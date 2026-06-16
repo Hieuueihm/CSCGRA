@@ -846,7 +846,10 @@ always @(posedge clk or negedge rst_n) begin
                     write_idx <= write_idx + 1'b1;
                     if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
                         rd_addr <= 10'h100 + ((write_idx + 1'b1) >> 3);
-                    state <= S_WR_WAIT;
+                    scan_col <= {IDX_W{1'b0}};
+                    for (gi = 0; gi < MAX_K; gi = gi + 1)
+                        phi_cache[gi] <= {DATA_W{1'b0}};
+                    state <= S_SCAN;
                 end
             end
             S_SOLVE: begin
