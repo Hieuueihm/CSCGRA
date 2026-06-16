@@ -773,8 +773,8 @@ always @(posedge clk or negedge rst_n) begin
                     state <= S_GRAM_PE_WAIT;
                 end else if (acc_j + 5'd1 < active_k[4:0]) begin
                     acc_j <= acc_j + 5'd1;
-                    acc_i <= 5'd0;
-                    rhs_block_base <= 5'd0;
+                    acc_i <= (acc_j + 5'd1) % RHS_BLOCK_STRIDE;
+                    rhs_block_base <= ((acc_j + 5'd1) / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE;
                     state <= S_GRAM_PE_WAIT;
                 end else begin
                     acc_i <= 5'd0;
