@@ -20,6 +20,11 @@ module score_select_service #(
     input  wire [SCALAR_W-1:0]    threshold_value,
     input  wire [5:0]             support_depth,
     input  wire [MAX_SUPPORT*IDX_W-1:0] support_bus,
+    input  wire                   stream_valid,
+    input  wire                   stream_done,
+    input  wire [IDX_W-1:0]       stream_base_idx,
+    input  wire [COLS-1:0]        stream_lane_valid,
+    input  wire [COLS*DATA_W-1:0] stream_data,
     input  wire                   append_done,
     output reg                    append_valid,
     output reg  [IDX_W-1:0]       append_idx,
@@ -81,6 +86,13 @@ module score_select_service #(
     reg block_best_valid_next;
     reg [DATA_W-1:0] block_best_score_next;
     reg [IDX_W-1:0] block_best_idx_next;
+    reg stream_arm_q;
+    reg stream_exclude_support_q;
+    reg [2:0] stream_path_q;
+    reg stream_best_valid_q;
+    reg [DATA_W-1:0] stream_best_score_q;
+    reg [IDX_W-1:0] stream_best_idx_q;
+    reg stream_append_wait_q;
     reg [COLS-1:0] lane_keep_q;
     reg [COLS*DATA_W-1:0] lane_score_q;
     reg [COLS*IDX_W-1:0] lane_idx_q;
@@ -93,6 +105,7 @@ module score_select_service #(
     integer add_count;
     wire [IDX_W-1:0] lane0_idx_ext = {{(IDX_W-1){1'b0}}, 1'b0};
 
+    wire stream_mode = ctx_word[31];
     wire select_start = ctx_valid && (uop_class == 4'd5) && ((ctx_word[27:24] == 4'd1) || (ctx_word[27:24] == 4'd2) || (ctx_word[27:24] == 4'd3));
     wire [3:0] shift_sel = ctx_word[19:16];
     wire [DATA_W-1:0] threshold_next = threshold_value[DATA_W-1:0] >> shift_sel;
@@ -125,6 +138,13 @@ module score_select_service #(
             block_best_valid_q <= 1'b0;
             block_best_score_q <= {DATA_W{1'b0}};
             block_best_idx_q <= {IDX_W{1'b0}};
+            stream_arm_q <= 1'b0;
+            stream_exclude_support_q <= 1'b1;
+            stream_path_q <= 3'd0;
+            stream_best_valid_q <= 1'b0;
+            stream_best_score_q <= {DATA_W{1'b0}};
+            stream_best_idx_q <= {IDX_W{1'b0}};
+            stream_append_wait_q <= 1'b0;
             lane_keep_q <= {COLS{1'b0}};
             lane_score_q <= {(COLS*DATA_W){1'b0}};
             lane_idx_q <= {(COLS*IDX_W){1'b0}};
@@ -135,10 +155,53 @@ module score_select_service #(
         end else begin
             append_valid <= 1'b0;
             done <= 1'b0;
+            if (stream_arm_q) begin
+                busy <= 1'b1;
+                if (stream_valid) begin
+                    for (lane = 0; lane < COLS; lane = lane + 1) begin
+                        if (stream_lane_valid[lane]) begin
+                            topk_idx_eff = stream_base_idx + lane[IDX_W-1:0];
+                            lane_abs_q = abs_data(stream_data[lane*DATA_W +: DATA_W]);
+                            if ((lane_abs_q > {{(DATA_W-1){1'b0}},1'b1}) && (!stream_exclude_support_q || !support_has_idx(topk_idx_eff))) begin
+                                if (!stream_best_valid_q || (lane_abs_q > stream_best_score_q) || ((lane_abs_q == stream_best_score_q) && (topk_idx_eff < stream_best_idx_q))) begin
+                                    stream_best_valid_q <= 1'b1;
+                                    stream_best_score_q <= lane_abs_q;
+                                    stream_best_idx_q <= topk_idx_eff;
+                                end
+                            end
+                        end
+                    end
+                end
+                if (stream_done) begin
+                    if (stream_append_wait_q) begin
+                        if (append_done) begin
+                            stream_arm_q <= 1'b0;
+                            stream_append_wait_q <= 1'b0;
+                            done <= 1'b1;
+                        end
+                    end else if (stream_best_valid_q) begin
+                        append_valid <= 1'b1;
+                        append_idx <= stream_best_idx_q;
+                        append_path <= stream_path_q;
+                        stream_append_wait_q <= 1'b1;
+                    end else begin
+                        stream_arm_q <= 1'b0;
+                    end
+                end
+            end
             case (state_q)
                 S_IDLE: begin
-                    busy <= 1'b0;
-                    if (select_start) begin
+                    if (!stream_arm_q) busy <= 1'b0;
+                    if (select_start && stream_mode) begin
+                        busy <= 1'b1;
+                        stream_arm_q <= 1'b1;
+                        stream_exclude_support_q <= (ctx_word[27:24] == 4'd2);
+                        stream_path_q <= ctx_word[22:20];
+                        stream_best_valid_q <= 1'b0;
+                        stream_best_score_q <= {DATA_W{1'b0}};
+                        stream_best_idx_q <= {IDX_W{1'b0}};
+                        stream_append_wait_q <= 1'b0;
+                    end else if (select_start) begin
                         busy <= 1'b1;
                         append_path <= ctx_word[22:20];
                         threshold_q <= threshold_next;
@@ -232,11 +295,11 @@ module score_select_service #(
                     scan2_lane_valid_q <= scan_lane_valid_q;
                     scan2_base_idx_q <= scan_base_idx_q;
                     scan2_data_q <= scan_data_q;
-                    scan_valid_q <= addr_valid;
-                    scan_done_q <= addr_done;
-                    scan_lane_valid_q <= lane_valid;
-                    scan_base_idx_q <= base_idx;
-                    scan_data_q <= spm_pa_rdata;
+                    scan_valid_q <= stream_mode ? stream_valid : addr_valid;
+                    scan_done_q <= stream_mode ? stream_done : addr_done;
+                    scan_lane_valid_q <= stream_mode ? stream_lane_valid : lane_valid;
+                    scan_base_idx_q <= stream_mode ? stream_base_idx : base_idx;
+                    scan_data_q <= stream_mode ? stream_data : spm_pa_rdata;
                 end
 
                 S_APPEND: begin

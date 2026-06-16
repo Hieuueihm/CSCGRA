@@ -106,6 +106,14 @@ module sparse_kernel_service_engine #(
     wire select_append_valid;
     wire [IDX_W-1:0] select_append_idx;
     wire [2:0] select_append_path;
+    wire select_busy;
+    wire ls_done_raw;
+
+    wire ls_corr_stream_valid;
+    wire ls_corr_stream_done;
+    wire [IDX_W-1:0] ls_corr_stream_base_idx;
+    wire [COLS-1:0] ls_corr_stream_lane_valid;
+    wire [COLS*DATA_W-1:0] ls_corr_stream_data;
     wire [32*IDX_W-1:0] support_bus_w;
     assign support_bus_w = {support31_w, support30_w, support29_w, support28_w, support27_w, support26_w, support25_w, support24_w, support23_w, support22_w, support21_w, support20_w, support19_w, support18_w, support17_w, support16_w, support15_w, support14_w, support13_w, support12_w, support11_w, support10_w, support9_w, support8_w, support7_w, support6_w, support5_w, support4_w, support3_w, support2_w, support1_w, support0_w};
 
@@ -136,12 +144,13 @@ module sparse_kernel_service_engine #(
     );
 
 
-    score_select_service #(.COLS(COLS), .DATA_W(DATA_W), .SCALAR_W(SCALAR_W), .IDX_W(IDX_W), .CTX_W(CTX_W), .MAX_SEL(1), .MAX_SUPPORT(16)) u_score_select (
+    score_select_service #(.COLS(COLS), .DATA_W(DATA_W), .SCALAR_W(SCALAR_W), .IDX_W(IDX_W), .CTX_W(CTX_W), .MAX_SEL(32), .MAX_SUPPORT(32)) u_score_select (
         .clk(clk), .rst_n(rst_n), .ctx_valid(ctx_valid), .ctx_word(ctx_word), .uop_class(uop_class),
         .lane_valid(select_lane_valid), .base_idx(select_base_idx), .addr_valid(select_addr_valid), .addr_done(select_addr_done),
-        .spm_pa_rdata(select_spm_pa_rdata), .threshold_value(last_result_value), .support_depth(support_depth0), .support_bus(support_bus_w[16*IDX_W-1:0]), .append_done(support_done),
+        .spm_pa_rdata(select_spm_pa_rdata), .threshold_value(last_result_value), .support_depth(support_depth0), .support_bus(support_bus_w[32*IDX_W-1:0]),
+        .stream_valid(ls_corr_stream_valid), .stream_done(ls_corr_stream_done), .stream_base_idx(ls_corr_stream_base_idx), .stream_lane_valid(ls_corr_stream_lane_valid), .stream_data(ls_corr_stream_data), .append_done(support_done),
         .append_valid(select_append_valid), .append_idx(select_append_idx), .append_path(select_append_path),
-        .busy(), .done(select_done)
+        .busy(select_busy), .done(select_done)
     );
 
     sparse_loop_controller #(.COLS(COLS), .DATA_W(DATA_W), .SCALAR_W(SCALAR_W), .MEM_AW(MEM_AW), .IDX_W(IDX_W), .MAX_M(MAX_M), .MAX_N(MAX_N), .MAX_K(MAX_K), .REFINE_ITERS(REFINE_ITERS)) u_sparse_loop_controller (
@@ -149,14 +158,17 @@ module sparse_kernel_service_engine #(
         .start(ls_start), .op(scalar_op_low), .m_size(m_size), .n_size(n_size),
         .k_active(sparse_k_active), .support_depth0(support_depth0), .seed(seed), .scale_q(phi_scale_q8_8), .phi_kind(phi_kind), .phi_bus(phi_bus),
         .pe_rhs_product_bus(pe_rhs_product_bus), .last_result_value(last_result_value), .last_result_idx(last_result_idx), .pe_rhs_phi_bus(ls_pe_rhs_phi_bus), .pe_rhs_y_bus(ls_pe_rhs_y_bus), .pe_rhs_active(ls_pe_rhs_active), .pe_sparse_clear(pe_sparse_clear), .pe_sparse_op(pe_sparse_op),
+        .corr_stream_valid(ls_corr_stream_valid), .corr_stream_done(ls_corr_stream_done), .corr_stream_base_idx(ls_corr_stream_base_idx), .corr_stream_lane_valid(ls_corr_stream_lane_valid), .corr_stream_data(ls_corr_stream_data),
         .support0(support0_w), .support1(support1_w), .support2(support2_w), .support3(support3_w), .support4(support4_w), .support5(support5_w), .support6(support6_w), .support7(support7_w),
         .support8(support8_w), .support9(support9_w), .support10(support10_w), .support11(support11_w), .support12(support12_w), .support13(support13_w), .support14(support14_w), .support15(support15_w),
         .support16(support16_w), .support17(support17_w), .support18(support18_w), .support19(support19_w), .support20(support20_w), .support21(support21_w), .support22(support22_w), .support23(support23_w),
         .support24(support24_w), .support25(support25_w), .support26(support26_w), .support27(support27_w), .support28(support28_w), .support29(support29_w), .support30(support30_w), .support31(support31_w),
         .rd_addr(ls_rd_addr), .rd_data(spm_pa_rdata),
         .wr_addr(ls_wr_addr), .wr_data(ls_wr_data), .wr_en(ls_wr_en),
-        .busy(ls_busy), .done(ls_done), .result(ls_result)
+        .busy(ls_busy), .done(ls_done_raw), .result(ls_result)
     );
+
+assign ls_done = ls_done_raw && !((scalar_op_low[3:0] == 4'd1) && select_busy);
 
 endmodule
 

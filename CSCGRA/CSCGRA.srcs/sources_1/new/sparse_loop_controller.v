@@ -32,6 +32,11 @@ module sparse_loop_controller #(
     output reg pe_rhs_active,
     output reg pe_sparse_clear,
     output reg [3:0] pe_sparse_op,
+    output wire corr_stream_valid,
+    output wire corr_stream_done,
+    output wire [IDX_W-1:0] corr_stream_base_idx,
+    output wire [COLS-1:0] corr_stream_lane_valid,
+    output wire [COLS*DATA_W-1:0] corr_stream_data,
     input wire [IDX_W-1:0] support0,
     input wire [IDX_W-1:0] support1,
     input wire [IDX_W-1:0] support2,
@@ -397,6 +402,18 @@ function [IDX_W-1:0] support_cached_at;
         support_cached_at = support_cache[rank];
     end
 endfunction
+
+
+generate
+    genvar corr_stream_lane;
+    for (corr_stream_lane = 0; corr_stream_lane < COLS; corr_stream_lane = corr_stream_lane + 1) begin : gen_corr_stream
+        assign corr_stream_data[corr_stream_lane*DATA_W +: DATA_W] = sat_s24($signed(corr_acc_lane[corr_stream_lane*64 +: 64]) >>> 16);
+        assign corr_stream_lane_valid[corr_stream_lane] = ((corr_col + corr_stream_lane[IDX_W-1:0]) < n_size);
+    end
+endgenerate
+assign corr_stream_valid = busy && (active_op == OP_CORR) && (state == S_CORR_WRITE);
+assign corr_stream_done = corr_stream_valid && (corr_col + COLS[IDX_W-1:0] >= n_size);
+assign corr_stream_base_idx = corr_col;
 
 always @(*) begin
     residual_block_sum = 128'sd0;
