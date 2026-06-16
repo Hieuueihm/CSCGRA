@@ -73,7 +73,7 @@ module sparse_loop_controller #(
     output reg done,
     output reg [SCALAR_W-1:0] result
 );
-localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC_WAIT=2, S_ACC=3, S_SOLVE=4, S_WX=5, S_WR_WAIT=6, S_WR=7, S_DONE=8, S_K0_WAIT=9, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_WR_ACC=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_SCAN_COMMIT=32, S_SCAN_HIT=33, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_RESID_PE_WAIT2=51, S_RESID_PE_WAIT3=52, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_PE_WAIT2=55, S_CORR_PE_WAIT3=56, S_CORR_LATCH=57,
+localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC_WAIT=2, S_ACC=3, S_SOLVE=4, S_WX=5, S_WR_WAIT=6, S_WR=7, S_DONE=8, S_K0_WAIT=9, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_WR_ACC=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_SCAN_COMMIT=32, S_SCAN_HIT=33, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_RESID_PE_WAIT2=51, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
 S_DIV_NR_NORM=58, S_DIV_NR_MUL0=59, S_DIV_NR_R0=60, S_DIV_NR_MUL1=61,
 S_DIV_NR_T0=62, S_DIV_NR_MUL2=63, S_DIV_NR_R1=64, S_DIV_NR_MUL3=65,
 S_DIV_NR_T1=66, S_DIV_NR_MUL4=67, S_DIV_NR_R2=68, S_DIV_APPLY=69,
@@ -403,12 +403,12 @@ endfunction
 always @(*) begin
     pe_sparse_clear = busy && (active_op == OP_CORR) && (state == S_CORR_INIT);
     pe_sparse_op = busy ? active_op : op_sel;
-    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_RESID_PE_WAIT3) || (state == S_WR_ACC))) || ((active_op == OP_CORR) && (state == S_CORR_ACC)));
+    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC))) || ((active_op == OP_CORR) && (state == S_CORR_ACC)));
     pe_rhs_phi_bus = {COLS*DATA_W{1'b0}};
     pe_rhs_y_bus = {COLS*DATA_W{1'b0}};
     for (rhs_lane = 0; rhs_lane < COLS; rhs_lane = rhs_lane + 1) begin
         pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] = (active_op == OP_CORR) ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] : (((rhs_block_base + rhs_lane) < active_k) ? phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}});
-        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = ((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_RESID_PE_WAIT3) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : ((active_op == OP_CORR) ? rd_data[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W]));
+        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = ((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : ((active_op == OP_CORR) ? rd_data[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W]));
     end
 end
 
@@ -821,9 +821,6 @@ always @(posedge clk or negedge rst_n) begin
             S_RESID_PE_WAIT2: begin
                 state <= S_WR_ACC;
             end
-            S_RESID_PE_WAIT3: begin
-                state <= S_WR_ACC;
-            end
             S_WR_ACC: begin
                 if ((resid_i < RHS_BLOCK_STRIDE) && ((rhs_block_base + resid_i) < active_k[4:0])) begin
                     residual_acc <= residual_acc + $signed(pe_rhs_product_bus[resid_i*64 +: 64]);
@@ -1103,12 +1100,6 @@ always @(posedge clk or negedge rst_n) begin
                 state <= S_CORR_PE_WAIT;
             end
             S_CORR_PE_WAIT: begin
-                state <= S_CORR_LATCH;
-            end
-            S_CORR_PE_WAIT2: begin
-                state <= S_CORR_LATCH;
-            end
-            S_CORR_PE_WAIT3: begin
                 state <= S_CORR_LATCH;
             end
             S_CORR_LATCH: begin
