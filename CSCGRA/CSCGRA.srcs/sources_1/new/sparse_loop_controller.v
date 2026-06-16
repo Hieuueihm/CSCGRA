@@ -287,15 +287,11 @@ reg phase_residual;
 integer lane;
 reg [MEM_AW-1:0] base_addr;
 reg [31:0] accum_dbg;
-reg [IDX_W-1:0] support_sel0;
-reg [IDX_W-1:0] support_sel1;
 reg signed [63:0] acc_num;
 reg signed [63:0] acc_den;
 reg signed [63:0] acc_num1;
 reg signed [63:0] acc_den01;
 reg signed [63:0] acc_den11;
-reg signed [DATA_W-1:0] coeff_q;
-reg signed [DATA_W-1:0] coeff1_q;
 reg signed [DATA_W-1:0] y_cur;
 reg signed [DATA_W-1:0] phi_cur;
 reg signed [DATA_W-1:0] phi1_cur;
@@ -614,8 +610,6 @@ always @(posedge clk or negedge rst_n) begin
                     residual_acc <= 128'sd0;
                     state <= S_WR;
                 end else if (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && (k_active <= MAX_K) && (k_active != 0) && (n_size != 0) && (m_size != 0)) begin
-                    support_sel0 <= support0;
-                    support_sel1 <= support1;
                     active_k <= (support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active;
                     write_idx <= {IDX_W{1'b0}};
                     write_limit <= m_size;
@@ -628,8 +622,6 @@ always @(posedge clk or negedge rst_n) begin
                     acc_num1 <= 64'sd0;
                     acc_den01 <= 64'sd0;
                     acc_den11 <= 64'sd0;
-                    coeff_q <= {DATA_W{1'b0}};
-                    coeff1_q <= {DATA_W{1'b0}};
                     for (gi = 0; gi < MAX_K; gi = gi + 1) begin
                         rhs[gi] <= 64'sd0;
                         coeff_mem[gi] <= {DATA_W{1'b0}};
@@ -698,39 +690,9 @@ always @(posedge clk or negedge rst_n) begin
                 end
             end
             S_ACC: begin
-                if (active_k <= 8'd3) begin
-                    rhs[0] <= rhs[0] + $signed(mul_s24_s24(phi_cache[0], rd_data[write_idx[2:0]*DATA_W +: DATA_W]));
-                    ge_mat[0][0] <= ge_mat[0][0] + $signed(mul_s24_s24(phi_cache[0], phi_cache[0]));
-                    if (active_k > 8'd1) begin
-                        rhs[1] <= rhs[1] + $signed(mul_s24_s24(phi_cache[1], rd_data[write_idx[2:0]*DATA_W +: DATA_W]));
-                        ge_mat[1][0] <= ge_mat[1][0] + $signed(mul_s24_s24(phi_cache[1], phi_cache[0]));
-                        ge_mat[0][1] <= ge_mat[0][1] + $signed(mul_s24_s24(phi_cache[1], phi_cache[0]));
-                        ge_mat[1][1] <= ge_mat[1][1] + $signed(mul_s24_s24(phi_cache[1], phi_cache[1]));
-                    end
-                    if (active_k > 8'd2) begin
-                        rhs[2] <= rhs[2] + $signed(mul_s24_s24(phi_cache[2], rd_data[write_idx[2:0]*DATA_W +: DATA_W]));
-                        ge_mat[2][0] <= ge_mat[2][0] + $signed(mul_s24_s24(phi_cache[2], phi_cache[0]));
-                        ge_mat[0][2] <= ge_mat[0][2] + $signed(mul_s24_s24(phi_cache[2], phi_cache[0]));
-                        ge_mat[2][1] <= ge_mat[2][1] + $signed(mul_s24_s24(phi_cache[2], phi_cache[1]));
-                        ge_mat[1][2] <= ge_mat[1][2] + $signed(mul_s24_s24(phi_cache[2], phi_cache[1]));
-                        ge_mat[2][2] <= ge_mat[2][2] + $signed(mul_s24_s24(phi_cache[2], phi_cache[2]));
-                    end
-                    if (write_idx + 1 >= write_limit) begin
-                        state <= S_SOLVE_INIT;
-                    end else begin
-                        write_idx <= write_idx + 1'b1;
-                        if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
-                            rd_addr <= 10'h100 + ((write_idx + 1'b1) >> 3);
-                        scan_col <= {IDX_W{1'b0}};
-                        for (gi = 0; gi < MAX_K; gi = gi + 1)
-                            phi_cache[gi] <= {DATA_W{1'b0}};
-                        state <= S_SCAN;
-                    end
-                end else begin
-                    acc_i <= 5'd0;
-                    rhs_block_base <= 5'd0;
-                    state <= S_ACC_PE_WAIT;
-                end
+                acc_i <= 5'd0;
+                rhs_block_base <= 5'd0;
+                state <= S_ACC_PE_WAIT;
             end
             S_ACC_PE_WAIT: begin
                 state <= S_ACC_PE_WAIT2;
@@ -794,7 +756,7 @@ always @(posedge clk or negedge rst_n) begin
                 end
             end
             S_WX: begin
-                write_value <= (write_idx == support_sel0) ? coeff_q : (((k_active == 8'd2) && (write_idx == support_sel1)) ? coeff1_q : {DATA_W{1'b0}});
+                write_value <= write_value_now;
                 if (write_idx + 1 >= write_limit) begin
                     write_idx <= {IDX_W{1'b0}};
                     phase_residual <= 1'b1;
@@ -1066,8 +1028,6 @@ always @(posedge clk or negedge rst_n) begin
                 state <= S_DONE;
             end
             S_SOLVE_DONE: begin
-                coeff_q <= coeff_mem[0];
-                coeff1_q <= coeff_mem[1];
                 write_idx <= {IDX_W{1'b0}};
                 write_limit <= (active_op == OP_REFINE_SPARSE) ? active_k : n_size;
                 phase_residual <= 1'b0;
