@@ -93,6 +93,7 @@ module score_select_service #(
     reg [DATA_W-1:0] stream_best_score_q;
     reg [IDX_W-1:0] stream_best_idx_q;
     reg stream_append_wait_q;
+    reg stream_done_seen_q;
     reg [COLS-1:0] lane_keep_q;
     reg [COLS*DATA_W-1:0] lane_score_q;
     reg [COLS*IDX_W-1:0] lane_idx_q;
@@ -145,6 +146,7 @@ module score_select_service #(
             stream_best_score_q <= {DATA_W{1'b0}};
             stream_best_idx_q <= {IDX_W{1'b0}};
             stream_append_wait_q <= 1'b0;
+            stream_done_seen_q <= 1'b0;
             lane_keep_q <= {COLS{1'b0}};
             lane_score_q <= {(COLS*DATA_W){1'b0}};
             lane_idx_q <= {(COLS*IDX_W){1'b0}};
@@ -157,35 +159,50 @@ module score_select_service #(
             done <= 1'b0;
             if (stream_arm_q) begin
                 busy <= 1'b1;
-                if (stream_valid) begin
-                    for (lane = 0; lane < COLS; lane = lane + 1) begin
-                        if (stream_lane_valid[lane]) begin
-                            topk_idx_eff = stream_base_idx + lane[IDX_W-1:0];
-                            lane_abs_q = abs_data(stream_data[lane*DATA_W +: DATA_W]);
-                            if ((lane_abs_q > {{(DATA_W-1){1'b0}},1'b1}) && (!stream_exclude_support_q || !support_has_idx(topk_idx_eff))) begin
-                                if (!stream_best_valid_q || (lane_abs_q > stream_best_score_q) || ((lane_abs_q == stream_best_score_q) && (topk_idx_eff < stream_best_idx_q))) begin
-                                    stream_best_valid_q <= 1'b1;
-                                    stream_best_score_q <= lane_abs_q;
-                                    stream_best_idx_q <= topk_idx_eff;
+                if (stream_append_wait_q) begin
+                    if (append_done) begin
+                        stream_arm_q <= 1'b0;
+                        stream_append_wait_q <= 1'b0;
+                        stream_done_seen_q <= 1'b0;
+                        done <= 1'b1;
+                    end
+                end else begin
+                    if (stream_valid) begin
+                        block_best_valid_next = 1'b0;
+                        block_best_score_next = {DATA_W{1'b0}};
+                        block_best_idx_next = {IDX_W{1'b0}};
+                        for (lane = 0; lane < COLS; lane = lane + 1) begin
+                            if (stream_lane_valid[lane]) begin
+                                topk_idx_eff = stream_base_idx + lane[IDX_W-1:0];
+                                lane_abs_q = abs_data(stream_data[lane*DATA_W +: DATA_W]);
+                                if ((lane_abs_q > {{(DATA_W-1){1'b0}},1'b1}) && (!stream_exclude_support_q || !support_has_idx(topk_idx_eff))) begin
+                                    if (!block_best_valid_next || (lane_abs_q > block_best_score_next) || ((lane_abs_q == block_best_score_next) && (topk_idx_eff < block_best_idx_next))) begin
+                                        block_best_valid_next = 1'b1;
+                                        block_best_score_next = lane_abs_q;
+                                        block_best_idx_next = topk_idx_eff;
+                                    end
                                 end
                             end
                         end
+                        if (block_best_valid_next && (!stream_best_valid_q || (block_best_score_next > stream_best_score_q) || ((block_best_score_next == stream_best_score_q) && (block_best_idx_next < stream_best_idx_q)))) begin
+                            stream_best_valid_q <= 1'b1;
+                            stream_best_score_q <= block_best_score_next;
+                            stream_best_idx_q <= block_best_idx_next;
+                        end
                     end
-                end
-                if (stream_done) begin
-                    if (stream_append_wait_q) begin
-                        if (append_done) begin
+                    if (stream_done)
+                        stream_done_seen_q <= 1'b1;
+                    if (stream_done_seen_q || stream_done) begin
+                        if (stream_best_valid_q) begin
+                            append_valid <= 1'b1;
+                            append_idx <= stream_best_idx_q;
+                            append_path <= stream_path_q;
+                            stream_append_wait_q <= 1'b1;
+                        end else begin
                             stream_arm_q <= 1'b0;
-                            stream_append_wait_q <= 1'b0;
+                            stream_done_seen_q <= 1'b0;
                             done <= 1'b1;
                         end
-                    end else if (stream_best_valid_q) begin
-                        append_valid <= 1'b1;
-                        append_idx <= stream_best_idx_q;
-                        append_path <= stream_path_q;
-                        stream_append_wait_q <= 1'b1;
-                    end else begin
-                        stream_arm_q <= 1'b0;
                     end
                 end
             end
@@ -201,6 +218,7 @@ module score_select_service #(
                         stream_best_score_q <= {DATA_W{1'b0}};
                         stream_best_idx_q <= {IDX_W{1'b0}};
                         stream_append_wait_q <= 1'b0;
+                        stream_done_seen_q <= 1'b0;
                     end else if (select_start) begin
                         busy <= 1'b1;
                         append_path <= ctx_word[22:20];

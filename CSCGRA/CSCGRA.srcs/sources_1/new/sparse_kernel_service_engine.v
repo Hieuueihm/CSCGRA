@@ -108,6 +108,8 @@ module sparse_kernel_service_engine #(
     wire [2:0] select_append_path;
     wire select_busy;
     wire ls_done_raw;
+    reg stream_select_pending_q;
+    reg ls_done_deferred_q;
 
     wire ls_corr_stream_valid;
     wire ls_corr_stream_done;
@@ -168,7 +170,28 @@ module sparse_kernel_service_engine #(
         .busy(ls_busy), .done(ls_done_raw), .result(ls_result)
     );
 
-assign ls_done = ls_done_raw && !((scalar_op_low[3:0] == 4'd1) && select_busy);
+wire ls_done_deferred_fire = ls_done_deferred_q && !stream_select_pending_q && !select_busy;
+
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        stream_select_pending_q <= 1'b0;
+        ls_done_deferred_q <= 1'b0;
+    end else if (clear_error_pulse || start_pulse) begin
+        stream_select_pending_q <= 1'b0;
+        ls_done_deferred_q <= 1'b0;
+    end else begin
+        if (ctx_valid && (uop_class == 4'd5) && ctx_word[31])
+            stream_select_pending_q <= 1'b1;
+        if (ls_done_raw && stream_select_pending_q && select_busy)
+            ls_done_deferred_q <= 1'b1;
+        if (select_done)
+            stream_select_pending_q <= 1'b0;
+        if (ls_done_deferred_fire)
+            ls_done_deferred_q <= 1'b0;
+    end
+end
+
+assign ls_done = (ls_done_raw && !(stream_select_pending_q && select_busy)) || ls_done_deferred_fire;
 
 endmodule
 

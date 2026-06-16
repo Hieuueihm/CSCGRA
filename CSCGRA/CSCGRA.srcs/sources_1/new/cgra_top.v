@@ -476,7 +476,7 @@ module cgra_top #(
     assign ctx_done =
         (uop_class == 4'd7) ? dma_done :
         (uop_class == 4'd4) ? reduce_valid :
-        (uop_class == 4'd5) ? skse_select_done :
+        (uop_class == 4'd5) ? (ctx_word[31] ? 1'b1 : skse_select_done) :
         (uop_class == 4'd6) ? skse_support_done :
         (uop_class == 4'd8) ? scalar_valid :
         (uop_class == 4'd9) ? 1'b1 :
