@@ -34,6 +34,16 @@ module reduce_scan #(
         end
     endfunction
 
+
+    function [DATA_W-1:0] score_data;
+        input [DATA_W-1:0] value;
+        reg [DATA_W-1:0] abs_value;
+        begin
+            abs_value = abs_data(value);
+            score_data = (abs_value <= {{(DATA_W-1){1'b0}}, 1'b1}) ? {DATA_W{1'b0}} : abs_value;
+        end
+    endfunction
+
     reg [SCALAR_W-1:0] best_value_q;
     reg [IDX_W-1:0] best_idx_q;
     reg best_flag_q;
@@ -109,18 +119,18 @@ module reduce_scan #(
 
                 for (i = 0; i < PAIRS; i = i + 1) begin
                     pair_valid_q[i] <= active && addr_valid_q && (lane_valid_q[2*i] || ((2*i+1 < COLS) && lane_valid_q[2*i+1]));
-                    if ((2*i+1 < COLS) && lane_valid_q[2*i+1] && (!lane_valid_q[2*i] || (abs_data(spm_pa_rdata[(2*i+1)*DATA_W +: DATA_W]) > abs_data(spm_pa_rdata[(2*i)*DATA_W +: DATA_W])))) begin
-                        pair_value_q[i] <= {{(SCALAR_W-DATA_W){1'b0}}, abs_data(spm_pa_rdata[(2*i+1)*DATA_W +: DATA_W])};
+                    if ((2*i+1 < COLS) && lane_valid_q[2*i+1] && (!lane_valid_q[2*i] || (score_data(spm_pa_rdata[(2*i+1)*DATA_W +: DATA_W]) > score_data(spm_pa_rdata[(2*i)*DATA_W +: DATA_W])))) begin
+                        pair_value_q[i] <= {{(SCALAR_W-DATA_W){1'b0}}, score_data(spm_pa_rdata[(2*i+1)*DATA_W +: DATA_W])};
                         pair_idx_q[i] <= base_idx_q + (2*i+1);
                     end else begin
-                        pair_value_q[i] <= {{(SCALAR_W-DATA_W){1'b0}}, abs_data(spm_pa_rdata[(2*i)*DATA_W +: DATA_W])};
+                        pair_value_q[i] <= {{(SCALAR_W-DATA_W){1'b0}}, score_data(spm_pa_rdata[(2*i)*DATA_W +: DATA_W])};
                         pair_idx_q[i] <= base_idx_q + (2*i);
                     end
                 end
 
                 for (i = 0; i < PAIR2; i = i + 1) begin
                     mid_valid_q[i] <= pair_valid_q[2*i] || ((2*i+1 < PAIRS) && pair_valid_q[2*i+1]);
-                    if ((2*i+1 < PAIRS) && pair_valid_q[2*i+1] && (!pair_valid_q[2*i] || (pair_value_q[2*i+1] > pair_value_q[2*i]))) begin
+                    if ((2*i+1 < PAIRS) && pair_valid_q[2*i+1] && (!pair_valid_q[2*i] || ((pair_value_q[2*i+1] > pair_value_q[2*i]) || ((pair_value_q[2*i+1] == pair_value_q[2*i]) && (pair_idx_q[2*i+1] < pair_idx_q[2*i]))))) begin
                         mid_value_q[i] <= pair_value_q[2*i+1];
                         mid_idx_q[i] <= pair_idx_q[2*i+1];
                     end else begin
@@ -130,7 +140,7 @@ module reduce_scan #(
                 end
 
                 cand_valid_q <= mid_valid_q[0] || ((PAIR2 > 1) && mid_valid_q[1]);
-                if ((PAIR2 > 1) && mid_valid_q[1] && (!mid_valid_q[0] || (mid_value_q[1] > mid_value_q[0]))) begin
+                if ((PAIR2 > 1) && mid_valid_q[1] && (!mid_valid_q[0] || ((mid_value_q[1] > mid_value_q[0]) || ((mid_value_q[1] == mid_value_q[0]) && (mid_idx_q[1] < mid_idx_q[0]))))) begin
                     cand_value_q <= mid_value_q[1];
                     cand_idx_q <= mid_idx_q[1];
                 end else begin
@@ -138,7 +148,7 @@ module reduce_scan #(
                     cand_idx_q <= mid_idx_q[0];
                 end
 
-                if (cand_valid_q && (!best_flag_q || (cand_value_q > best_value_q))) begin
+                if (cand_valid_q && (!best_flag_q || ((cand_value_q > best_value_q) || ((cand_value_q == best_value_q) && (cand_idx_q < best_idx_q))))) begin
                     best_value_q <= cand_value_q;
                     best_idx_q <= cand_idx_q;
                     best_flag_q <= 1'b1;
