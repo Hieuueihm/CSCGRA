@@ -975,8 +975,7 @@ always @(posedge clk or negedge rst_n) begin
                 state <= S_DIV_APPLY;
             end
             S_DIV_APPLY: begin
-                div_result <= div_neg ? -apply_recip_q48_s64($signed(div_abs_num[63:0]), $signed(recip_q48_result))
-                                      :  apply_recip_q48_s64($signed(div_abs_num[63:0]), $signed(recip_q48_result));
+                div_result <= div_round_s64(ge_div_num, ge_div_den);
                 state <= div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE);
             end
             S_ELIM_DIV_DONE: begin
