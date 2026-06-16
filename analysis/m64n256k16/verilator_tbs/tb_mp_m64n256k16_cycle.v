@@ -1,0 +1,68 @@
+`timescale 1ns/1ps
+module tb_mp_m64n256k16_cycle;
+localparam DATA_W=24;
+localparam VEC_X=10'h000;
+localparam VEC_R=10'h080;
+localparam VEC_Y=10'h100;
+integer pass_cnt, fail_cnt, i, iter_idx, pc, timeout, exp_idx;
+reg clk,rst_n;
+reg [11:0] s_axi_awaddr; reg s_axi_awvalid; wire s_axi_awready;
+reg [31:0] s_axi_wdata; reg [3:0] s_axi_wstrb; reg s_axi_wvalid; wire s_axi_wready;
+wire [1:0] s_axi_bresp; wire s_axi_bvalid; reg s_axi_bready;
+reg [11:0] s_axi_araddr; reg s_axi_arvalid; wire s_axi_arready; wire [31:0] s_axi_rdata; wire [1:0] s_axi_rresp; wire s_axi_rvalid; reg s_axi_rready;
+wire [31:0] m_axi_araddr; wire [7:0] m_axi_arlen; wire [2:0] m_axi_arsize; wire [1:0] m_axi_arburst; wire m_axi_arvalid; reg m_axi_arready;
+reg [31:0] m_axi_rdata; reg m_axi_rvalid; reg m_axi_rlast; wire m_axi_rready;
+wire [31:0] m_axi_awaddr; wire [7:0] m_axi_awlen; wire [2:0] m_axi_awsize; wire [1:0] m_axi_awburst; wire m_axi_awvalid; reg m_axi_awready;
+wire [31:0] m_axi_wdata; wire [3:0] m_axi_wstrb; wire m_axi_wlast; wire m_axi_wvalid; reg m_axi_wready;
+reg [1:0] m_axi_bresp; reg m_axi_bvalid; wire m_axi_bready;
+wire irq_done, irq_error;
+reg [23:0] got; reg signed [24:0] diff;
+`include "golden_cases.vh"
+
+cgra_top dut(.clk(clk),.rst_n(rst_n),.s_axi_awaddr(s_axi_awaddr),.s_axi_awvalid(s_axi_awvalid),.s_axi_awready(s_axi_awready),.s_axi_wdata(s_axi_wdata),.s_axi_wstrb(s_axi_wstrb),.s_axi_wvalid(s_axi_wvalid),.s_axi_wready(s_axi_wready),.s_axi_bresp(s_axi_bresp),.s_axi_bvalid(s_axi_bvalid),.s_axi_bready(s_axi_bready),.s_axi_araddr(s_axi_araddr),.s_axi_arvalid(s_axi_arvalid),.s_axi_arready(s_axi_arready),.s_axi_rdata(s_axi_rdata),.s_axi_rresp(s_axi_rresp),.s_axi_rvalid(s_axi_rvalid),.s_axi_rready(s_axi_rready),.m_axi_araddr(m_axi_araddr),.m_axi_arlen(m_axi_arlen),.m_axi_arsize(m_axi_arsize),.m_axi_arburst(m_axi_arburst),.m_axi_arvalid(m_axi_arvalid),.m_axi_arready(m_axi_arready),.m_axi_rdata(m_axi_rdata),.m_axi_rvalid(m_axi_rvalid),.m_axi_rlast(m_axi_rlast),.m_axi_rready(m_axi_rready),.m_axi_awaddr(m_axi_awaddr),.m_axi_awlen(m_axi_awlen),.m_axi_awsize(m_axi_awsize),.m_axi_awburst(m_axi_awburst),.m_axi_awvalid(m_axi_awvalid),.m_axi_awready(m_axi_awready),.m_axi_wdata(m_axi_wdata),.m_axi_wstrb(m_axi_wstrb),.m_axi_wlast(m_axi_wlast),.m_axi_wvalid(m_axi_wvalid),.m_axi_wready(m_axi_wready),.m_axi_bresp(m_axi_bresp),.m_axi_bvalid(m_axi_bvalid),.m_axi_bready(m_axi_bready),.irq_done(irq_done),.irq_error(irq_error));
+
+always #5 clk=~clk;
+
+task tick; begin @(posedge clk); #1; end endtask
+task check; input [255:0] name; input cond; begin if(cond) begin $display("PASS %0s",name); pass_cnt=pass_cnt+1; end else begin $display("FAIL %0s",name); fail_cnt=fail_cnt+1; end end endtask
+function absdiff_le; input [23:0] a,b; input integer tol; begin diff={a[23],a}-{b[23],b}; if(diff<0) diff=-diff; absdiff_le=(diff<=tol); end endfunction
+
+task axi_write; input [11:0] a; input [31:0] d; begin if(s_axi_bvalid) tick(); s_axi_awaddr=a; s_axi_wdata=d; s_axi_awvalid=1; s_axi_wvalid=1; tick(); s_axi_awvalid=0; s_axi_wvalid=0; end endtask
+task write_ctx; input [10:0] cidx; input [63:0] word; begin axi_write(12'h100+{cidx,3'b000},word[31:0]); axi_write(12'h100+{cidx,3'b000}+12'd4,word[63:32]); end endtask
+
+task write_spm_word; input [9:0] base; input integer idx; input [23:0] value; reg [9:0] addr; begin addr=base+idx[9:3]; case(idx[2:0])
+0:begin dut.u_spm.gen_bank[0].mem_pa[addr]=value; dut.u_spm.gen_bank[0].mem_pb[addr]=value; end
+1:begin dut.u_spm.gen_bank[1].mem_pa[addr]=value; dut.u_spm.gen_bank[1].mem_pb[addr]=value; end
+2:begin dut.u_spm.gen_bank[2].mem_pa[addr]=value; dut.u_spm.gen_bank[2].mem_pb[addr]=value; end
+3:begin dut.u_spm.gen_bank[3].mem_pa[addr]=value; dut.u_spm.gen_bank[3].mem_pb[addr]=value; end
+4:begin dut.u_spm.gen_bank[4].mem_pa[addr]=value; dut.u_spm.gen_bank[4].mem_pb[addr]=value; end
+5:begin dut.u_spm.gen_bank[5].mem_pa[addr]=value; dut.u_spm.gen_bank[5].mem_pb[addr]=value; end
+6:begin dut.u_spm.gen_bank[6].mem_pa[addr]=value; dut.u_spm.gen_bank[6].mem_pb[addr]=value; end
+default:begin dut.u_spm.gen_bank[7].mem_pa[addr]=value; dut.u_spm.gen_bank[7].mem_pb[addr]=value; end endcase end endtask
+
+task read_spm_word; input [9:0] base; input integer idx; output [23:0] value; reg [9:0] addr; begin addr=base+idx[9:3]; case(idx[2:0])
+0:value=dut.u_spm.gen_bank[0].mem_pa[addr]; 1:value=dut.u_spm.gen_bank[1].mem_pa[addr]; 2:value=dut.u_spm.gen_bank[2].mem_pa[addr]; 3:value=dut.u_spm.gen_bank[3].mem_pa[addr];
+4:value=dut.u_spm.gen_bank[4].mem_pa[addr]; 5:value=dut.u_spm.gen_bank[5].mem_pa[addr]; 6:value=dut.u_spm.gen_bank[6].mem_pa[addr]; default:value=dut.u_spm.gen_bank[7].mem_pa[addr];
+endcase end endtask
+
+function [63:0] sparse_op_ctx; input [7:0] sop; input is_last; begin sparse_op_ctx=64'd0; sparse_op_ctx[63:60]=4'h1; sparse_op_ctx[59:56]=4'd8; sparse_op_ctx[27:20]=sop; sparse_op_ctx[47:44]=is_last?4'd6:4'd0; end endfunction
+function [63:0] reduce_argmax_ctx; input is_last; begin reduce_argmax_ctx=64'd0; reduce_argmax_ctx[63:60]=4'h1; reduce_argmax_ctx[59:56]=4'd4; reduce_argmax_ctx[55:52]=4'd1; reduce_argmax_ctx[51:48]=4'd2; reduce_argmax_ctx[47:44]=is_last?4'd6:4'd0; reduce_argmax_ctx[43:41]=3'd3; reduce_argmax_ctx[34:32]=3'd3; reduce_argmax_ctx[27:24]=4'd4; end endfunction
+function [63:0] candidate_append_result_ctx; input is_last; begin candidate_append_result_ctx=64'd0; candidate_append_result_ctx[63:60]=4'h1; candidate_append_result_ctx[59:56]=4'd6; candidate_append_result_ctx[47:44]=is_last?4'd6:4'd0; candidate_append_result_ctx[22:20]=3'd0; candidate_append_result_ctx[19:16]=4'b0001; end endfunction
+
+
+task reset_dut; begin rst_n=0; s_axi_awaddr=0; s_axi_awvalid=0; s_axi_wdata=0; s_axi_wstrb=4'hf; s_axi_wvalid=0; s_axi_bready=1; s_axi_araddr=0; s_axi_arvalid=0; s_axi_rready=1; m_axi_arready=1; m_axi_rdata=0; m_axi_rvalid=0; m_axi_rlast=0; m_axi_awready=1; m_axi_wready=1; m_axi_bresp=0; m_axi_bvalid=0; repeat(5) tick(); rst_n=1; repeat(2) tick(); end endtask
+task load_case0; begin for(i=0;i<GOLD_MAX_N;i=i+1) begin write_spm_word(VEC_X,i,24'h0); write_spm_word(VEC_R,i,24'h0); write_spm_word(VEC_Y,i,gold_y(0,i)); end end endtask
+task seed_residual_from_y; begin for(i=0;i<gold_case_m(0);i=i+1) write_spm_word(VEC_R,i,gold_y(0,i)); end endtask
+
+task run_prog; input integer plen; begin axi_write(12'h00C,gold_case_m(0)); axi_write(12'h010,gold_case_n(0)); axi_write(12'h014,gold_case_k(0)); axi_write(12'h020,gold_case_seed(0)); axi_write(12'h024,gold_case_scale(0)); axi_write(12'h030,{28'd0,gold_case_phi_kind(0),1'b0,1'b1}); axi_write(12'h040,0); axi_write(12'h044,plen); axi_write(12'h000,1); tick(); timeout=0; while(!irq_done && !irq_error && timeout<50000000) begin timeout=timeout+1; tick(); end $display("MEASURED_CYCLES %0d", timeout); check("irq_done", irq_done && !irq_error); repeat(8) tick(); end endtask
+
+task build_mp_program; begin pc=0; for(iter_idx=0; iter_idx<gold_case_k(0); iter_idx=iter_idx+1) begin write_ctx(pc[10:0], sparse_op_ctx(8'h81,1'b0)); pc=pc+1; write_ctx(pc[10:0], reduce_argmax_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], candidate_append_result_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], sparse_op_ctx(8'h85,1'b0)); pc=pc+1; write_ctx(pc[10:0], sparse_op_ctx(8'h83, (iter_idx==gold_case_k(0)-1))); pc=pc+1; end end endtask
+
+task check_support_trace; begin for(iter_idx=0; iter_idx<gold_case_k(0); iter_idx=iter_idx+1) begin exp_idx = gold_support_idx(0,7,iter_idx,iter_idx); $display("SUPPORT_TRACE iter=%0d rtl=%0d gold=%0d", iter_idx, dut.u_sparse_kernel_service_engine.u_support_service.support_mem[iter_idx], exp_idx); check("support_match", dut.u_sparse_kernel_service_engine.u_support_service.support_mem[iter_idx] == exp_idx[9:0]); end check("support_depth", dut.u_sparse_kernel_service_engine.u_support_service.depth_mem[0] == gold_case_k(0)); end endtask
+
+task check_final_vectors; begin for(i=0;i<gold_case_n(0);i=i+1) begin read_spm_word(VEC_X,i,got); check("x_final", absdiff_le(got, gold_iter_x_hat(0,7,gold_case_k(0)-1,i), 512)); end for(i=0;i<gold_case_m(0);i=i+1) begin read_spm_word(VEC_R,i,got); check("r_final", absdiff_le(got, gold_iter_residual(0,7,gold_case_k(0)-1,i), 512)); end end endtask
+
+
+initial begin clk=0; pass_cnt=0; fail_cnt=0; reset_dut(); load_case0(); seed_residual_from_y(); build_mp_program(); run_prog(pc); check_support_trace(); check_final_vectors(); $display("tb_mp_m64n256k16_cycle: %0d PASS, %0d FAIL", pass_cnt, fail_cnt); $finish; end
+endmodule
+

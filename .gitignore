@@ -1,0 +1,35 @@
+# Vivado/generated artifacts
+*.jou
+*.log
+*.pb
+*.wdb
+*.str
+*.zip
+*.bak
+*.backup.*
+*.rpt
+*.dcp
+*.bit
+*.ltx
+*.hwdef
+*.runs/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+*.gen/
+.Xil/
+xsim.dir/
+
+# Python/cache
+__pycache__/
+*.pyc
+
+# OS/editor
+Thumbs.db
+.DS_Store
+.vscode/
+
+# Verilator cache
+analysis/verilator_build/
+analysis/verification/verilator_smoke/
