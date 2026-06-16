@@ -352,6 +352,7 @@ reg [4:0] resid_i;
 reg [4:0] back_i;
 reg [4:0] back_j;
 reg signed [127:0] residual_acc;
+reg signed [127:0] residual_block_sum;
 reg signed [DATA_W-1:0] phi_cache [0:MAX_K-1];
 reg [IDX_W-1:0] support_cache [0:MAX_K-1];
 reg [31:0] phi_state_q;
@@ -382,6 +383,7 @@ integer comb_k;
 integer keep_k;
 integer rhs_lane;
 integer corr_lane;
+integer block_lane;
 reg keep_x;
 reg [IDX_W-1:0] sparse_target_idx;
 wire [IDX_W-1:0] support_xor = support0 ^ support1 ^ support2 ^ support3 ^ support4 ^ support5 ^ support6 ^ support7 ^ support8 ^ support9 ^ support10 ^ support11 ^ support12 ^ support13 ^ support14 ^ support15 ^ support16 ^ support17 ^ support18 ^ support19 ^ support20 ^ support21 ^ support22 ^ support23 ^ support24 ^ support25 ^ support26 ^ support27 ^ support28 ^ support29 ^ support30 ^ support31;
@@ -395,6 +397,14 @@ function [IDX_W-1:0] support_cached_at;
         support_cached_at = support_cache[rank];
     end
 endfunction
+
+always @(*) begin
+    residual_block_sum = 128'sd0;
+    for (block_lane = 0; block_lane < RHS_BLOCK_STRIDE; block_lane = block_lane + 1) begin
+        if ((rhs_block_base + block_lane) < active_k[4:0])
+            residual_block_sum = residual_block_sum + $signed(pe_rhs_product_bus[block_lane*64 +: 64]);
+    end
+end
 
 always @(*) begin
     pe_sparse_clear = busy && (active_op == OP_CORR) && (state == S_CORR_INIT);
@@ -701,10 +711,11 @@ always @(posedge clk or negedge rst_n) begin
                 state <= S_ACC_RHS;
             end
             S_ACC_RHS: begin
-                if ((acc_i < RHS_BLOCK_STRIDE) && ((rhs_block_base + acc_i) < active_k[4:0])) begin
-                    rhs[rhs_block_base + acc_i] <= rhs[rhs_block_base + acc_i] + $signed(pe_rhs_product_bus[acc_i*64 +: 64]);
-                    acc_i <= acc_i + 5'd1;
-                end else if (rhs_block_base + RHS_BLOCK_STRIDE < active_k[4:0]) begin
+                for (gi = 0; gi < RHS_BLOCK_STRIDE; gi = gi + 1) begin
+                    if ((rhs_block_base + gi) < active_k[4:0])
+                        rhs[rhs_block_base + gi] <= rhs[rhs_block_base + gi] + $signed(pe_rhs_product_bus[gi*64 +: 64]);
+                end
+                if (rhs_block_base + RHS_BLOCK_STRIDE < active_k[4:0]) begin
                     rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
                     acc_i <= 5'd0;
                     state <= S_ACC_PE_WAIT;
@@ -722,20 +733,20 @@ always @(posedge clk or negedge rst_n) begin
                 state <= S_ACC_GRAM;
             end
             S_ACC_GRAM: begin
-                if ((acc_i < RHS_BLOCK_STRIDE) && ((rhs_block_base + acc_i) < active_k[4:0])) begin
-                    if ((rhs_block_base + acc_i) >= acc_j) begin
-                        ge_mat[rhs_block_base + acc_i][acc_j] <= ge_mat[rhs_block_base + acc_i][acc_j] + $signed(pe_rhs_product_bus[acc_i*64 +: 64]);
-                        if ((rhs_block_base + acc_i) != acc_j)
-                            ge_mat[acc_j][rhs_block_base + acc_i] <= ge_mat[rhs_block_base + acc_i][acc_j] + $signed(pe_rhs_product_bus[acc_i*64 +: 64]);
+                for (gi = 0; gi < RHS_BLOCK_STRIDE; gi = gi + 1) begin
+                    if (((rhs_block_base + gi) < active_k[4:0]) && ((rhs_block_base + gi) >= acc_j)) begin
+                        ge_mat[rhs_block_base + gi][acc_j] <= ge_mat[rhs_block_base + gi][acc_j] + $signed(pe_rhs_product_bus[gi*64 +: 64]);
+                        if ((rhs_block_base + gi) != acc_j)
+                            ge_mat[acc_j][rhs_block_base + gi] <= ge_mat[rhs_block_base + gi][acc_j] + $signed(pe_rhs_product_bus[gi*64 +: 64]);
                     end
-                    acc_i <= acc_i + 5'd1;
-                end else if (rhs_block_base + RHS_BLOCK_STRIDE < active_k[4:0]) begin
+                end
+                if (rhs_block_base + RHS_BLOCK_STRIDE < active_k[4:0]) begin
                     rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
                     acc_i <= 5'd0;
                     state <= S_GRAM_PE_WAIT;
                 end else if (acc_j + 5'd1 < active_k[4:0]) begin
                     acc_j <= acc_j + 5'd1;
-                    acc_i <= (acc_j + 5'd1) % RHS_BLOCK_STRIDE;
+                    acc_i <= 5'd0;
                     rhs_block_base <= ((acc_j + 5'd1) / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE;
                     state <= S_GRAM_PE_WAIT;
                 end else begin
@@ -784,10 +795,8 @@ always @(posedge clk or negedge rst_n) begin
                 state <= S_WR_ACC;
             end
             S_WR_ACC: begin
-                if ((resid_i < RHS_BLOCK_STRIDE) && ((rhs_block_base + resid_i) < active_k[4:0])) begin
-                    residual_acc <= residual_acc + $signed(pe_rhs_product_bus[resid_i*64 +: 64]);
-                    resid_i <= resid_i + 5'd1;
-                end else if (rhs_block_base + RHS_BLOCK_STRIDE < active_k[4:0]) begin
+                residual_acc <= residual_acc + residual_block_sum;
+                if (rhs_block_base + RHS_BLOCK_STRIDE < active_k[4:0]) begin
                     rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
                     resid_i <= 5'd0;
                     state <= S_RESID_PE_WAIT;
