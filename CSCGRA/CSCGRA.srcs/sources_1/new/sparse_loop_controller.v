@@ -73,7 +73,7 @@ module sparse_loop_controller #(
     output reg done,
     output reg [SCALAR_W-1:0] result
 );
-localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_K0_WAIT=9, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_WR_ACC=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_RESID_PE_WAIT2=51, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
+localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_WR_ACC=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_RESID_PE_WAIT2=51, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
 S_DIV_NR_NORM=58, S_DIV_NR_MUL0=59, S_DIV_NR_R0=60, S_DIV_NR_MUL1=61,
 S_DIV_NR_T0=62, S_DIV_NR_MUL2=63, S_DIV_NR_R1=64, S_DIV_NR_MUL3=65,
 S_DIV_NR_T1=66, S_DIV_NR_MUL4=67, S_DIV_NR_R2=68, S_DIV_APPLY=69,
@@ -612,7 +612,7 @@ always @(posedge clk or negedge rst_n) begin
                     phase_residual <= 1'b1;
                     rd_addr <= 10'h100;
                     residual_acc <= 128'sd0;
-                    state <= S_K0_WAIT;
+                    state <= S_WR;
                 end else if (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && (k_active <= MAX_K) && (k_active != 0) && (n_size != 0) && (m_size != 0)) begin
                     support_sel0 <= support0;
                     support_sel1 <= support1;
@@ -677,7 +677,7 @@ always @(posedge clk or negedge rst_n) begin
                     phase_residual <= 1'b1;
                     rd_addr <= 10'h100;
                     residual_acc <= 128'sd0;
-                    state <= S_K0_WAIT;
+                    state <= S_WR;
                 end else if ((active_op == OP_MP_UPDATE) && (support_depth0 != 0) && (n_size != 0) && (m_size != 0)) begin
                     active_k <= (support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active;
                     mp_idx_q <= support_cached_at((((support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active) == 0) ? 5'd0 : (((support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active) - 1'b1));
@@ -1231,10 +1231,6 @@ always @(posedge clk or negedge rst_n) begin
                         state <= S_SCAN;
                     end
                 end
-            end
-            S_K0_WAIT: begin
-                residual_acc <= 128'sd0;
-                state <= S_WR;
             end
             S_DONE: begin
                 busy <= 1'b0;
