@@ -79,7 +79,7 @@ module sparse_loop_controller #(
     output reg [SCALAR_W-1:0] result
 );
 localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_WR_ACC=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_RESID_PE_WAIT2=51, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
-S_DIV_NR_NORM=58, S_DIV_NR_MUL0=59, S_DIV_NR_R0=60, S_DIV_NR_MUL1=61,
+S_CACHE_BUILD=56, S_SCAN_DIRECT=55, S_DIV_NR_NORM=58, S_DIV_NR_MUL0=59, S_DIV_NR_R0=60, S_DIV_NR_MUL1=61,
 S_DIV_NR_T0=62, S_DIV_NR_MUL2=63, S_DIV_NR_R1=64, S_DIV_NR_MUL3=65,
 S_DIV_NR_T1=66, S_DIV_NR_MUL4=67, S_DIV_NR_R2=68, S_DIV_APPLY=69,
 S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76;
@@ -309,9 +309,11 @@ reg signed [127:0] k2_b1;
 reg signed [127:0] k2_det;
 reg [7:0] active_k;
 reg signed [63:0] rhs [0:MAX_K-1];
+reg signed [63:0] rhs_build_cache [0:MAX_K-1];
 reg signed [DATA_W-1:0] coeff_mem [0:MAX_K-1];
 localparam integer GE_MAT_W = 56;
 reg signed [GE_MAT_W-1:0] ge_mat [0:MAX_K-1][0:MAX_K-1];
+reg signed [GE_MAT_W-1:0] ge_mat_build_cache [0:MAX_K-1][0:MAX_K-1];
 reg signed [63:0] ge_rhs [0:MAX_K-1];
 reg signed [63:0] ge_x [0:MAX_K-1];
 reg signed [63:0] ge_factor;
@@ -360,6 +362,23 @@ reg signed [127:0] residual_acc;
 reg signed [127:0] residual_block_sum;
 reg signed [DATA_W-1:0] phi_cache [0:MAX_K-1];
 reg [IDX_W-1:0] support_cache [0:MAX_K-1];
+reg [IDX_W-1:0] support_build_cache [0:MAX_K-1];
+reg refine_build_cache_valid;
+reg [7:0] refine_build_cache_k;
+reg [IDX_W-1:0] refine_cache_m_size;
+reg [IDX_W-1:0] refine_cache_n_size;
+reg [31:0] refine_cache_seed;
+reg [DATA_W-1:0] refine_cache_scale_q;
+reg [1:0] refine_cache_phi_kind;
+reg refine_same_support_comb;
+reg refine_extend_support_comb;
+reg [4:0] refine_new_pos_comb;
+reg refine_incremental_active;
+reg refine_skip_build_active;
+reg [4:0] refine_new_pos;
+reg [7:0] refine_prime_k_eff;
+reg refine_pos_match;
+reg refine_any_insert_match;
 reg [31:0] phi_state_q;
 reg [31:0] phi_state_next;
 reg [IDX_W-1:0] scan_col;
@@ -389,6 +408,8 @@ integer keep_k;
 integer rhs_lane;
 integer corr_lane;
 integer block_lane;
+integer cache_pos;
+integer cache_cmp;
 reg keep_x;
 reg [IDX_W-1:0] sparse_target_idx;
 wire [IDX_W-1:0] support_xor = support0 ^ support1 ^ support2 ^ support3 ^ support4 ^ support5 ^ support6 ^ support7 ^ support8 ^ support9 ^ support10 ^ support11 ^ support12 ^ support13 ^ support14 ^ support15 ^ support16 ^ support17 ^ support18 ^ support19 ^ support20 ^ support21 ^ support22 ^ support23 ^ support24 ^ support25 ^ support26 ^ support27 ^ support28 ^ support29 ^ support30 ^ support31;
@@ -414,6 +435,52 @@ endgenerate
 assign corr_stream_valid = busy && (active_op == OP_CORR) && (state == S_CORR_WRITE);
 assign corr_stream_done = corr_stream_valid && (corr_col + COLS[IDX_W-1:0] >= n_size);
 assign corr_stream_base_idx = corr_col;
+
+always @(*) begin
+    refine_prime_k_eff = (support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active;
+    refine_same_support_comb = 1'b0;
+    refine_extend_support_comb = 1'b0;
+    refine_new_pos_comb = 5'd0;
+    refine_any_insert_match = 1'b0;
+
+    if (refine_build_cache_valid &&
+        (refine_cache_m_size == m_size) &&
+        (refine_cache_n_size == n_size) &&
+        (refine_cache_seed == seed) &&
+        (refine_cache_scale_q == scale_q) &&
+        (refine_cache_phi_kind == phi_kind)) begin
+
+        if (refine_build_cache_k == refine_prime_k_eff) begin
+            refine_same_support_comb = 1'b1;
+            for (cache_cmp = 0; cache_cmp < MAX_K; cache_cmp = cache_cmp + 1) begin
+                if ((cache_cmp < refine_prime_k_eff) && (support_cache[cache_cmp] != support_build_cache[cache_cmp]))
+                    refine_same_support_comb = 1'b0;
+            end
+        end
+
+        if ((refine_prime_k_eff != 0) && (refine_build_cache_k + 8'd1 == refine_prime_k_eff)) begin
+            for (cache_pos = 0; cache_pos < MAX_K; cache_pos = cache_pos + 1) begin
+                refine_pos_match = 1'b1;
+                for (cache_cmp = 0; cache_cmp < MAX_K; cache_cmp = cache_cmp + 1) begin
+                    if (cache_cmp < refine_build_cache_k) begin
+                        if (cache_cmp < cache_pos) begin
+                            if (support_cache[cache_cmp] != support_build_cache[cache_cmp])
+                                refine_pos_match = 1'b0;
+                        end else begin
+                            if (support_cache[cache_cmp + 1] != support_build_cache[cache_cmp])
+                                refine_pos_match = 1'b0;
+                        end
+                    end
+                end
+                if ((cache_pos < refine_prime_k_eff) && refine_pos_match && !refine_any_insert_match) begin
+                    refine_extend_support_comb = 1'b1;
+                    refine_any_insert_match = 1'b1;
+                    refine_new_pos_comb = cache_pos[4:0];
+                end
+            end
+        end
+    end
+end
 
 always @(*) begin
     residual_block_sum = 128'sd0;
@@ -583,14 +650,27 @@ always @(posedge clk or negedge rst_n) begin
         nr_t1 <= 64'sd0;
         nr_prod <= 128'sd0;
         nr_out_sh <= 7'd0;
+        refine_build_cache_valid <= 1'b0;
+        refine_build_cache_k <= 8'd0;
+        refine_cache_m_size <= {IDX_W{1'b0}};
+        refine_cache_n_size <= {IDX_W{1'b0}};
+        refine_cache_seed <= 32'd0;
+        refine_cache_scale_q <= {DATA_W{1'b0}};
+        refine_cache_phi_kind <= 2'b00;
+        refine_incremental_active <= 1'b0;
+        refine_skip_build_active <= 1'b0;
+        refine_new_pos <= 5'd0;
         for (gi = 0; gi < MAX_K; gi = gi + 1) begin
             rhs[gi] <= 64'sd0;
+            rhs_build_cache[gi] <= 64'sd0;
             coeff_mem[gi] <= {DATA_W{1'b0}};
             phi_cache[gi] <= {DATA_W{1'b0}};
             ge_rhs[gi] <= 64'sd0;
             ge_x[gi] <= 64'sd0;
+            support_build_cache[gi] <= {IDX_W{1'b0}};
             for (gj = 0; gj < MAX_K; gj = gj + 1) begin
                 ge_mat[gi][gj] <= 64'sd0;
+                ge_mat_build_cache[gi][gj] <= 64'sd0;
             end
         end
     end else begin
@@ -638,6 +718,9 @@ always @(posedge clk or negedge rst_n) begin
                     state <= S_WR;
                 end else if (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && (k_active <= MAX_K) && (k_active != 0) && (n_size != 0) && (m_size != 0)) begin
                     active_k <= (support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active;
+                    refine_incremental_active <= 1'b0;
+                    refine_skip_build_active <= 1'b0;
+                    refine_new_pos <= refine_new_pos_comb;
                     write_idx <= {IDX_W{1'b0}};
                     write_limit <= m_size;
                     rd_addr <= 10'h100;
@@ -649,19 +732,49 @@ always @(posedge clk or negedge rst_n) begin
                     acc_num1 <= 64'sd0;
                     acc_den01 <= 64'sd0;
                     acc_den11 <= 64'sd0;
-                    for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                        rhs[gi] <= 64'sd0;
-                        coeff_mem[gi] <= {DATA_W{1'b0}};
-                        ge_rhs[gi] <= 64'sd0;
-                        ge_x[gi] <= 64'sd0;
-                        for (gj = 0; gj < MAX_K; gj = gj + 1) begin
-                            ge_mat[gi][gj] <= 64'sd0;
+                    if (refine_same_support_comb) begin
+                        refine_skip_build_active <= 1'b1;
+                        for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                            rhs[gi] <= rhs_build_cache[gi];
+                            coeff_mem[gi] <= {DATA_W{1'b0}};
+                            ge_rhs[gi] <= 64'sd0;
+                            ge_x[gi] <= 64'sd0;
+                            for (gj = 0; gj < MAX_K; gj = gj + 1) begin
+                                ge_mat[gi][gj] <= ge_mat_build_cache[gi][gj];
+                            end
+                        end
+                    end else if (refine_extend_support_comb && (refine_new_pos_comb == refine_build_cache_k[4:0])) begin
+                        refine_incremental_active <= 1'b1;
+                        for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                            coeff_mem[gi] <= {DATA_W{1'b0}};
+                            ge_rhs[gi] <= 64'sd0;
+                            ge_x[gi] <= 64'sd0;
+                            if (gi < refine_build_cache_k[4:0])
+                                rhs[gi] <= rhs_build_cache[gi];
+                            else
+                                rhs[gi] <= 64'sd0;
+                            for (gj = 0; gj < MAX_K; gj = gj + 1) begin
+                                if ((gi < refine_build_cache_k[4:0]) && (gj < refine_build_cache_k[4:0]))
+                                    ge_mat[gi][gj] <= ge_mat_build_cache[gi][gj];
+                                else
+                                    ge_mat[gi][gj] <= {GE_MAT_W{1'b0}};
+                            end
+                        end
+                    end else begin
+                        for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                            rhs[gi] <= 64'sd0;
+                            coeff_mem[gi] <= {DATA_W{1'b0}};
+                            ge_rhs[gi] <= 64'sd0;
+                            ge_x[gi] <= 64'sd0;
+                            for (gj = 0; gj < MAX_K; gj = gj + 1) begin
+                                ge_mat[gi][gj] <= 64'sd0;
+                            end
                         end
                     end
                     phase_residual <= 1'b0;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         phi_cache[gi] <= {DATA_W{1'b0}};
-                    state <= S_SCAN;
+                    state <= refine_same_support_comb ? S_SOLVE_INIT : ((phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN);
                 end else if ((active_op == OP_CORR) && (n_size != 0) && (m_size != 0)) begin
                     corr_col <= {IDX_W{1'b0}};
                     corr_row <= {IDX_W{1'b0}};
@@ -718,7 +831,7 @@ always @(posedge clk or negedge rst_n) begin
             end
             S_ACC: begin
                 acc_i <= 5'd0;
-                rhs_block_base <= 5'd0;
+                rhs_block_base <= refine_incremental_active ? ((refine_new_pos / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE) : 5'd0;
                 state <= S_ACC_PE_WAIT;
             end
             S_ACC_PE_WAIT: begin
@@ -729,17 +842,24 @@ always @(posedge clk or negedge rst_n) begin
             end
             S_ACC_RHS: begin
                 for (gi = 0; gi < RHS_BLOCK_STRIDE; gi = gi + 1) begin
-                    if ((rhs_block_base + gi) < active_k[4:0])
+                    if ((rhs_block_base + gi) < active_k[4:0] && (!refine_incremental_active || ((rhs_block_base + gi) == refine_new_pos)))
                         rhs[rhs_block_base + gi] <= rhs[rhs_block_base + gi] + $signed(pe_rhs_product_bus[gi*64 +: 64]);
                 end
                 if (rhs_block_base + RHS_BLOCK_STRIDE < active_k[4:0]) begin
-                    rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
-                    acc_i <= 5'd0;
-                    state <= S_ACC_PE_WAIT;
+                    if (refine_incremental_active) begin
+                        acc_i <= 5'd0;
+                        acc_j <= 5'd0;
+                        rhs_block_base <= (refine_new_pos / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE;
+                        state <= S_GRAM_PE_WAIT;
+                    end else begin
+                        rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
+                        acc_i <= 5'd0;
+                        state <= S_ACC_PE_WAIT;
+                    end
                 end else begin
                     acc_i <= 5'd0;
                     acc_j <= 5'd0;
-                    rhs_block_base <= 5'd0;
+                    rhs_block_base <= refine_incremental_active ? ((refine_new_pos / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE) : 5'd0;
                     state <= S_GRAM_PE_WAIT;
                 end
             end
@@ -751,27 +871,51 @@ always @(posedge clk or negedge rst_n) begin
             end
             S_ACC_GRAM: begin
                 for (gi = 0; gi < RHS_BLOCK_STRIDE; gi = gi + 1) begin
-                    if (((rhs_block_base + gi) < active_k[4:0]) && ((rhs_block_base + gi) >= acc_j)) begin
+                    if (((rhs_block_base + gi) < active_k[4:0]) && ((rhs_block_base + gi) >= acc_j) && (!refine_incremental_active || ((rhs_block_base + gi) == refine_new_pos) || (acc_j == refine_new_pos))) begin
                         ge_mat[rhs_block_base + gi][acc_j] <= ge_mat[rhs_block_base + gi][acc_j] + $signed(pe_rhs_product_bus[gi*64 +: 64]);
                         if ((rhs_block_base + gi) != acc_j)
                             ge_mat[acc_j][rhs_block_base + gi] <= ge_mat[rhs_block_base + gi][acc_j] + $signed(pe_rhs_product_bus[gi*64 +: 64]);
                     end
                 end
                 if (rhs_block_base + RHS_BLOCK_STRIDE < active_k[4:0]) begin
-                    rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
-                    acc_i <= 5'd0;
-                    state <= S_GRAM_PE_WAIT;
+                    if (refine_incremental_active) begin
+                        if (acc_j + 5'd1 < active_k[4:0]) begin
+                            acc_j <= acc_j + 5'd1;
+                            acc_i <= 5'd0;
+                            rhs_block_base <= (refine_new_pos / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE;
+                            state <= S_GRAM_PE_WAIT;
+                        end else begin
+                            acc_i <= 5'd0;
+                            acc_j <= 5'd0;
+                            rhs_block_base <= 5'd0;
+                            if (write_idx + 1 >= write_limit) begin
+                                state <= S_CACHE_BUILD;
+                            end else begin
+                                write_idx <= write_idx + 1'b1;
+                                if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
+                                    rd_addr <= 10'h100 + ((write_idx + 1'b1) >> 3);
+                                scan_col <= {IDX_W{1'b0}};
+                                for (gi = 0; gi < MAX_K; gi = gi + 1)
+                                    phi_cache[gi] <= {DATA_W{1'b0}};
+                                state <= (phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN;
+                            end
+                        end
+                    end else begin
+                        rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
+                        acc_i <= 5'd0;
+                        state <= S_GRAM_PE_WAIT;
+                    end
                 end else if (acc_j + 5'd1 < active_k[4:0]) begin
                     acc_j <= acc_j + 5'd1;
                     acc_i <= 5'd0;
-                    rhs_block_base <= ((acc_j + 5'd1) / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE;
+                    rhs_block_base <= refine_incremental_active ? ((refine_new_pos / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE) : (((acc_j + 5'd1) / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE);
                     state <= S_GRAM_PE_WAIT;
                 end else begin
                     acc_i <= 5'd0;
                     acc_j <= 5'd0;
                     rhs_block_base <= 5'd0;
                     if (write_idx + 1 >= write_limit) begin
-                        state <= S_SOLVE_INIT;
+                        state <= S_CACHE_BUILD;
                     end else begin
                         write_idx <= write_idx + 1'b1;
                         if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
@@ -779,9 +923,25 @@ always @(posedge clk or negedge rst_n) begin
                         scan_col <= {IDX_W{1'b0}};
                         for (gi = 0; gi < MAX_K; gi = gi + 1)
                             phi_cache[gi] <= {DATA_W{1'b0}};
-                        state <= S_SCAN;
+                        state <= (phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN;
                     end
                 end
+            end
+            S_CACHE_BUILD: begin
+                refine_build_cache_valid <= 1'b1;
+                refine_build_cache_k <= active_k;
+                refine_cache_m_size <= m_size;
+                refine_cache_n_size <= n_size;
+                refine_cache_seed <= seed;
+                refine_cache_scale_q <= scale_q;
+                refine_cache_phi_kind <= phi_kind;
+                for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                    rhs_build_cache[gi] <= rhs[gi];
+                    support_build_cache[gi] <= support_cache[gi];
+                    for (gj = 0; gj < MAX_K; gj = gj + 1)
+                        ge_mat_build_cache[gi][gj] <= ge_mat[gi][gj];
+                end
+                state <= S_SOLVE_INIT;
             end
             S_WX: begin
                 write_value <= write_value_now;
@@ -794,7 +954,7 @@ always @(posedge clk or negedge rst_n) begin
                     scan_col <= {IDX_W{1'b0}};
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         phi_cache[gi] <= {DATA_W{1'b0}};
-                    state <= (m_size == 0) ? S_DONE : S_SCAN;
+                    state <= (m_size == 0) ? S_DONE : ((phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN);
                 end else begin
                     write_idx <= write_idx + 1'b1;
                 end
@@ -837,7 +997,7 @@ always @(posedge clk or negedge rst_n) begin
                     scan_col <= {IDX_W{1'b0}};
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         phi_cache[gi] <= {DATA_W{1'b0}};
-                    state <= S_SCAN;
+                    state <= (phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN;
                 end
             end
             S_SOLVE_INIT: begin
@@ -946,7 +1106,7 @@ always @(posedge clk or negedge rst_n) begin
                     div_result <= 64'sd0;
                     state <= div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE);
                 end else begin
-                    state <= S_DIV_NR_NORM;
+                    state <= S_DIV_APPLY;
                 end
             end
             S_DIV_NR_NORM: begin
@@ -1053,6 +1213,8 @@ always @(posedge clk or negedge rst_n) begin
                 state <= S_DONE;
             end
             S_SOLVE_DONE: begin
+                refine_incremental_active <= 1'b0;
+                refine_skip_build_active <= 1'b0;
                 write_idx <= {IDX_W{1'b0}};
                 write_limit <= (active_op == OP_REFINE_SPARSE) ? active_k : n_size;
                 phase_residual <= 1'b0;
@@ -1149,7 +1311,7 @@ always @(posedge clk or negedge rst_n) begin
                     padded_n_q <= ((n_size + 7) >> 3) << 3;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         phi_cache[gi] <= {DATA_W{1'b0}};
-                    state <= S_SCAN;
+                    state <= (phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN;
                 end else begin
                     load_i <= load_i + 5'd1;
                     load_support_q <= load_support_next_q;
@@ -1168,6 +1330,17 @@ always @(posedge clk or negedge rst_n) begin
                     rd_addr <= 10'h000 + ((write_idx + 1'b1) >> 3);
                     state <= S_PRUNE_X_READ;
                 end
+            end
+            S_SCAN_DIRECT: begin
+                for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                    if (gi < active_k)
+                        phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, {1'b0, support_cache[gi]} + 1'b1));
+                    else
+                        phi_cache[gi] <= {DATA_W{1'b0}};
+                end
+                phi_state_q <= lfsr_advance(phi_state_q, padded_n_q);
+                scan_col <= {IDX_W{1'b0}};
+                state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
             end
             S_SCAN: begin
                 if (phi_kind == 2'd0) begin
