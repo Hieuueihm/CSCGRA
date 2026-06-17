@@ -873,8 +873,6 @@ always @(posedge clk or negedge rst_n) begin
                 for (gi = 0; gi < RHS_BLOCK_STRIDE; gi = gi + 1) begin
                     if (((rhs_block_base + gi) < active_k[4:0]) && ((rhs_block_base + gi) >= acc_j) && (!refine_incremental_active || ((rhs_block_base + gi) == refine_new_pos) || (acc_j == refine_new_pos))) begin
                         ge_mat[rhs_block_base + gi][acc_j] <= ge_mat[rhs_block_base + gi][acc_j] + $signed(pe_rhs_product_bus[gi*64 +: 64]);
-                        if ((rhs_block_base + gi) != acc_j)
-                            ge_mat[acc_j][rhs_block_base + gi] <= ge_mat[rhs_block_base + gi][acc_j] + $signed(pe_rhs_product_bus[gi*64 +: 64]);
                     end
                 end
                 if (rhs_block_base + RHS_BLOCK_STRIDE < active_k[4:0]) begin
@@ -1006,7 +1004,7 @@ always @(posedge clk or negedge rst_n) begin
                     ge_x[gi] <= 64'sd0;
                     coeff_mem[gi] <= {DATA_W{1'b0}};
                     for (gj = 0; gj < MAX_K; gj = gj + 1) begin
-                        ge_mat[gi][gj] <= ge_mat[gi][gj] + ((gi == gj) ? 64'sd1 : 64'sd0);
+                        ge_mat[gi][gj] <= ((gi >= gj) ? ge_mat[gi][gj] : ge_mat[gj][gi]) + ((gi == gj) ? 64'sd1 : 64'sd0);
                     end
                 end
                 solve_i <= 5'd0;
