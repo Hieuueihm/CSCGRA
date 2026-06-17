@@ -497,8 +497,8 @@ always @(*) begin
     pe_rhs_phi_bus = {COLS*DATA_W{1'b0}};
     pe_rhs_y_bus = {COLS*DATA_W{1'b0}};
     for (rhs_lane = 0; rhs_lane < COLS; rhs_lane = rhs_lane + 1) begin
-        pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] = (active_op == OP_CORR) ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] : (((rhs_block_base + rhs_lane) < active_k) ? phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}});
-        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = ((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : ((active_op == OP_CORR) ? rd_data[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W]));
+        pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] = (active_op == OP_CORR) ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] : ((((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) && refine_incremental_active) ? phi_cache[refine_new_pos] : (((rhs_block_base + rhs_lane) < active_k) ? phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}));
+        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? (refine_incremental_active ? (((rhs_block_base + rhs_lane) < active_k) ? phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : phi_cache[acc_j]) : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : ((active_op == OP_CORR) ? rd_data[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
     end
 end
 
@@ -858,8 +858,8 @@ always @(posedge clk or negedge rst_n) begin
                     end
                 end else begin
                     acc_i <= 5'd0;
-                    acc_j <= 5'd0;
-                    rhs_block_base <= refine_incremental_active ? ((refine_new_pos / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE) : 5'd0;
+                    acc_j <= refine_incremental_active ? refine_new_pos : 5'd0;
+                    rhs_block_base <= 5'd0;
                     state <= S_GRAM_PE_WAIT;
                 end
             end
@@ -871,43 +871,45 @@ always @(posedge clk or negedge rst_n) begin
             end
             S_ACC_GRAM: begin
                 for (gi = 0; gi < RHS_BLOCK_STRIDE; gi = gi + 1) begin
-                    if (((rhs_block_base + gi) < active_k[4:0]) && ((rhs_block_base + gi) >= acc_j) && (!refine_incremental_active || ((rhs_block_base + gi) == refine_new_pos) || (acc_j == refine_new_pos))) begin
+                    if (refine_incremental_active) begin
+                        if ((rhs_block_base + gi) < active_k[4:0] && ((rhs_block_base + gi) <= refine_new_pos))
+                            ge_mat[refine_new_pos][rhs_block_base + gi] <= ge_mat[refine_new_pos][rhs_block_base + gi] + $signed(pe_rhs_product_bus[gi*64 +: 64]);
+                    end else if (((rhs_block_base + gi) < active_k[4:0]) && ((rhs_block_base + gi) >= acc_j)) begin
                         ge_mat[rhs_block_base + gi][acc_j] <= ge_mat[rhs_block_base + gi][acc_j] + $signed(pe_rhs_product_bus[gi*64 +: 64]);
                     end
                 end
                 if (rhs_block_base + RHS_BLOCK_STRIDE < active_k[4:0]) begin
                     if (refine_incremental_active) begin
-                        if (acc_j + 5'd1 < active_k[4:0]) begin
-                            acc_j <= acc_j + 5'd1;
-                            acc_i <= 5'd0;
-                            rhs_block_base <= (refine_new_pos / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE;
-                            state <= S_GRAM_PE_WAIT;
-                        end else begin
-                            acc_i <= 5'd0;
-                            acc_j <= 5'd0;
-                            rhs_block_base <= 5'd0;
-                            if (write_idx + 1 >= write_limit) begin
-                                state <= S_CACHE_BUILD;
-                            end else begin
-                                write_idx <= write_idx + 1'b1;
-                                if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
-                                    rd_addr <= 10'h100 + ((write_idx + 1'b1) >> 3);
-                                scan_col <= {IDX_W{1'b0}};
-                                for (gi = 0; gi < MAX_K; gi = gi + 1)
-                                    phi_cache[gi] <= {DATA_W{1'b0}};
-                                state <= (phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN;
-                            end
-                        end
+                        rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
+                        acc_i <= 5'd0;
+                        state <= S_GRAM_PE_WAIT;
                     end else begin
                         rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
                         acc_i <= 5'd0;
                         state <= S_GRAM_PE_WAIT;
                     end
                 end else if (acc_j + 5'd1 < active_k[4:0]) begin
+                    if (refine_incremental_active) begin
+                        acc_i <= 5'd0;
+                        acc_j <= 5'd0;
+                        rhs_block_base <= 5'd0;
+                        if (write_idx + 1 >= write_limit) begin
+                            state <= S_CACHE_BUILD;
+                        end else begin
+                            write_idx <= write_idx + 1'b1;
+                            if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
+                                rd_addr <= 10'h100 + ((write_idx + 1'b1) >> 3);
+                            scan_col <= {IDX_W{1'b0}};
+                            for (gi = 0; gi < MAX_K; gi = gi + 1)
+                                phi_cache[gi] <= {DATA_W{1'b0}};
+                            state <= (phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN;
+                        end
+                    end else begin
                     acc_j <= acc_j + 5'd1;
                     acc_i <= 5'd0;
-                    rhs_block_base <= refine_incremental_active ? ((refine_new_pos / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE) : (((acc_j + 5'd1) / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE);
+                    rhs_block_base <= ((acc_j + 5'd1) / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE;
                     state <= S_GRAM_PE_WAIT;
+                    end
                 end else begin
                     acc_i <= 5'd0;
                     acc_j <= 5'd0;
