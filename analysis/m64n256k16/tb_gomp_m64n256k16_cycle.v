@@ -24,7 +24,7 @@ task load_case0; begin for(i=0;i<GOLD_MAX_N;i=i+1) begin write_spm_word(VEC_X,i,
 task seed_residual_from_y; begin for(i=0;i<gold_case_m(0);i=i+1) write_spm_word(VEC_R,i,gold_y(0,i)); end endtask
 task run_prog; input integer plen; begin axi_write(12'h00C,gold_case_m(0)); axi_write(12'h010,gold_case_n(0)); axi_write(12'h014,gold_case_k(0)); axi_write(12'h020,gold_case_seed(0)); axi_write(12'h024,gold_case_scale(0)); axi_write(12'h030,{28'd0,gold_case_phi_kind(0),1'b0,1'b1}); axi_write(12'h040,0); axi_write(12'h044,plen); axi_write(12'h000,1); tick(); timeout=0; while(!irq_done && !irq_error && timeout<50000000) begin timeout=timeout+1; tick(); end $display("MEASURED_CYCLES %0d", timeout); check("irq_done", irq_done && !irq_error); repeat(8) tick(); end endtask
 
-task build_omp_program; begin pc=0; for(iter_idx=0; iter_idx<gold_alg_iters(0,1); iter_idx=iter_idx+1) begin write_ctx(pc[10:0], sparse_op_ctx(8'h81,1'b0)); pc=pc+1; write_ctx(pc[10:0], reduce_argmax_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], candidate_append_result_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], reduce_argmax_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], candidate_append_result_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], sparse_op_ctx(8'h80, (iter_idx==gold_alg_iters(0,1)-1))); pc=pc+1; end end endtask
+task build_omp_program; begin pc=0; for(iter_idx=0; iter_idx<gold_alg_iters(0,1); iter_idx=iter_idx+1) begin write_ctx(pc[10:0], sparse_op_ctx(8'h81,1'b0)); pc=pc+1; write_ctx(pc[10:0], reduce_argmax_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], candidate_append_result_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], reduce_argmax_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], candidate_append_result_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], sparse_op_ctx(8'h86, (iter_idx==gold_alg_iters(0,1)-1))); pc=pc+1; end end endtask
 
 task check_support_trace; begin slen=gold_support_len(0,1,gold_alg_iters(0,1)-1); for(iter_idx=0; iter_idx<slen; iter_idx=iter_idx+1) begin exp_idx = gold_support_idx(0,1,gold_alg_iters(0,1)-1,iter_idx); $display("SUPPORT_TRACE rank=%0d rtl=%0d gold=%0d last_idx=%0d last_val=%h", iter_idx, dut.u_sparse_kernel_service_engine.u_support_service.support_mem[iter_idx], exp_idx, dut.last_result_idx, dut.last_result_value); check("support_match", dut.u_sparse_kernel_service_engine.u_support_service.support_mem[iter_idx] == exp_idx[9:0]); end check("support_depth", dut.u_sparse_kernel_service_engine.u_support_service.depth_mem[0] == slen); end endtask
 
@@ -32,6 +32,7 @@ task check_support_trace; begin slen=gold_support_len(0,1,gold_alg_iters(0,1)-1)
 
 initial begin clk=0; pass_cnt=0; fail_cnt=0; reset_dut(); load_case0(); seed_residual_from_y(); build_omp_program(); run_prog(pc); for(i=0;i<gold_case_n(0);i=i+1) begin read_spm_word(VEC_SCORE,i,got); $display("SCORE_DUMP idx=%0d val=%h", i, got); end check_support_trace(); check_final_vectors(); $display("tb_gomp_m64n256k16_cycle: %0d PASS, %0d FAIL", pass_cnt, fail_cnt); $finish; end
 endmodule
+
 
 
 
