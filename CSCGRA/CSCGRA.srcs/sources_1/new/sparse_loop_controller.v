@@ -79,9 +79,7 @@ module sparse_loop_controller #(
     output reg [SCALAR_W-1:0] result
 );
 localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_WR_ACC=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_RESID_PE_WAIT2=51, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
-S_CACHE_BUILD=56, S_SCAN_DIRECT=55, S_DIV_NR_NORM=58, S_DIV_NR_MUL0=59, S_DIV_NR_R0=60, S_DIV_NR_MUL1=61,
-S_DIV_NR_T0=62, S_DIV_NR_MUL2=63, S_DIV_NR_R1=64, S_DIV_NR_MUL3=65,
-S_DIV_NR_T1=66, S_DIV_NR_MUL4=67, S_DIV_NR_R2=68, S_DIV_APPLY=69,
+S_CACHE_BUILD=56, S_SCAN_DIRECT=55,
 S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76;
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6;
 localparam [4:0] RHS_BLOCK_STRIDE = COLS;
@@ -118,98 +116,6 @@ function signed [DATA_W-1:0] phi_from_lfsr_state;
     input [31:0] state;
     begin
         phi_from_lfsr_state = state[0] ? scale_q : ((~scale_q) + 1'b1);
-    end
-endfunction
-
-function signed [63:0] div_round_s64;
-    input signed [63:0] num;
-    input signed [63:0] den;
-    reg sign_q;
-    reg [63:0] abs_num;
-    reg [63:0] abs_den;
-    reg [63:0] q;
-    reg [63:0] r;
-    begin
-        if (den == 0) begin
-            div_round_s64 = 64'sd0;
-        end else begin
-            sign_q = num[63] ^ den[63];
-            abs_num = num[63] ? -num : num;
-            abs_den = den[63] ? -den : den;
-            q = abs_num / abs_den;
-            r = abs_num - (q * abs_den);
-            if ({1'b0, r} * 2 >= {1'b0, abs_den})
-                q = q + 1'b1;
-            div_round_s64 = sign_q ? -$signed(q) : $signed(q);
-        end
-    end
-endfunction
-
-localparam signed [63:0] NR_C48_17_Q61 = 64'sh5A5A5A5A5A5A5A5A;
-localparam signed [63:0] NR_C32_17_Q61 = 64'sh3C3C3C3C3C3C3C3C;
-localparam signed [63:0] NR_TWO_Q61   = 64'sh4000000000000000;
-
-function integer msb_pos_u64;
-    input [63:0] value;
-    integer b;
-    begin
-        msb_pos_u64 = 0;
-        for (b = 0; b < 64; b = b + 1) begin
-            if (value[b])
-                msb_pos_u64 = b;
-        end
-    end
-endfunction
-
-function [63:0] recip_nr_q48_u64;
-    input [63:0] den_abs;
-    integer msb_i;
-    integer sh_i;
-    integer out_sh_i;
-    reg [63:0] x_q61;
-    reg signed [63:0] r0, r1, r2, t0, t1;
-    reg signed [127:0] prod0, prod1, prod2, prod3, prod4;
-    begin
-        if (den_abs == 0) begin
-            recip_nr_q48_u64 = 64'd0;
-        end else begin
-            msb_i = msb_pos_u64(den_abs);
-            sh_i = 60 - msb_i;
-            if (sh_i >= 0)
-                x_q61 = den_abs << sh_i;
-            else
-                x_q61 = den_abs >> (-sh_i);
-            prod0 = $signed(NR_C32_17_Q61) * $signed({1'b0, x_q61});
-            r0 = NR_C48_17_Q61 - $signed((prod0 + 128'sd1152921504606846976) >>> 61);
-            prod1 = $signed({1'b0, x_q61}) * $signed(r0);
-            t0 = NR_TWO_Q61 - $signed((prod1 + 128'sd1152921504606846976) >>> 61);
-            prod2 = $signed(r0) * $signed(t0);
-            r1 = $signed((prod2 + 128'sd1152921504606846976) >>> 61);
-            prod3 = $signed({1'b0, x_q61}) * $signed(r1);
-            t1 = NR_TWO_Q61 - $signed((prod3 + 128'sd1152921504606846976) >>> 61);
-            prod4 = $signed(r1) * $signed(t1);
-            r2 = $signed((prod4 + 128'sd1152921504606846976) >>> 61);
-            out_sh_i = msb_i + 14;
-            if (out_sh_i >= 63)
-                recip_nr_q48_u64 = 64'd0;
-            else
-                recip_nr_q48_u64 = $unsigned(r2) >> out_sh_i;
-        end
-    end
-endfunction
-
-function signed [63:0] apply_recip_q48_s64;
-    input signed [63:0] num;
-    input signed [63:0] recip_q48;
-    reg signed [127:0] prod;
-    reg signed [127:0] bias;
-    begin
-        prod = $signed(num) * $signed(recip_q48);
-        bias = 128'sd1 <<< 47;
-        if (prod < 0)
-            apply_recip_q48_s64 = $signed((prod - bias) >>> 48);
-        else
-            apply_recip_q48_s64 = $signed((prod + bias) >>> 48);
     end
 endfunction
 
@@ -342,14 +248,6 @@ reg signed [DATA_W-1:0] mp_x_old_q;
 reg signed [DATA_W-1:0] mp_x_new_q;
 reg signed [63:0] mp_den_q;
 reg signed [63:0] div_result;
-reg signed [63:0] recip_q48_result;
-reg [63:0] nr_x_q61;
-reg signed [63:0] nr_r0;
-reg signed [63:0] nr_r1;
-reg signed [63:0] nr_t0;
-reg signed [63:0] nr_t1;
-reg signed [127:0] nr_prod;
-reg [6:0] nr_out_sh;
 reg [4:0] solve_i;
 reg [4:0] solve_j;
 reg [4:0] solve_k;
@@ -642,19 +540,11 @@ always @(posedge clk or negedge rst_n) begin
         div_return_back <= 1'b0;
         div_return_mp <= 1'b0;
         div_result <= 64'sd0;
-        recip_q48_result <= 64'sd0;
         mp_idx_q <= {IDX_W{1'b0}};
         mp_score_q <= {DATA_W{1'b0}};
         mp_x_old_q <= {DATA_W{1'b0}};
         mp_x_new_q <= {DATA_W{1'b0}};
         mp_den_q <= 64'sd0;
-        nr_x_q61 <= 64'd0;
-        nr_r0 <= 64'sd0;
-        nr_r1 <= 64'sd0;
-        nr_t0 <= 64'sd0;
-        nr_t1 <= 64'sd0;
-        nr_prod <= 128'sd0;
-        nr_out_sh <= 7'd0;
         refine_build_cache_valid <= 1'b0;
         refine_build_cache_k <= 8'd0;
         refine_cache_m_size <= {IDX_W{1'b0}};
@@ -1112,8 +1002,7 @@ always @(posedge clk or negedge rst_n) begin
             end
             S_DIV_STEP: begin
                 if (div_abs_den == 0) begin
-                    recip_q48_result <= 64'sd0;
-                    div_result <= 64'sd0;
+                                div_result <= 64'sd0;
                     state <= div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE);
                 end else begin
                     div_trial_rem = div_rem;
@@ -1145,60 +1034,6 @@ always @(posedge clk or negedge rst_n) begin
                         div_iter <= div_iter - 7'd2;
                     end
                 end
-            end
-            S_DIV_NR_NORM: begin
-                if ((60 - msb_pos_u64(div_abs_den)) >= 0)
-                    nr_x_q61 <= div_abs_den << (60 - msb_pos_u64(div_abs_den));
-                else
-                    nr_x_q61 <= div_abs_den >> (msb_pos_u64(div_abs_den) - 60);
-                nr_out_sh <= msb_pos_u64(div_abs_den) + 7'd14;
-                state <= S_DIV_NR_MUL0;
-            end
-            S_DIV_NR_MUL0: begin
-                nr_prod <= $signed(NR_C32_17_Q61) * $signed({1'b0, nr_x_q61});
-                state <= S_DIV_NR_R0;
-            end
-            S_DIV_NR_R0: begin
-                nr_r0 <= NR_C48_17_Q61 - $signed((nr_prod + 128'sd1152921504606846976) >>> 61);
-                state <= S_DIV_NR_MUL1;
-            end
-            S_DIV_NR_MUL1: begin
-                nr_prod <= $signed({1'b0, nr_x_q61}) * $signed(nr_r0);
-                state <= S_DIV_NR_T0;
-            end
-            S_DIV_NR_T0: begin
-                nr_t0 <= NR_TWO_Q61 - $signed((nr_prod + 128'sd1152921504606846976) >>> 61);
-                state <= S_DIV_NR_MUL2;
-            end
-            S_DIV_NR_MUL2: begin
-                nr_prod <= $signed(nr_r0) * $signed(nr_t0);
-                state <= S_DIV_NR_R1;
-            end
-            S_DIV_NR_R1: begin
-                nr_r1 <= $signed((nr_prod + 128'sd1152921504606846976) >>> 61);
-                state <= S_DIV_NR_MUL3;
-            end
-            S_DIV_NR_MUL3: begin
-                nr_prod <= $signed({1'b0, nr_x_q61}) * $signed(nr_r1);
-                state <= S_DIV_NR_T1;
-            end
-            S_DIV_NR_T1: begin
-                nr_t1 <= NR_TWO_Q61 - $signed((nr_prod + 128'sd1152921504606846976) >>> 61);
-                state <= S_DIV_NR_MUL4;
-            end
-            S_DIV_NR_MUL4: begin
-                nr_prod <= $signed(nr_r1) * $signed(nr_t1);
-                state <= S_DIV_NR_R2;
-            end
-            S_DIV_NR_R2: begin
-                if (nr_out_sh >= 7'd63)
-                    recip_q48_result <= 64'd0;
-                else
-                    recip_q48_result <= $unsigned($signed((nr_prod + 128'sd1152921504606846976) >>> 61)) >> nr_out_sh;
-                state <= S_DIV_APPLY;
-            end
-            S_DIV_APPLY: begin
-                state <= div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE);
             end
             S_ELIM_DIV_DONE: begin
                 ge_factor <= div_result;
