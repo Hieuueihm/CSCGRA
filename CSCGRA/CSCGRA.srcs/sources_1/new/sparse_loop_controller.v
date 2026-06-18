@@ -1098,6 +1098,9 @@ always @(posedge clk or negedge rst_n) begin
                 div_neg <= ge_div_num[63] ^ ge_div_den[63];
                 div_abs_den <= ge_div_den[63] ? -ge_div_den : ge_div_den;
                 div_abs_num <= {1'b0, (ge_div_num[63] ? -ge_div_num : ge_div_num)};
+                div_rem <= 65'd0;
+                div_quot <= 65'd0;
+                div_iter <= 7'd65;
                 state <= S_DIV_STEP;
             end
             S_DIV_STEP: begin
@@ -1106,7 +1109,34 @@ always @(posedge clk or negedge rst_n) begin
                     div_result <= 64'sd0;
                     state <= div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE);
                 end else begin
-                    state <= S_DIV_APPLY;
+                    div_trial_rem = div_rem;
+                    div_trial_quot = div_quot;
+                    if (div_iter != 0) begin
+                        div_trial_rem = {div_trial_rem[63:0], div_abs_num[div_iter - 1'b1]};
+                        if (div_trial_rem >= {1'b0, div_abs_den}) begin
+                            div_trial_rem = div_trial_rem - {1'b0, div_abs_den};
+                            div_trial_quot[div_iter - 1'b1] = 1'b1;
+                        end
+                    end
+                    if (div_iter > 1) begin
+                        div_trial_rem = {div_trial_rem[63:0], div_abs_num[div_iter - 2'd2]};
+                        if (div_trial_rem >= {1'b0, div_abs_den}) begin
+                            div_trial_rem = div_trial_rem - {1'b0, div_abs_den};
+                            div_trial_quot[div_iter - 2'd2] = 1'b1;
+                        end
+                    end
+                    if (div_iter <= 2) begin
+                        if ({div_trial_rem[63:0], 1'b0} >= {1'b0, div_abs_den})
+                            div_trial_quot = div_trial_quot + 1'b1;
+                        div_result <= div_neg ? -$signed(div_trial_quot[63:0]) : $signed(div_trial_quot[63:0]);
+                        div_rem <= div_trial_rem;
+                        div_quot <= div_trial_quot;
+                        state <= div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE);
+                    end else begin
+                        div_rem <= div_trial_rem;
+                        div_quot <= div_trial_quot;
+                        div_iter <= div_iter - 7'd2;
+                    end
                 end
             end
             S_DIV_NR_NORM: begin
@@ -1161,7 +1191,6 @@ always @(posedge clk or negedge rst_n) begin
                 state <= S_DIV_APPLY;
             end
             S_DIV_APPLY: begin
-                div_result <= div_round_s64(ge_div_num, ge_div_den);
                 state <= div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE);
             end
             S_ELIM_DIV_DONE: begin
