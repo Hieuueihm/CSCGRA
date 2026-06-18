@@ -1,4 +1,5 @@
 import csv
+import os
 import re
 import shutil
 import subprocess
@@ -11,6 +12,7 @@ OUT_DIR = TB_DIR / "verified_runs"
 VIVADO_BIN = Path(r"C:\Xilinx\Vivado\2024.2\bin")
 ALGS = ["omp", "gomp", "mp", "iht", "gp", "sp", "cosamp", "htp"]
 ALG_INDEX = {"omp": 0, "gomp": 1, "cosamp": 2, "sp": 3, "iht": 4, "htp": 5, "gp": 6, "mp": 7}
+MAX_THREADS = int(os.environ.get("CSCGRA_MAX_THREADS", os.cpu_count() or 8))
 
 
 def read_text(path: Path) -> str:
@@ -87,7 +89,7 @@ def main():
             f'call "{VIVADO_BIN / "xvlog.bat"}" -sv '
             f'-i D:/vivado_pj/analysis/m64n256k16 -i D:/vivado_pj/analysis/verification '
             f'{rtl_args} "{tb}" && '
-            f'call "{VIVADO_BIN / "xelab.bat"}" --timescale 1ns/1ps --override_timeunit --override_timeprecision {name} -s {name} && '
+            f'call "{VIVADO_BIN / "xelab.bat"}" -mt {MAX_THREADS} --timescale 1ns/1ps --override_timeunit --override_timeprecision {name} -s {name} && '
             f'call "{VIVADO_BIN / "xsim.bat"}" {name} -runall'
         )
         rc, out = run_cmd(f'cmd /c "{cmd}"', run_dir)

@@ -1,4 +1,5 @@
 import argparse
+import os
 import re
 import shutil
 import subprocess
@@ -12,7 +13,7 @@ XVLOG = Path(r"C:\Xilinx\Vivado\2024.2\bin\xvlog.bat")
 XELAB = Path(r"C:\Xilinx\Vivado\2024.2\bin\xelab.bat")
 PART = "xczu7ev-ffvc1156-2-e"
 CLOCK_NS = "10.000"
-MAX_THREADS = 8
+MAX_THREADS = int(os.environ.get("CSCGRA_MAX_THREADS", os.cpu_count() or 8))
 
 
 def run(cmd, cwd):

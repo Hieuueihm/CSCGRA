@@ -1248,51 +1248,19 @@ always @(posedge clk or negedge rst_n) begin
                 end
             end
             S_SCAN: begin
-                if (phi_kind == 2'd0) begin
-                    for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                        if (gi >= active_k) begin
-                            phi_cache[gi] <= {DATA_W{1'b0}};
-                        end else if (support_cache[gi] == scan_col) begin
-                            phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, 1));
-                        end else if ((scan_col + 1 < padded_n_q) && (support_cache[gi] == (scan_col + 1'b1))) begin
-                            phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, 2));
-                        end else if ((scan_col + 2 < padded_n_q) && (support_cache[gi] == (scan_col + 2'd2))) begin
-                            phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, 3));
-                        end else if ((scan_col + 3 < padded_n_q) && (support_cache[gi] == (scan_col + 2'd3))) begin
-                            phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, 4));
-                        end else if ((scan_col + 4 < padded_n_q) && (support_cache[gi] == (scan_col + 3'd4))) begin
-                            phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, 5));
-                        end else if ((scan_col + 5 < padded_n_q) && (support_cache[gi] == (scan_col + 3'd5))) begin
-                            phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, 6));
-                        end else if ((scan_col + 6 < padded_n_q) && (support_cache[gi] == (scan_col + 3'd6))) begin
-                            phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, 7));
-                        end else if ((scan_col + 7 < padded_n_q) && (support_cache[gi] == (scan_col + 3'd7))) begin
-                            phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, 8));
-                        end
-                    end
-                    phi_state_q <= lfsr_advance(phi_state_q, COLS);
-                    if (scan_col + COLS >= padded_n_q) begin
-                        scan_col <= {IDX_W{1'b0}};
-                        state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
-                    end else begin
-                        scan_col <= scan_col + COLS[IDX_W-1:0];
-                        state <= S_SCAN;
-                    end
+                phi_state_next = galois_step(phi_state_q);
+                scan_base_phi = phi_state_next[0] ? scale_q : ((~scale_q) + 1'b1);
+                scan_hit_phi = scan_base_phi;
+                for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                    if ((gi < active_k) && (scan_col == support_cache[gi]))
+                        phi_cache[gi] <= scan_hit_phi;
+                end
+                phi_state_q <= phi_state_next;
+                if (scan_col + 1 >= padded_n_q) begin
+                    state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
                 end else begin
-                    phi_state_next = galois_step(phi_state_q);
-                    scan_base_phi = phi_state_next[0] ? scale_q : ((~scale_q) + 1'b1);
-                    scan_hit_phi = scan_base_phi;
-                    for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                        if ((gi < active_k) && (scan_col == support_cache[gi]))
-                            phi_cache[gi] <= scan_hit_phi;
-                    end
-                    phi_state_q <= phi_state_next;
-                    if (scan_col + 1 >= padded_n_q) begin
-                        state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
-                    end else begin
-                        scan_col <= scan_col + 1'b1;
-                        state <= S_SCAN;
-                    end
+                    scan_col <= scan_col + 1'b1;
+                    state <= S_SCAN;
                 end
             end
             S_DONE: begin
