@@ -263,14 +263,10 @@ reg [7:0] refine_prime_k_eff;
 reg refine_pos_match;
 reg refine_any_insert_match;
 reg [31:0] phi_state_q;
-reg [31:0] phi_state_next;
-reg [IDX_W-1:0] scan_col;
 reg [4:0] phi_load_i;
 reg [4:0] cache_i;
 reg [4:0] cache_j;
 reg [IDX_W-1:0] padded_n_q;
-reg signed [DATA_W-1:0] scan_base_phi;
-reg signed [DATA_W-1:0] scan_hit_phi;
 reg scan_is_last_col;
 reg [IDX_W-1:0] corr_col;
 reg [IDX_W-1:0] corr_row;
@@ -522,14 +518,10 @@ always @(posedge clk or negedge rst_n) begin
         accum_dbg <= 32'd0;
         active_k <= 8'd0;
         phi_state_q <= DEFAULT_SEED;
-        phi_state_next <= DEFAULT_SEED;
-        scan_col <= {IDX_W{1'b0}};
         phi_load_i <= 5'd0;
         cache_i <= 5'd0;
         cache_j <= 5'd0;
         padded_n_q <= {IDX_W{1'b0}};
-        scan_base_phi <= {DATA_W{1'b0}};
-        scan_hit_phi <= {DATA_W{1'b0}};
         scan_is_last_col <= 1'b0;
         corr_col <= {IDX_W{1'b0}};
         corr_row <= {IDX_W{1'b0}};
@@ -640,8 +632,7 @@ always @(posedge clk or negedge rst_n) begin
                     write_limit <= m_size;
                     rd_addr <= 10'h100;
                     phi_state_q <= (|seed) ? seed : DEFAULT_SEED;
-                    scan_col <= {IDX_W{1'b0}};
-                    padded_n_q <= ((n_size + 7) >> 3) << 3;
+                                padded_n_q <= ((n_size + 7) >> 3) << 3;
                                 acc_num <= 64'sd0;
                     acc_den <= 64'sd0;
                     acc_num1 <= 64'sd0;
@@ -689,7 +680,7 @@ always @(posedge clk or negedge rst_n) begin
                     phase_residual <= 1'b0;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         phi_cache[gi] <= {DATA_W{1'b0}};
-                    state <= refine_same_support_comb ? S_SOLVE_INIT : ((phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN);
+                    state <= refine_same_support_comb ? S_SOLVE_INIT : S_SCAN_DIRECT;
                 end else if ((active_op == OP_CORR) && (n_size != 0) && (m_size != 0)) begin
                     corr_col <= {IDX_W{1'b0}};
                     corr_row <= {IDX_W{1'b0}};
@@ -814,10 +805,9 @@ always @(posedge clk or negedge rst_n) begin
                             write_idx <= write_idx + 1'b1;
                             if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
                                 rd_addr <= 10'h100 + ((write_idx + 1'b1) >> 3);
-                            scan_col <= {IDX_W{1'b0}};
-                            for (gi = 0; gi < MAX_K; gi = gi + 1)
+                                                for (gi = 0; gi < MAX_K; gi = gi + 1)
                                 phi_cache[gi] <= {DATA_W{1'b0}};
-                            state <= (phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN;
+                            state <= S_SCAN_DIRECT;
                         end
                     end else begin
                     acc_j <= acc_j + 5'd1;
@@ -835,10 +825,9 @@ always @(posedge clk or negedge rst_n) begin
                         write_idx <= write_idx + 1'b1;
                         if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
                             rd_addr <= 10'h100 + ((write_idx + 1'b1) >> 3);
-                        scan_col <= {IDX_W{1'b0}};
-                        for (gi = 0; gi < MAX_K; gi = gi + 1)
+                                        for (gi = 0; gi < MAX_K; gi = gi + 1)
                             phi_cache[gi] <= {DATA_W{1'b0}};
-                        state <= (phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN;
+                        state <= S_SCAN_DIRECT;
                     end
                 end
             end
@@ -879,10 +868,9 @@ always @(posedge clk or negedge rst_n) begin
                     write_limit <= m_size;
                     rd_addr <= 10'h100;
                     phi_state_q <= (|seed) ? seed : DEFAULT_SEED;
-                    scan_col <= {IDX_W{1'b0}};
-                    for (gi = 0; gi < MAX_K; gi = gi + 1)
+                                for (gi = 0; gi < MAX_K; gi = gi + 1)
                         phi_cache[gi] <= {DATA_W{1'b0}};
-                    state <= (m_size == 0) ? S_DONE : ((phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN);
+                    state <= (m_size == 0) ? S_DONE : S_SCAN_DIRECT;
                 end else begin
                     write_idx <= write_idx + 1'b1;
                 end
@@ -922,10 +910,9 @@ always @(posedge clk or negedge rst_n) begin
                     write_idx <= write_idx + 1'b1;
                     if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
                         rd_addr <= 10'h100 + ((write_idx + 1'b1) >> 3);
-                    scan_col <= {IDX_W{1'b0}};
-                    for (gi = 0; gi < MAX_K; gi = gi + 1)
+                                for (gi = 0; gi < MAX_K; gi = gi + 1)
                         phi_cache[gi] <= {DATA_W{1'b0}};
-                    state <= (phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN;
+                    state <= S_SCAN_DIRECT;
                 end
             end
             S_SOLVE_INIT: begin
@@ -1216,11 +1203,10 @@ always @(posedge clk or negedge rst_n) begin
                     phase_residual <= 1'b1;
                     rd_addr <= 10'h100;
                     phi_state_q <= (|seed) ? seed : DEFAULT_SEED;
-                    scan_col <= {IDX_W{1'b0}};
-                    padded_n_q <= ((n_size + 7) >> 3) << 3;
+                                padded_n_q <= ((n_size + 7) >> 3) << 3;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         phi_cache[gi] <= {DATA_W{1'b0}};
-                    state <= (phi_kind == 2'd0) ? S_SCAN_DIRECT : S_SCAN;
+                    state <= S_SCAN_DIRECT;
                 end else begin
                     load_i <= load_i + 5'd1;
                     load_support_q <= load_support_next_q;
@@ -1253,26 +1239,9 @@ always @(posedge clk or negedge rst_n) begin
                 end
                 if (phi_load_i + 1'b1 >= MAX_K[4:0]) begin
                     phi_state_q <= lfsr_advance(phi_state_q, padded_n_q);
-                    scan_col <= {IDX_W{1'b0}};
-                    state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
+                                state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
                 end else begin
                     phi_load_i <= phi_load_i + 1'b1;
-                end
-            end
-            S_SCAN: begin
-                phi_state_next = galois_step(phi_state_q);
-                scan_base_phi = phi_state_next[0] ? scale_q : ((~scale_q) + 1'b1);
-                scan_hit_phi = scan_base_phi;
-                for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                    if ((gi < active_k) && (scan_col == support_cache[gi]))
-                        phi_cache[gi] <= scan_hit_phi;
-                end
-                phi_state_q <= phi_state_next;
-                if (scan_col + 1 >= padded_n_q) begin
-                    state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
-                end else begin
-                    scan_col <= scan_col + 1'b1;
-                    state <= S_SCAN;
                 end
             end
             S_DONE: begin
