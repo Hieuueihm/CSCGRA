@@ -80,7 +80,7 @@ module sparse_loop_controller #(
 );
 localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_WR_ACC=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_RESID_PE_WAIT2=51, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
 S_CACHE_BUILD=56, S_SCAN_DIRECT=55,
-S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76;
+S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76, S_SCAN_DIRECT_STEP=77;
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6;
 localparam [4:0] RHS_BLOCK_STRIDE = COLS;
 
@@ -280,6 +280,7 @@ reg refine_any_insert_match;
 reg [31:0] phi_state_q;
 reg [31:0] phi_state_next;
 reg [IDX_W-1:0] scan_col;
+reg [4:0] phi_load_i;
 reg [IDX_W-1:0] padded_n_q;
 reg signed [DATA_W-1:0] scan_base_phi;
 reg signed [DATA_W-1:0] scan_hit_phi;
@@ -509,6 +510,7 @@ always @(posedge clk or negedge rst_n) begin
         phi_state_q <= DEFAULT_SEED;
         phi_state_next <= DEFAULT_SEED;
         scan_col <= {IDX_W{1'b0}};
+        phi_load_i <= 5'd0;
         padded_n_q <= {IDX_W{1'b0}};
         scan_base_phi <= {DATA_W{1'b0}};
         scan_hit_phi <= {DATA_W{1'b0}};
@@ -1210,15 +1212,23 @@ always @(posedge clk or negedge rst_n) begin
                 end
             end
             S_SCAN_DIRECT: begin
-                for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                    if (gi < active_k)
-                        phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, {1'b0, support_cache[gi]} + 1'b1));
+                phi_load_i <= 5'd0;
+                state <= S_SCAN_DIRECT_STEP;
+            end
+            S_SCAN_DIRECT_STEP: begin
+                if (phi_load_i < MAX_K[4:0]) begin
+                    if (phi_load_i < active_k[4:0])
+                        phi_cache[phi_load_i] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, {1'b0, support_cache[phi_load_i]} + 1'b1));
                     else
-                        phi_cache[gi] <= {DATA_W{1'b0}};
+                        phi_cache[phi_load_i] <= {DATA_W{1'b0}};
                 end
-                phi_state_q <= lfsr_advance(phi_state_q, padded_n_q);
-                scan_col <= {IDX_W{1'b0}};
-                state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
+                if (phi_load_i + 1'b1 >= MAX_K[4:0]) begin
+                    phi_state_q <= lfsr_advance(phi_state_q, padded_n_q);
+                    scan_col <= {IDX_W{1'b0}};
+                    state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
+                end else begin
+                    phi_load_i <= phi_load_i + 1'b1;
+                end
             end
             S_SCAN: begin
                 if (phi_kind == 2'd0) begin
