@@ -89,7 +89,7 @@ def main():
             f'call "{VIVADO_BIN / "xvlog.bat"}" -sv '
             f'-i D:/vivado_pj/analysis/m64n256k16 -i D:/vivado_pj/analysis/verification '
             f'{rtl_args} "{tb}" && '
-            f'call "{VIVADO_BIN / "xelab.bat"}" -mt {MAX_THREADS} --timescale 1ns/1ps --override_timeunit --override_timeprecision {name} -s {name} && '
+            f'call "{VIVADO_BIN / "xelab.bat"}" -mt {MAX_THREADS} -L xpm --timescale 1ns/1ps --override_timeunit --override_timeprecision {name} -s {name} && '
             f'call "{VIVADO_BIN / "xsim.bat"}" {name} -runall'
         )
         rc, out = run_cmd(f'cmd /c "{cmd}"', run_dir)

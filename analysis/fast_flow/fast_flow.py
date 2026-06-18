@@ -57,7 +57,7 @@ def compile_elab(tb_name):
     rtl_args = " ".join(f'"{p}"' for p in rtl_files())
     cmd = (
         f'call "{XVLOG}" -sv -i D:/vivado_pj/analysis/verification {rtl_args} "{tb}" && '
-        f'call "{XELAB}" -mt {MAX_THREADS} --timescale 1ns/1ps --override_timeunit --override_timeprecision {tb_name} -s {tb_name}'
+        f'call "{XELAB}" -mt {MAX_THREADS} -L xpm --timescale 1ns/1ps --override_timeunit --override_timeprecision {tb_name} -s {tb_name}'
     )
     rc, text = run(f'cmd /c "{cmd}"', out)
     (out / "compile_elab.log").write_text(text, errors="ignore")
