@@ -259,7 +259,8 @@ module support_set_service #(
     output reg  [IDX_W-1:0]         result_idx,
     output reg                      result_valid
 );
-    localparam integer PATHS = 8;
+    localparam integer PATHS = 2;
+    localparam integer PATH_AW = 1;
     localparam integer MAX_K = 16;
     localparam integer K_AW = 4;
 
@@ -283,9 +284,11 @@ module support_set_service #(
     wire candidate_selpath = candidate_meta && ext_ctrl[1] && !ext_ctrl[3];
     wire candidate_copy_to_path0 = candidate_meta && ext_ctrl[1] && ext_ctrl[3];
     wire candidate_merge_sel_to_path = candidate_uop && (ext_ctrl == 4'b0010);
-    wire [2:0] candidate_path = ctx_word[22:20];
+    wire [2:0] candidate_path_raw = ctx_word[22:20];
+    wire [PATH_AW-1:0] candidate_path = candidate_path_raw[PATH_AW-1:0];
     wire [4:0] candidate_depth = ctx_word[15:11];
-    wire [2:0] candidate_src_path = ctx_word[25:23];
+    wire [2:0] candidate_src_path_raw = ctx_word[25:23];
+    wire [PATH_AW-1:0] candidate_src_path = candidate_src_path_raw[PATH_AW-1:0];
     wire [4:0] candidate_src_slot = ctx_word[30:26];
     wire [4:0] candidate_dst_slot = ctx_word[15:11];
     wire candidate_imm_idx_en = ctx_word[10];
@@ -295,10 +298,10 @@ module support_set_service #(
     wire [K_AW:0] candidate_depth_now = (depth_mem[candidate_path] >= MAX_K_COUNT) ? MAX_K_COUNT : depth_mem[candidate_path];
     wire [K_AW:0] candidate_copy_depth = (depth_mem[candidate_path] >= MAX_K_COUNT) ? MAX_K_COUNT : depth_mem[candidate_path];
 
-    reg [2:0] selected_path_q;
+    reg [PATH_AW-1:0] selected_path_q;
     reg [3:0] state_q;
-    reg [2:0] op_path_q;
-    reg [2:0] op_src_path_q;
+    reg [PATH_AW-1:0] op_path_q;
+    reg [PATH_AW-1:0] op_src_path_q;
     reg [IDX_W-1:0] op_idx_q;
     reg op_sorted_q;
     reg [K_AW:0] scan_q;

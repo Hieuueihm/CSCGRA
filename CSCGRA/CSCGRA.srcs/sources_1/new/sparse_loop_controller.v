@@ -162,23 +162,7 @@ function [IDX_W-1:0] support_at;
             12: support_at = support12;
             13: support_at = support13;
             14: support_at = support14;
-            15: support_at = support15;
-            16: support_at = support16;
-            17: support_at = support17;
-            18: support_at = support18;
-            19: support_at = support19;
-            20: support_at = support20;
-            21: support_at = support21;
-            22: support_at = support22;
-            23: support_at = support23;
-            24: support_at = support24;
-            25: support_at = support25;
-            26: support_at = support26;
-            27: support_at = support27;
-            28: support_at = support28;
-            29: support_at = support29;
-            30: support_at = support30;
-            default: support_at = support31;
+            default: support_at = support15;
         endcase
     end
 endfunction
@@ -320,7 +304,7 @@ integer cache_pos;
 integer cache_cmp;
 reg keep_x;
 reg [IDX_W-1:0] sparse_target_idx;
-wire [IDX_W-1:0] support_xor = support0 ^ support1 ^ support2 ^ support3 ^ support4 ^ support5 ^ support6 ^ support7 ^ support8 ^ support9 ^ support10 ^ support11 ^ support12 ^ support13 ^ support14 ^ support15 ^ support16 ^ support17 ^ support18 ^ support19 ^ support20 ^ support21 ^ support22 ^ support23 ^ support24 ^ support25 ^ support26 ^ support27 ^ support28 ^ support29 ^ support30 ^ support31;
+wire [IDX_W-1:0] support_xor = support0 ^ support1 ^ support2 ^ support3 ^ support4 ^ support5 ^ support6 ^ support7 ^ support8 ^ support9 ^ support10 ^ support11 ^ support12 ^ support13 ^ support14 ^ support15;
 wire [DATA_W-1:0] phi_fold = phi_bus[DATA_W-1:0] ^ rd_data[DATA_W-1:0] ^ scale_q;
 wire [31:0] misc_fold = seed ^ {24'd0, k_active} ^ {22'd0, op_sel, 2'b00} ^ { {(32-IDX_W){1'b0}}, support_xor };
 
