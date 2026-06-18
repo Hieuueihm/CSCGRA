@@ -80,7 +80,7 @@ module sparse_loop_controller #(
 );
 localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_WR_ACC=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_RESID_PE_WAIT2=51, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
 S_CACHE_BUILD=56, S_SCAN_DIRECT=55,
-S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76, S_SCAN_DIRECT_STEP=77;
+S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76, S_SCAN_DIRECT_STEP=77, S_CACHE_BUILD_STEP=78;
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6;
 localparam [4:0] RHS_BLOCK_STRIDE = COLS;
 
@@ -281,6 +281,8 @@ reg [31:0] phi_state_q;
 reg [31:0] phi_state_next;
 reg [IDX_W-1:0] scan_col;
 reg [4:0] phi_load_i;
+reg [4:0] cache_i;
+reg [4:0] cache_j;
 reg [IDX_W-1:0] padded_n_q;
 reg signed [DATA_W-1:0] scan_base_phi;
 reg signed [DATA_W-1:0] scan_hit_phi;
@@ -511,6 +513,8 @@ always @(posedge clk or negedge rst_n) begin
         phi_state_next <= DEFAULT_SEED;
         scan_col <= {IDX_W{1'b0}};
         phi_load_i <= 5'd0;
+        cache_i <= 5'd0;
+        cache_j <= 5'd0;
         padded_n_q <= {IDX_W{1'b0}};
         scan_base_phi <= {DATA_W{1'b0}};
         scan_hit_phi <= {DATA_W{1'b0}};
@@ -834,13 +838,26 @@ always @(posedge clk or negedge rst_n) begin
                 refine_cache_seed <= seed;
                 refine_cache_scale_q <= scale_q;
                 refine_cache_phi_kind <= phi_kind;
-                for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                    rhs_build_cache[gi] <= rhs[gi];
-                    support_build_cache[gi] <= support_cache[gi];
-                    for (gj = 0; gj < MAX_K; gj = gj + 1)
-                        ge_mat_build_cache[gi][gj] <= ge_mat[gi][gj];
+                cache_i <= 5'd0;
+                cache_j <= 5'd0;
+                state <= S_CACHE_BUILD_STEP;
+            end
+            S_CACHE_BUILD_STEP: begin
+                ge_mat_build_cache[cache_i][cache_j] <= ge_mat[cache_i][cache_j];
+                if (cache_j == 5'd0) begin
+                    rhs_build_cache[cache_i] <= rhs[cache_i];
+                    support_build_cache[cache_i] <= support_cache[cache_i];
                 end
-                state <= S_SOLVE_INIT;
+                if ((cache_i + 1'b1 >= MAX_K[4:0]) && (cache_j + 1'b1 >= MAX_K[4:0])) begin
+                    cache_i <= 5'd0;
+                    cache_j <= 5'd0;
+                    state <= S_SOLVE_INIT;
+                end else if (cache_j + 1'b1 >= MAX_K[4:0]) begin
+                    cache_j <= 5'd0;
+                    cache_i <= cache_i + 1'b1;
+                end else begin
+                    cache_j <= cache_j + 1'b1;
+                end
             end
             S_WX: begin
                 write_value <= write_value_now;
