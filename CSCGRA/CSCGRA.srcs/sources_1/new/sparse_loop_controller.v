@@ -393,6 +393,11 @@ reg signed [DATA_W-1:0] corr_phi;
 reg signed [63:0] corr_acc;
 reg [COLS*DATA_W-1:0] corr_phi_lane;
 reg [COLS*64-1:0] corr_acc_lane;
+reg corr_stream_valid_q;
+reg corr_stream_done_q;
+reg [IDX_W-1:0] corr_stream_base_idx_q;
+reg [COLS-1:0] corr_stream_lane_valid_q;
+reg [COLS*DATA_W-1:0] corr_stream_data_q;
 reg [31:0] corr_block_seq;
 reg [31:0] corr_block_state;
 reg [31:0] corr_row_state;
@@ -425,16 +430,11 @@ function [IDX_W-1:0] support_cached_at;
 endfunction
 
 
-generate
-    genvar corr_stream_lane;
-    for (corr_stream_lane = 0; corr_stream_lane < COLS; corr_stream_lane = corr_stream_lane + 1) begin : gen_corr_stream
-        assign corr_stream_data[corr_stream_lane*DATA_W +: DATA_W] = sat_s24($signed(corr_acc_lane[corr_stream_lane*64 +: 64]) >>> 16);
-        assign corr_stream_lane_valid[corr_stream_lane] = ((corr_col + corr_stream_lane[IDX_W-1:0]) < n_size);
-    end
-endgenerate
-assign corr_stream_valid = busy && (active_op == OP_CORR) && (state == S_CORR_WRITE);
-assign corr_stream_done = corr_stream_valid && (corr_col + COLS[IDX_W-1:0] >= n_size);
-assign corr_stream_base_idx = corr_col;
+assign corr_stream_valid = corr_stream_valid_q;
+assign corr_stream_done = corr_stream_done_q;
+assign corr_stream_base_idx = corr_stream_base_idx_q;
+assign corr_stream_lane_valid = corr_stream_lane_valid_q;
+assign corr_stream_data = corr_stream_data_q;
 
 always @(*) begin
     refine_prime_k_eff = (support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active;
@@ -620,6 +620,11 @@ always @(posedge clk or negedge rst_n) begin
         corr_scan_col <= {IDX_W{1'b0}};
         corr_phi <= {DATA_W{1'b0}};
         corr_acc <= 64'sd0;
+        corr_stream_valid_q <= 1'b0;
+        corr_stream_done_q <= 1'b0;
+        corr_stream_base_idx_q <= {IDX_W{1'b0}};
+        corr_stream_lane_valid_q <= {COLS{1'b0}};
+        corr_stream_data_q <= {COLS*DATA_W{1'b0}};
         iht_x_value <= {DATA_W{1'b0}};
         load_i <= 5'd0;
         ge_mul_a <= 64'sd0;
@@ -674,6 +679,8 @@ always @(posedge clk or negedge rst_n) begin
             end
         end
     end else begin
+        corr_stream_valid_q <= 1'b0;
+        corr_stream_done_q <= 1'b0;
         case (state)
             S_IDLE: begin
                 busy <= 1'b0;
@@ -1293,6 +1300,13 @@ always @(posedge clk or negedge rst_n) begin
                 end
             end
             S_CORR_WRITE: begin
+                corr_stream_valid_q <= busy;
+                corr_stream_done_q <= (corr_col + COLS[IDX_W-1:0] >= n_size);
+                corr_stream_base_idx_q <= corr_col;
+                for (corr_lane = 0; corr_lane < COLS; corr_lane = corr_lane + 1) begin
+                    corr_stream_lane_valid_q[corr_lane] <= ((corr_col + corr_lane[IDX_W-1:0]) < n_size);
+                    corr_stream_data_q[corr_lane*DATA_W +: DATA_W] <= sat_s24($signed(corr_acc_lane[corr_lane*64 +: 64]) >>> 16);
+                end
                 corr_block_seq <= corr_block_seq + 1'b1;
                 if (corr_col + COLS[IDX_W-1:0] >= n_size) begin
                     state <= S_DONE;
