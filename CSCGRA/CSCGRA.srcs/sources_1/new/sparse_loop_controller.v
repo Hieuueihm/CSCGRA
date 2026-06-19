@@ -199,12 +199,9 @@ reg signed [127:0] k2_b1;
 reg signed [127:0] k2_det;
 reg [7:0] active_k;
 reg signed [63:0] rhs [0:MAX_K-1];
-reg signed [63:0] rhs_build_cache [0:MAX_K-1];
 reg signed [DATA_W-1:0] coeff_mem [0:MAX_K-1];
 localparam integer GE_MAT_W = 56;
 reg signed [GE_MAT_W-1:0] ge_mat [0:MAX_K-1][0:MAX_K-1];
-localparam integer GE_CACHE_DEPTH = (MAX_K * (MAX_K + 1)) / 2;
-reg signed [GE_MAT_W-1:0] ge_mat_build_cache [0:GE_CACHE_DEPTH-1];
 reg signed [63:0] ge_rhs [0:MAX_K-1];
 reg signed [63:0] ge_x [0:MAX_K-1];
 reg signed [63:0] ge_factor;
@@ -245,14 +242,6 @@ reg signed [127:0] residual_acc;
 reg signed [127:0] residual_block_sum;
 reg signed [DATA_W-1:0] phi_cache [0:MAX_K-1];
 reg [IDX_W-1:0] support_cache [0:MAX_K-1];
-reg [IDX_W-1:0] support_build_cache [0:MAX_K-1];
-reg refine_build_cache_valid;
-reg [7:0] refine_build_cache_k;
-reg [IDX_W-1:0] refine_cache_m_size;
-reg [IDX_W-1:0] refine_cache_n_size;
-reg [31:0] refine_cache_seed;
-reg [DATA_W-1:0] refine_cache_scale_q;
-reg [1:0] refine_cache_phi_kind;
 reg refine_same_support_comb;
 reg refine_extend_support_comb;
 reg [4:0] refine_new_pos_comb;
@@ -351,44 +340,7 @@ always @(*) begin
     refine_extend_support_comb = 1'b0;
     refine_new_pos_comb = 5'd0;
     refine_any_insert_match = 1'b0;
-
-    if (refine_build_cache_valid &&
-        (refine_cache_m_size == m_size) &&
-        (refine_cache_n_size == n_size) &&
-        (refine_cache_seed == seed) &&
-        (refine_cache_scale_q == scale_q) &&
-        (refine_cache_phi_kind == phi_kind)) begin
-
-        if (refine_build_cache_k == refine_prime_k_eff) begin
-            refine_same_support_comb = 1'b1;
-            for (cache_cmp = 0; cache_cmp < MAX_K; cache_cmp = cache_cmp + 1) begin
-                if ((cache_cmp < refine_prime_k_eff) && (support_cache[cache_cmp] != support_build_cache[cache_cmp]))
-                    refine_same_support_comb = 1'b0;
-            end
-        end
-
-        if ((refine_prime_k_eff != 0) && (refine_build_cache_k + 8'd1 == refine_prime_k_eff)) begin
-            for (cache_pos = 0; cache_pos < MAX_K; cache_pos = cache_pos + 1) begin
-                refine_pos_match = 1'b1;
-                for (cache_cmp = 0; cache_cmp < MAX_K; cache_cmp = cache_cmp + 1) begin
-                    if (cache_cmp < refine_build_cache_k) begin
-                        if (cache_cmp < cache_pos) begin
-                            if (support_cache[cache_cmp] != support_build_cache[cache_cmp])
-                                refine_pos_match = 1'b0;
-                        end else begin
-                            if (support_cache[cache_cmp + 1] != support_build_cache[cache_cmp])
-                                refine_pos_match = 1'b0;
-                        end
-                    end
-                end
-                if ((cache_pos < refine_prime_k_eff) && refine_pos_match && !refine_any_insert_match) begin
-                    refine_extend_support_comb = 1'b1;
-                    refine_any_insert_match = 1'b1;
-                    refine_new_pos_comb = cache_pos[4:0];
-                end
-            end
-        end
-    end
+    refine_pos_match = 1'b0;
 end
 
 always @(*) begin
@@ -555,27 +507,17 @@ always @(posedge clk or negedge rst_n) begin
         mp_x_old_q <= {DATA_W{1'b0}};
         mp_x_new_q <= {DATA_W{1'b0}};
         mp_den_q <= 64'sd0;
-        refine_build_cache_valid <= 1'b0;
-        refine_build_cache_k <= 8'd0;
-        refine_cache_m_size <= {IDX_W{1'b0}};
-        refine_cache_n_size <= {IDX_W{1'b0}};
-        refine_cache_seed <= 32'd0;
-        refine_cache_scale_q <= {DATA_W{1'b0}};
-        refine_cache_phi_kind <= 2'b00;
         refine_incremental_active <= 1'b0;
         refine_skip_build_active <= 1'b0;
         refine_new_pos <= 5'd0;
         for (gi = 0; gi < MAX_K; gi = gi + 1) begin
             rhs[gi] <= 64'sd0;
-            rhs_build_cache[gi] <= 64'sd0;
             coeff_mem[gi] <= {DATA_W{1'b0}};
             phi_cache[gi] <= {DATA_W{1'b0}};
             ge_rhs[gi] <= 64'sd0;
             ge_x[gi] <= 64'sd0;
-            support_build_cache[gi] <= {IDX_W{1'b0}};
             for (gj = 0; gj < MAX_K; gj = gj + 1) begin
                 ge_mat[gi][gj] <= 64'sd0;
-                if (gi >= gj) ge_mat_build_cache[ge_lower_idx(gi[4:0], gj[4:0])] <= {GE_MAT_W{1'b0}};
             end
         end
     end else begin
@@ -638,49 +580,19 @@ always @(posedge clk or negedge rst_n) begin
                     acc_num1 <= 64'sd0;
                     acc_den01 <= 64'sd0;
                     acc_den11 <= 64'sd0;
-                    if (refine_same_support_comb) begin
-                        refine_skip_build_active <= 1'b1;
-                        for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                            rhs[gi] <= rhs_build_cache[gi];
-                            coeff_mem[gi] <= {DATA_W{1'b0}};
-                            ge_rhs[gi] <= 64'sd0;
-                            ge_x[gi] <= 64'sd0;
-                            for (gj = 0; gj < MAX_K; gj = gj + 1) begin
-                                ge_mat[gi][gj] <= (gi >= gj) ? ge_mat_build_cache[ge_lower_idx(gi[4:0], gj[4:0])] : {GE_MAT_W{1'b0}};
-                            end
-                        end
-                    end else if (refine_extend_support_comb && (refine_new_pos_comb == refine_build_cache_k[4:0])) begin
-                        refine_incremental_active <= 1'b1;
-                        for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                            coeff_mem[gi] <= {DATA_W{1'b0}};
-                            ge_rhs[gi] <= 64'sd0;
-                            ge_x[gi] <= 64'sd0;
-                            if (gi < refine_build_cache_k[4:0])
-                                rhs[gi] <= rhs_build_cache[gi];
-                            else
-                                rhs[gi] <= 64'sd0;
-                            for (gj = 0; gj < MAX_K; gj = gj + 1) begin
-                                if ((gi < refine_build_cache_k[4:0]) && (gj < refine_build_cache_k[4:0]))
-                                    ge_mat[gi][gj] <= (gi >= gj) ? ge_mat_build_cache[ge_lower_idx(gi[4:0], gj[4:0])] : {GE_MAT_W{1'b0}};
-                                else
-                                    ge_mat[gi][gj] <= {GE_MAT_W{1'b0}};
-                            end
-                        end
-                    end else begin
-                        for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                            rhs[gi] <= 64'sd0;
-                            coeff_mem[gi] <= {DATA_W{1'b0}};
-                            ge_rhs[gi] <= 64'sd0;
-                            ge_x[gi] <= 64'sd0;
-                            for (gj = 0; gj < MAX_K; gj = gj + 1) begin
-                                ge_mat[gi][gj] <= 64'sd0;
-                            end
+                    for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                        rhs[gi] <= 64'sd0;
+                        coeff_mem[gi] <= {DATA_W{1'b0}};
+                        ge_rhs[gi] <= 64'sd0;
+                        ge_x[gi] <= 64'sd0;
+                        for (gj = 0; gj < MAX_K; gj = gj + 1) begin
+                            ge_mat[gi][gj] <= 64'sd0;
                         end
                     end
                     phase_residual <= 1'b0;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         phi_cache[gi] <= {DATA_W{1'b0}};
-                    state <= refine_same_support_comb ? S_SOLVE_INIT : S_SCAN_DIRECT;
+                    state <= S_SCAN_DIRECT;
                 end else if ((active_op == OP_CORR) && (n_size != 0) && (m_size != 0)) begin
                     corr_col <= {IDX_W{1'b0}};
                     corr_row <= {IDX_W{1'b0}};
@@ -800,7 +712,7 @@ always @(posedge clk or negedge rst_n) begin
                         acc_j <= 5'd0;
                         rhs_block_base <= 5'd0;
                         if (write_idx + 1 >= write_limit) begin
-                            state <= S_CACHE_BUILD;
+                            state <= S_SOLVE_INIT;
                         end else begin
                             write_idx <= write_idx + 1'b1;
                             if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
@@ -820,7 +732,7 @@ always @(posedge clk or negedge rst_n) begin
                     acc_j <= 5'd0;
                     rhs_block_base <= 5'd0;
                     if (write_idx + 1 >= write_limit) begin
-                        state <= S_CACHE_BUILD;
+                        state <= S_SOLVE_INIT;
                     end else begin
                         write_idx <= write_idx + 1'b1;
                         if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
@@ -832,33 +744,10 @@ always @(posedge clk or negedge rst_n) begin
                 end
             end
             S_CACHE_BUILD: begin
-                refine_build_cache_valid <= 1'b1;
-                refine_build_cache_k <= active_k;
-                refine_cache_m_size <= m_size;
-                refine_cache_n_size <= n_size;
-                refine_cache_seed <= seed;
-                refine_cache_scale_q <= scale_q;
-                refine_cache_phi_kind <= phi_kind;
-                cache_i <= 5'd0;
-                cache_j <= 5'd0;
-                state <= S_CACHE_BUILD_STEP;
+                state <= S_SOLVE_INIT;
             end
             S_CACHE_BUILD_STEP: begin
-                if (cache_i >= cache_j) ge_mat_build_cache[ge_lower_idx(cache_i, cache_j)] <= ge_mat[cache_i][cache_j];
-                if (cache_j == 5'd0) begin
-                    rhs_build_cache[cache_i] <= rhs[cache_i];
-                    support_build_cache[cache_i] <= support_cache[cache_i];
-                end
-                if ((cache_i + 1'b1 >= MAX_K[4:0]) && (cache_j + 1'b1 >= MAX_K[4:0])) begin
-                    cache_i <= 5'd0;
-                    cache_j <= 5'd0;
-                    state <= S_SOLVE_INIT;
-                end else if (cache_j + 1'b1 >= MAX_K[4:0]) begin
-                    cache_j <= 5'd0;
-                    cache_i <= cache_i + 1'b1;
-                end else begin
-                    cache_j <= cache_j + 1'b1;
-                end
+                state <= S_SOLVE_INIT;
             end
             S_WX: begin
                 write_value <= write_value_now;
