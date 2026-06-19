@@ -82,10 +82,10 @@ localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=
 S_CACHE_BUILD=56, S_SCAN_DIRECT=55,
 S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76, S_SCAN_DIRECT_STEP=77, S_CACHE_BUILD_STEP=78,
 S_LS_CLEAR_START=86, S_LS_CLEAR_WAIT=87, S_SOLVE_SYM_READ=88, S_SOLVE_SYM_WAIT=89, S_SOLVE_SYM_WRITE=90, S_SOLVE_SYM_WRITE_WAIT=91,
-S_ELIM_ROW_READ=92, S_ELIM_ROW_WAIT=93, S_ELIM_UPDATE_START=94, S_ELIM_UPDATE_WAIT=95, S_BACK_ACC_READ=96, S_BACK_ACC_WAIT=97, S_BACK_PREP_READ=98, S_BACK_PREP_WAIT=99, S_GRAM_ACC_WAIT=100, S_SCAN_DIRECT_LATCH=101;
+S_ELIM_ROW_READ=92, S_ELIM_ROW_WAIT=93, S_ELIM_UPDATE_START=94, S_ELIM_UPDATE_WAIT=95, S_BACK_ACC_READ=96, S_BACK_ACC_WAIT=97, S_BACK_PREP_READ=98, S_BACK_PREP_WAIT=99, S_GRAM_ACC_WAIT=100, S_SCAN_DIRECT_LATCH=101, S_RHS_INIT_WRITE=102, S_RHS_INIT_WAIT=103, S_ELIM_RHS_READ_WAIT=104, S_ELIM_RHS_UPDATE_WAIT=105, S_BACK_RHS_READ=106, S_BACK_RHS_READ_WAIT=107;
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6;
 localparam [4:0] RHS_BLOCK_STRIDE = COLS;
-localparam [2:0] LS_OP_CLEAR=3'd0, LS_OP_WRITE=3'd1, LS_OP_READ2=3'd2, LS_OP_ACC_BLOCK=3'd3, LS_OP_ROW_UPDATE=3'd4;
+localparam [2:0] LS_OP_CLEAR=3'd0, LS_OP_WRITE=3'd1, LS_OP_READ2=3'd2, LS_OP_ACC_BLOCK=3'd3, LS_OP_ROW_UPDATE=3'd4, LS_OP_RHS_WRITE=3'd5, LS_OP_RHS_READ=3'd6, LS_OP_RHS_UPDATE=3'd7;
 
 localparam [31:0] LFSR_TAPS = 32'h80200003;
 localparam [31:0] DEFAULT_SEED = 32'hDEADBEEF;
@@ -1316,7 +1316,6 @@ reg [7:0] active_k;
 reg signed [63:0] rhs [0:MAX_K-1];
 reg signed [DATA_W-1:0] coeff_mem [0:MAX_K-1];
 localparam integer GE_MAT_W = 56;
-reg signed [63:0] ge_rhs [0:MAX_K-1];
 reg signed [63:0] ge_x [0:MAX_K-1];
 reg signed [63:0] ge_factor;
 reg signed [63:0] ge_acc;
@@ -1338,6 +1337,7 @@ reg [4:0] ls_row_base_q;
 reg [COLS-1:0] ls_lane_valid_q;
 reg signed [GE_MAT_W-1:0] ls_wdata_q;
 reg signed [63:0] ls_factor_q;
+reg signed [63:0] ls_rhs_wdata_q;
 wire ls_busy_w;
 wire ls_done_w;
 wire signed [GE_MAT_W-1:0] ls_rdata_a_w;
@@ -1362,7 +1362,7 @@ ls_matrix_service #(
     .lane_add(pe_rhs_product_bus),
     .wdata(ls_wdata_q),
     .factor(ls_factor_q),
-    .rhs_wdata(64'sd0),
+    .rhs_wdata(ls_rhs_wdata_q),
     .busy(ls_busy_w),
     .done(ls_done_w),
     .rdata_a(ls_rdata_a_w),
@@ -1649,6 +1649,7 @@ always @(posedge clk or negedge rst_n) begin
         ls_lane_valid_q <= {COLS{1'b0}};
         ls_wdata_q <= {GE_MAT_W{1'b0}};
         ls_factor_q <= 64'sd0;
+        ls_rhs_wdata_q <= 64'sd0;
         div_abs_num <= 65'd0;
         div_abs_den <= 64'd1;
         div_rem <= 65'd0;
@@ -1669,7 +1670,6 @@ always @(posedge clk or negedge rst_n) begin
             rhs[gi] <= 64'sd0;
             coeff_mem[gi] <= {DATA_W{1'b0}};
             phi_cache[gi] <= {DATA_W{1'b0}};
-            ge_rhs[gi] <= 64'sd0;
             ge_x[gi] <= 64'sd0;
         end
     end else begin
@@ -1733,8 +1733,7 @@ always @(posedge clk or negedge rst_n) begin
                     for (gi = 0; gi < MAX_K; gi = gi + 1) begin
                         rhs[gi] <= 64'sd0;
                         coeff_mem[gi] <= {DATA_W{1'b0}};
-                        ge_rhs[gi] <= 64'sd0;
-                        ge_x[gi] <= 64'sd0;
+                                    ge_x[gi] <= 64'sd0;
                     end
                     phase_residual <= 1'b0;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
@@ -1932,7 +1931,6 @@ always @(posedge clk or negedge rst_n) begin
             end
             S_SOLVE_INIT: begin
                 for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                    ge_rhs[gi] <= rhs[gi];
                     ge_x[gi] <= 64'sd0;
                     coeff_mem[gi] <= {DATA_W{1'b0}};
                 end
@@ -1942,7 +1940,25 @@ always @(posedge clk or negedge rst_n) begin
                 back_i <= (active_k == 0) ? 5'd0 : (active_k[4:0] - 5'd1);
                 back_j <= 5'd0;
                 ge_acc <= 64'sd0;
-                state <= S_SOLVE_SYM_READ;
+                state <= S_RHS_INIT_WRITE;
+            end
+            S_RHS_INIT_WRITE: begin
+                if (solve_i >= active_k[4:0]) begin
+                    solve_i <= 5'd0;
+                    state <= S_SOLVE_SYM_READ;
+                end else begin
+                    ls_start_q <= 1'b1;
+                    ls_op_q <= LS_OP_RHS_WRITE;
+                    ls_row_a_q <= solve_i;
+                    ls_rhs_wdata_q <= rhs[solve_i];
+                    state <= S_RHS_INIT_WAIT;
+                end
+            end
+            S_RHS_INIT_WAIT: begin
+                if (ls_done_w) begin
+                    solve_i <= solve_i + 5'd1;
+                    state <= S_RHS_INIT_WRITE;
+                end
             end
             S_SOLVE_SYM_READ: begin
                 if (solve_i >= active_k[4:0]) begin
@@ -2047,9 +2063,12 @@ always @(posedge clk or negedge rst_n) begin
             S_ELIM_UPDATE_WAIT: begin
                 if (ls_done_w) begin
                     if (solve_k + 5'd1 >= active_k[4:0]) begin
-                        ge_rhs[solve_j] <= ge_rhs[solve_j] - ((ge_factor * ge_mul_c) >>> 16);
-                        solve_j <= solve_j + 5'd1;
-                        state <= S_ELIM_ROW;
+                        ls_start_q <= 1'b1;
+                        ls_op_q <= LS_OP_RHS_UPDATE;
+                        ls_row_a_q <= solve_j;
+                        ls_row_b_q <= solve_i;
+                        ls_factor_q <= ge_factor;
+                        state <= S_ELIM_RHS_UPDATE_WAIT;
                     end else begin
                         solve_k <= solve_k + 5'd1;
                         state <= S_ELIM_UPDATE;
@@ -2058,6 +2077,12 @@ always @(posedge clk or negedge rst_n) begin
             end
             S_ELIM_ROW_WAIT: begin
                 state <= S_ELIM_UPDATE;
+            end
+            S_ELIM_RHS_UPDATE_WAIT: begin
+                if (ls_done_w) begin
+                    solve_j <= solve_j + 5'd1;
+                    state <= S_ELIM_ROW;
+                end
             end
             S_BACK_INIT: begin
                 if (active_k == 0) begin
@@ -2108,8 +2133,22 @@ always @(posedge clk or negedge rst_n) begin
             end
             S_BACK_PREP_READ: begin
                 if (ls_done_w) begin
-                    ge_div_num <= (ge_rhs[back_i] - ge_acc) <<< 16;
                     ge_div_den <= (ls_rdata_a_w != 0) ? {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w} : 64'sd1;
+                    ls_start_q <= 1'b1;
+                    ls_op_q <= LS_OP_RHS_READ;
+                    ls_row_a_q <= back_i;
+                    state <= S_BACK_RHS_READ_WAIT;
+                end
+            end
+            S_BACK_RHS_READ: begin
+                ls_start_q <= 1'b1;
+                ls_op_q <= LS_OP_RHS_READ;
+                ls_row_a_q <= back_i;
+                state <= S_BACK_RHS_READ_WAIT;
+            end
+            S_BACK_RHS_READ_WAIT: begin
+                if (ls_done_w) begin
+                    ge_div_num <= (ls_rhs_rdata_w - ge_acc) <<< 16;
                     state <= S_BACK_DIV;
                 end
             end
@@ -2163,8 +2202,16 @@ always @(posedge clk or negedge rst_n) begin
             end
             S_ELIM_DIV_DONE: begin
                 ge_factor <= div_result;
-                ge_mul_c <= ge_rhs[solve_i];
-                state <= S_ELIM_UPDATE;
+                ls_start_q <= 1'b1;
+                ls_op_q <= LS_OP_RHS_READ;
+                ls_row_a_q <= solve_i;
+                state <= S_ELIM_RHS_READ_WAIT;
+            end
+            S_ELIM_RHS_READ_WAIT: begin
+                if (ls_done_w) begin
+                    ge_mul_c <= ls_rhs_rdata_w;
+                    state <= S_ELIM_UPDATE;
+                end
             end
             S_BACK_DIV_DONE: begin
                 ge_x[back_i] <= div_result;
