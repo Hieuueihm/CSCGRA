@@ -8,6 +8,9 @@ module tb_ls_matrix_service;
     localparam [2:0] OP_READ2      = 3'd2;
     localparam [2:0] OP_ACC_BLOCK  = 3'd3;
     localparam [2:0] OP_ROW_UPDATE = 3'd4;
+    localparam [2:0] OP_RHS_WRITE  = 3'd5;
+    localparam [2:0] OP_RHS_READ   = 3'd6;
+    localparam [2:0] OP_RHS_UPDATE = 3'd7;
 
     reg clk;
     reg rst_n;
@@ -22,11 +25,13 @@ module tb_ls_matrix_service;
     reg signed [LANES*64-1:0] lane_add;
     reg signed [GE_W-1:0] wdata;
     reg signed [63:0] factor;
+    reg signed [63:0] rhs_wdata;
     wire busy;
     wire done;
     wire signed [GE_W-1:0] rdata_a;
     wire signed [GE_W-1:0] rdata_b;
     wire signed [GE_W-1:0] update_value;
+    wire signed [63:0] rhs_rdata;
 
     integer pass_count;
     integer fail_count;
@@ -35,8 +40,8 @@ module tb_ls_matrix_service;
         .clk(clk), .rst_n(rst_n), .start(start), .op(op),
         .row_a(row_a), .col_a(col_a), .row_b(row_b), .col_b(col_b),
         .row_base(row_base), .lane_valid(lane_valid), .lane_add(lane_add),
-        .wdata(wdata), .factor(factor), .busy(busy), .done(done),
-        .rdata_a(rdata_a), .rdata_b(rdata_b), .update_value(update_value)
+        .wdata(wdata), .factor(factor), .rhs_wdata(rhs_wdata), .busy(busy), .done(done),
+        .rdata_a(rdata_a), .rdata_b(rdata_b), .update_value(update_value), .rhs_rdata(rhs_rdata)
     );
 
     initial clk = 1'b0;
@@ -69,6 +74,21 @@ module tb_ls_matrix_service;
         end
     endtask
 
+
+    task check_eq64;
+        input signed [63:0] got;
+        input signed [63:0] exp;
+        begin
+            if (got === exp) begin
+                pass_count = pass_count + 1;
+                $display("PASS64 got=%0d", got);
+            end else begin
+                fail_count = fail_count + 1;
+                $display("FAIL64 got=%0d exp=%0d", got, exp);
+            end
+        end
+    endtask
+
     initial begin
         pass_count = 0;
         fail_count = 0;
@@ -83,6 +103,7 @@ module tb_ls_matrix_service;
         lane_add = {LANES*64{1'b0}};
         wdata = {GE_W{1'b0}};
         factor = 64'sd0;
+        rhs_wdata = 64'sd0;
         rst_n = 1'b0;
         repeat (4) @(negedge clk);
         rst_n = 1'b1;
@@ -134,6 +155,21 @@ module tb_ls_matrix_service;
         col_a = 5'd6;
         issue(OP_READ2);
         check_eq(rdata_a, 56'sd488);
+
+
+        row_a = 5'd7;
+        rhs_wdata = 64'sd2048;
+        issue(OP_RHS_WRITE);
+        row_a = 5'd6;
+        rhs_wdata = 64'sd256;
+        issue(OP_RHS_WRITE);
+        row_a = 5'd7;
+        row_b = 5'd6;
+        factor = 64'sd131072;
+        issue(OP_RHS_UPDATE);
+        row_a = 5'd7;
+        issue(OP_RHS_READ);
+        check_eq64(rhs_rdata, 64'sd1536);
 
         $display("tb_ls_matrix_service: %0d PASS, %0d FAIL", pass_count, fail_count);
         if (fail_count != 0)

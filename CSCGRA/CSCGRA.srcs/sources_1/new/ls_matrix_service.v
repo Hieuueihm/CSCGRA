@@ -4,6 +4,7 @@ module ls_matrix_service #(
     parameter integer MAX_K = 16,
     parameter integer GE_W = 56,
     parameter integer FACTOR_W = 64,
+    parameter integer RHS_W = 64,
     parameter integer FRAC_W = 16,
     parameter integer LANES = 8
 )(
@@ -20,17 +21,22 @@ module ls_matrix_service #(
     input  wire signed [LANES*64-1:0]   lane_add,
     input  wire signed [GE_W-1:0]       wdata,
     input  wire signed [FACTOR_W-1:0]   factor,
+    input  wire signed [RHS_W-1:0]       rhs_wdata,
     output reg                          busy,
     output reg                          done,
     output reg signed [GE_W-1:0]        rdata_a,
     output reg signed [GE_W-1:0]        rdata_b,
-    output reg signed [GE_W-1:0]        update_value
+    output reg signed [GE_W-1:0]        update_value,
+    output reg signed [RHS_W-1:0]        rhs_rdata
 );
     localparam [2:0] OP_CLEAR      = 3'd0;
     localparam [2:0] OP_WRITE      = 3'd1;
     localparam [2:0] OP_READ2      = 3'd2;
     localparam [2:0] OP_ACC_BLOCK  = 3'd3;
     localparam [2:0] OP_ROW_UPDATE = 3'd4;
+    localparam [2:0] OP_RHS_WRITE  = 3'd5;
+    localparam [2:0] OP_RHS_READ   = 3'd6;
+    localparam [2:0] OP_RHS_UPDATE = 3'd7;
 
     localparam [3:0] S_IDLE        = 4'd0;
     localparam [3:0] S_CLEAR       = 4'd1;
@@ -84,6 +90,8 @@ module ls_matrix_service #(
         end
     endfunction
 
+    (* ram_style = "distributed" *) reg signed [RHS_W-1:0] rhs_mem [0:MAX_K-1];
+
     genvar bank;
     generate
         for (bank = 0; bank < BANKS; bank = bank + 1) begin : gen_bank
@@ -128,6 +136,7 @@ module ls_matrix_service #(
             product_q <= {(FACTOR_W+GE_W){1'b0}};
             update_write_data <= {GE_W{1'b0}};
             update_value <= {GE_W{1'b0}};
+            rhs_rdata <= {RHS_W{1'b0}};
             rdata_a <= {GE_W{1'b0}};
             rdata_b <= {GE_W{1'b0}};
             clear_en <= 1'b0;
@@ -151,6 +160,15 @@ module ls_matrix_service #(
                             clear_addr <= 6'd0;
                             clear_en <= 1'b1;
                             state <= S_CLEAR;
+                        end else if (op == OP_RHS_WRITE) begin
+                            rhs_mem[row_a[3:0]] <= rhs_wdata;
+                            state <= S_DONE;
+                        end else if (op == OP_RHS_READ) begin
+                            rhs_rdata <= rhs_mem[row_a[3:0]];
+                            state <= S_DONE;
+                        end else if (op == OP_RHS_UPDATE) begin
+                            rhs_mem[row_a[3:0]] <= rhs_mem[row_a[3:0]] - (($signed(factor) * $signed(rhs_mem[row_b[3:0]])) >>> FRAC_W);
+                            state <= S_DONE;
                         end else if (op == OP_WRITE) begin
                             wr_bank_q <= row_a[2:0];
                             wr_addr_q <= bank_addr(row_a, col_a);
@@ -171,6 +189,8 @@ module ls_matrix_service #(
                     end
                 end
                 S_CLEAR: begin
+                    if (clear_addr < MAX_K[5:0])
+                        rhs_mem[clear_addr[3:0]] <= {RHS_W{1'b0}};
                     if (clear_addr == BANK_DEPTH[5:0] - 6'd1)
                         state <= S_DONE;
                     else begin
