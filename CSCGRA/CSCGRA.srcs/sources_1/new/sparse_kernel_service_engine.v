@@ -108,6 +108,19 @@ module sparse_kernel_service_engine #(
     wire [2:0] select_append_path;
     wire select_busy;
     wire ls_done_raw;
+    wire select_start = ctx_valid && (uop_class == 4'd5) && ((ctx_word[27:24] == 4'd1) || (ctx_word[27:24] == 4'd2) || (ctx_word[27:24] == 4'd3));
+    wire stream_select_start = select_start && ctx_word[31];
+    wire nonstream_select_start = select_start && !ctx_word[31];
+    wire [4:0] select_max_count = (ctx_word[15:11] == 5'd0) ? MAX_K[4:0] : ctx_word[15:11];
+    wire [2:0] select_append_path_cfg = ctx_word[22:20];
+    wire select_exclude_support = (ctx_word[27:24] == 4'd2);
+    wire select_allow_tiny = ctx_word[30] || (ctx_word[27:24] == 4'd3);
+    wire topk_busy;
+    wire topk_done;
+    reg select_busy_q;
+    reg select_done_q;
+    assign select_busy = select_busy_q;
+    assign select_done = select_done_q;
     reg stream_select_pending_q;
     reg ls_done_deferred_q;
 
@@ -146,14 +159,34 @@ module sparse_kernel_service_engine #(
     );
 
 
-    score_select_service #(.COLS(COLS), .DATA_W(DATA_W), .SCALAR_W(SCALAR_W), .IDX_W(IDX_W), .CTX_W(CTX_W), .MAX_SEL(MAX_K), .MAX_SUPPORT(MAX_K)) u_score_select (
-        .clk(clk), .rst_n(rst_n), .ctx_valid(ctx_valid), .ctx_word(ctx_word), .uop_class(uop_class),
-        .lane_valid(select_lane_valid), .base_idx(select_base_idx), .addr_valid(select_addr_valid), .addr_done(select_addr_done),
-        .spm_pa_rdata(select_spm_pa_rdata), .threshold_value(last_result_value), .support_depth(support_depth0), .support_bus(support_bus_w[MAX_K*IDX_W-1:0]),
-        .stream_valid(ls_corr_stream_valid), .stream_done(ls_corr_stream_done), .stream_base_idx(ls_corr_stream_base_idx), .stream_lane_valid(ls_corr_stream_lane_valid), .stream_data(ls_corr_stream_data), .append_done(support_done),
+    pe_stream_topk_serial_service #(.COLS(COLS), .DATA_W(DATA_W), .IDX_W(IDX_W), .MAX_SEL(MAX_K), .MAX_SUPPORT(MAX_K)) u_stream_topk (
+        .clk(clk), .rst_n(rst_n), .start(stream_select_start), .max_count(select_max_count), .append_path_in(select_append_path_cfg),
+        .exclude_support(select_exclude_support), .allow_tiny(select_allow_tiny),
+        .stream_valid(ls_corr_stream_valid), .stream_done(ls_corr_stream_done), .stream_base_idx(ls_corr_stream_base_idx), .stream_lane_valid(ls_corr_stream_lane_valid), .stream_data(ls_corr_stream_data),
+        .support_depth(support_depth0), .support_bus(support_bus_w[MAX_K*IDX_W-1:0]), .append_done(support_done),
         .append_valid(select_append_valid), .append_idx(select_append_idx), .append_path(select_append_path),
-        .busy(select_busy), .done(select_done)
+        .stream_ready(), .busy(topk_busy), .done(topk_done)
     );
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            select_busy_q <= 1'b0;
+            select_done_q <= 1'b0;
+        end else begin
+            select_done_q <= 1'b0;
+            if (stream_select_start) begin
+                select_busy_q <= 1'b1;
+            end else if (nonstream_select_start) begin
+                select_busy_q <= 1'b1;
+                select_done_q <= 1'b1;
+            end else if (topk_done) begin
+                select_busy_q <= 1'b0;
+                select_done_q <= 1'b1;
+            end else if (!topk_busy && !stream_select_start) begin
+                select_busy_q <= 1'b0;
+            end
+        end
+    end
 
     sparse_loop_controller #(.COLS(COLS), .DATA_W(DATA_W), .SCALAR_W(SCALAR_W), .MEM_AW(MEM_AW), .IDX_W(IDX_W), .MAX_M(MAX_M), .MAX_N(MAX_N), .MAX_K(MAX_K), .REFINE_ITERS(REFINE_ITERS)) u_sparse_loop_controller (
         .clk(clk), .rst_n(rst_n), .ctx_valid(ctx_valid), .ctx_word(ctx_word),
