@@ -95,10 +95,8 @@ module ls_matrix_service #(
     genvar bank;
     generate
         for (bank = 0; bank < BANKS; bank = bank + 1) begin : gen_bank
-            (* ram_style = "block" *) reg signed [GE_W-1:0] mem_a [0:BANK_DEPTH-1];
-            (* ram_style = "block" *) reg signed [GE_W-1:0] mem_b [0:BANK_DEPTH-1];
-            reg signed [GE_W-1:0] rd_a_q;
-            reg signed [GE_W-1:0] rd_b_q;
+            (* ram_style = "distributed" *) reg signed [GE_W-1:0] mem_a [0:BANK_DEPTH-1];
+            (* ram_style = "distributed" *) reg signed [GE_W-1:0] mem_b [0:BANK_DEPTH-1];
             wire [4:0] acc_addr = {row_base[3], col_a[3:0]};
             always @(posedge clk) begin
                 if (clear_en) begin
@@ -114,11 +112,9 @@ module ls_matrix_service #(
                     mem_a[wr_addr_q] <= update_write_data;
                     mem_b[wr_addr_q] <= update_write_data;
                 end
-                rd_a_q <= mem_a[rd_addr_a];
-                rd_b_q <= mem_b[rd_addr_b];
             end
-            assign bank_rdata_a[bank*GE_W +: GE_W] = rd_a_q;
-            assign bank_rdata_b[bank*GE_W +: GE_W] = rd_b_q;
+            assign bank_rdata_a[bank*GE_W +: GE_W] = mem_a[rd_addr_a];
+            assign bank_rdata_b[bank*GE_W +: GE_W] = mem_b[rd_addr_b];
         end
     endgenerate
 
@@ -173,10 +169,14 @@ module ls_matrix_service #(
                             wr_bank_q <= row_a[2:0];
                             wr_addr_q <= bank_addr(row_a, col_a);
                             write_en <= 1'b1;
-                            state <= S_DONE;
+                            busy <= 1'b0;
+                            done <= 1'b1;
+                            state <= S_IDLE;
                         end else if (op == OP_ACC_BLOCK) begin
                             acc_en <= 1'b1;
-                            state <= S_DONE;
+                            busy <= 1'b0;
+                            done <= 1'b1;
+                            state <= S_IDLE;
                         end else begin
                             rd_bank_a <= row_a[2:0];
                             rd_bank_b <= row_b[2:0];
@@ -191,27 +191,31 @@ module ls_matrix_service #(
                 S_CLEAR: begin
                     if (clear_addr < MAX_K[5:0])
                         rhs_mem[clear_addr[3:0]] <= {RHS_W{1'b0}};
-                    if (clear_addr == BANK_DEPTH[5:0] - 6'd1)
-                        state <= S_DONE;
-                    else begin
+                    if (clear_addr == BANK_DEPTH[5:0] - 6'd1) begin
+                        busy <= 1'b0;
+                        done <= 1'b1;
+                        state <= S_IDLE;
+                    end else begin
                         clear_addr <= clear_addr + 6'd1;
                         clear_en <= 1'b1;
                     end
                 end
                 S_READ_WAIT: begin
-                    state <= S_READ_CAP;
-                end
-                S_READ_CAP: begin
                     rdata_a <= bank_rdata_a[rd_bank_a*GE_W +: GE_W];
                     rdata_b <= bank_rdata_b[rd_bank_b*GE_W +: GE_W];
+                    busy <= 1'b0;
+                    done <= 1'b1;
+                    state <= S_IDLE;
+                end
+                S_READ_CAP: begin
                     state <= S_DONE;
                 end
                 S_UPDATE_WAIT: begin
-                    state <= S_UPDATE_MUL;
-                end
-                S_UPDATE_MUL: begin
                     row_value_q <= bank_rdata_a[rd_bank_a*GE_W +: GE_W];
                     product_q <= $signed(factor) * $signed(bank_rdata_b[rd_bank_b*GE_W +: GE_W]);
+                    state <= S_UPDATE_WR;
+                end
+                S_UPDATE_MUL: begin
                     state <= S_UPDATE_WR;
                 end
                 S_UPDATE_WR: begin
@@ -219,7 +223,9 @@ module ls_matrix_service #(
                     update_value <= row_value_q - $signed(product_q >>> FRAC_W);
                     rdata_a <= row_value_q - $signed(product_q >>> FRAC_W);
                     update_write_en <= 1'b1;
-                    state <= S_DONE;
+                    busy <= 1'b0;
+                    done <= 1'b1;
+                    state <= S_IDLE;
                 end
                 S_DONE: begin
                     busy <= 1'b0;
