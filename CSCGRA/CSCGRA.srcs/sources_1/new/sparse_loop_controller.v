@@ -82,7 +82,7 @@ localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=
 S_CACHE_BUILD=56, S_SCAN_DIRECT=55,
 S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76, S_SCAN_DIRECT_STEP=77, S_CACHE_BUILD_STEP=78,
 S_LS_CLEAR_START=86, S_LS_CLEAR_WAIT=87, S_SOLVE_SYM_READ=88, S_SOLVE_SYM_WAIT=89, S_SOLVE_SYM_WRITE=90, S_SOLVE_SYM_WRITE_WAIT=91,
-S_ELIM_ROW_READ=92, S_ELIM_ROW_WAIT=93, S_ELIM_UPDATE_START=94, S_ELIM_UPDATE_WAIT=95, S_BACK_ACC_READ=96, S_BACK_ACC_WAIT=97, S_BACK_PREP_READ=98, S_BACK_PREP_WAIT=99, S_GRAM_ACC_WAIT=100;
+S_ELIM_ROW_READ=92, S_ELIM_ROW_WAIT=93, S_ELIM_UPDATE_START=94, S_ELIM_UPDATE_WAIT=95, S_BACK_ACC_READ=96, S_BACK_ACC_WAIT=97, S_BACK_PREP_READ=98, S_BACK_PREP_WAIT=99, S_GRAM_ACC_WAIT=100, S_SCAN_DIRECT_LATCH=101;
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6;
 localparam [4:0] RHS_BLOCK_STRIDE = COLS;
 localparam [2:0] LS_OP_CLEAR=3'd0, LS_OP_WRITE=3'd1, LS_OP_READ2=3'd2, LS_OP_ACC_BLOCK=3'd3, LS_OP_ROW_UPDATE=3'd4;
@@ -111,6 +111,19 @@ function [31:0] lfsr_advance;
         for (adv_i = 0; adv_i < MAX_N; adv_i = adv_i + 1) begin
             if (adv_i < steps)
                 lfsr_advance = galois_step(lfsr_advance);
+        end
+    end
+endfunction
+
+function [31:0] lfsr_advance16;
+    input [31:0] state;
+    input [4:0] steps;
+    integer adv16_i;
+    begin
+        lfsr_advance16 = state;
+        for (adv16_i = 0; adv16_i < 16; adv16_i = adv16_i + 1) begin
+            if (adv16_i < steps)
+                lfsr_advance16 = galois_step(lfsr_advance16);
         end
     end
 endfunction
@@ -290,7 +303,11 @@ reg [IDX_W-1:0] support_cache [0:MAX_K-1];
 reg [7:0] refine_prime_k_eff;
 reg [31:0] phi_state_q;
 reg [4:0] phi_load_i;
+reg [IDX_W-1:0] phi_support_q;
+reg phi_support_valid_q;
 reg [IDX_W-1:0] padded_n_q;
+reg [IDX_W-1:0] phi_scan_col_q;
+reg [31:0] phi_scan_state_q;
 reg scan_is_last_col;
 reg [IDX_W-1:0] corr_col;
 reg [IDX_W-1:0] corr_row;
@@ -501,6 +518,10 @@ always @(posedge clk or negedge rst_n) begin
         active_k <= 8'd0;
         phi_state_q <= DEFAULT_SEED;
         phi_load_i <= 5'd0;
+        phi_support_q <= {IDX_W{1'b0}};
+        phi_support_valid_q <= 1'b0;
+        phi_scan_col_q <= {IDX_W{1'b0}};
+        phi_scan_state_q <= DEFAULT_SEED;
         padded_n_q <= {IDX_W{1'b0}};
         scan_is_last_col <= 1'b0;
         corr_col <= {IDX_W{1'b0}};
@@ -1211,21 +1232,24 @@ always @(posedge clk or negedge rst_n) begin
                 end
             end
             S_SCAN_DIRECT: begin
-                phi_load_i <= 5'd0;
+                phi_scan_col_q <= {IDX_W{1'b0}};
+                phi_scan_state_q <= phi_state_q;
+                for (gi = 0; gi < MAX_K; gi = gi + 1)
+                    phi_cache[gi] <= {DATA_W{1'b0}};
                 state <= S_SCAN_DIRECT_STEP;
             end
             S_SCAN_DIRECT_STEP: begin
-                if (phi_load_i < MAX_K[4:0]) begin
-                    if (phi_load_i < active_k[4:0])
-                        phi_cache[phi_load_i] <= phi_from_lfsr_state(lfsr_advance(phi_state_q, {1'b0, support_cache[phi_load_i]} + 1'b1));
-                    else
-                        phi_cache[phi_load_i] <= {DATA_W{1'b0}};
+                for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                    if ((gi < active_k[4:0]) && (support_cache[gi] >= phi_scan_col_q) && (support_cache[gi] < (phi_scan_col_q + 10'd16))) begin
+                        phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance16(phi_scan_state_q, {1'b0, (support_cache[gi] - phi_scan_col_q[IDX_W-1:0])} + 5'd1));
+                    end
                 end
-                if (phi_load_i + 1'b1 >= MAX_K[4:0]) begin
-                    phi_state_q <= lfsr_advance(phi_state_q, padded_n_q);
-                                state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
+                if (phi_scan_col_q + 10'd16 >= padded_n_q) begin
+                    phi_state_q <= lfsr_advance16(phi_scan_state_q, 5'd16);
+                    state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
                 end else begin
-                    phi_load_i <= phi_load_i + 1'b1;
+                    phi_scan_col_q <= phi_scan_col_q + 10'd16;
+                    phi_scan_state_q <= lfsr_advance16(phi_scan_state_q, 5'd16);
                 end
             end
             S_DONE: begin
