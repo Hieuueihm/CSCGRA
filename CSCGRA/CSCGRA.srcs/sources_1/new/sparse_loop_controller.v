@@ -32,6 +32,8 @@ module sparse_loop_controller #(
     output reg [COLS*DATA_W-1:0] pe_rhs_y_bus,
     output reg pe_rhs_active,
     output reg pe_sparse_clear,
+    output reg pe_corr_acc_clear,
+    output reg pe_corr_acc_en,
     output reg [3:0] pe_sparse_op,
     output wire corr_stream_valid,
     output wire corr_stream_done,
@@ -1500,6 +1502,8 @@ end
 
 always @(*) begin
     pe_sparse_clear = busy && (active_op == OP_CORR) && (state == S_CORR_INIT);
+    pe_corr_acc_clear = busy && (active_op == OP_CORR) && (state == S_CORR_INIT);
+    pe_corr_acc_en = busy && (active_op == OP_CORR) && (state == S_CORR_LATCH);
     pe_sparse_op = busy ? active_op : op_sel;
     pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC))) || ((active_op == OP_CORR) && (state == S_CORR_ACC)));
     pe_rhs_phi_bus = {COLS*DATA_W{1'b0}};

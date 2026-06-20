@@ -292,6 +292,7 @@ module cgra_top #(
     wire [COLS*64-1:0] pe_corr_acc_bus;
     wire [3:0] ls_pe_sparse_op;
     wire ls_pe_sparse_clear;
+    wire ls_pe_corr_acc_clear, ls_pe_corr_acc_en;
     wire [COLS*DATA_W-1:0] ls_pe_rhs_phi_bus, ls_pe_rhs_y_bus;
     wire ls_pe_rhs_active;
     reg  [COLS*DATA_W-1:0] pe_spm_pa_rdata_q, pe_spm_pb_rdata_q;
@@ -352,7 +353,7 @@ module cgra_top #(
         .reduce_valid(reduce_valid), .reduce_result(reduce_result), .reduce_idx(reduce_idx), .reduce_converged(reduce_converged),
         .ls_busy(ls_busy), .ls_done(ls_done), .ls_result(ls_result),
         .ls_rd_addr(ls_rd_addr), .ls_wr_addr(ls_wr_addr), .ls_wr_data(ls_wr_data), .ls_wr_en(ls_wr_en),
-        .ls_pe_rhs_phi_bus(ls_pe_rhs_phi_bus), .ls_pe_rhs_y_bus(ls_pe_rhs_y_bus), .ls_pe_rhs_active(ls_pe_rhs_active), .pe_sparse_clear(ls_pe_sparse_clear), .pe_sparse_op(ls_pe_sparse_op), .support_done(skse_support_done), .support_result_idx(skse_support_result_idx), .support_result_valid(skse_support_result_valid), .select_done(skse_select_done)
+        .ls_pe_rhs_phi_bus(ls_pe_rhs_phi_bus), .ls_pe_rhs_y_bus(ls_pe_rhs_y_bus), .ls_pe_rhs_active(ls_pe_rhs_active), .pe_sparse_clear(ls_pe_sparse_clear), .pe_corr_acc_clear(ls_pe_corr_acc_clear), .pe_corr_acc_en(ls_pe_corr_acc_en), .pe_sparse_op(ls_pe_sparse_op), .support_done(skse_support_done), .support_result_idx(skse_support_result_idx), .support_result_valid(skse_support_result_valid), .select_done(skse_select_done)
     );
 
     pearray #(.ROWS(ROWS), .COLS(COLS), .DATA_W(DATA_W), .ACC_W(ACC_W), .CTX_W(CTX_W),
@@ -360,7 +361,7 @@ module cgra_top #(
         .clk(clk), .rst_n(rst_core_n), .ctx_valid(pe_exec_valid_q), .ctx_word(pe_ctx_word_q),
         .lane_valid(pe_lane_valid_q), .base_idx(pe_base_idx_q), .first_in_phase(pe_first_in_phase_q),
         .spm_a_rdata(pe_spm_pa_rdata), .spm_b_rdata(pe_spm_pb_rdata), .phi_bus(ls_busy ? ls_pe_rhs_phi_bus : phi_bus), .scalar_bus(ls_busy ? ls_pe_rhs_y_bus : scalar_bus),
-        .sparse_active(ls_start || ls_busy), .sparse_step_active(ls_pe_rhs_active), .sparse_clear(ls_pe_sparse_clear), .sparse_op((ls_busy || ls_start) ? ((ls_pe_sparse_op == 4'd1) ? 4'd1 : 4'd0) : scalar_op[3:0]), .sparse_k_active(sparse_k_active),
+        .sparse_active(ls_start || ls_busy), .sparse_step_active(ls_pe_rhs_active), .sparse_clear(ls_pe_sparse_clear), .corr_acc_clear(ls_pe_corr_acc_clear), .corr_acc_en(ls_pe_corr_acc_en), .sparse_op((ls_busy || ls_start) ? ((ls_pe_sparse_op == 4'd1) ? 4'd1 : 4'd0) : scalar_op[3:0]), .sparse_k_active(sparse_k_active),
         .spm_wdata(pe_spm_wdata), .spm_wen(pe_spm_wen_raw), .reduce_data(reduce_data), .acc_data(acc_data), .sparse_rhs_product_bus(ls_pe_rhs_product_bus), .corr_acc_bus(pe_corr_acc_bus),
         .result_value(result_value), .result_idx(result_idx), .result_flag(result_flag),
         .result_valid(result_valid), .compute_done(compute_done)

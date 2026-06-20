@@ -28,6 +28,8 @@ module pearray #(
     input  wire                       sparse_active,
     input  wire                       sparse_step_active,
     input  wire                       sparse_clear,
+    input  wire                       corr_acc_clear,
+    input  wire                       corr_acc_en,
     input  wire [3:0]                 sparse_op,
     input  wire [7:0]                 sparse_k_active,
 
@@ -122,6 +124,7 @@ module pearray #(
     wire [DATA_W-1:0] colbus_r0 [0:COLS-1];
     reg [3:0] mesh_keepalive_q;
     reg [3:0] sparse_step_pipe_q;
+    reg signed [63:0] corr_acc_bank [0:COLS-1];
     wire mesh_active_req = ctx_valid | sparse_active;
     reg [31:0] row_exec_count [0:ROWS-1];
     reg [31:0] col_exec_count [0:COLS-1];
@@ -223,7 +226,7 @@ module pearray #(
             assign reduce_data[c*DATA_W +: DATA_W] = tile_out[(ROWS-1)*COLS+c];
             assign acc_data[c*ACC_W +: ACC_W]      = tile_acc[(ROWS-1)*COLS+c];
             assign sparse_rhs_product_bus[c*64 +: 64] = tile_acc[c][63:0];
-            assign corr_acc_bus[c*64 +: 64] = tile_acc[c][63:0];
+            assign corr_acc_bus[c*64 +: 64] = corr_acc_bank[c];
             assign spm_wdata[c*DATA_W +: DATA_W]   = tile_out[(ROWS-1)*COLS+c];
             assign spm_wen[c] = ctx_valid && spm_wr_en && lane_valid[c];
         end
@@ -240,6 +243,8 @@ module pearray #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             sparse_step_pipe_q <= 4'b0000;
+            for (util_i = 0; util_i < COLS; util_i = util_i + 1)
+                corr_acc_bank[util_i] <= 64'sd0;
             if (ENABLE_DEBUG_COUNTERS) begin
                 for (util_i = 0; util_i < ROWS; util_i = util_i + 1) row_exec_count[util_i] <= 32'd0;
                 for (util_i = 0; util_i < COLS; util_i = util_i + 1) col_exec_count[util_i] <= 32'd0;
@@ -261,6 +266,13 @@ module pearray #(
                 sparse_step_pipe_q <= 4'b0000;
             else
                 sparse_step_pipe_q <= {sparse_step_pipe_q[2:0], sparse_step_active && (sparse_op == 4'd1)};
+            if (corr_acc_clear) begin
+                for (util_i = 0; util_i < COLS; util_i = util_i + 1)
+                    corr_acc_bank[util_i] <= 64'sd0;
+            end else if (corr_acc_en) begin
+                for (util_i = 0; util_i < COLS; util_i = util_i + 1)
+                    corr_acc_bank[util_i] <= corr_acc_bank[util_i] + $signed(tile_acc[util_i][63:0]);
+            end
             if (ENABLE_DEBUG_COUNTERS && ctx_valid) begin
                 for (util_i = 0; util_i < ROWS; util_i = util_i + 1)
                     if (row_en[util_i]) row_exec_count[util_i] <= row_exec_count[util_i] + 1'b1;
