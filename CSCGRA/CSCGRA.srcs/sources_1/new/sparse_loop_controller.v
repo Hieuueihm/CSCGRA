@@ -1502,7 +1502,7 @@ end
 
 always @(*) begin
     pe_sparse_clear = busy && (active_op == OP_CORR) && (state == S_CORR_INIT);
-    pe_corr_acc_clear = busy && (active_op == OP_CORR) && (state == S_CORR_INIT);
+    pe_corr_acc_clear = busy && (active_op == OP_CORR) && ((state == S_CORR_INIT) || (state == S_CORR_WRITE));
     pe_corr_acc_en = busy && (active_op == OP_CORR) && (state == S_CORR_LATCH);
     pe_sparse_op = busy ? active_op : op_sel;
     pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC))) || ((active_op == OP_CORR) && (state == S_CORR_ACC)));
@@ -1597,7 +1597,7 @@ always @(*) begin
     for (lane = 0; lane < COLS; lane = lane + 1) begin
         wr_addr[lane*MEM_AW +: MEM_AW] = base_addr;
         if ((active_op == OP_CORR) && (state == S_CORR_WRITE)) begin
-            wr_data[lane*DATA_W +: DATA_W] = sat_s24($signed(corr_acc_lane[lane*64 +: 64]) >>> 16);
+            wr_data[lane*DATA_W +: DATA_W] = sat_s24($signed(pe_corr_acc_bus[lane*64 +: 64]) >>> 16);
             wr_en[lane] = busy && ((write_idx + lane[IDX_W-1:0]) < write_limit);
         end else if ((((active_op == OP_REFINE_SPARSE) && (state == S_WX)) ? sparse_target_idx[2:0] : write_idx[2:0]) == lane[2:0]) begin
             wr_data[lane*DATA_W +: DATA_W] = write_value_now;
@@ -2314,7 +2314,7 @@ always @(posedge clk or negedge rst_n) begin
                 corr_stream_base_idx_q <= corr_col;
                 for (corr_lane = 0; corr_lane < COLS; corr_lane = corr_lane + 1) begin
                     corr_stream_lane_valid_q[corr_lane] <= ((corr_col + corr_lane[IDX_W-1:0]) < n_size);
-                    corr_stream_data_q[corr_lane*DATA_W +: DATA_W] <= sat_s24($signed(corr_acc_lane[corr_lane*64 +: 64]) >>> 16);
+                    corr_stream_data_q[corr_lane*DATA_W +: DATA_W] <= sat_s24($signed(pe_corr_acc_bus[corr_lane*64 +: 64]) >>> 16);
                 end
                 corr_block_seq <= corr_block_seq + 1'b1;
                 if (corr_col + COLS[IDX_W-1:0] >= n_size) begin
