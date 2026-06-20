@@ -40,6 +40,7 @@ module sparse_kernel_service_engine #(
     input  wire [COLS*DATA_W-1:0]   spm_pa_rdata,
     input  wire [COLS*DATA_W-1:0]   select_spm_pa_rdata,
     input  wire [COLS*64-1:0]       pe_rhs_product_bus,
+    input  wire [COLS*64-1:0]       pe_corr_acc_bus,
     input  wire [SCALAR_W-1:0]      last_result_value,
     input  wire [IDX_W-1:0]         last_result_idx,
 
@@ -192,7 +193,7 @@ module sparse_kernel_service_engine #(
         .clk(clk), .rst_n(rst_n), .ctx_valid(ctx_valid), .ctx_word(ctx_word),
         .start(ls_start), .op(scalar_op_low), .m_size(m_size), .n_size(n_size),
         .k_active(sparse_k_active), .support_depth0(support_depth0), .seed(seed), .scale_q(phi_scale_q8_8), .phi_kind(phi_kind), .phi_bus(phi_bus),
-        .pe_rhs_product_bus(pe_rhs_product_bus), .last_result_value(last_result_value), .last_result_idx(last_result_idx), .pe_rhs_phi_bus(ls_pe_rhs_phi_bus), .pe_rhs_y_bus(ls_pe_rhs_y_bus), .pe_rhs_active(ls_pe_rhs_active), .pe_sparse_clear(pe_sparse_clear), .pe_sparse_op(pe_sparse_op),
+        .pe_rhs_product_bus(pe_rhs_product_bus), .pe_corr_acc_bus(pe_corr_acc_bus), .last_result_value(last_result_value), .last_result_idx(last_result_idx), .pe_rhs_phi_bus(ls_pe_rhs_phi_bus), .pe_rhs_y_bus(ls_pe_rhs_y_bus), .pe_rhs_active(ls_pe_rhs_active), .pe_sparse_clear(pe_sparse_clear), .pe_sparse_op(pe_sparse_op),
         .corr_stream_valid(ls_corr_stream_valid), .corr_stream_done(ls_corr_stream_done), .corr_stream_base_idx(ls_corr_stream_base_idx), .corr_stream_lane_valid(ls_corr_stream_lane_valid), .corr_stream_data(ls_corr_stream_data),
         .support0(support0_w), .support1(support1_w), .support2(support2_w), .support3(support3_w), .support4(support4_w), .support5(support5_w), .support6(support6_w), .support7(support7_w),
         .support8(support8_w), .support9(support9_w), .support10(support10_w), .support11(support11_w), .support12(support12_w), .support13(support13_w), .support14(support14_w), .support15(support15_w),

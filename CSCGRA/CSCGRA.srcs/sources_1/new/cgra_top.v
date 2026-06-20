@@ -289,6 +289,7 @@ module cgra_top #(
 
     wire [COLS*DATA_W-1:0] spm_pa_rdata, spm_pb_rdata, pe_spm_wdata;
     wire [COLS*64-1:0] ls_pe_rhs_product_bus;
+    wire [COLS*64-1:0] pe_corr_acc_bus;
     wire [3:0] ls_pe_sparse_op;
     wire ls_pe_sparse_clear;
     wire [COLS*DATA_W-1:0] ls_pe_rhs_phi_bus, ls_pe_rhs_y_bus;
@@ -337,7 +338,7 @@ module cgra_top #(
         .ls_start(ls_start), .scalar_op_low(scalar_op[3:0]), .m_size(m_size), .n_size(n_size),
         .sparse_k_active(sparse_k_active), .seed(seed), .phi_scale_q8_8(phi_scale_q8_8), .phi_kind(flags[3:2]), .phi_bus(phi_bus),
         .addr_support_query_base(addr_support_query_base), .base_idx(base_idx), .select_base_idx(base_idx), .addr_valid(addr_valid), .addr_done(addr_done), .select_addr_valid(addr_valid), .select_addr_done(addr_done),
-        .spm_pa_rdata(spm_pa_rdata), .select_spm_pa_rdata(spm_pa_rdata), .select_lane_valid(lane_valid), .pe_rhs_product_bus(ls_pe_rhs_product_bus),
+        .spm_pa_rdata(spm_pa_rdata), .select_spm_pa_rdata(spm_pa_rdata), .select_lane_valid(lane_valid), .pe_rhs_product_bus(ls_pe_rhs_product_bus), .pe_corr_acc_bus(pe_corr_acc_bus),
         .last_result_value(last_result_value), .last_result_idx(last_result_idx),
         .support_lane_mask(support_lane_mask), .selected_lane_mask(selected_lane_mask), .support_depth0(support_depth0),
         .support0_w(support0_w), .support1_w(support1_w), .support2_w(support2_w), .support3_w(support3_w),
@@ -360,7 +361,7 @@ module cgra_top #(
         .lane_valid(pe_lane_valid_q), .base_idx(pe_base_idx_q), .first_in_phase(pe_first_in_phase_q),
         .spm_a_rdata(pe_spm_pa_rdata), .spm_b_rdata(pe_spm_pb_rdata), .phi_bus(ls_busy ? ls_pe_rhs_phi_bus : phi_bus), .scalar_bus(ls_busy ? ls_pe_rhs_y_bus : scalar_bus),
         .sparse_active(ls_start || ls_busy), .sparse_step_active(ls_pe_rhs_active), .sparse_clear(ls_pe_sparse_clear), .sparse_op((ls_busy || ls_start) ? ((ls_pe_sparse_op == 4'd1) ? 4'd1 : 4'd0) : scalar_op[3:0]), .sparse_k_active(sparse_k_active),
-        .spm_wdata(pe_spm_wdata), .spm_wen(pe_spm_wen_raw), .reduce_data(reduce_data), .acc_data(acc_data), .sparse_rhs_product_bus(ls_pe_rhs_product_bus),
+        .spm_wdata(pe_spm_wdata), .spm_wen(pe_spm_wen_raw), .reduce_data(reduce_data), .acc_data(acc_data), .sparse_rhs_product_bus(ls_pe_rhs_product_bus), .corr_acc_bus(pe_corr_acc_bus),
         .result_value(result_value), .result_idx(result_idx), .result_flag(result_flag),
         .result_valid(result_valid), .compute_done(compute_done)
     );

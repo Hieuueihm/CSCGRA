@@ -37,6 +37,7 @@ module pearray #(
     output wire [COLS*DATA_W-1:0]     reduce_data,
     output wire [COLS*ACC_W-1:0]      acc_data,
     output wire [COLS*64-1:0]         sparse_rhs_product_bus,
+    output wire [COLS*64-1:0]         corr_acc_bus,
     // v3 result interface (replaces external reduction_unit / scalar_unit latch)
     output wire [SCALAR_W-1:0]        result_value,
     output wire [IDX_W-1:0]           result_idx,
@@ -222,6 +223,7 @@ module pearray #(
             assign reduce_data[c*DATA_W +: DATA_W] = tile_out[(ROWS-1)*COLS+c];
             assign acc_data[c*ACC_W +: ACC_W]      = tile_acc[(ROWS-1)*COLS+c];
             assign sparse_rhs_product_bus[c*64 +: 64] = tile_acc[c][63:0];
+            assign corr_acc_bus[c*64 +: 64] = tile_acc[c][63:0];
             assign spm_wdata[c*DATA_W +: DATA_W]   = tile_out[(ROWS-1)*COLS+c];
             assign spm_wen[c] = ctx_valid && spm_wr_en && lane_valid[c];
         end

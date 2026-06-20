@@ -25,6 +25,7 @@ module sparse_loop_controller #(
     input wire [1:0] phi_kind,
     input wire [COLS*DATA_W-1:0] phi_bus,
     input wire [COLS*64-1:0] pe_rhs_product_bus,
+    input wire [COLS*64-1:0] pe_corr_acc_bus,
     input wire [SCALAR_W-1:0] last_result_value,
     input wire [IDX_W-1:0] last_result_idx,
     output reg [COLS*DATA_W-1:0] pe_rhs_phi_bus,
