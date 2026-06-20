@@ -546,9 +546,17 @@ module support_set_service #(
                             end
                             scan_q <= scan_q + 1'b1;
                         end else begin
-                            if (dup_q || (merge_depth_q >= MAX_K)) begin
+                            if (dup_q) begin
                                 merge_src_q <= merge_src_q + 1'b1;
                                 state_q <= S_MERGE_INIT;
+                            end else if (merge_depth_q >= MAX_K) begin
+                                if (found_q) begin
+                                    scan_q <= MAX_K_COUNT - 1'b1;
+                                    state_q <= S_MERGE_NEXT;
+                                end else begin
+                                    merge_src_q <= merge_src_q + 1'b1;
+                                    state_q <= S_MERGE_INIT;
+                                end
                             end else begin
                                 scan_q <= merge_depth_q;
                                 state_q <= S_MERGE_NEXT;
@@ -562,7 +570,8 @@ module support_set_service #(
                             scan_q <= scan_q - 1'b1;
                         end else begin
                             support_mem[(op_path_q * MAX_K) + insert_pos_q[K_AW-1:0]] <= op_idx_q;
-                            merge_depth_q <= merge_depth_q + 1'b1;
+                            if (merge_depth_q < MAX_K)
+                                merge_depth_q <= merge_depth_q + 1'b1;
                             merge_src_q <= merge_src_q + 1'b1;
                             state_q <= S_MERGE_INIT;
                         end
