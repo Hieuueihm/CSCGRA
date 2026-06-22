@@ -191,7 +191,7 @@ module pe_stream_topk_serial_service #(
                     end else begin
                         append_valid <= 1'b1;
                         append_idx <= sel_mem[append_pos_q];
-                        append_path <= append_path_in;
+                        append_path <= append_path;
                         append_wait_q <= 1'b1;
                     end
                 end
@@ -209,4 +209,5 @@ module pe_stream_topk_serial_service #(
         end
     end
 endmodule
+
 

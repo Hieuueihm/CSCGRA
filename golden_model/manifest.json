@@ -1,0 +1,21 @@
+﻿{
+  "created": "2026-06-22",
+  "source_dir": "D:/vivado_pj/analysis/m64n256k16",
+  "M": 64,
+  "N": 256,
+  "K": 16,
+  "algorithms": [
+    {"name":"OMP", "alg_idx":0},
+    {"name":"gOMP", "alg_idx":1},
+    {"name":"CoSaMP", "alg_idx":2},
+    {"name":"SP", "alg_idx":3},
+    {"name":"IHT", "alg_idx":4},
+    {"name":"HTP", "alg_idx":5},
+    {"name":"GP", "alg_idx":6},
+    {"name":"MP", "alg_idx":7}
+  ],
+  "sha256": {
+    "golden_cases.vh": "BDAC3A6A040AA1CDD4444B7C269C773555D78190C7E7FD70E724C58E8AF3EF35",
+    "golden_cases_array.vh": "8230BE93080E7BFFE499F0C001416B3B000EA11A2DB5229925E1F5C4430A36B0"
+  }
+}

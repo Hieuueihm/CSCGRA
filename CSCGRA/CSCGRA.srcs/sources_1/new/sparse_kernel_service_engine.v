@@ -206,17 +206,18 @@ module sparse_kernel_service_engine #(
         .busy(ls_busy), .done(ls_done_raw), .result(ls_result)
     );
 
+wire stream_select_ctx = ctx_valid && (uop_class == 4'd5) && ctx_word[31];
 wire ls_done_deferred_fire = ls_done_deferred_q && !stream_select_pending_q && !select_busy;
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         stream_select_pending_q <= 1'b0;
         ls_done_deferred_q <= 1'b0;
-    end else if (clear_error_pulse || start_pulse) begin
+    end else if (clear_error_pulse || (start_pulse && !stream_select_ctx)) begin
         stream_select_pending_q <= 1'b0;
         ls_done_deferred_q <= 1'b0;
     end else begin
-        if (ctx_valid && (uop_class == 4'd5) && ctx_word[31])
+        if (stream_select_ctx)
             stream_select_pending_q <= 1'b1;
         if (ls_done_raw && stream_select_pending_q && select_busy)
             ls_done_deferred_q <= 1'b1;
@@ -297,8 +298,8 @@ module support_set_service #(
 );
     localparam integer PATHS = 2;
     localparam integer PATH_AW = 1;
-    localparam integer MAX_K = 16;
-    localparam integer K_AW = 4;
+    localparam integer MAX_K = 32;
+    localparam integer K_AW = 5;
 
     localparam [3:0] S_IDLE       = 4'd0;
     localparam [3:0] S_COPY       = 4'd1;
@@ -440,13 +441,13 @@ module support_set_service #(
                         if (select_append_valid) begin
                             op_path_q <= select_append_path;
                             op_idx_q <= select_append_idx;
-                            op_sorted_q <= 1'b1;
-                            scan_q <= {(K_AW+1){1'b0}};
-                            insert_pos_q <= depth_mem[select_append_path];
-                            dup_q <= 1'b0;
-                            found_q <= 1'b0;
+                            op_sorted_q <= 1'b0;
                             if (depth_mem[select_append_path] >= MAX_K) op_done_q <= 1'b1;
-                            else state_q <= S_APPEND_SCAN;
+                            else begin
+                                support_mem[(select_append_path * MAX_K) + depth_mem[select_append_path][K_AW-1:0]] <= select_append_idx;
+                                depth_mem[select_append_path] <= depth_mem[select_append_path] + 1'b1;
+                                op_done_q <= 1'b1;
+                            end
                         end else if (candidate_selpath) begin
                             selected_path_q <= candidate_path;
                             op_done_q <= 1'b1;
@@ -591,3 +592,4 @@ module support_set_service #(
         end
     end
 endmodule
+

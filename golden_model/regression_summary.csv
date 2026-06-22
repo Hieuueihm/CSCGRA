@@ -1,0 +1,9 @@
+alg,M,N,K,status,summary,total_cycles,num_runs,last_cycle,iter_run_count,log,fail_hint
+OMP,64,256,16,PASS,"tb_omp_m64n256k16_cycle: 338 PASS, 0 FAIL",298720,1,298720,0,D:\vivado_pj\golden_model\verified_runs_stream\tb_omp_m64n256k16_cycle\run.log,
+MP,64,256,16,PASS,"tb_mp_m64n256k16_cycle: 338 PASS, 0 FAIL",298720,1,298720,0,D:\vivado_pj\golden_model\verified_runs_stream\tb_mp_m64n256k16_cycle\run.log,
+GOMP,64,256,16,PASS,"tb_gomp_m64n256k16_cycle: 354 PASS, 0 FAIL",408103,1,408103,0,D:\vivado_pj\golden_model\verified_runs_stream\tb_gomp_m64n256k16_cycle\run.log,
+IHT,64,256,16,PASS,"tb_iht_m64n256k16_cycle: 625 PASS, 0 FAIL",199968,16,12477,16,D:\vivado_pj\golden_model\verified_runs_stream\tb_iht_m64n256k16_cycle\run.log,
+GP,64,256,16,PASS,"tb_gp_m64n256k16_cycle: 353 PASS, 0 FAIL",199968,16,12477,16,D:\vivado_pj\golden_model\verified_runs_stream\tb_gp_m64n256k16_cycle\run.log,
+SP,64,256,16,PASS,"tb_sp_m64n256k16_cycle: 625 PASS, 0 FAIL",909218,16,56830,16,D:\vivado_pj\golden_model\verified_runs_stream\tb_sp_m64n256k16_cycle\run.log,
+CoSaMP,64,256,16,PASS,"tb_cosamp_m64n256k16_cycle: 625 PASS, 0 FAIL",940961,16,58824,16,D:\vivado_pj\golden_model\verified_runs_stream\tb_cosamp_m64n256k16_cycle\run.log,
+HTP,64,256,16,PASS,"tb_htp_m64n256k16_cycle: 353 PASS, 0 FAIL",533310,16,33329,16,D:\vivado_pj\golden_model\verified_runs_stream\tb_htp_m64n256k16_cycle\run.log,

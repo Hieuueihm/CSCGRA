@@ -1,0 +1,6 @@
+verified_runs*/
+*.jou
+*.log
+*.pb
+*.wdb
+xsim.dir/
