@@ -1,0 +1,13 @@
+runs/*
+!runs/corrpipe_summary.md
+*.jou
+*.log
+*.pb
+*.wdb
+*.dcp
+*.bak_*
+xsim.dir/
+.cache/
+.hw/
+.sim/
+.runs/
