@@ -69,6 +69,8 @@ module ls_matrix_service #(
 
     wire signed [BANKS*GE_W-1:0] bank_rdata_a;
     wire signed [BANKS*GE_W-1:0] bank_rdata_b;
+    wire signed [BANKS*GE_W-1:0] direct_rdata_a;
+    wire signed [BANKS*GE_W-1:0] direct_rdata_b;
 
     function [4:0] bank_addr;
         input [4:0] row;
@@ -115,6 +117,8 @@ module ls_matrix_service #(
             end
             assign bank_rdata_a[bank*GE_W +: GE_W] = mem_a[rd_addr_a];
             assign bank_rdata_b[bank*GE_W +: GE_W] = mem_b[rd_addr_b];
+            assign direct_rdata_a[bank*GE_W +: GE_W] = mem_a[bank_addr(row_a, col_a)];
+            assign direct_rdata_b[bank*GE_W +: GE_W] = mem_b[bank_addr(row_b, col_b)];
         end
     endgenerate
 
@@ -158,13 +162,31 @@ module ls_matrix_service #(
                             state <= S_CLEAR;
                         end else if (op == OP_RHS_WRITE) begin
                             rhs_mem[row_a[3:0]] <= rhs_wdata;
-                            state <= S_DONE;
+                            busy <= 1'b0;
+                            done <= 1'b1;
+                            state <= S_IDLE;
                         end else if (op == OP_RHS_READ) begin
                             rhs_rdata <= rhs_mem[row_a[3:0]];
-                            state <= S_DONE;
+                            busy <= 1'b0;
+                            done <= 1'b1;
+                            state <= S_IDLE;
                         end else if (op == OP_RHS_UPDATE) begin
                             rhs_mem[row_a[3:0]] <= rhs_mem[row_a[3:0]] - (($signed(factor) * $signed(rhs_mem[row_b[3:0]])) >>> FRAC_W);
-                            state <= S_DONE;
+                            busy <= 1'b0;
+                            done <= 1'b1;
+                            state <= S_IDLE;
+                        end else if (op == OP_READ2) begin
+                            rdata_a <= direct_rdata_a[row_a[2:0]*GE_W +: GE_W];
+                            rdata_b <= direct_rdata_b[row_b[2:0]*GE_W +: GE_W];
+                            busy <= 1'b0;
+                            done <= 1'b1;
+                            state <= S_IDLE;
+                        end else if (op == OP_ROW_UPDATE) begin
+                            row_value_q <= direct_rdata_a[row_a[2:0]*GE_W +: GE_W];
+                            product_q <= $signed(factor) * $signed(direct_rdata_b[row_b[2:0]*GE_W +: GE_W]);
+                            wr_bank_q <= row_a[2:0];
+                            wr_addr_q <= bank_addr(row_a, col_a);
+                            state <= S_UPDATE_WR;
                         end else if (op == OP_WRITE) begin
                             wr_bank_q <= row_a[2:0];
                             wr_addr_q <= bank_addr(row_a, col_a);
@@ -240,3 +262,4 @@ module ls_matrix_service #(
         end
     end
 endmodule
+

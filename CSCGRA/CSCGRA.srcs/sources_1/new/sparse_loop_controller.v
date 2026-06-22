@@ -130,7 +130,18 @@ function [31:0] lfsr_advance16;
         end
     end
 endfunction
-
+function [31:0] lfsr_advance32;
+    input [31:0] state;
+    input [5:0] steps;
+    integer adv32_i;
+    begin
+        lfsr_advance32 = state;
+        for (adv32_i = 0; adv32_i < 32; adv32_i = adv32_i + 1) begin
+            if (adv32_i < steps)
+                lfsr_advance32 = galois_step(lfsr_advance32);
+        end
+    end
+endfunction
 function [31:0] lfsr_jump_padded;
     input [31:0] state;
     input [IDX_W-1:0] steps;
@@ -1835,7 +1846,7 @@ always @(posedge clk or negedge rst_n) begin
                 end
             end
             S_GRAM_PE_WAIT: begin
-                state <= S_GRAM_PE_WAIT2;
+                state <= S_ACC_GRAM;
             end
             S_GRAM_PE_WAIT2: begin
                 state <= S_ACC_GRAM;
@@ -2292,6 +2303,17 @@ always @(posedge clk or negedge rst_n) begin
                 state <= S_CORR_PE_WAIT;
             end
             S_CORR_PE_WAIT: begin
+                if (corr_row + 1 < m_size) begin
+                    rd_addr <= 10'h080 + ((corr_row + 1'b1) >> 3);
+                    for (corr_lane = 0; corr_lane < COLS; corr_lane = corr_lane + 1) begin
+                        if ((corr_col + corr_lane[IDX_W-1:0]) < n_size)
+                            corr_phi_lane[corr_lane*DATA_W +: DATA_W] <= phi_from_lfsr_state(lfsr_advance(corr_row_next_state, corr_lane[IDX_W-1:0] + 1'b1));
+                        else
+                            corr_phi_lane[corr_lane*DATA_W +: DATA_W] <= {DATA_W{1'b0}};
+                    end
+                    phi_state_q <= lfsr_jump_padded(corr_row_next_state, padded_n_q);
+                    corr_scan_col <= {IDX_W{1'b0}};
+                end
                 state <= S_CORR_LATCH;
             end
             S_CORR_LATCH: begin
@@ -2304,8 +2326,7 @@ always @(posedge clk or negedge rst_n) begin
                     corr_row <= corr_row + 1'b1;
                     corr_row_state <= corr_row_next_state;
                     corr_row_next_state <= lfsr_jump_padded(corr_row_next_state, padded_n_q);
-                    rd_addr <= 10'h080 + ((corr_row + 1'b1) >> 3);
-                    state <= S_CORR_SCAN;
+                    state <= S_CORR_ACC;
                 end
             end
             S_CORR_WRITE: begin
@@ -2391,20 +2412,19 @@ always @(posedge clk or negedge rst_n) begin
             end
             S_SCAN_DIRECT_STEP: begin
                 for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                    if ((gi < active_k[4:0]) && (support_cache[gi] >= phi_scan_col_q) && (support_cache[gi] < (phi_scan_col_q + 10'd16))) begin
-                        phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance16(phi_scan_state_q, {1'b0, (support_cache[gi] - phi_scan_col_q[IDX_W-1:0])} + 5'd1));
+                    if ((gi < active_k[4:0]) && (support_cache[gi] >= phi_scan_col_q) && (support_cache[gi] < (phi_scan_col_q + 10'd32))) begin
+                        phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance32(phi_scan_state_q, {1'b0, (support_cache[gi] - phi_scan_col_q[IDX_W-1:0])} + 6'd1));
                     end
                 end
-                if (phi_scan_col_q + 10'd16 >= padded_n_q) begin
-                    phi_state_q <= lfsr_advance16(phi_scan_state_q, 5'd16);
+                if (phi_scan_col_q + 10'd32 >= padded_n_q) begin
+                    phi_state_q <= lfsr_advance32(phi_scan_state_q, 6'd32);
                     state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
                 end else begin
-                    phi_scan_col_q <= phi_scan_col_q + 10'd16;
-                    phi_scan_state_q <= lfsr_advance16(phi_scan_state_q, 5'd16);
+                    phi_scan_col_q <= phi_scan_col_q + 10'd32;
+                    phi_scan_state_q <= lfsr_advance32(phi_scan_state_q, 6'd32);
                 end
             end
-            S_DONE: begin
-                busy <= 1'b0;
+            S_DONE: begin                busy <= 1'b0;
                 done <= 1'b1;
                 result <= {{(SCALAR_W-32){1'b0}}, accum_dbg};
                 state <= S_IDLE;
@@ -2414,6 +2434,9 @@ always @(posedge clk or negedge rst_n) begin
     end
 end
 endmodule
+
+
+
 
 
 
