@@ -33,3 +33,13 @@ Thumbs.db
 # Verilator cache
 analysis/verilator_build/
 analysis/verification/verilator_smoke/
+
+# Local optimization/verification scratch trees
+CSCGRA_opt/
+analysis/current_fulliter_diag/
+analysis/cycle_mismatch_check/
+analysis/synth_cgra_top_current/
+analysis/soc_bd_current/artifacts/
+analysis/soc_bd_current/vivado_zcu106_soc/
+iter_*_CongestedCLBsAndNets.txt
+paper_figures/
