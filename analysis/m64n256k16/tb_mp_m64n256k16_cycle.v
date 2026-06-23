@@ -17,7 +17,7 @@ wire [31:0] m_axi_wdata; wire [3:0] m_axi_wstrb; wire m_axi_wlast; wire m_axi_wv
 reg [1:0] m_axi_bresp; reg m_axi_bvalid; wire m_axi_bready;
 wire irq_done, irq_error;
 reg [23:0] got; reg signed [24:0] diff;
-`include "golden_cases.vh"
+`include "golden_cases_array.vh"
 
 cgra_top dut(.clk(clk),.rst_n(rst_n),.s_axi_awaddr(s_axi_awaddr),.s_axi_awvalid(s_axi_awvalid),.s_axi_awready(s_axi_awready),.s_axi_wdata(s_axi_wdata),.s_axi_wstrb(s_axi_wstrb),.s_axi_wvalid(s_axi_wvalid),.s_axi_wready(s_axi_wready),.s_axi_bresp(s_axi_bresp),.s_axi_bvalid(s_axi_bvalid),.s_axi_bready(s_axi_bready),.s_axi_araddr(s_axi_araddr),.s_axi_arvalid(s_axi_arvalid),.s_axi_arready(s_axi_arready),.s_axi_rdata(s_axi_rdata),.s_axi_rresp(s_axi_rresp),.s_axi_rvalid(s_axi_rvalid),.s_axi_rready(s_axi_rready),.m_axi_araddr(m_axi_araddr),.m_axi_arlen(m_axi_arlen),.m_axi_arsize(m_axi_arsize),.m_axi_arburst(m_axi_arburst),.m_axi_arvalid(m_axi_arvalid),.m_axi_arready(m_axi_arready),.m_axi_rdata(m_axi_rdata),.m_axi_rvalid(m_axi_rvalid),.m_axi_rlast(m_axi_rlast),.m_axi_rready(m_axi_rready),.m_axi_awaddr(m_axi_awaddr),.m_axi_awlen(m_axi_awlen),.m_axi_awsize(m_axi_awsize),.m_axi_awburst(m_axi_awburst),.m_axi_awvalid(m_axi_awvalid),.m_axi_awready(m_axi_awready),.m_axi_wdata(m_axi_wdata),.m_axi_wstrb(m_axi_wstrb),.m_axi_wlast(m_axi_wlast),.m_axi_wvalid(m_axi_wvalid),.m_axi_wready(m_axi_wready),.m_axi_bresp(m_axi_bresp),.m_axi_bvalid(m_axi_bvalid),.m_axi_bready(m_axi_bready),.irq_done(irq_done),.irq_error(irq_error));
 
@@ -46,7 +46,7 @@ task read_spm_word; input [9:0] base; input integer idx; output [23:0] value; re
 endcase end endtask
 
 function [63:0] sparse_op_ctx; input [7:0] sop; input is_last; begin sparse_op_ctx=64'd0; sparse_op_ctx[63:60]=4'h1; sparse_op_ctx[59:56]=4'd8; sparse_op_ctx[27:20]=sop; sparse_op_ctx[47:44]=is_last?4'd6:4'd0; end endfunction
-function [63:0] reduce_argmax_ctx; input is_last; begin reduce_argmax_ctx=64'd0; reduce_argmax_ctx[63:60]=4'h1; reduce_argmax_ctx[59:56]=4'd4; reduce_argmax_ctx[55:52]=4'd1; reduce_argmax_ctx[51:48]=4'd2; reduce_argmax_ctx[47:44]=is_last?4'd6:4'd0; reduce_argmax_ctx[43:41]=3'd3; reduce_argmax_ctx[34:32]=3'd3; reduce_argmax_ctx[27:24]=4'd4; end endfunction
+function [63:0] reduce_argmax_ctx; input is_last; begin reduce_argmax_ctx=64'd0; reduce_argmax_ctx[63:60]=4'h1; reduce_argmax_ctx[59:56]=4'd4; reduce_argmax_ctx[55:52]=4'd1; reduce_argmax_ctx[51:48]=4'd2; reduce_argmax_ctx[47:44]=is_last?4'd6:4'd0; reduce_argmax_ctx[43:41]=3'd3; reduce_argmax_ctx[34:32]=3'd0; reduce_argmax_ctx[27:24]=4'd4; end endfunction
 function [63:0] candidate_append_result_ctx; input is_last; begin candidate_append_result_ctx=64'd0; candidate_append_result_ctx[63:60]=4'h1; candidate_append_result_ctx[59:56]=4'd6; candidate_append_result_ctx[47:44]=is_last?4'd6:4'd0; candidate_append_result_ctx[22:20]=3'd0; candidate_append_result_ctx[19:16]=4'b0001; end endfunction
 
 
@@ -56,13 +56,13 @@ task seed_residual_from_y; begin for(i=0;i<gold_case_m(0);i=i+1) write_spm_word(
 
 task run_prog; input integer plen; begin axi_write(12'h00C,gold_case_m(0)); axi_write(12'h010,gold_case_n(0)); axi_write(12'h014,gold_case_k(0)); axi_write(12'h020,gold_case_seed(0)); axi_write(12'h024,gold_case_scale(0)); axi_write(12'h030,{28'd0,gold_case_phi_kind(0),1'b0,1'b1}); axi_write(12'h040,0); axi_write(12'h044,plen); axi_write(12'h000,1); tick(); timeout=0; while(!irq_done && !irq_error && timeout<50000000) begin timeout=timeout+1; tick(); end $display("MEASURED_CYCLES %0d", timeout); check("irq_done", irq_done && !irq_error); repeat(8) tick(); end endtask
 
-task build_omp_program; begin pc=0; for(iter_idx=0; iter_idx<gold_case_k(0); iter_idx=iter_idx+1) begin write_ctx(pc[10:0], sparse_op_ctx(8'h81,1'b0)); pc=pc+1; write_ctx(pc[10:0], reduce_argmax_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], candidate_append_result_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], sparse_op_ctx(8'h86, (iter_idx==gold_case_k(0)-1))); pc=pc+1; end end endtask
+task build_mp_program; begin pc=0; for(iter_idx=0; iter_idx<gold_case_k(0); iter_idx=iter_idx+1) begin write_ctx(pc[10:0], sparse_op_ctx(8'h81,1'b0)); pc=pc+1; write_ctx(pc[10:0], reduce_argmax_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], candidate_append_result_ctx(1'b0)); pc=pc+1; write_ctx(pc[10:0], sparse_op_ctx(8'h85, (iter_idx==gold_case_k(0)-1))); pc=pc+1; end end endtask
 
 task check_support_trace; begin for(iter_idx=0; iter_idx<gold_case_k(0); iter_idx=iter_idx+1) begin exp_idx = gold_support_idx(0,7,iter_idx,iter_idx); $display("SUPPORT_TRACE iter=%0d rtl=%0d gold=%0d", iter_idx, dut.u_sparse_kernel_service_engine.u_support_service.support_mem[iter_idx], exp_idx); check("support_match", dut.u_sparse_kernel_service_engine.u_support_service.support_mem[iter_idx] == exp_idx[9:0]); end check("support_depth", dut.u_sparse_kernel_service_engine.u_support_service.depth_mem[0] == gold_case_k(0)); end endtask
 
 task check_final_vectors; begin for(i=0;i<gold_case_n(0);i=i+1) begin read_spm_word(VEC_X,i,got); check("x_final", absdiff_le(got, gold_iter_x_hat(0,7,gold_case_k(0)-1,i), 512)); end for(i=0;i<gold_case_m(0);i=i+1) begin read_spm_word(VEC_R,i,got); check("r_final", absdiff_le(got, gold_iter_residual(0,7,gold_case_k(0)-1,i), 512)); end end endtask
 
-initial begin clk=0; pass_cnt=0; fail_cnt=0; reset_dut(); load_case0(); seed_residual_from_y(); build_omp_program(); run_prog(pc); check_support_trace(); check_final_vectors(); $display("tb_mp_m64n256k16_cycle: %0d PASS, %0d FAIL", pass_cnt, fail_cnt); $finish; end
+initial begin clk=0; pass_cnt=0; fail_cnt=0; reset_dut(); load_case0(); seed_residual_from_y(); build_mp_program(); run_prog(pc); check_support_trace(); check_final_vectors(); $display("tb_mp_m64n256k16_cycle: %0d PASS, %0d FAIL", pass_cnt, fail_cnt); $finish; end
 endmodule
 
 

@@ -38,6 +38,70 @@ def parse_golden():
     vals["iters"] = iters
     return vals
 
+def parse_flat_assignments(text: str, fname: str) -> dict[int, str]:
+    m = re.search(rf"function\s+(?:integer|\[[^\]]+\])\s+{fname};(?P<body>.*?)endfunction", text, re.S)
+    if not m:
+        return {}
+    out = {}
+    for flat, value in re.findall(rf"\b(\d+)\s*:\s*{fname}\s*=\s*([^;]+);", m.group("body")):
+        out[int(flat)] = value.strip()
+    return out
+
+
+def span_equal(values: dict[int, str], lhs: int, rhs: int, count: int) -> bool:
+    for off in range(count):
+        if values.get(lhs + off) != values.get(rhs + off):
+            return False
+    return True
+
+
+def detect_stale_golden_pairs() -> dict[str, str]:
+    text = read_text(GOLDEN_DIR / "golden_cases.vh")
+
+    def localparam(name: str, default: int) -> int:
+        m = re.search(rf"localparam\s+integer\s+{name}\s*=\s*(\d+)\s*;", text)
+        return int(m.group(1)) if m else default
+
+    max_n = localparam("GOLD_MAX_N", 256)
+    max_k = localparam("GOLD_MAX_K", 32)
+    max_iters = localparam("GOLD_MAX_ITERS", 16)
+    checks = [
+        ("gold_support_len", max_iters, "iter"),
+        ("gold_support_idx", max_iters * max_k, "support"),
+        ("gold_iter_x_hat", max_iters * max_n, "vector"),
+        ("gold_iter_residual", max_iters * max_n, "vector"),
+        ("gold_iter_ls_x_hat", max_iters * max_n, "vector"),
+        ("gold_iter_ls_residual", max_iters * max_n, "vector"),
+    ]
+    flat_maps = {name: parse_flat_assignments(text, name) for name, _, _ in checks}
+
+    def alg_blocks_equal(lhs_alg: int, rhs_alg: int) -> bool:
+        compared = 0
+        for name, count, kind in checks:
+            values = flat_maps[name]
+            if not values:
+                continue
+            compared += 1
+            if kind == "iter":
+                lhs_base = lhs_alg * max_iters
+                rhs_base = rhs_alg * max_iters
+            elif kind == "support":
+                lhs_base = lhs_alg * max_iters * max_k
+                rhs_base = rhs_alg * max_iters * max_k
+            else:
+                lhs_base = lhs_alg * max_iters * max_n
+                rhs_base = rhs_alg * max_iters * max_n
+            if not span_equal(values, lhs_base, rhs_base, count):
+                return False
+        return compared > 0
+
+    stale = {}
+    if alg_blocks_equal(ALG_INDEX["omp"], ALG_INDEX["mp"]):
+        stale["mp"] = "GOLDEN_STALE: MP golden block is identical to OMP"
+    if alg_blocks_equal(ALG_INDEX["iht"], ALG_INDEX["gp"]):
+        stale["gp"] = "GOLDEN_STALE: GP golden block is identical to IHT"
+    return stale
+
 
 def classify_status(summary_line: str | None, log_text: str, returncode: int, dataset_ok: bool, iter_ok: bool):
     if returncode != 0 or re.search(r"\b(ERROR|FATAL)\b", log_text):
@@ -65,6 +129,7 @@ def run_cmd(cmd: str, cwd: Path) -> tuple[int, str]:
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     golden = parse_golden()
+    stale_golden = detect_stale_golden_pairs()
     rtl_files = sorted(str(p) for p in RTL_DIR.glob("*.v"))
     rows = []
     for alg in ALGS:
@@ -80,7 +145,7 @@ def main():
             golden.get("GOLD_CASE_0_N") == 256 and
             golden.get("GOLD_CASE_0_K") == 16 and
             golden.get("GOLD_MAX_N") == 256 and
-            'golden_cases.vh' in tb_text
+            ('golden_cases.vh' in tb_text or 'golden_cases_array.vh' in tb_text)
         )
         expected_iters = golden.get("iters", {}).get(ALG_INDEX[alg])
         if expected_iters is None and alg in ["omp", "mp"]:
@@ -126,6 +191,10 @@ def main():
             notes.append("INCOMPLETE_ITER")
         if real_fail_hint:
             notes.append(real_fail_hint[:240])
+        if alg in stale_golden:
+            notes.append(stale_golden[alg])
+            if status == "FAIL_TRUE":
+                status = "FAIL_GOLDEN_STALE"
         rows.append({
             "alg": alg,
             "M": golden.get("GOLD_CASE_0_M"),
@@ -157,6 +226,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 

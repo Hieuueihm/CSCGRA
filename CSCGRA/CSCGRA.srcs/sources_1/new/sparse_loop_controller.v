@@ -86,7 +86,7 @@ S_CACHE_BUILD=56, S_SCAN_DIRECT=55,
 S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76, S_SCAN_DIRECT_STEP=77, S_CACHE_BUILD_STEP=78,
 S_LS_CLEAR_START=86, S_LS_CLEAR_WAIT=87, S_SOLVE_SYM_READ=88, S_SOLVE_SYM_WAIT=89, S_SOLVE_SYM_WRITE=90, S_SOLVE_SYM_WRITE_WAIT=91,
 S_ELIM_ROW_READ=92, S_ELIM_ROW_WAIT=93, S_ELIM_UPDATE_START=94, S_ELIM_UPDATE_WAIT=95, S_BACK_ACC_READ=96, S_BACK_ACC_WAIT=97, S_BACK_PREP_READ=98, S_BACK_PREP_WAIT=99, S_GRAM_ACC_WAIT=100, S_SCAN_DIRECT_LATCH=101, S_RHS_INIT_WRITE=102, S_RHS_INIT_WAIT=103, S_ELIM_RHS_READ_WAIT=104, S_ELIM_RHS_UPDATE_WAIT=105, S_BACK_RHS_READ=106, S_BACK_RHS_READ_WAIT=107;
-localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6;
+localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GP_UPDATE=4'd7;
 localparam [4:0] RHS_BLOCK_STRIDE = COLS;
 localparam [2:0] LS_OP_CLEAR=3'd0, LS_OP_WRITE=3'd1, LS_OP_READ2=3'd2, LS_OP_ACC_BLOCK=3'd3, LS_OP_ROW_UPDATE=3'd4, LS_OP_RHS_WRITE=3'd5, LS_OP_RHS_READ=3'd6, LS_OP_RHS_UPDATE=3'd7;
 
@@ -1516,7 +1516,7 @@ always @(*) begin
     pe_corr_acc_clear = busy && (active_op == OP_CORR) && ((state == S_CORR_INIT) || (state == S_CORR_WRITE));
     pe_corr_acc_en = busy && (active_op == OP_CORR) && (state == S_CORR_LATCH);
     pe_sparse_op = busy ? active_op : op_sel;
-    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC))) || ((active_op == OP_CORR) && (state == S_CORR_ACC)));
+    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC))) || ((active_op == OP_CORR) && (state == S_CORR_ACC)));
     pe_rhs_phi_bus = {COLS*DATA_W{1'b0}};
     pe_rhs_y_bus = {COLS*DATA_W{1'b0}};
     for (rhs_lane = 0; rhs_lane < COLS; rhs_lane = rhs_lane + 1) begin
@@ -1533,7 +1533,7 @@ always @(*) begin
         base_addr = 10'h180 + write_idx[IDX_W-1:3];
     else if ((active_op == OP_REFINE_SPARSE) && (state == S_WX))
         base_addr = 10'h000 + sparse_target_idx[IDX_W-1:3];
-    else if (active_op == OP_IHT_UPDATE)
+    else if ((active_op == OP_IHT_UPDATE) || (active_op == OP_GP_UPDATE))
         base_addr = 10'h000 + write_idx[IDX_W-1:3];
     else
         base_addr = 10'h000 + write_idx[IDX_W-1:3];
@@ -1593,11 +1593,13 @@ always @(*) begin
         write_value_now = write_value;
     end else if ((active_op == OP_IHT_UPDATE) && (state == S_IHT_SCORE_READ)) begin
         write_value_now = sat_s24($signed(iht_x_value) + ($signed(rd_data[write_idx[2:0]*DATA_W +: DATA_W]) >>> MU_SHIFT));
+    end else if ((active_op == OP_GP_UPDATE) && (state == S_IHT_SCORE_READ)) begin
+        write_value_now = sat_s24($signed(iht_x_value) + $signed(rd_data[write_idx[2:0]*DATA_W +: DATA_W]));
     end else if ((active_op == OP_PRUNE_X) && (state == S_PRUNE_X_WAIT)) begin
         write_value_now = keep_x ? rd_data[write_idx[2:0]*DATA_W +: DATA_W] : {DATA_W{1'b0}};
     end else if ((active_op == OP_MP_UPDATE) && (state == S_MP_X_WRITE)) begin
         write_value_now = mp_x_new_q;
-    end else if (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_RESID)) && (k_active <= MAX_K) && (state == S_WR)) begin
+    end else if (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_RESID) || (active_op == OP_MP_UPDATE)) && (k_active <= MAX_K) && (state == S_WR)) begin
         write_value_now = sat_s24($signed(rd_data[write_idx[2:0]*DATA_W +: DATA_W]) - $signed(residual_acc >>> 16));
     end else
         write_value_now = write_value;
@@ -1769,7 +1771,7 @@ always @(posedge clk or negedge rst_n) begin
                     corr_row_next_state <= lfsr_jump_padded((|seed) ? seed : DEFAULT_SEED, ((n_size + 7) >> 3) << 3);
                     padded_n_q <= ((n_size + 7) >> 3) << 3;
                     state <= S_CORR_SCAN;
-                end else if ((active_op == OP_IHT_UPDATE) && (n_size != 0)) begin
+                end else if (((active_op == OP_IHT_UPDATE) || (active_op == OP_GP_UPDATE)) && (n_size != 0)) begin
                     write_idx <= {IDX_W{1'b0}};
                     write_limit <= n_size;
                     rd_addr <= 10'h000;
@@ -1939,7 +1941,7 @@ always @(posedge clk or negedge rst_n) begin
                 end else begin
                     write_idx <= write_idx + 1'b1;
                     if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
-                        rd_addr <= 10'h100 + ((write_idx + 1'b1) >> 3);
+                        rd_addr <= ((active_op == OP_MP_UPDATE) ? 10'h080 : 10'h100) + ((write_idx + 1'b1) >> 3);
                                 for (gi = 0; gi < MAX_K; gi = gi + 1)
                         phi_cache[gi] <= {DATA_W{1'b0}};
                     state <= S_SCAN_DIRECT;
@@ -2263,12 +2265,23 @@ always @(posedge clk or negedge rst_n) begin
             end
             S_MP_DIV_DONE: begin
                 div_return_mp <= 1'b0;
+                coeff_mem[0] <= sat_s24(div_result);
                 mp_x_new_q <= sat_s24($signed(mp_x_old_q) + $signed(div_result));
                 write_idx <= mp_idx_q;
                 state <= S_MP_X_WRITE;
             end
             S_MP_X_WRITE: begin
-                state <= S_DONE;
+                active_k <= 8'd1;
+                support_cache[0] <= mp_idx_q;
+                write_idx <= {IDX_W{1'b0}};
+                write_limit <= m_size;
+                phase_residual <= 1'b1;
+                rd_addr <= 10'h080;
+                phi_state_q <= (|seed) ? seed : DEFAULT_SEED;
+                padded_n_q <= ((n_size + 7) >> 3) << 3;
+                for (gi = 0; gi < MAX_K; gi = gi + 1)
+                    phi_cache[gi] <= {DATA_W{1'b0}};
+                state <= S_SCAN_DIRECT;
             end
             S_SOLVE_DONE: begin
                 write_idx <= {IDX_W{1'b0}};

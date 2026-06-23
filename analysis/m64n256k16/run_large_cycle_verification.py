@@ -79,7 +79,7 @@ def main():
             golden.get("GOLD_CASE_0_N") == 256 and
             golden.get("GOLD_CASE_0_K") == 16 and
             golden.get("GOLD_MAX_N") == 256 and
-            'golden_cases.vh' in tb_text
+            ('golden_cases.vh' in tb_text or 'golden_cases_array.vh' in tb_text)
         )
         expected_iters = golden.get("iters", {}).get(ALG_INDEX[alg])
         if expected_iters is None and alg in ["omp", "mp"]:
