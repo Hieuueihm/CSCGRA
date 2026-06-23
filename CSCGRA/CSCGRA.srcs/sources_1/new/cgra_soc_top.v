@@ -50,10 +50,11 @@ module cgra_soc_top #(
     input  wire                 m_axi_gmem_bvalid,
     output wire                 m_axi_gmem_bready,
 
-    output wire                 interrupt,
-    output wire                 irq_done,
-    output wire                 irq_error
+    output wire                 interrupt
 );
+    wire irq_done;
+    wire irq_error;
+
     cgra_top #(
         .AXIL_AW(AXIL_AW),
         .AXIL_DW(AXIL_DW),
