@@ -1,7 +1,11 @@
 set script_dir [file dirname [file normalize [info script]]]
 set_param general.maxThreads 8
 set root_dir {D:/vivado_pj}
-set run_dir [file join $root_dir CSCGRA_opt runs bd_zcu106_soc_opt_current]
+if {[info exists ::env(CSCGRA_SOC_RUN_DIR)]} {
+  set run_dir [file normalize $::env(CSCGRA_SOC_RUN_DIR)]
+} else {
+  set run_dir [file join $root_dir CSCGRA runs bd_zcu106_soc_opt_current]
+}
 set proj_dir [file join $run_dir vivado_zcu106_soc]
 set report_dir [file join $run_dir reports]
 set artifact_dir [file join $run_dir artifacts]
@@ -12,7 +16,7 @@ file mkdir $artifact_dir
 create_project cscgra_zcu106_soc_opt $proj_dir -part xczu7ev-ffvc1156-2-e -force
 set_property target_language Verilog [current_project]
 catch {set_property board_part xilinx.com:zcu106:part0:2.6 [current_project]}
-set rtl_dir [file join $root_dir CSCGRA_opt CSCGRA.srcs sources_1 new]
+set rtl_dir [file join $root_dir CSCGRA CSCGRA.srcs sources_1 new]
 set rtl_files [glob -nocomplain -directory $rtl_dir *.v]
 if {[llength $rtl_files] == 0} { error "No RTL files found in $rtl_dir" }
 add_files -norecurse $rtl_files

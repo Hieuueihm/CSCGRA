@@ -7,6 +7,7 @@
 *.zip
 *.bak
 *.backup.*
+*.dmp
 *.rpt
 *.dcp
 *.bit
@@ -19,6 +20,7 @@
 *.sim/
 *.gen/
 .Xil/
+.hdi.isWriteableTest.*.tmp
 xsim.dir/
 
 # Python/cache
@@ -40,6 +42,7 @@ analysis/cycle_mismatch_check/
 analysis/synth_cgra_top_current/
 analysis/soc_bd_current/artifacts/
 analysis/soc_bd_current/vivado_zcu106_soc/
+analysis/runs/
 iter_*_CongestedCLBsAndNets.txt
 paper_figures/
 CSCGRA/runs/

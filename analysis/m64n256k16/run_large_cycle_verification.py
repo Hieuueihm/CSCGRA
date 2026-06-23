@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(r"D:\vivado_pj")
 RTL_DIR = ROOT / "CSCGRA" / "CSCGRA.srcs" / "sources_1" / "new"
 TB_DIR = ROOT / "analysis" / "m64n256k16"
-OUT_DIR = TB_DIR / "verified_runs"
+OUT_DIR = Path(os.environ.get("CSCGRA_VERIFIED_RUNS_DIR", str(TB_DIR / "verified_runs")))
 VIVADO_BIN = Path(r"C:\Xilinx\Vivado\2024.2\bin")
 ALGS = ["omp", "gomp", "mp", "iht", "gp", "sp", "cosamp", "htp"]
 ALG_INDEX = {"omp": 0, "gomp": 1, "cosamp": 2, "sp": 3, "iht": 4, "htp": 5, "gp": 6, "mp": 7}

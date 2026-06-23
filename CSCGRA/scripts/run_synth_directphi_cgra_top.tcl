@@ -1,4 +1,4 @@
-set root "D:/vivado_pj/CSCGRA_opt"
+set root "D:/vivado_pj/CSCGRA"
 set outdir "$root/runs/synth_directphi_cgra_top"
 file mkdir $outdir
 create_project -in_memory -part xczu7ev-ffvc1156-2-e
