@@ -19,6 +19,10 @@ int cscgra_soc_main_8alg_compile_via_main_c;
 #define CGRA_RUN_ALG_MASK 0x01ffU
 #endif
 
+#ifndef CGRA_DUMP_FULL_X
+#define CGRA_DUMP_FULL_X 0
+#endif
+
 #define CGRA_DDR_LOW_LIMIT 0x80000000UL
 
 #define REG_CTRL         0x000U
@@ -149,9 +153,16 @@ static int run_kernel(const alg_desc_t *alg){uint32_t pc=0U; if(alg->kind==ALG_O
 static uint32_t gold_at(const alg_desc_t *alg,uint32_t idx){for(uint32_t i=0;i<alg->gold_x_count;++i) if(alg->gold_x[i].index==idx) return alg->gold_x[i].value; return 0U;}
 static int verify_x(const alg_desc_t *alg){uint32_t fail=0U,shown=0U; for(uint32_t i=0;i<N_SIZE;++i){uint32_t got=x_ddr[i]&0x00ffffffU, exp=gold_at(alg,i); if(!absdiff_le24(got,exp,GOLD_TOL)){fail++; if(shown<16U){xil_printf("  MISMATCH %s x[%d] got=0x%x exp=0x%x\r\n",alg->name,i,got,exp); shown++;}}} if(fail==0U){xil_printf("VERIFY %s x_final PASS alg_idx=%d tol=%d\r\n",alg->name,alg->gold_alg_idx,GOLD_TOL); return 0;} xil_printf("VERIFY %s x_final FAIL mismatches=%d tol=%d\r\n",alg->name,fail,GOLD_TOL); return -1;}
 static void print_samples(const char *name){uint32_t n=0U; xil_printf("%s x non-zero samples:\r\n",name); for(uint32_t i=0;i<N_SIZE&&n<24U;++i){uint32_t v=x_ddr[i]&0x00ffffffU; if(v){xil_printf("  x[%d] = 0x%x\r\n",i,v); n++;}} if(n==0U) xil_printf("  all first %d entries are zero\r\n",N_SIZE);} 
+static void dump_full_x(const alg_desc_t *alg){
+#if CGRA_DUMP_FULL_X
+    for(uint32_t i=0;i<N_SIZE;++i){xil_printf("X_DUMP %s alg_idx=%d idx=%d value=0x%x\r\n",alg->name,alg->gold_alg_idx,i,x_ddr[i]&0x00ffffffU);}
+#else
+    (void)alg;
+#endif
+}
 static void configure_case(uint32_t y,uint32_t x){cgra_wr(REG_M_SIZE,M_SIZE); cgra_wr(REG_N_SIZE,N_SIZE); cgra_wr(REG_K_PARAM,K_PARAM); cgra_wr(REG_Y_DDR,y); cgra_wr(REG_X_DDR,x); cgra_wr(REG_SEED,SEED); cgra_wr(REG_PHI_SCALE,PHI_SCALE_Q8_16); cgra_wr(REG_FLAGS,FLAGS_TESTBENCH);} 
 static int prepare_spm(uint32_t y,uint32_t z){if(dma_read("dma zero -> vec0",z,VEC_X,0U)!=0) return -1; if(dma_read("dma zero -> vec1",z,VEC_R,0U)!=0) return -1; if(dma_read("dma zero -> vec3",z,VEC_SCORE,0U)!=0) return -1; if(dma_read("dma y -> vec2",y,VEC_Y,1U)!=0) return -1; if(dma_read("dma y -> vec1",y,VEC_R,1U)!=0) return -1; return 0;}
-static int run_one(const alg_desc_t *alg,uint32_t y,uint32_t z,uint32_t x){xil_printf("\r\n=== RUN %s alg_idx=%d ===\r\n",alg->name,alg->gold_alg_idx); for(uint32_t i=0;i<N_SIZE;++i) x_ddr[i]=0U; Xil_DCacheFlushRange((UINTPTR)x_ddr,sizeof(x_ddr)); cgra_soft_reset(); configure_case(y,x); if(prepare_spm(y,z)!=0) return -1; if(run_kernel(alg)!=0) return -1; if(dma_write("dma vec0 -> x",x,VEC_X,0U)!=0) return -1; Xil_DCacheInvalidateRange((UINTPTR)x_ddr,sizeof(x_ddr)); print_samples(alg->name); return verify_x(alg);}
+static int run_one(const alg_desc_t *alg,uint32_t y,uint32_t z,uint32_t x){xil_printf("\r\n=== RUN %s alg_idx=%d ===\r\n",alg->name,alg->gold_alg_idx); for(uint32_t i=0;i<N_SIZE;++i) x_ddr[i]=0U; Xil_DCacheFlushRange((UINTPTR)x_ddr,sizeof(x_ddr)); cgra_soft_reset(); configure_case(y,x); if(prepare_spm(y,z)!=0) return -1; if(run_kernel(alg)!=0) return -1; if(dma_write("dma vec0 -> x",x,VEC_X,0U)!=0) return -1; Xil_DCacheInvalidateRange((UINTPTR)x_ddr,sizeof(x_ddr)); print_samples(alg->name); dump_full_x(alg); return verify_x(alg);}
 
 int main(void)
 {
