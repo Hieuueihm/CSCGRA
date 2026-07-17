@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="560" viewBox="0 0 980 560">
+<style>text{font-family:Arial,Helvetica,sans-serif;font-size:14px}.title{font-size:20px;font-weight:600}.axis{stroke:#222;stroke-width:1.2}.grid{stroke:#ddd;stroke-width:1}.lab{font-size:15px}.legend{font-size:13px}</style>
+<rect width="100%" height="100%" fill="white"/>
+<text x="490" y="28" text-anchor="middle" class="title">Quantization impact on reconstruction error</text>
+<line x1="80" y1="55" x2="950" y2="55" class="grid"/><text x="70" y="60" text-anchor="end">5.2e+0</text>
+<line x1="80" y1="141" x2="950" y2="141" class="grid"/><text x="70" y="146" text-anchor="end">7.0e-2</text>
+<line x1="80" y1="227" x2="950" y2="227" class="grid"/><text x="70" y="232" text-anchor="end">9.4e-4</text>
+<line x1="80" y1="313" x2="950" y2="313" class="grid"/><text x="70" y="318" text-anchor="end">1.3e-5</text>
+<line x1="80" y1="399" x2="950" y2="399" class="grid"/><text x="70" y="404" text-anchor="end">1.7e-7</text>
+<line x1="80" y1="485" x2="950" y2="485" class="grid"/><text x="70" y="490" text-anchor="end">2.3e-9</text>
+<line x1="80" y1="485" x2="950" y2="485" class="axis"/><line x1="80" y1="55" x2="80" y2="485" class="axis"/>
+<line x1="80" y1="485" x2="80" y2="491" stroke="#222"/><text x="80" y="510" text-anchor="middle">FP32</text>
+<line x1="225" y1="485" x2="225" y2="491" stroke="#222"/><text x="225" y="510" text-anchor="middle">12</text>
+<line x1="370" y1="485" x2="370" y2="491" stroke="#222"/><text x="370" y="510" text-anchor="middle">16</text>
+<line x1="515" y1="485" x2="515" y2="491" stroke="#222"/><text x="515" y="510" text-anchor="middle">20</text>
+<line x1="660" y1="485" x2="660" y2="491" stroke="#222"/><text x="660" y="510" text-anchor="middle">24</text>
+<line x1="805" y1="485" x2="805" y2="491" stroke="#222"/><text x="805" y="510" text-anchor="middle">28</text>
+<line x1="950" y1="485" x2="950" y2="491" stroke="#222"/><text x="950" y="510" text-anchor="middle">32</text>
+<line x1="660" y1="55" x2="660" y2="485" stroke="#111" stroke-dasharray="6,5"/><text x="667" y="73">24-bit</text>
+<polyline fill="none" stroke="#1f77b4" stroke-width="2.4" points="80,95.33955074969816 225,95.6040225985905 370,95.81686801397848 515,95.33874472167446 660,95.33965497597794 805,95.33954782806819 950,95.33955033131087"/>
+<circle cx="80" cy="95.33955074969816" r="4" fill="#1f77b4"/>
+<circle cx="225" cy="95.6040225985905" r="4" fill="#1f77b4"/>
+<circle cx="370" cy="95.81686801397848" r="4" fill="#1f77b4"/>
+<circle cx="515" cy="95.33874472167446" r="4" fill="#1f77b4"/>
+<circle cx="660" cy="95.33965497597794" r="4" fill="#1f77b4"/>
+<circle cx="805" cy="95.33954782806819" r="4" fill="#1f77b4"/>
+<circle cx="950" cy="95.33955033131087" r="4" fill="#1f77b4"/>
+<polyline fill="none" stroke="#ff7f0e" stroke-width="2.4" points="80,98.03800012655404 225,109.26998984890923 370,98.09480309731697 515,98.04340605931185 660,98.03828811159745 805,98.03801687565417 950,98.03800100582109"/>
+<circle cx="80" cy="98.03800012655404" r="4" fill="#ff7f0e"/>
+<circle cx="225" cy="109.26998984890923" r="4" fill="#ff7f0e"/>
+<circle cx="370" cy="98.09480309731697" r="4" fill="#ff7f0e"/>
+<circle cx="515" cy="98.04340605931185" r="4" fill="#ff7f0e"/>
+<circle cx="660" cy="98.03828811159745" r="4" fill="#ff7f0e"/>
+<circle cx="805" cy="98.03801687565417" r="4" fill="#ff7f0e"/>
+<circle cx="950" cy="98.03800100582109" r="4" fill="#ff7f0e"/>
+<polyline fill="none" stroke="#2ca02c" stroke-width="2.4" points="80,99.04997741491746 225,97.56575675722738 370,99.05923285560728 515,99.05417544435568 660,99.04988454219584 805,99.04998220816768 950,99.04997808667493"/>
+<circle cx="80" cy="99.04997741491746" r="4" fill="#2ca02c"/>
+<circle cx="225" cy="97.56575675722738" r="4" fill="#2ca02c"/>
+<circle cx="370" cy="99.05923285560728" r="4" fill="#2ca02c"/>
+<circle cx="515" cy="99.05417544435568" r="4" fill="#2ca02c"/>
+<circle cx="660" cy="99.04988454219584" r="4" fill="#2ca02c"/>
+<circle cx="805" cy="99.04998220816768" r="4" fill="#2ca02c"/>
+<circle cx="950" cy="99.04997808667493" r="4" fill="#2ca02c"/>
+<polyline fill="none" stroke="#d62728" stroke-width="2.4" points="80,97.98003740172592 225,94.98425721423635 370,97.4350197433163 515,97.97913467150309 660,97.98014763356863 805,97.98003774691256 950,97.98003764084379"/>
+<circle cx="80" cy="97.98003740172592" r="4" fill="#d62728"/>
+<circle cx="225" cy="94.98425721423635" r="4" fill="#d62728"/>
+<circle cx="370" cy="97.4350197433163" r="4" fill="#d62728"/>
+<circle cx="515" cy="97.97913467150309" r="4" fill="#d62728"/>
+<circle cx="660" cy="97.98014763356863" r="4" fill="#d62728"/>
+<circle cx="805" cy="97.98003774691256" r="4" fill="#d62728"/>
+<circle cx="950" cy="97.98003764084379" r="4" fill="#d62728"/>
+<polyline fill="none" stroke="#9467bd" stroke-width="2.4" points="80,101.54460449236429 225,94.80081567962478 370,101.41952398678077 515,101.54373906581172 660,101.54460340945275 805,101.54459944159771 950,101.54460527004127"/>
+<circle cx="80" cy="101.54460449236429" r="4" fill="#9467bd"/>
+<circle cx="225" cy="94.80081567962478" r="4" fill="#9467bd"/>
+<circle cx="370" cy="101.41952398678077" r="4" fill="#9467bd"/>
+<circle cx="515" cy="101.54373906581172" r="4" fill="#9467bd"/>
+<circle cx="660" cy="101.54460340945275" r="4" fill="#9467bd"/>
+<circle cx="805" cy="101.54459944159771" r="4" fill="#9467bd"/>
+<circle cx="950" cy="101.54460527004127" r="4" fill="#9467bd"/>
+<polyline fill="none" stroke="#8c564b" stroke-width="2.4" points="80,455.34482758620686 225,84.65517241379311 370,290.6584025727533 515,392.9959187256504 660,455.34482758620686 805,455.34482758620686 950,455.34482758620686"/>
+<circle cx="80" cy="455.34482758620686" r="4" fill="#8c564b"/>
+<circle cx="225" cy="84.65517241379311" r="4" fill="#8c564b"/>
+<circle cx="370" cy="290.6584025727533" r="4" fill="#8c564b"/>
+<circle cx="515" cy="392.9959187256504" r="4" fill="#8c564b"/>
+<circle cx="660" cy="455.34482758620686" r="4" fill="#8c564b"/>
+<circle cx="805" cy="455.34482758620686" r="4" fill="#8c564b"/>
+<circle cx="950" cy="455.34482758620686" r="4" fill="#8c564b"/>
+<polyline fill="none" stroke="#e377c2" stroke-width="2.4" points="80,455.34482758620686 225,100.38105301770989 370,290.40209290172913 515,386.7414638523684 660,455.34482758620686 805,455.34482758620686 950,455.34482758620686"/>
+<circle cx="80" cy="455.34482758620686" r="4" fill="#e377c2"/>
+<circle cx="225" cy="100.38105301770989" r="4" fill="#e377c2"/>
+<circle cx="370" cy="290.40209290172913" r="4" fill="#e377c2"/>
+<circle cx="515" cy="386.7414638523684" r="4" fill="#e377c2"/>
+<circle cx="660" cy="455.34482758620686" r="4" fill="#e377c2"/>
+<circle cx="805" cy="455.34482758620686" r="4" fill="#e377c2"/>
+<circle cx="950" cy="455.34482758620686" r="4" fill="#e377c2"/>
+<polyline fill="none" stroke="#17becf" stroke-width="2.4" points="80,101.54460449236429 225,94.80081567962478 370,101.41952398678077 515,101.54373906581172 660,101.54460340945275 805,101.54459944159771 950,101.54460527004127"/>
+<circle cx="80" cy="101.54460449236429" r="4" fill="#17becf"/>
+<circle cx="225" cy="94.80081567962478" r="4" fill="#17becf"/>
+<circle cx="370" cy="101.41952398678077" r="4" fill="#17becf"/>
+<circle cx="515" cy="101.54373906581172" r="4" fill="#17becf"/>
+<circle cx="660" cy="101.54460340945275" r="4" fill="#17becf"/>
+<circle cx="805" cy="101.54459944159771" r="4" fill="#17becf"/>
+<circle cx="950" cy="101.54460527004127" r="4" fill="#17becf"/>
+<text x="490" y="542" text-anchor="middle" class="lab">Numeric format / datapath width</text><text transform="translate(20 280) rotate(-90)" text-anchor="middle" class="lab">Median NMSE of recovered x</text>
+<line x1="80" y1="512" x2="105" y2="512" stroke="#1f77b4" stroke-width="2.4"/><circle cx="92" cy="512" r="4" fill="#1f77b4"/><text x="113" y="517" class="legend">MP</text>
+<line x1="290" y1="512" x2="315" y2="512" stroke="#ff7f0e" stroke-width="2.4"/><circle cx="302" cy="512" r="4" fill="#ff7f0e"/><text x="323" y="517" class="legend">OMP</text>
+<line x1="500" y1="512" x2="525" y2="512" stroke="#2ca02c" stroke-width="2.4"/><circle cx="512" cy="512" r="4" fill="#2ca02c"/><text x="533" y="517" class="legend">GOMP</text>
+<line x1="710" y1="512" x2="735" y2="512" stroke="#d62728" stroke-width="2.4"/><circle cx="722" cy="512" r="4" fill="#d62728"/><text x="743" y="517" class="legend">IHT</text>
+<line x1="80" y1="532" x2="105" y2="532" stroke="#9467bd" stroke-width="2.4"/><circle cx="92" cy="532" r="4" fill="#9467bd"/><text x="113" y="537" class="legend">GP</text>
+<line x1="290" y1="532" x2="315" y2="532" stroke="#8c564b" stroke-width="2.4"/><circle cx="302" cy="532" r="4" fill="#8c564b"/><text x="323" y="537" class="legend">SP</text>
+<line x1="500" y1="532" x2="525" y2="532" stroke="#e377c2" stroke-width="2.4"/><circle cx="512" cy="532" r="4" fill="#e377c2"/><text x="533" y="537" class="legend">CoSaMP</text>
+<line x1="710" y1="532" x2="735" y2="532" stroke="#17becf" stroke-width="2.4"/><circle cx="722" cy="532" r="4" fill="#17becf"/><text x="743" y="537" class="legend">HTP</text>
+</svg>

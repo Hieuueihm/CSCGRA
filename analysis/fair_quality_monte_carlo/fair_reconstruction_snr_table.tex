@@ -1,0 +1,24 @@
+\begin{table*}[!t]
+\centering
+\caption{Fair Monte Carlo reconstruction quality for \((N,M,K)=(256,64,8)\) using 24-bit fixed-point arithmetic. 
+For each trial, all algorithms use the same sensing matrix, sparse signal, and noise realization. 
+Columns indicate the input measurement SNR. Each entry reports the mean reconstruction SNR in dB over 100 trials.}
+\label{tab:fair_reconstruction_snr}
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{lcccc}
+\hline
+Algorithm & Meas. SNR 10 dB & Meas. SNR 20 dB & Meas. SNR 30 dB & Meas. SNR 40 dB \\
+\hline
+OMP    & 16.67 & 27.49 & 37.18 & 47.15 \\
+GOMP   & 13.06 & 24.45 & 32.61 & 41.68 \\
+CoSaMP & 14.73 & 29.02 & 39.32 & 49.14 \\
+SP     & 16.66 & 29.01 & 39.32 & 49.14 \\
+IHT    & 10.63 & 22.33 & 28.65 & 31.46 \\
+HTP    & 11.44 & 24.95 & 33.90 & 43.43 \\
+GP     & 10.63 & 22.33 & 28.65 & 31.46 \\
+MP     &  7.75 & 17.19 & 26.82 & 36.52 \\
+\hline
+\end{tabular}
+\end{table*}

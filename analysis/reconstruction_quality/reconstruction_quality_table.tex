@@ -1,0 +1,19 @@
+\begin{table}[!t]
+\centering
+\caption{Reconstruction quality for $(N,M,K)=(256,64,16)$ using 24-bit fixed-point arithmetic.}
+\label{tab:reconstruction_quality}
+\begin{tabular}{lccc}
+\hline
+Algorithm & MSE & SNR (dB) & Support overlap \\
+\hline
+OMP & 0 & $\infty$ & 16/16 \\
+GOMP & 0 & $\infty$ & 16/16 \\
+CoSaMP & 0 & $\infty$ & 16/16 \\
+SP & 0 & $\infty$ & 16/16 \\
+IHT & $1.092\times10^{-3}$ & 14.75 & 15/16 \\
+HTP & 0 & $\infty$ & 16/16 \\
+GP & 0 & $\infty$ & 16/16 \\
+MP & $2.473\times10^{-3}$ & 11.20 & 16/16 \\
+\hline
+\end{tabular}
+\end{table}

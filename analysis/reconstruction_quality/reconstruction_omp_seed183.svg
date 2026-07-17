@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360">
+<rect width="100%" height="100%" fill="white"/>
+<line x1="45" y1="170" x2="885" y2="170" stroke="#999" stroke-width="1"/>
+<line x1="45" y1="20" x2="45" y2="320" stroke="#333"/>
+<line x1="45" y1="320" x2="885" y2="320" stroke="#333"/>
+<line x1="127.35" y1="170.00" x2="127.35" y2="271.82" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="166.88" y1="170.00" x2="166.88" y2="219.80" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="176.76" y1="170.00" x2="176.76" y2="114.55" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="183.35" y1="170.00" x2="183.35" y2="33.64" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="367.82" y1="170.00" x2="367.82" y2="68.62" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="384.29" y1="170.00" x2="384.29" y2="71.29" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="466.65" y1="170.00" x2="466.65" y2="225.88" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="539.12" y1="170.00" x2="539.12" y2="90.07" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="581.94" y1="170.00" x2="581.94" y2="244.81" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="644.53" y1="170.00" x2="644.53" y2="107.52" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="664.29" y1="170.00" x2="664.29" y2="299.69" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="733.47" y1="170.00" x2="733.47" y2="96.07" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="749.94" y1="170.00" x2="749.94" y2="256.53" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="763.12" y1="170.00" x2="763.12" y2="243.59" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="852.06" y1="170.00" x2="852.06" y2="112.38" stroke="#1f77b4" stroke-width="2.2"/>
+<line x1="875.12" y1="170.00" x2="875.12" y2="100.07" stroke="#1f77b4" stroke-width="2.2"/>
+<circle cx="127.35" cy="271.82" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="166.88" cy="219.80" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="176.76" cy="114.55" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="183.35" cy="33.64" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="367.82" cy="68.62" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="384.29" cy="71.29" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="466.65" cy="225.88" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="539.12" cy="90.07" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="581.94" cy="244.81" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="644.53" cy="107.52" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="664.29" cy="299.69" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="733.47" cy="96.07" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="749.94" cy="256.53" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="763.12" cy="243.59" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="852.06" cy="112.38" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<circle cx="875.12" cy="100.07" r="3" fill="none" stroke="#d62728" stroke-width="1.6"/>
+<text x="450" y="352" text-anchor="middle" font-family="Arial" font-size="14">Coefficient index</text>
+<text x="16" y="180" text-anchor="middle" font-family="Arial" font-size="14" transform="rotate(-90 16 180)">Amplitude</text>
+<text x="55" y="18" font-family="Arial" font-size="13" fill="#1f77b4">Blue: true sparse signal</text>
+<text x="255" y="18" font-family="Arial" font-size="13" fill="#d62728">Red circles: OMP reconstruction</text>
+</svg>

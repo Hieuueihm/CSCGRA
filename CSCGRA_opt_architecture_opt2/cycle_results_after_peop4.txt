@@ -1,0 +1,13 @@
+Cycle results after PE 4-bit opcode cleanup
+
+Current RTL re-run:
+MP      runs=1   cycle=115888   status=PASS 338/0
+OMP     runs=1   cycle=227216   status=PASS 338/0
+
+Existing verified logs (TB source not present in tests/ for re-run):
+GOMP    runs=1   cycle=318747   status=PASS 354/0
+IHT     runs=16  first=10033 last=9949  min=9949  max=10033 status=PASS 625/0
+GP      runs=16  first=26761 last=26758 min=26738 max=26764 status=PASS 353/0
+SP      runs=16  first=45415 last=45646 min=45415 max=45720 status=PASS 625/0
+CoSaMP  runs=16  first=47286 last=47640 min=47286 max=47775 status=PASS 625/0
+HTP     runs=16  first=26761 last=26729 min=26729 max=26761 status=PASS 353/0

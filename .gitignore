@@ -13,6 +13,18 @@
 *.bit
 *.ltx
 *.hwdef
+*.exe
+*.dll
+*.o
+*.obj
+*.gch
+*.sdb
+*.xdbg
+*.rlx
+*.rtti
+*.svtype
+*.reloc
+*.dbg
 *.runs/
 *.cache/
 *.hw/
@@ -22,6 +34,9 @@
 .Xil/
 .hdi.isWriteableTest.*.tmp
 xsim.dir/
+obj_dir/
+xvlog_*.out
+xvlog_*.err
 
 # Python/cache
 __pycache__/
@@ -48,3 +63,10 @@ paper_figures/
 CSCGRA/runs/
 CSCGRA/.Xil/
 CSCGRA/$repo/
+
+# Local packaged Vivado project/output; canonical RTL and build scripts live in
+# CSCGRA_opt_architecture*.
+bd_release_optarch_20260706/
+
+# Current generated synthesis tree (keep scripts/reports outside this folder).
+analysis/synth_cgra_soc_top_opt/

@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="560" viewBox="0 0 980 560">
+<style>text{font-family:Arial,Helvetica,sans-serif;font-size:14px}.title{font-size:20px;font-weight:600}.axis{stroke:#222;stroke-width:1.2}.grid{stroke:#ddd;stroke-width:1}.lab{font-size:15px}.legend{font-size:13px}</style>
+<rect width="100%" height="100%" fill="white"/>
+<text x="490" y="28" text-anchor="middle" class="title">Quantization impact on residual consistency</text>
+<line x1="80" y1="55" x2="950" y2="55" class="grid"/><text x="70" y="60" text-anchor="end">2.2e+0</text>
+<line x1="80" y1="141" x2="950" y2="141" class="grid"/><text x="70" y="146" text-anchor="end">5.2e-2</text>
+<line x1="80" y1="227" x2="950" y2="227" class="grid"/><text x="70" y="232" text-anchor="end">1.2e-3</text>
+<line x1="80" y1="313" x2="950" y2="313" class="grid"/><text x="70" y="318" text-anchor="end">3.0e-5</text>
+<line x1="80" y1="399" x2="950" y2="399" class="grid"/><text x="70" y="404" text-anchor="end">7.2e-7</text>
+<line x1="80" y1="485" x2="950" y2="485" class="grid"/><text x="70" y="490" text-anchor="end">1.7e-8</text>
+<line x1="80" y1="485" x2="950" y2="485" class="axis"/><line x1="80" y1="55" x2="80" y2="485" class="axis"/>
+<line x1="80" y1="485" x2="80" y2="491" stroke="#222"/><text x="80" y="510" text-anchor="middle">FP32</text>
+<line x1="225" y1="485" x2="225" y2="491" stroke="#222"/><text x="225" y="510" text-anchor="middle">12</text>
+<line x1="370" y1="485" x2="370" y2="491" stroke="#222"/><text x="370" y="510" text-anchor="middle">16</text>
+<line x1="515" y1="485" x2="515" y2="491" stroke="#222"/><text x="515" y="510" text-anchor="middle">20</text>
+<line x1="660" y1="485" x2="660" y2="491" stroke="#222"/><text x="660" y="510" text-anchor="middle">24</text>
+<line x1="805" y1="485" x2="805" y2="491" stroke="#222"/><text x="805" y="510" text-anchor="middle">28</text>
+<line x1="950" y1="485" x2="950" y2="491" stroke="#222"/><text x="950" y="510" text-anchor="middle">32</text>
+<line x1="660" y1="55" x2="660" y2="485" stroke="#111" stroke-dasharray="6,5"/><text x="667" y="73">24-bit</text>
+<polyline fill="none" stroke="#1f77b4" stroke-width="2.4" points="80,101.23698636349914 225,99.58657085764989 370,101.35721619406658 515,101.2385959068418 660,101.23699508045561 805,101.2369861856928 950,101.23698637980442"/>
+<circle cx="80" cy="101.23698636349914" r="4" fill="#1f77b4"/>
+<circle cx="225" cy="99.58657085764989" r="4" fill="#1f77b4"/>
+<circle cx="370" cy="101.35721619406658" r="4" fill="#1f77b4"/>
+<circle cx="515" cy="101.2385959068418" r="4" fill="#1f77b4"/>
+<circle cx="660" cy="101.23699508045561" r="4" fill="#1f77b4"/>
+<circle cx="805" cy="101.2369861856928" r="4" fill="#1f77b4"/>
+<circle cx="950" cy="101.23698637980442" r="4" fill="#1f77b4"/>
+<polyline fill="none" stroke="#ff7f0e" stroke-width="2.4" points="80,108.86432703292996 225,105.3116580431543 370,108.85889535013737 515,108.86430920388645 660,108.86432713522363 805,108.86432720342884 950,108.86432660511679"/>
+<circle cx="80" cy="108.86432703292996" r="4" fill="#ff7f0e"/>
+<circle cx="225" cy="105.3116580431543" r="4" fill="#ff7f0e"/>
+<circle cx="370" cy="108.85889535013737" r="4" fill="#ff7f0e"/>
+<circle cx="515" cy="108.86430920388645" r="4" fill="#ff7f0e"/>
+<circle cx="660" cy="108.86432713522363" r="4" fill="#ff7f0e"/>
+<circle cx="805" cy="108.86432720342884" r="4" fill="#ff7f0e"/>
+<circle cx="950" cy="108.86432660511679" r="4" fill="#ff7f0e"/>
+<polyline fill="none" stroke="#2ca02c" stroke-width="2.4" points="80,93.013117353139 225,92.66295881858082 370,93.01231720947376 515,93.01311271556708 660,93.013117148032 805,93.01311716068423 950,93.01311736685514"/>
+<circle cx="80" cy="93.013117353139" r="4" fill="#2ca02c"/>
+<circle cx="225" cy="92.66295881858082" r="4" fill="#2ca02c"/>
+<circle cx="370" cy="93.01231720947376" r="4" fill="#2ca02c"/>
+<circle cx="515" cy="93.01311271556708" r="4" fill="#2ca02c"/>
+<circle cx="660" cy="93.013117148032" r="4" fill="#2ca02c"/>
+<circle cx="805" cy="93.01311716068423" r="4" fill="#2ca02c"/>
+<circle cx="950" cy="93.01311736685514" r="4" fill="#2ca02c"/>
+<polyline fill="none" stroke="#d62728" stroke-width="2.4" points="80,92.3033702397556 225,88.2023129087032 370,92.30536768640744 515,92.30392034066047 660,92.30334738246898 805,92.3033709648139 950,92.30336956670118"/>
+<circle cx="80" cy="92.3033702397556" r="4" fill="#d62728"/>
+<circle cx="225" cy="88.2023129087032" r="4" fill="#d62728"/>
+<circle cx="370" cy="92.30536768640744" r="4" fill="#d62728"/>
+<circle cx="515" cy="92.30392034066047" r="4" fill="#d62728"/>
+<circle cx="660" cy="92.30334738246898" r="4" fill="#d62728"/>
+<circle cx="805" cy="92.3033709648139" r="4" fill="#d62728"/>
+<circle cx="950" cy="92.30336956670118" r="4" fill="#d62728"/>
+<polyline fill="none" stroke="#9467bd" stroke-width="2.4" points="80,94.46245939629347 225,91.90243095571279 370,94.15613426772629 515,94.46245390523879 660,94.46245954565329 805,94.46245956848956 950,94.46245984202281"/>
+<circle cx="80" cy="94.46245939629347" r="4" fill="#9467bd"/>
+<circle cx="225" cy="91.90243095571279" r="4" fill="#9467bd"/>
+<circle cx="370" cy="94.15613426772629" r="4" fill="#9467bd"/>
+<circle cx="515" cy="94.46245390523879" r="4" fill="#9467bd"/>
+<circle cx="660" cy="94.46245954565329" r="4" fill="#9467bd"/>
+<circle cx="805" cy="94.46245956848956" r="4" fill="#9467bd"/>
+<circle cx="950" cy="94.46245984202281" r="4" fill="#9467bd"/>
+<polyline fill="none" stroke="#8c564b" stroke-width="2.4" points="80,455.3448275862069 225,84.65517241379311 370,195.01517131065052 515,255.65224404260206 660,318.93203617002723 805,383.6636525139917 950,444.6449029910773"/>
+<circle cx="80" cy="455.3448275862069" r="4" fill="#8c564b"/>
+<circle cx="225" cy="84.65517241379311" r="4" fill="#8c564b"/>
+<circle cx="370" cy="195.01517131065052" r="4" fill="#8c564b"/>
+<circle cx="515" cy="255.65224404260206" r="4" fill="#8c564b"/>
+<circle cx="660" cy="318.93203617002723" r="4" fill="#8c564b"/>
+<circle cx="805" cy="383.6636525139917" r="4" fill="#8c564b"/>
+<circle cx="950" cy="444.6449029910773" r="4" fill="#8c564b"/>
+<polyline fill="none" stroke="#e377c2" stroke-width="2.4" points="80,455.3448275862069 225,99.49715385265466 370,195.031530014433 515,251.82332176528507 660,317.6274729082865 805,382.55341823654265 950,439.8196515916312"/>
+<circle cx="80" cy="455.3448275862069" r="4" fill="#e377c2"/>
+<circle cx="225" cy="99.49715385265466" r="4" fill="#e377c2"/>
+<circle cx="370" cy="195.031530014433" r="4" fill="#e377c2"/>
+<circle cx="515" cy="251.82332176528507" r="4" fill="#e377c2"/>
+<circle cx="660" cy="317.6274729082865" r="4" fill="#e377c2"/>
+<circle cx="805" cy="382.55341823654265" r="4" fill="#e377c2"/>
+<circle cx="950" cy="439.8196515916312" r="4" fill="#e377c2"/>
+<polyline fill="none" stroke="#17becf" stroke-width="2.4" points="80,94.46245939629347 225,91.90243095571279 370,94.15613426772629 515,94.46245390523879 660,94.46245954565329 805,94.46245956848956 950,94.46245984202281"/>
+<circle cx="80" cy="94.46245939629347" r="4" fill="#17becf"/>
+<circle cx="225" cy="91.90243095571279" r="4" fill="#17becf"/>
+<circle cx="370" cy="94.15613426772629" r="4" fill="#17becf"/>
+<circle cx="515" cy="94.46245390523879" r="4" fill="#17becf"/>
+<circle cx="660" cy="94.46245954565329" r="4" fill="#17becf"/>
+<circle cx="805" cy="94.46245956848956" r="4" fill="#17becf"/>
+<circle cx="950" cy="94.46245984202281" r="4" fill="#17becf"/>
+<text x="490" y="542" text-anchor="middle" class="lab">Numeric format / datapath width</text><text transform="translate(20 280) rotate(-90)" text-anchor="middle" class="lab">Median relative residual norm</text>
+<line x1="80" y1="512" x2="105" y2="512" stroke="#1f77b4" stroke-width="2.4"/><circle cx="92" cy="512" r="4" fill="#1f77b4"/><text x="113" y="517" class="legend">MP</text>
+<line x1="290" y1="512" x2="315" y2="512" stroke="#ff7f0e" stroke-width="2.4"/><circle cx="302" cy="512" r="4" fill="#ff7f0e"/><text x="323" y="517" class="legend">OMP</text>
+<line x1="500" y1="512" x2="525" y2="512" stroke="#2ca02c" stroke-width="2.4"/><circle cx="512" cy="512" r="4" fill="#2ca02c"/><text x="533" y="517" class="legend">GOMP</text>
+<line x1="710" y1="512" x2="735" y2="512" stroke="#d62728" stroke-width="2.4"/><circle cx="722" cy="512" r="4" fill="#d62728"/><text x="743" y="517" class="legend">IHT</text>
+<line x1="80" y1="532" x2="105" y2="532" stroke="#9467bd" stroke-width="2.4"/><circle cx="92" cy="532" r="4" fill="#9467bd"/><text x="113" y="537" class="legend">GP</text>
+<line x1="290" y1="532" x2="315" y2="532" stroke="#8c564b" stroke-width="2.4"/><circle cx="302" cy="532" r="4" fill="#8c564b"/><text x="323" y="537" class="legend">SP</text>
+<line x1="500" y1="532" x2="525" y2="532" stroke="#e377c2" stroke-width="2.4"/><circle cx="512" cy="532" r="4" fill="#e377c2"/><text x="533" y="537" class="legend">CoSaMP</text>
+<line x1="710" y1="532" x2="735" y2="532" stroke="#17becf" stroke-width="2.4"/><circle cx="722" cy="532" r="4" fill="#17becf"/><text x="743" y="537" class="legend">HTP</text>
+</svg>

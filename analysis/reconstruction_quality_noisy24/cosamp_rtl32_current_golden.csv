@@ -1,0 +1,2 @@
+algorithm,mode,x_seed,mse,snr_db,support_overlap,true_power_per_sample,error_power_per_sample
+CoSaMP,rtl32_current_match,77,2.5735048041e-02,1.3292,9/16,3.4949886859e-02,2.5735048041e-02

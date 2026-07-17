@@ -1,0 +1,6 @@
+CSCGRA.srcs/sources_1/new/ls_matrix_update_service.v
+CSCGRA.srcs/sources_1/new/ls_row_update_service.v
+CSCGRA.srcs/sources_1/new/ls_scratchpad.v
+CSCGRA.srcs/sources_1/new/pe_cluster_4x4.v
+CSCGRA.srcs/sources_1/new/pe_stream_top1_4x8_service.v
+CSCGRA.srcs/sources_1/new/pe_stream_top1_service.v

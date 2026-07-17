@@ -1,0 +1,66 @@
+[
+  {
+    "alg": "OMP",
+    "baselineOpt": "{}",
+    "baselineSNR": 22.07242336922407,
+    "bestOpt": "{}",
+    "bestSNR": 22.07242336922407,
+    "improvement": 0
+  },
+  {
+    "alg": "MP",
+    "baselineOpt": "{}",
+    "baselineSNR": 11.992402383520275,
+    "bestOpt": "{}",
+    "bestSNR": 11.992402383520275,
+    "improvement": 0
+  },
+  {
+    "alg": "GOMP",
+    "baselineOpt": "{\"gompPick\":2}",
+    "baselineSNR": 3020.0438855523253,
+    "bestOpt": "{\"gompPick\":2}",
+    "bestSNR": 3020.0438855523253,
+    "improvement": 0
+  },
+  {
+    "alg": "IHT",
+    "baselineOpt": "{\"shift\":2,\"refine\":false}",
+    "baselineSNR": -31.038279989392162,
+    "bestOpt": "{\"shift\":2,\"refine\":true}",
+    "bestSNR": 3020.0438855523253,
+    "improvement": 3051.0821655417176
+  },
+  {
+    "alg": "HTP",
+    "baselineOpt": "{\"shift\":2}",
+    "baselineSNR": 3020.0438855523253,
+    "bestOpt": "{\"shift\":2}",
+    "bestSNR": 3020.0438855523253,
+    "improvement": 0
+  },
+  {
+    "alg": "GP",
+    "baselineOpt": "{\"shift\":0,\"refine\":true}",
+    "baselineSNR": 2.1230146229619007,
+    "bestOpt": "{\"shift\":0,\"refine\":true}",
+    "bestSNR": 2.1230146229619007,
+    "improvement": 0
+  },
+  {
+    "alg": "CoSaMP",
+    "baselineOpt": "{\"pick\":32,\"cap\":16}",
+    "baselineSNR": 9.24262920634031,
+    "bestOpt": "{\"pick\":16,\"cap\":16}",
+    "bestSNR": 9.24262920634031,
+    "improvement": 0
+  },
+  {
+    "alg": "SP",
+    "baselineOpt": "{\"pick\":16,\"cap\":16}",
+    "baselineSNR": 9.24262920634031,
+    "bestOpt": "{\"pick\":16,\"cap\":16}",
+    "bestSNR": 9.24262920634031,
+    "improvement": 0
+  }
+]
