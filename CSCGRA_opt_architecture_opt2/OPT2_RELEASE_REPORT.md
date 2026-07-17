@@ -812,3 +812,12 @@
 - New cycle-best candidate among validated RTL versions.
 - Timing remains clean at 100 MHz and DSP stays 102; LUT cost is small versus `backinit0` (+243 LUT).
 - Best balanced-resource candidate remains `backprep0`; best cycle candidate is now `div64`.
+
+## Final LS balanced radix-4 candidate (2026-07-17)
+
+- Replaced the expensive first-upper-read back-solve shortcut with the compact `S_BACK_ACC` entry while retaining the cheap diagonal prefetch.
+- Increased the single shared restoring divider from two to four quotient bits per clock (32 -> 16 step clocks).
+- Validation: GP-opt `3 PASS, 0 FAIL`; K=8 representative `20 PASS, 0 FAIL`; full K-sweep `348 PASS, 0 FAIL`.
+- Full K-sweep total: 3,571,863 -> 3,389,961 cycles, -181,902 (-5.09%); 46 entries improved, 16 unchanged, 0 regressed.
+- OOC synthesis: LUT 75,718 -> 73,303 (-2,415), FF +17, BRAM36 unchanged at 24, DSP unchanged at 102, WNS +2.152 ns at 100 MHz.
+- Kept as the new balanced LS release. Detailed tables and reproducible report paths are in `analysis/ls_balanced_radix4_summary.md`.

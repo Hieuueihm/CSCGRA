@@ -2308,23 +2308,12 @@ case (state)
                 end else begin
                     ge_acc <= 64'sd0;
                     back_j <= back_i + 5'd1;
-                    if ((back_i + 5'd1) >= active_k_count) begin
-                        ls_start_q <= 1'b1;
-                        ls_op_q <= LS_OP_READ2;
-                        ls_row_a_q <= back_i;
-                        ls_col_a_q <= back_i;
-                        ls_row_b_q <= 5'd0;
-                        ls_col_b_q <= 5'd0;
-                        state <= S_BACK_PREP_READ;
-                    end else begin
-                        ls_start_q <= 1'b1;
-                        ls_op_q <= LS_OP_READ2;
-                        ls_row_a_q <= back_i;
-                        ls_col_a_q <= back_i + 5'd1;
-                        ls_row_b_q <= 5'd0;
-                        ls_col_b_q <= 5'd0;
-                        state <= S_BACK_ACC_READ;
-                    end
+                    // Keep the small back-solve controller here.  Issuing the
+                    // first upper read in this state saves only one cycle per
+                    // row, but causes a large mux replication after synthesis.
+                    // S_BACK_ACC_READ still prefetches the diagonal on the last
+                    // upper term, which retains the inexpensive fast path.
+                    state <= S_BACK_ACC;
                 end
             end
             S_BACK_ACC: begin
@@ -2431,7 +2420,24 @@ case (state)
                             div_trial_quot[div_iter - 2'd2] = 1'b1;
                         end
                     end
-                    if (div_iter <= 2) begin
+                    // Two more restoring steps halve the LS divider latency
+                    // from 32 to 16 clocks without adding another divider or
+                    // changing the fixed-point quotient/rounding behavior.
+                    if (div_iter > 2) begin
+                        div_trial_rem = {div_trial_rem[63:0], div_abs_num[div_iter - 3'd3]};
+                        if (div_trial_rem >= {1'b0, div_abs_den}) begin
+                            div_trial_rem = div_trial_rem - {1'b0, div_abs_den};
+                            div_trial_quot[div_iter - 3'd3] = 1'b1;
+                        end
+                    end
+                    if (div_iter > 3) begin
+                        div_trial_rem = {div_trial_rem[63:0], div_abs_num[div_iter - 3'd4]};
+                        if (div_trial_rem >= {1'b0, div_abs_den}) begin
+                            div_trial_rem = div_trial_rem - {1'b0, div_abs_den};
+                            div_trial_quot[div_iter - 3'd4] = 1'b1;
+                        end
+                    end
+                    if (div_iter <= 4) begin
                         if ({div_trial_rem[63:0], 1'b0} >= {1'b0, div_abs_den})
                             div_trial_quot = div_trial_quot + 1'b1;
                         div_result <= div_neg ? -$signed(div_trial_quot[63:0]) : $signed(div_trial_quot[63:0]);
@@ -2441,7 +2447,7 @@ case (state)
                     end else begin
                         div_rem <= div_trial_rem;
                         div_quot <= div_trial_quot;
-                        div_iter <= div_iter - 7'd2;
+                        div_iter <= div_iter - 7'd4;
                     end
                 end
             end
