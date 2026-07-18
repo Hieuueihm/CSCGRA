@@ -102,6 +102,7 @@ localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3
 localparam [1:0] MESH_CTX_NONE=2'd0, MESH_CTX_UPDATE=2'd1, MESH_CTX_PRUNE=2'd2, MESH_CTX_RESID=2'd3;
 localparam [3:0] MESH_CTX_WAIT_CYCLES = 4'd6;
 localparam [4:0] RHS_BLOCK_STRIDE = COLS;
+localparam [4:0] LS_ROW_UPDATE_STRIDE = COLS;
 localparam [2:0] LS_OP_CLEAR=3'd0, LS_OP_WRITE=3'd1, LS_OP_READ2=3'd2, LS_OP_ACC_BLOCK=3'd3, LS_OP_ROW_UPDATE=3'd4, LS_OP_RHS_WRITE=3'd5, LS_OP_RHS_READ=3'd6, LS_OP_RHS_UPDATE=3'd7;
 
 localparam [31:0] LFSR_TAPS = 32'h80200003;
@@ -1383,7 +1384,8 @@ ls_matrix_service #(
     .MAX_K(MAX_K),
     .GE_W(GE_MAT_W),
     .LANES(COLS),
-    .ENABLE_ROW_UPDATE_BLOCK(0)
+    .ENABLE_ROW_UPDATE_BLOCK(1),
+    .ROW_UPDATE_LANES(LS_ROW_UPDATE_STRIDE)
 ) u_ls_matrix_service (
     .clk(clk),
     .rst_n(rst_n),
@@ -1395,7 +1397,7 @@ ls_matrix_service #(
     .col_b(ls_col_b_q),
     .row_base(ls_row_base_q),
     .lane_valid(ls_lane_valid_q),
-    .row_update_block(1'b0),
+    .row_update_block(ls_row_update_block_q),
     .lane_add(pe_rhs_product_bus),
     .wdata(ls_wdata_q),
     .factor(ls_factor_q),
@@ -2271,7 +2273,7 @@ case (state)
                 ls_row_b_q <= solve_i;
                 ls_col_b_q <= solve_k;
                 ls_factor_q <= ge_factor;
-                ls_row_update_block_q <= 1'b0;
+                ls_row_update_block_q <= 1'b1;
                 for (gi = 0; gi < COLS; gi = gi + 1) begin
                     ls_lane_valid_q[gi] <= ((solve_k + gi[4:0]) < active_k_count);
                 end
@@ -2279,7 +2281,7 @@ case (state)
             end
             S_ELIM_UPDATE_WAIT: begin
                 if (ls_done_w) begin
-                    if (solve_k + 5'd1 >= active_k_count) begin
+                    if (solve_k + LS_ROW_UPDATE_STRIDE >= active_k_count) begin
                         ls_start_q <= 1'b1;
                         ls_op_q <= LS_OP_RHS_UPDATE;
                         ls_row_a_q <= solve_j;
@@ -2288,7 +2290,7 @@ case (state)
                         ls_row_update_block_q <= 1'b0;
                         state <= S_ELIM_RHS_UPDATE_WAIT;
                     end else begin
-                        solve_k <= solve_k + 5'd1;
+                        solve_k <= solve_k + LS_ROW_UPDATE_STRIDE;
                         state <= S_ELIM_UPDATE;
                     end
                 end

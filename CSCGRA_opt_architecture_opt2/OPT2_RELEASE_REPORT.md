@@ -821,3 +821,12 @@
 - Full K-sweep total: 3,571,863 -> 3,389,961 cycles, -181,902 (-5.09%); 46 entries improved, 16 unchanged, 0 regressed.
 - OOC synthesis: LUT 75,718 -> 73,303 (-2,415), FF +17, BRAM36 unchanged at 24, DSP unchanged at 102, WNS +2.152 ns at 100 MHz.
 - Kept as the new balanced LS release. Detailed tables and reproducible report paths are in `analysis/ls_balanced_radix4_summary.md`.
+
+## Sparse LS streamed block-8 candidate (2026-07-18)
+
+- Batched Gaussian-elimination row updates into transactions of up to eight columns while keeping one shared, pipelined factor multiplier and honoring the final partial-block lane mask.
+- Rejected the parallel block-4 trial because it increased DSP from 102 to 146; the retained streamed design uses 105 DSPs.
+- Validation: GP-opt `checks 3 PASS, 0 FAIL`; K=8 representative `checks 20 PASS, 0 FAIL`; sharded full K-sweep `348 PASS, 0 FAIL` with 62/62 entries and no regression.
+- Full K-sweep total: 3,389,961 -> 3,102,464 cycles, -287,497 (-8.48%); 38 entries improved, 24 unchanged, 0 regressed.
+- OOC synthesis: LUT 73,303 -> 75,213 (+2.61%), FF +129, BRAM36 unchanged at 24, DSP 102 -> 105, WNS improves from +2.152 ns to +2.977 ns at 100 MHz.
+- Kept as the new sparse/LS balanced release. Detailed architecture, cycle tables, validation accounting, and reproducible report paths are in `analysis/sparse_ls_stream8_summary.md`.

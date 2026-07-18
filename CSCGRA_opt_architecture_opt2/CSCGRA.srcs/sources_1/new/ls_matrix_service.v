@@ -12,7 +12,8 @@ module ls_matrix_service #(
     parameter integer RHS_W = 64,
     parameter integer FRAC_W = 16,
     parameter integer LANES = 8,
-    parameter integer ENABLE_ROW_UPDATE_BLOCK = 0
+    parameter integer ENABLE_ROW_UPDATE_BLOCK = 0,
+    parameter integer ROW_UPDATE_LANES = 8
 )(
     input  wire                         clk,
     input  wire                         rst_n,
@@ -58,8 +59,6 @@ module ls_matrix_service #(
 
     localparam integer BANKS = 8;
     localparam integer BANK_DEPTH = (MAX_K / BANKS) * MAX_K;
-    localparam [2:0] LAST_LANE = LANES - 1;
-
     reg [3:0] state;
     reg [5:0] clear_addr;
     reg [4:0] rd_addr_a;
@@ -71,12 +70,9 @@ module ls_matrix_service #(
     reg signed [GE_W-1:0] row_value_q;
     reg signed [(FACTOR_W+GE_W)-1:0] product_q;
     reg [4:0] block_col_base_q;
-    reg [2:0] block_wr_bank_q;
     reg [LANES-1:0] block_lane_valid_q;
     reg [2:0] block_wr_lane_q;
-    reg signed [LANES*GE_W-1:0] block_row_value_q;
-    reg signed [LANES*GE_W-1:0] block_pivot_value_q;
-    reg signed [LANES*GE_W-1:0] block_update_value_q;
+    reg [2:0] block_last_lane_q;
     reg [4:0] rhs_wr_addr_q;
     reg signed [RHS_W-1:0] rhs_value_q;
     reg signed [RHS_W-1:0] rhs_pivot_q;
@@ -84,17 +80,12 @@ module ls_matrix_service #(
     reg write_en;
     reg acc_en;
     reg update_write_en;
-    reg block_update_write_en;
     reg signed [GE_W-1:0] update_write_data;
 
     wire signed [BANKS*GE_W-1:0] bank_rdata_a;
     wire signed [BANKS*GE_W-1:0] bank_rdata_b;
     wire signed [BANKS*GE_W-1:0] direct_rdata_a;
     wire signed [BANKS*GE_W-1:0] direct_rdata_b;
-    reg signed [LANES*GE_W-1:0] block_target_read_w;
-    reg signed [LANES*GE_W-1:0] block_pivot_read_w;
-    integer rd_lane;
-    integer upd_lane;
 
     function [4:0] bank_addr;
         input [4:0] row;
@@ -135,6 +126,18 @@ module ls_matrix_service #(
         end
     endfunction
 
+    function [2:0] last_valid_update_lane;
+        input [LANES-1:0] valid;
+        integer valid_i;
+        begin
+            last_valid_update_lane = 3'd0;
+            for (valid_i = 0; valid_i < ROW_UPDATE_LANES; valid_i = valid_i + 1) begin
+                if (valid[valid_i])
+                    last_valid_update_lane = valid_i[2:0];
+            end
+        end
+    endfunction
+
 
     (* ram_style = "distributed" *) reg signed [RHS_W-1:0] rhs_mem [0:MAX_K-1];
 
@@ -157,9 +160,6 @@ module ls_matrix_service #(
                 end else if (update_write_en && (wr_bank_q == bank[2:0])) begin
                     mem_a[wr_addr_q] <= update_write_data;
                     mem_b[wr_addr_q] <= update_write_data;
-                end else if (block_update_write_en && (block_wr_bank_q == bank[2:0]) && block_lane_valid_q[block_wr_lane_q]) begin
-                    mem_a[bank_addr(row_a, block_col_base_q + {2'b00, block_wr_lane_q})] <= block_update_value_q[block_wr_lane_q*GE_W +: GE_W];
-                    mem_b[bank_addr(row_a, block_col_base_q + {2'b00, block_wr_lane_q})] <= block_update_value_q[block_wr_lane_q*GE_W +: GE_W];
                 end
             end
             assign bank_rdata_a[bank*GE_W +: GE_W] = mem_a[rd_addr_a];
@@ -168,33 +168,6 @@ module ls_matrix_service #(
             assign direct_rdata_b[bank*GE_W +: GE_W] = mem_b[bank_addr(row_b, col_b)];
         end
     endgenerate
-
-    always @(*) begin
-        block_target_read_w = {LANES*GE_W{1'b0}};
-        block_pivot_read_w = {LANES*GE_W{1'b0}};
-        for (rd_lane = 0; rd_lane < LANES; rd_lane = rd_lane + 1) begin
-            case (row_a[2:0])
-                3'd0: block_target_read_w[rd_lane*GE_W +: GE_W] = gen_bank[0].mem_a[bank_addr(row_a, block_col_base_q + rd_lane[4:0])];
-                3'd1: block_target_read_w[rd_lane*GE_W +: GE_W] = gen_bank[1].mem_a[bank_addr(row_a, block_col_base_q + rd_lane[4:0])];
-                3'd2: block_target_read_w[rd_lane*GE_W +: GE_W] = gen_bank[2].mem_a[bank_addr(row_a, block_col_base_q + rd_lane[4:0])];
-                3'd3: block_target_read_w[rd_lane*GE_W +: GE_W] = gen_bank[3].mem_a[bank_addr(row_a, block_col_base_q + rd_lane[4:0])];
-                3'd4: block_target_read_w[rd_lane*GE_W +: GE_W] = gen_bank[4].mem_a[bank_addr(row_a, block_col_base_q + rd_lane[4:0])];
-                3'd5: block_target_read_w[rd_lane*GE_W +: GE_W] = gen_bank[5].mem_a[bank_addr(row_a, block_col_base_q + rd_lane[4:0])];
-                3'd6: block_target_read_w[rd_lane*GE_W +: GE_W] = gen_bank[6].mem_a[bank_addr(row_a, block_col_base_q + rd_lane[4:0])];
-                default: block_target_read_w[rd_lane*GE_W +: GE_W] = gen_bank[7].mem_a[bank_addr(row_a, block_col_base_q + rd_lane[4:0])];
-            endcase
-            case (row_b[2:0])
-                3'd0: block_pivot_read_w[rd_lane*GE_W +: GE_W] = gen_bank[0].mem_b[bank_addr(row_b, block_col_base_q + rd_lane[4:0])];
-                3'd1: block_pivot_read_w[rd_lane*GE_W +: GE_W] = gen_bank[1].mem_b[bank_addr(row_b, block_col_base_q + rd_lane[4:0])];
-                3'd2: block_pivot_read_w[rd_lane*GE_W +: GE_W] = gen_bank[2].mem_b[bank_addr(row_b, block_col_base_q + rd_lane[4:0])];
-                3'd3: block_pivot_read_w[rd_lane*GE_W +: GE_W] = gen_bank[3].mem_b[bank_addr(row_b, block_col_base_q + rd_lane[4:0])];
-                3'd4: block_pivot_read_w[rd_lane*GE_W +: GE_W] = gen_bank[4].mem_b[bank_addr(row_b, block_col_base_q + rd_lane[4:0])];
-                3'd5: block_pivot_read_w[rd_lane*GE_W +: GE_W] = gen_bank[5].mem_b[bank_addr(row_b, block_col_base_q + rd_lane[4:0])];
-                3'd6: block_pivot_read_w[rd_lane*GE_W +: GE_W] = gen_bank[6].mem_b[bank_addr(row_b, block_col_base_q + rd_lane[4:0])];
-                default: block_pivot_read_w[rd_lane*GE_W +: GE_W] = gen_bank[7].mem_b[bank_addr(row_b, block_col_base_q + rd_lane[4:0])];
-            endcase
-        end
-    end
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -210,12 +183,9 @@ module ls_matrix_service #(
             product_q <= {(FACTOR_W+GE_W){1'b0}};
             update_write_data <= {GE_W{1'b0}};
             block_col_base_q <= 5'd0;
-            block_wr_bank_q <= 3'd0;
             block_wr_lane_q <= 3'd0;
+            block_last_lane_q <= 3'd0;
             block_lane_valid_q <= {LANES{1'b0}};
-            block_row_value_q <= {LANES*GE_W{1'b0}};
-            block_pivot_value_q <= {LANES*GE_W{1'b0}};
-            block_update_value_q <= {LANES*GE_W{1'b0}};
             rhs_wr_addr_q <= 5'd0;
             rhs_value_q <= {RHS_W{1'b0}};
             rhs_pivot_q <= {RHS_W{1'b0}};
@@ -227,7 +197,6 @@ module ls_matrix_service #(
             write_en <= 1'b0;
             acc_en <= 1'b0;
             update_write_en <= 1'b0;
-            block_update_write_en <= 1'b0;
             busy <= 1'b0;
             done <= 1'b0;
         end else begin
@@ -236,7 +205,6 @@ module ls_matrix_service #(
             write_en <= 1'b0;
             acc_en <= 1'b0;
             update_write_en <= 1'b0;
-            block_update_write_en <= 1'b0;
             case (state)
                 S_IDLE: begin
                     busy <= 1'b0;
@@ -263,8 +231,14 @@ module ls_matrix_service #(
                             state <= S_DONE;
                         end else if ((op == OP_ROW_UPDATE) && row_update_block) begin
                             block_col_base_q <= col_a;
-                            block_wr_bank_q <= row_a[2:0];
+                            block_wr_lane_q <= 3'd0;
+                            block_last_lane_q <= last_valid_update_lane(lane_valid);
                             block_lane_valid_q <= lane_valid;
+                            rd_bank_a <= row_a[2:0];
+                            rd_bank_b <= row_b[2:0];
+                            rd_addr_a <= bank_addr(row_a, col_a);
+                            rd_addr_b <= bank_addr(row_b, col_a);
+                            wr_bank_q <= row_a[2:0];
                             state <= S_UPDATE_WAIT;
                         end else if (op == OP_ROW_UPDATE) begin
                             row_value_q <= direct_rdata_a[row_a[2:0]*GE_W +: GE_W];
@@ -311,9 +285,13 @@ module ls_matrix_service #(
                 end
                 S_UPDATE_WAIT: begin
                     if (ENABLE_ROW_UPDATE_BLOCK && row_update_block) begin
-                        block_row_value_q <= block_target_read_w;
-                        block_pivot_value_q <= block_pivot_read_w;
-                        state <= S_UPDATE_MUL;
+                        row_value_q <= bank_rdata_a[rd_bank_a*GE_W +: GE_W];
+                        product_q <= $signed(factor) * $signed(bank_rdata_b[rd_bank_b*GE_W +: GE_W]);
+                        if (ROW_UPDATE_LANES > 1) begin
+                            rd_addr_a <= bank_addr(row_a, block_col_base_q + 5'd1);
+                            rd_addr_b <= bank_addr(row_b, block_col_base_q + 5'd1);
+                        end
+                        state <= S_BLOCK_WR;
                     end else begin
                         row_value_q <= bank_rdata_a[rd_bank_a*GE_W +: GE_W];
                         product_q <= $signed(factor) * $signed(bank_rdata_b[rd_bank_b*GE_W +: GE_W]);
@@ -321,21 +299,11 @@ module ls_matrix_service #(
                     end
                 end
                 S_UPDATE_MUL: begin
-                    if (ENABLE_ROW_UPDATE_BLOCK && row_update_block) begin
-                        for (upd_lane = 0; upd_lane < LANES; upd_lane = upd_lane + 1) begin
-                            block_update_value_q[upd_lane*GE_W +: GE_W] <= row_update_factor(
-                                block_row_value_q[upd_lane*GE_W +: GE_W],
-                                block_pivot_value_q[upd_lane*GE_W +: GE_W],
-                                factor
-                            );
-                        end
-                    end
                     state <= S_UPDATE_WR;
                 end
                 S_UPDATE_WR: begin
                     if (ENABLE_ROW_UPDATE_BLOCK && row_update_block) begin
                         block_wr_lane_q <= 3'd0;
-                        block_update_write_en <= 1'b1;
                         state <= S_BLOCK_WR;
                     end else begin
                         update_write_data <= row_update_result(row_value_q, product_q);
@@ -346,11 +314,21 @@ module ls_matrix_service #(
                     end
                 end
                 S_BLOCK_WR: begin
-                    if (block_wr_lane_q == LAST_LANE) begin
+                    update_write_data <= row_update_result(row_value_q, product_q);
+                    update_value <= row_update_result(row_value_q, product_q);
+                    rdata_a <= row_update_result(row_value_q, product_q);
+                    wr_addr_q <= bank_addr(row_a, block_col_base_q + {2'b00, block_wr_lane_q});
+                    update_write_en <= block_lane_valid_q[block_wr_lane_q];
+                    if (block_wr_lane_q == block_last_lane_q) begin
                         state <= S_DONE;
                     end else begin
                         block_wr_lane_q <= block_wr_lane_q + 3'd1;
-                        block_update_write_en <= 1'b1;
+                        row_value_q <= bank_rdata_a[rd_bank_a*GE_W +: GE_W];
+                        product_q <= $signed(factor) * $signed(bank_rdata_b[rd_bank_b*GE_W +: GE_W]);
+                        if (block_wr_lane_q + 3'd2 <= block_last_lane_q) begin
+                            rd_addr_a <= bank_addr(row_a, block_col_base_q + {2'b00, block_wr_lane_q} + 5'd2);
+                            rd_addr_b <= bank_addr(row_b, block_col_base_q + {2'b00, block_wr_lane_q} + 5'd2);
+                        end
                     end
                 end
                 S_RHS_WR: begin
