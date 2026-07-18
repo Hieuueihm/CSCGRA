@@ -125,6 +125,9 @@ module pearray #(
     wire [ROWS*CLUSTER_COLS*IDX_W-1:0]  cluster1_idx_out_bus;
     wire [CLUSTER_COLS*DATA_W-1:0] cluster0_colbus_r0_bus;
     wire [CLUSTER_COLS*DATA_W-1:0] cluster1_colbus_r0_bus;
+    wire [CLUSTER_COLS*ACC_W-1:0] cluster0_sparse_product_comb_bus;
+    wire [CLUSTER_COLS*ACC_W-1:0] cluster1_sparse_product_comb_bus;
+    wire [COLS*ACC_W-1:0] sparse_product_comb_bus = {cluster1_sparse_product_comb_bus, cluster0_sparse_product_comb_bus};
     reg [3:0] mesh_keepalive_q;
     reg signed [63:0] corr_acc_bank [0:COLS-1];
     wire mesh_active_req = ctx_valid | sparse_active;
@@ -170,7 +173,7 @@ module pearray #(
         .west_boundary_data_o(cluster0_west_data_unused), .west_boundary_idx_o(cluster0_west_idx_unused),
         .east_boundary_data_o(cluster0_east_data_bus), .east_boundary_idx_o(cluster0_east_idx_bus),
         .tile_out_bus(cluster0_tile_out_bus), .mesh_ctx_data_bus(cluster0_mesh_ctx_data_bus), .tile_acc_bus(cluster0_tile_acc_bus),
-        .idx_out_bus(cluster0_idx_out_bus), .colbus_r0_bus(cluster0_colbus_r0_bus)
+        .idx_out_bus(cluster0_idx_out_bus), .colbus_r0_bus(cluster0_colbus_r0_bus), .sparse_product_comb_bus(cluster0_sparse_product_comb_bus)
     );
 
     pe_cluster_4x4 #(
@@ -196,7 +199,7 @@ module pearray #(
         .west_boundary_data_o(cluster1_west_data_bus), .west_boundary_idx_o(cluster1_west_idx_bus),
         .east_boundary_data_o(cluster1_east_data_unused), .east_boundary_idx_o(cluster1_east_idx_unused),
         .tile_out_bus(cluster1_tile_out_bus), .mesh_ctx_data_bus(cluster1_mesh_ctx_data_bus), .tile_acc_bus(cluster1_tile_acc_bus),
-        .idx_out_bus(cluster1_idx_out_bus), .colbus_r0_bus(cluster1_colbus_r0_bus)
+        .idx_out_bus(cluster1_idx_out_bus), .colbus_r0_bus(cluster1_colbus_r0_bus), .sparse_product_comb_bus(cluster1_sparse_product_comb_bus)
     );
 
     generate
@@ -289,7 +292,8 @@ module pearray #(
                     corr_acc_bank[util_i] <= 64'sd0;
             end else if (corr_acc_en) begin
                 for (util_i = 0; util_i < COLS; util_i = util_i + 1)
-                    corr_acc_bank[util_i] <= corr_acc_bank[util_i] + $signed(tile_acc[util_i][63:0]);
+                    corr_acc_bank[util_i] <= corr_acc_bank[util_i] +
+                        $signed(sparse_product_comb_bus[util_i*ACC_W +: ACC_W]);
             end
             if (ENABLE_DEBUG_COUNTERS && ctx_valid) begin
                 for (util_i = 0; util_i < ROWS; util_i = util_i + 1)

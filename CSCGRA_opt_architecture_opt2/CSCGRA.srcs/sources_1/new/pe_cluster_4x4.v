@@ -63,7 +63,8 @@ module pe_cluster_4x4 #(
     output wire [ROWS*CLUSTER_COLS*DATA_W-1:0] mesh_ctx_data_bus,
     output wire [ROWS*CLUSTER_COLS*ACC_W-1:0] tile_acc_bus,
     output wire [ROWS*CLUSTER_COLS*IDX_W-1:0] idx_out_bus,
-    output wire [CLUSTER_COLS*DATA_W-1:0] colbus_r0_bus
+    output wire [CLUSTER_COLS*DATA_W-1:0] colbus_r0_bus,
+    output wire [CLUSTER_COLS*ACC_W-1:0] sparse_product_comb_bus
 );
     localparam integer CELLS = ROWS * CLUSTER_COLS;
     localparam [1:0] MESH_CTX_NONE   = 2'd0;
@@ -89,6 +90,7 @@ module pe_cluster_4x4 #(
     wire [DATA_W-1:0] tile_out [0:CELLS-1];
     wire [DATA_W-1:0] tile_mesh_ctx [0:CELLS-1];
     wire [ACC_W-1:0]  tile_acc [0:CELLS-1];
+    wire [ACC_W-1:0]  tile_mul_product [0:CELLS-1];
     wire [DATA_W-1:0] colbus_r0 [0:CLUSTER_COLS-1];
 
     genvar r;
@@ -154,7 +156,7 @@ module pe_cluster_4x4 #(
                     .out_sel(tile_out_sel), .ext_b_is_scalar(tile_ext_b_is_scalar),
                     .outN(outN[CELL]), .outS(outS[CELL]), .outE(outE[CELL]), .outW(outW[CELL]),
                     .idxE_out(idxE_out[CELL]), .idxW_out(idxW_out[CELL]),
-                    .pe_data_out(tile_out[CELL]), .mesh_ctx_data_out(tile_mesh_ctx[CELL]), .idx_out(idx_out[CELL]), .acc_out(tile_acc[CELL])
+                    .pe_data_out(tile_out[CELL]), .mesh_ctx_data_out(tile_mesh_ctx[CELL]), .idx_out(idx_out[CELL]), .acc_out(tile_acc[CELL]), .mul_product_out(tile_mul_product[CELL])
                 );
 
                 assign tile_out_bus[CELL*DATA_W +: DATA_W] = tile_out[CELL];
@@ -163,6 +165,7 @@ module pe_cluster_4x4 #(
                 assign idx_out_bus[CELL*IDX_W +: IDX_W] = idx_out[CELL];
                 if (r == 0) begin : gen_colbus
                     assign colbus_r0[lc] = tile_out[CELL];
+                    assign sparse_product_comb_bus[lc*ACC_W +: ACC_W] = tile_mul_product[CELL];
                 end
             end
         end

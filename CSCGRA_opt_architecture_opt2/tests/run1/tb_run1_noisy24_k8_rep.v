@@ -11,7 +11,7 @@ localparam PHI_SEED=32'hDEADBEEF; localparam PHI_SCALE=24'h004000; localparam PH
 localparam SOP_REFINE=8'h80, SOP_CORR=8'h81, SOP_IHT_UPDATE=8'h82, SOP_RESID=8'h83, SOP_PRUNE_X=8'h84, SOP_MP_UPDATE=8'h85, SOP_GP_NO_LS_UPDATE=8'h85, SOP_REFINE_SPARSE=8'h86, SOP_GRAD_STEP=8'h87;
 localparam ALG_OMP=0, ALG_COSAMP=1, ALG_IHT=2, ALG_HTP=3, ALG_SP=4, ALG_GP=5, ALG_GOMP=6, ALG_MP=7;
 integer pass_cnt, fail_cnt, run_pass_cnt, run_fail_cnt;
-integer i, alg, pc, timeout, mism, nz, program_len;
+integer i, alg, pc, timeout, mism, nz, program_len, start_alg, end_alg, trace_corr_count;
 reg clk,rst_n;
 reg [13:0] s_axi_awaddr; reg s_axi_awvalid; wire s_axi_awready;
 reg [31:0] s_axi_wdata; reg [3:0] s_axi_wstrb; reg s_axi_wvalid; wire s_axi_wready;
@@ -2738,10 +2738,30 @@ always @(posedge clk) begin
     end
 end
 
+always @(posedge clk) begin
+    if($test$plusargs("TRACE_CORR") &&
+       dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.pe_corr_acc_en &&
+       (trace_corr_count < 96)) begin
+        $display("CORR_MUL_TRACE row=%0d col=%0d phi=%0d y=%0d comb=%0d registered=%0d",
+                 dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.corr_row,
+                 dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.corr_col,
+                 $signed(dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.pe_rhs_phi_bus[23:0]),
+                 $signed(dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.pe_rhs_y_bus[23:0]),
+                 $signed(dut.u_pearray.sparse_product_comb_bus[63:0]),
+                 $signed(dut.ls_pe_rhs_product_bus[63:0]));
+        trace_corr_count=trace_corr_count+1;
+    end
+end
+
 initial begin
-    clk=0; pass_cnt=0; fail_cnt=0; run_pass_cnt=0; run_fail_cnt=0;
+    clk=0; pass_cnt=0; fail_cnt=0; run_pass_cnt=0; run_fail_cnt=0; trace_corr_count=0;
+    start_alg=0; end_alg=7;
+    if($value$plusargs("ALG=%d",start_alg)) end_alg=start_alg;
+    if($value$plusargs("START_ALG=%d",start_alg)) begin
+        if(!$value$plusargs("END_ALG=%d",end_alg)) end_alg=start_alg;
+    end
     reset_dut();
-    for(alg=0; alg<8; alg=alg+1) run_alg(alg);
+    for(alg=start_alg; alg<=end_alg; alg=alg+1) run_alg(alg);
     $display("tb_run1_noisy24_k8_rep: runs %0d PASS, %0d FAIL | checks %0d PASS, %0d FAIL", run_pass_cnt, run_fail_cnt, pass_cnt, fail_cnt);
     $finish;
 end

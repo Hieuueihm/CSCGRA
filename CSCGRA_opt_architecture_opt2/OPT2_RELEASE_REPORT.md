@@ -1,5 +1,16 @@
 ﻿# CSCGRA opt2 release report
 
+## Latest update: sparse correlation hybrid bypass
+
+- Baseline: LS streamed block-8 commit `d9bd414`.
+- Profile identified the per-row `CORR_LATCH` bubble as the dominant shared cost for IHT, GP, and MP.
+- The retained path consumes the existing PE multiplier product in `CORR_PE_WAIT` and keeps the extra latch cycle only at 8-row SPM bank boundaries.
+- Representative K=8 total: 1,517,725 -> 1,291,549 cycles, -226,176 (-14.90%); all 8 algorithms pass unchanged golden data.
+- Full K-sweep: 62/62 entries improved, 3,102,464 -> 2,723,672 cycles (-12.21%), `348 PASS, 0 FAIL`, no mismatch or timeout.
+- GP-opt: `runs 1 PASS, 0 FAIL | checks 3 PASS, 0 FAIL`.
+- OOC synth: 74,656 LUT, 24,819 FF, 24 BRAM36, 105 DSP, WNS +2.745 ns, TNS 0; no error or critical warning.
+- Detailed analysis: `analysis/corr_hybrid_summary.md`.
+
 ## Final release folder
 - Opt2 RTL/SDK/TB folder: `D:\vivado_pj\CSCGRA_opt_architecture_opt2`
 - Baseline preserved: `D:\vivado_pj\CSCGRA_opt_architecture`

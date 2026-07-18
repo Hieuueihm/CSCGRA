@@ -60,7 +60,8 @@ module pe_tile #(
     output wire [DATA_W-1:0]        pe_data_out,
     output wire [DATA_W-1:0]        mesh_ctx_data_out,
     output wire [IDX_W-1:0]         idx_out,
-    output wire [ACC_W-1:0]         acc_out
+    output wire [ACC_W-1:0]         acc_out,
+    output wire [ACC_W-1:0]         mul_product_out
 );
 
     wire [DATA_W-1:0] rf_rd_data;
@@ -212,7 +213,7 @@ module pe_tile #(
         .rf_rd_addr(core_rf_rd_addr), .rf_wr_addr(core_rf_wr_addr), .rf_wr_en(core_rf_wr_en),
         .acc_clear(core_acc_clear), .acc_en(core_acc_en),
         .idx_a(core_idx_a), .idx_b(core_idx_b), .idx_out(idx_out),
-        .pe_out(core_out), .mesh_ctx_result_out(core_mesh_ctx_result), .acc_out(acc_out), .rf_rd_data(rf_rd_data)
+        .pe_out(core_out), .mesh_ctx_result_out(core_mesh_ctx_result), .acc_out(acc_out), .mul_product_out(mul_product_out), .rf_rd_data(rf_rd_data)
     );
 
     function [DATA_W-1:0] sat_acc_q;

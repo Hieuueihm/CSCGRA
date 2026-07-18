@@ -12,6 +12,9 @@ localparam SOP_REFINE=8'h80, SOP_CORR=8'h81, SOP_IHT_UPDATE=8'h82, SOP_RESID=8'h
 localparam ALG_OMP=0, ALG_COSAMP=1, ALG_IHT=2, ALG_HTP=3, ALG_SP=4, ALG_GP=5, ALG_GOMP=6, ALG_MP=7;
 integer pass_cnt, fail_cnt, run_pass_cnt, run_fail_cnt;
 integer i, alg, pc, timeout, mism, nz, program_len;
+integer state_cycles [0:127];
+integer uop_cycles [0:15];
+integer profile_active, profile_i, start_alg, end_alg, max_only;
 reg clk,rst_n;
 reg [13:0] s_axi_awaddr; reg s_axi_awvalid; wire s_axi_awready;
 reg [31:0] s_axi_wdata; reg [3:0] s_axi_wstrb; reg s_axi_wvalid; wire s_axi_wready;
@@ -2696,15 +2699,37 @@ task run_checkpoint_1k; input integer a; integer fail_before; begin
     end
 end endtask
 
+task reset_phase_profile; begin
+    profile_active = 0;
+    for (profile_i = 0; profile_i < 128; profile_i = profile_i + 1)
+        state_cycles[profile_i] = 0;
+    for (profile_i = 0; profile_i < 16; profile_i = profile_i + 1)
+        uop_cycles[profile_i] = 0;
+    profile_active = 1;
+end endtask
 
-task profile_alg_iters; input integer a; integer it; integer prev_cycles; integer cur_cycles; begin
+task dump_phase_profile; input integer a; input integer it; begin
+    profile_active = 0;
+    for (profile_i = 0; profile_i < 16; profile_i = profile_i + 1)
+        if (uop_cycles[profile_i] != 0)
+            $display("UOP_CYCLE ALG=%0s iter=%0d uop=%0d cycles=%0d", alg_name(a), it, profile_i, uop_cycles[profile_i]);
+    for (profile_i = 0; profile_i < 128; profile_i = profile_i + 1)
+        if (state_cycles[profile_i] != 0)
+            $display("STATE_CYCLE ALG=%0s iter=%0d state=%0d cycles=%0d", alg_name(a), it, profile_i, state_cycles[profile_i]);
+end endtask
+
+
+task profile_alg_iters; input integer a; integer it; integer first_it; integer prev_cycles; integer cur_cycles; begin
     prev_cycles = 0;
     $display("START_ITER_PROFILE ALG=%0s max_iter=%0d kparam=%0d", alg_name(a), alg_iters(a), K);
-    for (it = 1; it <= alg_iters(a); it = it + 1) begin
+    first_it = max_only ? alg_iters(a) : 1;
+    for (it = first_it; it <= alg_iters(a); it = it + 1) begin
         clear_state();
         load_alg(a);
         build_program(a,it);
+        reset_phase_profile();
         run_prog(program_len,it);
+        dump_phase_profile(a,it);
         cur_cycles = timeout;
         $display("ITER_CYCLE ALG=%0s iter=%0d kparam=%0d plen=%0d cycles=%0d delta=%0d status=%0s",
                  alg_name(a), it, K, program_len, cur_cycles, cur_cycles - prev_cycles,
@@ -2753,10 +2778,24 @@ always @(posedge clk) begin
     end
 end
 
+always @(posedge clk) begin
+    if (profile_active) begin
+        uop_cycles[dut.uop_class] = uop_cycles[dut.uop_class] + 1;
+        if (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.busy)
+            state_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state] =
+                state_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state] + 1;
+    end
+end
+
 initial begin
-    clk=0; pass_cnt=0; fail_cnt=0; run_pass_cnt=0; run_fail_cnt=0;
+    clk=0; pass_cnt=0; fail_cnt=0; run_pass_cnt=0; run_fail_cnt=0; profile_active=0;
+    start_alg=2; end_alg=7; max_only=$test$plusargs("MAX_ONLY");
+    if($value$plusargs("ALG=%d",start_alg)) end_alg=start_alg;
+    if($value$plusargs("START_ALG=%d",start_alg)) begin
+        if(!$value$plusargs("END_ALG=%d",end_alg)) end_alg=start_alg;
+    end
     reset_dut();
-    for(alg=3; alg<8; alg=alg+1) profile_alg_iters(alg);
+    for(alg=start_alg; alg<=end_alg; alg=alg+1) profile_alg_iters(alg);
     $display("tb_run1_noisy24_k8_rep_iter_profile: iter profile complete | checks %0d PASS, %0d FAIL", pass_cnt, fail_cnt);
     $finish;
 end

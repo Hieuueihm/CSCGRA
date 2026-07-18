@@ -1453,7 +1453,6 @@ reg [IDX_W-1:0] corr_scan_col;
 reg signed [DATA_W-1:0] corr_phi;
 reg signed [63:0] corr_acc;
 reg [COLS*DATA_W-1:0] corr_phi_lane;
-reg [COLS*64-1:0] corr_acc_lane;
 reg corr_stream_valid_q;
 reg corr_stream_done_q;
 reg [IDX_W-1:0] corr_stream_base_idx_q;
@@ -1656,7 +1655,11 @@ end
 
 always @(*) begin
     pe_corr_acc_clear = busy && (active_op == OP_CORR) && ((state == S_CORR_INIT) || (state == S_CORR_WRITE));
-    pe_corr_acc_en = busy && (active_op == OP_CORR) && (state == S_CORR_LATCH);
+    // The PE product is usable in PE_WAIT except on the first row after an
+    // 8-row SPM bank transition, where the memory address needs one more cycle.
+    pe_corr_acc_en = busy && (active_op == OP_CORR) &&
+                     (((state == S_CORR_PE_WAIT) && !((corr_row != 0) && (corr_row[2:0] == 3'd0))) ||
+                      (state == S_CORR_LATCH));
     pe_sparse_op = busy ? active_op : op_sel;
     pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC))) || ((active_op == OP_CORR) && (state == S_CORR_ACC)));
     pe_rhs_phi_bus = {COLS*DATA_W{1'b0}};
@@ -1911,7 +1914,6 @@ case (state)
                     corr_scan_col <= {IDX_W{1'b0}};
                     corr_acc <= 64'sd0;
                     corr_phi_lane <= {COLS*DATA_W{1'b0}};
-                    corr_acc_lane <= {COLS*64{1'b0}};
                     rd_addr <= 10'h080;
                     phi_state_q <= (|seed) ? seed : DEFAULT_SEED;
                     corr_block_state <= (|seed) ? seed : DEFAULT_SEED;
@@ -2530,7 +2532,6 @@ case (state)
                 corr_scan_col <= {IDX_W{1'b0}};
                 corr_acc <= 64'sd0;
                 corr_phi_lane <= {COLS*DATA_W{1'b0}};
-                corr_acc_lane <= {COLS*64{1'b0}};
                 rd_addr <= 10'h080;
                 phi_state_q <= corr_block_state;
                 corr_row_state <= corr_block_state;
@@ -2563,11 +2564,20 @@ case (state)
                     phi_state_q <= lfsr_jump_padded(corr_row_next_state, padded_n_q);
                     corr_scan_col <= {IDX_W{1'b0}};
                 end
-                state <= S_CORR_LATCH;
+                // Retain the latch bubble only at SPM bank boundaries.
+                if ((corr_row != 0) && (corr_row[2:0] == 3'd0)) begin
+                    state <= S_CORR_LATCH;
+                end else if (corr_row + 1 >= m_size) begin
+                    write_idx <= corr_col;
+                    state <= S_CORR_WRITE;
+                end else begin
+                    corr_row <= corr_row + 1'b1;
+                    corr_row_state <= corr_row_next_state;
+                    corr_row_next_state <= lfsr_jump_padded(corr_row_next_state, padded_n_q);
+                    state <= S_CORR_ACC;
+                end
             end
             S_CORR_LATCH: begin
-                for (corr_lane = 0; corr_lane < COLS; corr_lane = corr_lane + 1)
-                    corr_acc_lane[corr_lane*64 +: 64] <= $signed(corr_acc_lane[corr_lane*64 +: 64]) + $signed(pe_rhs_product_bus[corr_lane*64 +: 64]);
                 if (corr_row + 1 >= m_size) begin
                     write_idx <= corr_col;
                     state <= S_CORR_WRITE;

@@ -38,6 +38,7 @@ module pe_core #(
     output reg  [DATA_W-1:0]        pe_out,
     output reg  [DATA_W-1:0]        mesh_ctx_result_out,
     output wire [ACC_W-1:0]         acc_out,
+    output wire [ACC_W-1:0]         mul_product_out,
     output wire [DATA_W-1:0]        rf_rd_data
 );
 
@@ -168,6 +169,7 @@ module pe_core #(
     wire signed [DATA_W-1:0] mul_b_s = b_s;
     wire signed [(2*DATA_W)-1:0] prod_full = mul_a_s * mul_b_s;
     wire signed [ACC_W-1:0]      prod_ext  = $signed(prod_full);
+    assign mul_product_out = prod_ext;
     wire signed [ACC_W:0] acc_add_wide = {acc[ACC_W-1], acc} + {prod_ext[ACC_W-1], prod_ext};
     wire signed [ACC_W:0] prod_round_ext = {prod_ext[ACC_W-1], prod_ext} + (prod_ext[ACC_W-1] ? -($signed(1) <<< (Q_FRAC_W-1)) : ($signed(1) <<< (Q_FRAC_W-1)));
     wire signed [ACC_W-1:0] prod_q_ext = prod_round_ext >>> Q_FRAC_W;
