@@ -76,7 +76,8 @@ uses no extra BRAM/DSP, and retains positive 100 MHz timing margin.
   `cgra_top_timing.rpt` (local, ignored).
 - Synthesis script: `scripts/run_synth_corr_update_fused_cgra_top.tcl`.
 
-## Next target
+## Divider evaluation
 
-Evaluate a fixed-point reciprocal Newton-Raphson unit against the existing
-bit-exact restoring divider.  Cholesky/LDLT remains the only LS factorization.
+The fixed-point reciprocal Newton-Raphson experiment is documented in
+`analysis/nr_reciprocal_evaluation.md`.  The current restoring divider is kept
+because the shared-multiplier implementation is slower at bit-exact precision.

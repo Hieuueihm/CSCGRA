@@ -1,0 +1,8 @@
+nr_iterations,multiplies,shared_multiplier_min_cycles,total_mismatches,max_abs_lsb_error,generic_mismatches,ldlt_mismatches
+0,1,6,152,3269,32,120
+1,3,18,150,192,32,118
+2,5,30,21,1,14,7
+3,7,42,11,1,11,0
+4,9,54,0,0,0,0
+5,11,66,0,0,0,0
+6,13,78,0,0,0,0
