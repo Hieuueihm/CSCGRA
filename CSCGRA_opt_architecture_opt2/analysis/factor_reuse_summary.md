@@ -79,8 +79,7 @@ margin improves by 0.515 ns.
   `cgra_top_timing.rpt` (local, ignored).
 - Synthesis script: `scripts/run_synth_factor_reuse_cgra_top.tcl`.
 
-## Next target
+## Successor checkpoint
 
-Fuse correlation with the following vector update for IHT and GP.  Those two
-algorithms remain cycle-identical in this checkpoint, which isolates the
-factor-reuse gain and provides a clean baseline for the fusion.
+The four-row correlation-update fusion for IHT and GP is implemented and
+documented in `analysis/corr_update_fused_summary.md`.

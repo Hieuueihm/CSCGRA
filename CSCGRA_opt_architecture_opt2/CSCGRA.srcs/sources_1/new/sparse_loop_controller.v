@@ -114,7 +114,8 @@ S_LDL_ROW_FINAL_WAIT=122, S_LDL_ROW_WRITE=123,
 S_LDL_ROW_WRITE_WAIT=124;
 localparam [6:0] S_FACTOR_CHECK_INIT=125, S_FACTOR_CHECK_SCAN=126,
                  S_FACTOR_CHECK_DONE=127;
-localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GRAD_STEP=4'd7; // OP_GRAD_STEP: scaled projected-gradient x += (Phi^T r >>> mu_shift), followed by prune/residual in context
+localparam [6:0] S_FUSED_UPDATE_CAPTURE=7'd2;
+localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GRAD_STEP=4'd7, OP_CORR_UPDATE=4'd8; // OP_CORR_UPDATE: fused Phi^T*r score writeback plus four-row x update
 localparam [1:0] MESH_CTX_NONE=2'd0, MESH_CTX_UPDATE=2'd1, MESH_CTX_PRUNE=2'd2, MESH_CTX_RESID=2'd3;
 localparam [3:0] MESH_CTX_WAIT_CYCLES = 4'd6;
 localparam [4:0] RHS_BLOCK_STRIDE = COLS;
@@ -1726,6 +1727,17 @@ integer cache_pos;
 integer cache_cmp;
 reg [COLS-1:0] row2_prune_keep_mask;
 wire [MAX_K*IDX_W-1:0] row2_support_flat_w;
+wire corr_active_op_w = (active_op == OP_CORR) ||
+                        (active_op == OP_CORR_UPDATE);
+wire corr_request_op_w = (op_sel == OP_CORR) ||
+                         (op_sel == OP_CORR_UPDATE);
+wire corr_pe_state_w = (state == S_PRIME) ||
+                       (state == S_CORR_INIT) ||
+                       (state == S_CORR_SCAN) ||
+                       (state == S_CORR_LATCH) ||
+                       (state == S_CORR_ACC) ||
+                       (state == S_CORR_PE_WAIT) ||
+                       (state == S_CORR_WRITE);
 reg [IDX_W-1:0] sparse_target_idx;
 reg [IDX_W-1:0] wx_target_idx_q;
 reg [DATA_W-1:0] wx_value_q;
@@ -1733,10 +1745,13 @@ reg [DATA_W-1:0] row3_selected_value;
 reg [COLS*MEM_AW-1:0] row3_wr_addr;
 reg [COLS*DATA_W-1:0] row3_wr_data;
 reg [COLS-1:0] row3_wr_en;
-wire row3_corr_mode_w = ((active_op == OP_CORR) && (state == S_CORR_WRITE));
+wire row3_corr_mode_w = corr_active_op_w && (state == S_CORR_WRITE);
 wire row3_scalar_write_en_w = ((state == S_WX) || (state == S_WX_COMMIT) || (state == S_WR_MESH_COMMIT) || (state == S_IHT_MESH_WRITE) || (state == S_PRUNE_MESH_WRITE) || (state == S_IHT_SCORE_READ) || (state == S_PRUNE_X_WAIT) || (state == S_MP_X_WRITE));
 wire row3_prune_block_mode_w = ((active_op == OP_PRUNE_X) && (state == S_PRUNE_MESH_WRITE));
-wire row3_update_block_mode_w = (((active_op == OP_IHT_UPDATE) || (active_op == OP_GRAD_STEP)) && (state == S_IHT_MESH_WRITE));
+wire row3_update_block_mode_w = (((active_op == OP_IHT_UPDATE) ||
+                                  (active_op == OP_GRAD_STEP) ||
+                                  (active_op == OP_CORR_UPDATE)) &&
+                                 (state == S_IHT_MESH_WRITE));
 wire row3_resid_write_op_w = (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_RESID) || (active_op == OP_MP_UPDATE)) && (k_active <= MAX_K));
 wire row3_resid_mode_w = (row3_resid_write_op_w && (state == S_WR_MESH_COMMIT));
 wire row3_commit_value_mode_w = row3_update_block_mode_w || row3_prune_block_mode_w || row3_resid_mode_w;
@@ -1938,19 +1953,22 @@ always @(*) begin
     // leaves one stale accumulator cycle at the first column block of every
     // correlation service after reset.  This is a startup-only clear; it does
     // not insert a bubble in the one-row-per-clock stream.
-    pe_corr_acc_clear = (start && (op_sel == OP_CORR)) ||
-                        (busy && (active_op == OP_CORR) &&
+    pe_corr_acc_clear = (start && corr_request_op_w) ||
+                        (busy && corr_active_op_w &&
                          ((state == S_CORR_INIT) || (state == S_CORR_WRITE)));
     // Correlation accepts one row per clock in S_CORR_ACC.  Four PE rows own
     // round-robin partial sums; S_CORR_PE_WAIT is only the final pipe drain.
-    pe_corr_acc_en = busy && (active_op == OP_CORR) && (state == S_CORR_ACC);
-    pe_sparse_op = busy ? active_op : op_sel;
-    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC))) || ((active_op == OP_CORR) && (state == S_CORR_ACC)));
+    pe_corr_acc_en = busy && corr_active_op_w && (state == S_CORR_ACC);
+    // The PE array already has the four-row striped OP_CORR datapath.  The
+    // fused opcode reuses that datapath, then enters the mesh update pipeline.
+    pe_sparse_op = busy ? ((corr_active_op_w && corr_pe_state_w) ? OP_CORR : active_op) :
+                          (corr_request_op_w ? OP_CORR : op_sel);
+    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC))) || (corr_active_op_w && (state == S_CORR_ACC)));
     pe_rhs_phi_bus = {COLS*DATA_W{1'b0}};
     pe_rhs_y_bus = {COLS*DATA_W{1'b0}};
     for (rhs_lane = 0; rhs_lane < COLS; rhs_lane = rhs_lane + 1) begin
-        pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] = (active_op == OP_CORR) ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] : (((rhs_block_base + rhs_lane) < active_k) ? phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}});
-        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : ((active_op == OP_CORR) ? corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
+        pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] = corr_active_op_w ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] : (((rhs_block_base + rhs_lane) < active_k) ? phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}});
+        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : (corr_active_op_w ? corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
     end
 end
 
@@ -1958,7 +1976,7 @@ always @(*) begin
     sparse_target_idx = support_cached_at(write_idx[4:0]);
     if (phase_residual)
         base_addr = 10'h080 + write_idx[IDX_W-1:3];
-    else if (active_op == OP_CORR)
+    else if (row3_corr_mode_w)
         base_addr = 10'h180 + write_idx[IDX_W-1:3];
     else if (wx_commit_mode_w)
         base_addr = 10'h000 + wx_target_idx_q[IDX_W-1:3];
@@ -2191,7 +2209,7 @@ case (state)
                     factor_reuse_mode_q <= FACTOR_REUSE_NONE;
                     write_idx <= {IDX_W{1'b0}};
                     phase_residual <= 1'b0;
-                    write_limit <= (op_sel == OP_CORR) ? n_size : n_size;
+                    write_limit <= n_size;
                     write_value <= {DATA_W{1'b0}};
                     state <= (((op_sel == OP_REFINE) ||
                                (op_sel == OP_REFINE_SPARSE)) &&
@@ -2383,7 +2401,7 @@ case (state)
                         factor_valid_q <= 1'b0;
                         state <= S_LS_CLEAR_START;
                     end
-                end else if ((active_op == OP_CORR) && (n_size != 0) && (m_size != 0)) begin
+                end else if (corr_active_op_w && (n_size != 0) && (m_size != 0)) begin
                     corr_col <= {IDX_W{1'b0}};
                     corr_row <= {IDX_W{1'b0}};
                     corr_scan_col <= {IDX_W{1'b0}};
@@ -3465,6 +3483,8 @@ case (state)
             end
             S_CORR_PE_WAIT: begin
                 write_idx <= corr_col;
+                if (active_op == OP_CORR_UPDATE)
+                    rd_addr <= 10'h000 + (corr_col >> 3);
                 state <= S_CORR_WRITE;
             end
             S_CORR_WRITE: begin
@@ -3476,6 +3496,36 @@ case (state)
                     corr_stream_data_q[corr_lane*DATA_W +: DATA_W] <= row3_wr_data[corr_lane*DATA_W +: DATA_W];
                 end
                 corr_block_seq <= corr_block_seq + 1'b1;
+                if (active_op == OP_CORR_UPDATE) begin
+                    // Score writeback occurs on this clock.  In parallel,
+                    // capture its full block as the update delta; the x block
+                    // requested in S_CORR_PE_WAIT is available next clock.
+                    mesh_ctx_delta_block <= row3_wr_data;
+                    mesh_ctx_keep_block <= {COLS{1'b1}};
+                    mesh_ctx_base_idx_block <= corr_col;
+                    mesh_ctx_limit_block <= n_size;
+                    mesh_ctx_shift_block <= mu_shift_eff;
+                    mesh_ctx_wait_count <= MESH_CTX_WAIT_CYCLES;
+                    state <= S_FUSED_UPDATE_CAPTURE;
+                end else if (corr_col + COLS[IDX_W-1:0] >= n_size) begin
+                    state <= S_DONE;
+                end else begin
+                    corr_col <= corr_col + COLS[IDX_W-1:0];
+                    corr_block_state <= lfsr_advance(corr_block_state, COLS);
+                    state <= S_CORR_INIT;
+                end
+            end
+            S_FUSED_UPDATE_CAPTURE: begin
+                mesh_ctx_x_block <= rd_data;
+                state <= S_IHT_MESH_WAIT;
+            end
+            S_IHT_MESH_WAIT: begin
+                if (mesh_ctx_wait_count == 0)
+                    state <= S_IHT_MESH_WRITE;
+                else
+                    mesh_ctx_wait_count <= mesh_ctx_wait_count - 1'b1;
+            end
+            S_IHT_MESH_WRITE: begin
                 if (corr_col + COLS[IDX_W-1:0] >= n_size) begin
                     state <= S_DONE;
                 end else begin
