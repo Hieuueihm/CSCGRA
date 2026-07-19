@@ -35,6 +35,10 @@ module sparse_loop_controller #(
     output reg pe_corr_acc_clear,
     output reg pe_corr_acc_en,
     output reg [3:0] pe_sparse_op,
+    output reg ls_wide_mul_active,
+    output reg [4*COLS*DATA_W-1:0] ls_wide_a_bus,
+    output reg [4*COLS*DATA_W-1:0] ls_wide_b_bus,
+    input wire [4*COLS*64-1:0] ls_wide_product_bus,
     output wire corr_stream_valid,
     output wire corr_stream_done,
     output wire [IDX_W-1:0] corr_stream_base_idx,
@@ -98,6 +102,16 @@ S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE
 S_LS_CLEAR_START=86, S_LS_CLEAR_WAIT=87, S_SOLVE_SYM_READ=88, S_SOLVE_SYM_WAIT=89, S_SOLVE_SYM_WRITE=90, S_SOLVE_SYM_WRITE_WAIT=91,
 S_ELIM_ROW_READ=92, S_ELIM_ROW_WAIT=93, S_ELIM_UPDATE_START=94, S_ELIM_UPDATE_WAIT=95, S_BACK_ACC_READ=96, S_BACK_ACC_WAIT=97, S_BACK_PREP_READ=98, S_BACK_PREP_WAIT=99, S_GRAM_ACC_WAIT=100, S_SCAN_DIRECT_LATCH=101, S_RHS_INIT_WRITE=102, S_RHS_INIT_WAIT=103, S_ELIM_RHS_READ_WAIT=104, S_ELIM_RHS_UPDATE_WAIT=105, S_BACK_RHS_READ=106, S_BACK_RHS_READ_WAIT=107;
 localparam [6:0] S_IHT_MESH_WAIT=108, S_IHT_MESH_WRITE=110, S_PRUNE_MESH_WAIT=111, S_PRUNE_MESH_WRITE=113, S_WR_MESH_WAIT=114, S_WR_MESH_COMMIT=116, S_WX_COMMIT=117;
+localparam [6:0] S_LDL_INIT=58, S_LDL_DIAG_READ=59, S_LDL_DIAG_WAIT=60,
+S_LDL_DIAG_GATHER=61, S_LDL_DIAG_GATHER_WAIT=62, S_LDL_DIAG_MUL1=63,
+S_LDL_DIAG_MUL1_WAIT=64, S_LDL_DIAG_MUL2=65, S_LDL_DIAG_MUL2_WAIT=66,
+S_LDL_DIAG_WRITE=67, S_LDL_DIAG_WRITE_WAIT=68, S_LDL_INV_DIV=69,
+S_LDL_INV_DONE=79, S_LDL_ROW_INIT=80, S_LDL_ROW_A_READ=81,
+S_LDL_ROW_A_WAIT=82, S_LDL_ROW_P_READ=83, S_LDL_ROW_P_WAIT=84,
+S_LDL_ROW_MUL1=85, S_LDL_ROW_MUL1_WAIT=118, S_LDL_ROW_MUL2=119,
+S_LDL_ROW_MUL2_WAIT=120, S_LDL_ROW_FINAL_MUL=121,
+S_LDL_ROW_FINAL_WAIT=122, S_LDL_ROW_WRITE=123,
+S_LDL_ROW_WRITE_WAIT=124;
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GRAD_STEP=4'd7; // OP_GRAD_STEP: scaled projected-gradient x += (Phi^T r >>> mu_shift), followed by prune/residual in context
 localparam [1:0] MESH_CTX_NONE=2'd0, MESH_CTX_UPDATE=2'd1, MESH_CTX_PRUNE=2'd2, MESH_CTX_RESID=2'd3;
 localparam [3:0] MESH_CTX_WAIT_CYCLES = 4'd6;
@@ -1410,6 +1424,136 @@ ls_matrix_service #(
     .rhs_rdata(ls_rhs_rdata_w)
 );
 
+// Four-row wide multiplier built from the existing 24x24 PE multipliers.
+// Each physical row evaluates one signed 64x64 product.  Sixteen unsigned
+// 16x16 limb products are issued over the eight PE columns in two clocks;
+// no extra wide multiplier or DSP array is instantiated in the LS controller.
+localparam [1:0] WIDE_MUL_IDLE=2'd0, WIDE_MUL_ISSUE0=2'd1,
+                 WIDE_MUL_ISSUE1=2'd2, WIDE_MUL_DRAIN=2'd3;
+reg [1:0] wide_mul_state_q;
+reg wide_mul_start_q;
+reg wide_mul_done_q;
+reg signed [4*64-1:0] wide_mul_a_q;
+reg signed [4*64-1:0] wide_mul_b_q;
+reg [63:0] wide_mul_abs_a_q [0:3];
+reg [63:0] wide_mul_abs_b_q [0:3];
+reg wide_mul_neg_q [0:3];
+reg [127:0] wide_mul_acc_q [0:3];
+reg signed [127:0] wide_mul_result_q [0:3];
+reg [127:0] wide_partial_sum [0:3];
+reg [4:0] ldlt_k_q;
+reg [4:0] ldlt_i_base_q;
+reg [4:0] ldlt_p_base_q;
+reg [2:0] ldlt_lane_q;
+reg [3:0] ldlt_lane_valid_q;
+reg signed [63:0] ldlt_diag_a_q;
+reg signed [127:0] ldlt_diag_acc_q;
+reg signed [63:0] ldlt_d_cur_q;
+reg signed [63:0] ldlt_l_lane_q [0:3];
+reg signed [63:0] ldlt_lkp_lane_q [0:3];
+reg signed [63:0] ldlt_a_lane_q [0:3];
+reg signed [63:0] ldlt_acc_lane_q [0:3];
+reg signed [63:0] ldlt_d_mem [0:MAX_K-1];
+integer wide_row;
+integer wide_col;
+integer wide_part;
+integer wide_a_limb;
+integer wide_b_limb;
+integer wide_shift;
+wire signed [127:0] ldlt_wide_q32_sum =
+    ($signed(wide_mul_result_q[0]) >>> 32) +
+    ($signed(wide_mul_result_q[1]) >>> 32) +
+    ($signed(wide_mul_result_q[2]) >>> 32) +
+    ($signed(wide_mul_result_q[3]) >>> 32);
+wire signed [127:0] ldlt_wide_q16_sum =
+    ($signed(wide_mul_result_q[0]) >>> 16) +
+    ($signed(wide_mul_result_q[1]) >>> 16) +
+    ($signed(wide_mul_result_q[2]) >>> 16) +
+    ($signed(wide_mul_result_q[3]) >>> 16);
+
+always @(*) begin
+    ls_wide_mul_active = (wide_mul_state_q != WIDE_MUL_IDLE);
+    ls_wide_a_bus = {4*COLS*DATA_W{1'b0}};
+    ls_wide_b_bus = {4*COLS*DATA_W{1'b0}};
+    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
+        wide_partial_sum[wide_row] = 128'd0;
+
+    if ((wide_mul_state_q == WIDE_MUL_ISSUE0) ||
+        (wide_mul_state_q == WIDE_MUL_ISSUE1)) begin
+        for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
+            for (wide_col = 0; wide_col < COLS; wide_col = wide_col + 1) begin
+                wide_part = ((wide_mul_state_q == WIDE_MUL_ISSUE1) ? COLS : 0) + wide_col;
+                wide_a_limb = wide_part >> 2;
+                wide_b_limb = wide_part & 3;
+                ls_wide_a_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                    {{(DATA_W-16){1'b0}}, wide_mul_abs_a_q[wide_row][wide_a_limb*16 +: 16]};
+                ls_wide_b_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                    {{(DATA_W-16){1'b0}}, wide_mul_abs_b_q[wide_row][wide_b_limb*16 +: 16]};
+            end
+        end
+    end
+
+    if ((wide_mul_state_q == WIDE_MUL_ISSUE1) ||
+        (wide_mul_state_q == WIDE_MUL_DRAIN)) begin
+        for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
+            for (wide_col = 0; wide_col < COLS; wide_col = wide_col + 1) begin
+                wide_part = ((wide_mul_state_q == WIDE_MUL_DRAIN) ? COLS : 0) + wide_col;
+                wide_a_limb = wide_part >> 2;
+                wide_b_limb = wide_part & 3;
+                wide_shift = (wide_a_limb + wide_b_limb) * 16;
+                wide_partial_sum[wide_row] = wide_partial_sum[wide_row] +
+                    ({64'd0, $unsigned(ls_wide_product_bus[(wide_row*COLS+wide_col)*64 +: 64])} << wide_shift);
+            end
+        end
+    end
+end
+
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        wide_mul_state_q <= WIDE_MUL_IDLE;
+        wide_mul_done_q <= 1'b0;
+        for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
+            wide_mul_abs_a_q[wide_row] <= 64'd0;
+            wide_mul_abs_b_q[wide_row] <= 64'd0;
+            wide_mul_neg_q[wide_row] <= 1'b0;
+            wide_mul_acc_q[wide_row] <= 128'd0;
+            wide_mul_result_q[wide_row] <= 128'sd0;
+        end
+    end else begin
+        wide_mul_done_q <= 1'b0;
+        case (wide_mul_state_q)
+            WIDE_MUL_IDLE: begin
+                if (wide_mul_start_q) begin
+                    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
+                        wide_mul_abs_a_q[wide_row] <= wide_mul_a_q[wide_row*64+63] ?
+                            -$signed(wide_mul_a_q[wide_row*64 +: 64]) : $signed(wide_mul_a_q[wide_row*64 +: 64]);
+                        wide_mul_abs_b_q[wide_row] <= wide_mul_b_q[wide_row*64+63] ?
+                            -$signed(wide_mul_b_q[wide_row*64 +: 64]) : $signed(wide_mul_b_q[wide_row*64 +: 64]);
+                        wide_mul_neg_q[wide_row] <= wide_mul_a_q[wide_row*64+63] ^ wide_mul_b_q[wide_row*64+63];
+                    end
+                    wide_mul_state_q <= WIDE_MUL_ISSUE0;
+                end
+            end
+            WIDE_MUL_ISSUE0: wide_mul_state_q <= WIDE_MUL_ISSUE1;
+            WIDE_MUL_ISSUE1: begin
+                for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
+                    wide_mul_acc_q[wide_row] <= wide_partial_sum[wide_row];
+                wide_mul_state_q <= WIDE_MUL_DRAIN;
+            end
+            WIDE_MUL_DRAIN: begin
+                for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
+                    if (wide_mul_neg_q[wide_row])
+                        wide_mul_result_q[wide_row] <= -$signed(wide_mul_acc_q[wide_row] + wide_partial_sum[wide_row]);
+                    else
+                        wide_mul_result_q[wide_row] <= $signed(wide_mul_acc_q[wide_row] + wide_partial_sum[wide_row]);
+                end
+                wide_mul_done_q <= 1'b1;
+                wide_mul_state_q <= WIDE_MUL_IDLE;
+            end
+        endcase
+    end
+end
+
 reg [64:0] div_abs_num;
 reg [63:0] div_abs_den;
 reg [64:0] div_rem;
@@ -1420,6 +1564,7 @@ reg [6:0] div_iter;
 reg div_neg;
 reg div_return_back;
 reg div_return_mp;
+reg div_return_ldlt;
 reg [IDX_W-1:0] mp_idx_q;
 reg signed [DATA_W-1:0] mp_score_q;
 reg signed [DATA_W-1:0] mp_x_old_q;
@@ -1453,6 +1598,8 @@ reg [IDX_W-1:0] corr_scan_col;
 reg signed [DATA_W-1:0] corr_phi;
 reg signed [63:0] corr_acc;
 reg [COLS*DATA_W-1:0] corr_phi_lane;
+reg [COLS*DATA_W-1:0] corr_y_block;
+reg [COLS*DATA_W-1:0] corr_y_next_block;
 reg corr_stream_valid_q;
 reg corr_stream_done_q;
 reg [IDX_W-1:0] corr_stream_base_idx_q;
@@ -1654,19 +1801,24 @@ always @(*) begin
 end
 
 always @(*) begin
-    pe_corr_acc_clear = busy && (active_op == OP_CORR) && ((state == S_CORR_INIT) || (state == S_CORR_WRITE));
-    // The PE product is usable in PE_WAIT except on the first row after an
-    // 8-row SPM bank transition, where the memory address needs one more cycle.
-    pe_corr_acc_en = busy && (active_op == OP_CORR) &&
-                     (((state == S_CORR_PE_WAIT) && !((corr_row != 0) && (corr_row[2:0] == 3'd0))) ||
-                      (state == S_CORR_LATCH));
+    // Clear on the request edge as well as in the internal clear states.  The
+    // PE tiles register their control inputs, so waiting for busy/S_CORR_INIT
+    // leaves one stale accumulator cycle at the first column block of every
+    // correlation service after reset.  This is a startup-only clear; it does
+    // not insert a bubble in the one-row-per-clock stream.
+    pe_corr_acc_clear = (start && (op_sel == OP_CORR)) ||
+                        (busy && (active_op == OP_CORR) &&
+                         ((state == S_CORR_INIT) || (state == S_CORR_WRITE)));
+    // Correlation accepts one row per clock in S_CORR_ACC.  Four PE rows own
+    // round-robin partial sums; S_CORR_PE_WAIT is only the final pipe drain.
+    pe_corr_acc_en = busy && (active_op == OP_CORR) && (state == S_CORR_ACC);
     pe_sparse_op = busy ? active_op : op_sel;
     pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC))) || ((active_op == OP_CORR) && (state == S_CORR_ACC)));
     pe_rhs_phi_bus = {COLS*DATA_W{1'b0}};
     pe_rhs_y_bus = {COLS*DATA_W{1'b0}};
     for (rhs_lane = 0; rhs_lane < COLS; rhs_lane = rhs_lane + 1) begin
         pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] = (active_op == OP_CORR) ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] : (((rhs_block_base + rhs_lane) < active_k) ? phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}});
-        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : ((active_op == OP_CORR) ? rd_data[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
+        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : ((active_op == OP_CORR) ? corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
     end
 end
 
@@ -1788,6 +1940,8 @@ active_op <= OP_REFINE;
         corr_scan_col <= {IDX_W{1'b0}};
         corr_phi <= {DATA_W{1'b0}};
         corr_acc <= 64'sd0;
+        corr_y_block <= {COLS*DATA_W{1'b0}};
+        corr_y_next_block <= {COLS*DATA_W{1'b0}};
         corr_stream_valid_q <= 1'b0;
         corr_stream_done_q <= 1'b0;
         corr_stream_base_idx_q <= {IDX_W{1'b0}};
@@ -1811,6 +1965,7 @@ active_op <= OP_REFINE;
         ls_factor_q <= 64'sd0;
         ls_rhs_wdata_q <= 64'sd0;
         ls_row_update_block_q <= 1'b0;
+        wide_mul_start_q <= 1'b0;
         div_abs_num <= 65'd0;
         div_abs_den <= 64'd1;
         div_rem <= 65'd0;
@@ -1821,6 +1976,7 @@ active_op <= OP_REFINE;
         div_neg <= 1'b0;
         div_return_back <= 1'b0;
         div_return_mp <= 1'b0;
+        div_return_ldlt <= 1'b0;
         div_result <= 64'sd0;
         mp_idx_q <= {IDX_W{1'b0}};
         mp_score_q <= {DATA_W{1'b0}};
@@ -1834,14 +1990,24 @@ active_op <= OP_REFINE;
         mesh_ctx_limit_block <= {IDX_W{1'b0}};
         mesh_ctx_shift_block <= 4'd0;
         mesh_ctx_wait_count <= 4'd0;
+        ldlt_k_q <= 5'd0;
+        ldlt_i_base_q <= 5'd0;
+        ldlt_p_base_q <= 5'd0;
+        ldlt_lane_q <= 3'd0;
+        ldlt_lane_valid_q <= 4'd0;
+        ldlt_diag_a_q <= 64'sd0;
+        ldlt_diag_acc_q <= 128'sd0;
+        ldlt_d_cur_q <= 64'sd0;
         for (gi = 0; gi < MAX_K; gi = gi + 1) begin
             rhs[gi] <= 64'sd0;
             coeff_mem[gi] <= {DATA_W{1'b0}};
             phi_cache[gi] <= {DATA_W{1'b0}};
             ge_x[gi] <= 64'sd0;
+            ldlt_d_mem[gi] <= 64'sd0;
         end
     end else begin
                 ls_start_q <= 1'b0;
+                wide_mul_start_q <= 1'b0;
                 if (ls_done_w)
                     ls_row_update_block_q <= 1'b0;
         corr_stream_valid_q <= 1'b0;
@@ -2161,7 +2327,7 @@ case (state)
             S_RHS_INIT_WRITE: begin
                 if (solve_i >= active_k_count) begin
                     solve_i <= 5'd0;
-                    state <= S_SOLVE_SYM_READ;
+                    state <= S_LDL_INIT;
                 end else begin
                     ls_start_q <= 1'b1;
                     ls_op_q <= LS_OP_RHS_WRITE;
@@ -2174,6 +2340,289 @@ case (state)
                 if (ls_done_w) begin
                     solve_i <= solve_i + 5'd1;
                     state <= S_RHS_INIT_WRITE;
+                end
+            end
+            S_LDL_INIT: begin
+                ldlt_k_q <= 5'd0;
+                state <= S_LDL_DIAG_READ;
+            end
+            S_LDL_DIAG_READ: begin
+                ls_start_q <= 1'b1;
+                ls_op_q <= LS_OP_READ2;
+                ls_row_a_q <= ldlt_k_q;
+                ls_col_a_q <= ldlt_k_q;
+                ls_row_b_q <= ldlt_k_q;
+                ls_col_b_q <= ldlt_k_q;
+                state <= S_LDL_DIAG_WAIT;
+            end
+            S_LDL_DIAG_WAIT: begin
+                if (ls_done_w) begin
+                    ldlt_diag_a_q <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w} + 64'sd1;
+                    ldlt_diag_acc_q <= 128'sd0;
+                    ldlt_p_base_q <= 5'd0;
+                    ldlt_lane_q <= 3'd0;
+                    if (ldlt_k_q == 0) begin
+                        ldlt_d_cur_q <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w} + 64'sd1;
+                        state <= S_LDL_DIAG_WRITE;
+                    end else begin
+                        state <= S_LDL_DIAG_GATHER;
+                    end
+                end
+            end
+            S_LDL_DIAG_GATHER: begin
+                if ((ldlt_p_base_q + ldlt_lane_q) < ldlt_k_q) begin
+                    ls_start_q <= 1'b1;
+                    ls_op_q <= LS_OP_READ2;
+                    ls_row_a_q <= ldlt_k_q;
+                    ls_col_a_q <= ldlt_p_base_q + ldlt_lane_q;
+                    ls_row_b_q <= ldlt_k_q;
+                    ls_col_b_q <= ldlt_p_base_q + ldlt_lane_q;
+                    state <= S_LDL_DIAG_GATHER_WAIT;
+                end else begin
+                    ldlt_l_lane_q[ldlt_lane_q] <= 64'sd0;
+                    if (ldlt_lane_q == 3) begin
+                        state <= S_LDL_DIAG_MUL1;
+                    end else begin
+                        ldlt_lane_q <= ldlt_lane_q + 1'b1;
+                    end
+                end
+            end
+            S_LDL_DIAG_GATHER_WAIT: begin
+                if (ls_done_w) begin
+                    ldlt_l_lane_q[ldlt_lane_q] <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w};
+                    if (ldlt_lane_q == 3) begin
+                        state <= S_LDL_DIAG_MUL1;
+                    end else begin
+                        ldlt_lane_q <= ldlt_lane_q + 1'b1;
+                        state <= S_LDL_DIAG_GATHER;
+                    end
+                end
+            end
+            S_LDL_DIAG_MUL1: begin
+                wide_mul_a_q <= {ldlt_l_lane_q[3],ldlt_l_lane_q[2],ldlt_l_lane_q[1],ldlt_l_lane_q[0]};
+                wide_mul_b_q <= {ldlt_l_lane_q[3],ldlt_l_lane_q[2],ldlt_l_lane_q[1],ldlt_l_lane_q[0]};
+                wide_mul_start_q <= 1'b1;
+                state <= S_LDL_DIAG_MUL1_WAIT;
+            end
+            S_LDL_DIAG_MUL1_WAIT: begin
+                if (wide_mul_done_q)
+                    state <= S_LDL_DIAG_MUL2;
+            end
+            S_LDL_DIAG_MUL2: begin
+                wide_mul_a_q <= {wide_mul_result_q[3][63:0],wide_mul_result_q[2][63:0],wide_mul_result_q[1][63:0],wide_mul_result_q[0][63:0]};
+                wide_mul_b_q <= {
+                    ((ldlt_p_base_q+3 < ldlt_k_q) ? ldlt_d_mem[ldlt_p_base_q+3] : 64'sd0),
+                    ((ldlt_p_base_q+2 < ldlt_k_q) ? ldlt_d_mem[ldlt_p_base_q+2] : 64'sd0),
+                    ((ldlt_p_base_q+1 < ldlt_k_q) ? ldlt_d_mem[ldlt_p_base_q+1] : 64'sd0),
+                    ldlt_d_mem[ldlt_p_base_q]};
+                wide_mul_start_q <= 1'b1;
+                state <= S_LDL_DIAG_MUL2_WAIT;
+            end
+            S_LDL_DIAG_MUL2_WAIT: begin
+                if (wide_mul_done_q) begin
+                    if (ldlt_p_base_q + 5'd4 < ldlt_k_q) begin
+                        ldlt_diag_acc_q <= ldlt_diag_acc_q + ldlt_wide_q32_sum;
+                        ldlt_p_base_q <= ldlt_p_base_q + 5'd4;
+                        ldlt_lane_q <= 3'd0;
+                        state <= S_LDL_DIAG_GATHER;
+                    end else begin
+                        ldlt_d_cur_q <= ldlt_diag_a_q - ldlt_diag_acc_q - ldlt_wide_q32_sum;
+                        state <= S_LDL_DIAG_WRITE;
+                    end
+                end
+            end
+            S_LDL_DIAG_WRITE: begin
+                ls_start_q <= 1'b1;
+                ls_op_q <= LS_OP_WRITE;
+                ls_row_a_q <= ldlt_k_q;
+                ls_col_a_q <= ldlt_k_q;
+                ls_wdata_q <= ldlt_d_cur_q[GE_MAT_W-1:0];
+                state <= S_LDL_DIAG_WRITE_WAIT;
+            end
+            S_LDL_DIAG_WRITE_WAIT: begin
+                if (ls_done_w) begin
+                    ldlt_d_mem[ldlt_k_q] <= ldlt_d_cur_q;
+                    ge_div_num <= 64'sh0001_0000_0000_0000;
+                    ge_div_den <= (ldlt_d_cur_q != 0) ? ldlt_d_cur_q : 64'sd1;
+                    state <= S_LDL_INV_DIV;
+                end
+            end
+            S_LDL_INV_DIV: begin
+                div_return_back <= 1'b0;
+                div_return_mp <= 1'b0;
+                div_return_ldlt <= 1'b1;
+                div_neg <= ge_div_num[63] ^ ge_div_den[63];
+                div_abs_den <= ge_div_den[63] ? -ge_div_den : ge_div_den;
+                div_abs_num <= {1'b0, (ge_div_num[63] ? -ge_div_num : ge_div_num)};
+                div_rem <= 65'd0;
+                div_quot <= 65'd0;
+                div_iter <= 7'd64;
+                state <= S_DIV_STEP;
+            end
+            S_LDL_INV_DONE: begin
+                div_return_ldlt <= 1'b0;
+                // ge_x is scratch until back substitution: first inv(D), then
+                // w=D^-1*z, and finally the solved x.  Reusing it avoids three
+                // separate MAX_K x 64 register arrays.
+                ge_x[ldlt_k_q] <= div_result;
+                if (ldlt_k_q + 1'b1 < active_k_count) begin
+                    ldlt_i_base_q <= ldlt_k_q + 1'b1;
+                    state <= S_LDL_ROW_INIT;
+                end else begin
+                    solve_i <= 5'd0;
+                    state <= S_ELIM_START;
+                end
+            end
+            S_LDL_ROW_INIT: begin
+                for (gi = 0; gi < 4; gi = gi + 1) begin
+                    ldlt_lane_valid_q[gi] <= ((ldlt_i_base_q + gi) < active_k_count);
+                    ldlt_a_lane_q[gi] <= 64'sd0;
+                    ldlt_acc_lane_q[gi] <= 128'sd0;
+                end
+                ldlt_lane_q <= 3'd0;
+                state <= S_LDL_ROW_A_READ;
+            end
+            S_LDL_ROW_A_READ: begin
+                if ((ldlt_i_base_q + ldlt_lane_q) < active_k_count) begin
+                    ls_start_q <= 1'b1;
+                    ls_op_q <= LS_OP_READ2;
+                    ls_row_a_q <= ldlt_i_base_q + ldlt_lane_q;
+                    ls_col_a_q <= ldlt_k_q;
+                    ls_row_b_q <= ldlt_i_base_q + ldlt_lane_q;
+                    ls_col_b_q <= ldlt_k_q;
+                    state <= S_LDL_ROW_A_WAIT;
+                end else if (ldlt_lane_q == 3) begin
+                    ldlt_p_base_q <= 5'd0;
+                    ldlt_lane_q <= 3'd0;
+                    state <= (ldlt_k_q == 0) ? S_LDL_ROW_FINAL_MUL : S_LDL_ROW_P_READ;
+                end else begin
+                    ldlt_lane_q <= ldlt_lane_q + 1'b1;
+                end
+            end
+            S_LDL_ROW_A_WAIT: begin
+                if (ls_done_w) begin
+                    ldlt_a_lane_q[ldlt_lane_q] <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w};
+                    if (ldlt_lane_q == 3) begin
+                        ldlt_p_base_q <= 5'd0;
+                        ldlt_lane_q <= 3'd0;
+                        state <= (ldlt_k_q == 0) ? S_LDL_ROW_FINAL_MUL : S_LDL_ROW_P_READ;
+                    end else begin
+                        ldlt_lane_q <= ldlt_lane_q + 1'b1;
+                        state <= S_LDL_ROW_A_READ;
+                    end
+                end
+            end
+            S_LDL_ROW_P_READ: begin
+                if ((ldlt_i_base_q + ldlt_lane_q) < active_k_count) begin
+                    ls_start_q <= 1'b1;
+                    ls_op_q <= LS_OP_READ2;
+                    ls_row_a_q <= ldlt_i_base_q + ldlt_lane_q;
+                    ls_col_a_q <= ldlt_p_base_q;
+                    ls_row_b_q <= ldlt_k_q;
+                    ls_col_b_q <= ldlt_p_base_q;
+                    state <= S_LDL_ROW_P_WAIT;
+                end else begin
+                    ldlt_l_lane_q[ldlt_lane_q] <= 64'sd0;
+                    ldlt_lkp_lane_q[ldlt_lane_q] <= 64'sd0;
+                    if (ldlt_lane_q == 3)
+                        state <= S_LDL_ROW_MUL1;
+                    else
+                        ldlt_lane_q <= ldlt_lane_q + 1'b1;
+                end
+            end
+            S_LDL_ROW_P_WAIT: begin
+                if (ls_done_w) begin
+                    ldlt_l_lane_q[ldlt_lane_q] <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w};
+                    ldlt_lkp_lane_q[ldlt_lane_q] <= {{(64-GE_MAT_W){ls_rdata_b_w[GE_MAT_W-1]}}, ls_rdata_b_w};
+                    if (ldlt_lane_q == 3)
+                        state <= S_LDL_ROW_MUL1;
+                    else begin
+                        ldlt_lane_q <= ldlt_lane_q + 1'b1;
+                        state <= S_LDL_ROW_P_READ;
+                    end
+                end
+            end
+            S_LDL_ROW_MUL1: begin
+                wide_mul_a_q <= {ldlt_l_lane_q[3],ldlt_l_lane_q[2],ldlt_l_lane_q[1],ldlt_l_lane_q[0]};
+                wide_mul_b_q <= {ldlt_lkp_lane_q[3],ldlt_lkp_lane_q[2],ldlt_lkp_lane_q[1],ldlt_lkp_lane_q[0]};
+                wide_mul_start_q <= 1'b1;
+                state <= S_LDL_ROW_MUL1_WAIT;
+            end
+            S_LDL_ROW_MUL1_WAIT: begin
+                if (wide_mul_done_q)
+                    state <= S_LDL_ROW_MUL2;
+            end
+            S_LDL_ROW_MUL2: begin
+                wide_mul_a_q <= {wide_mul_result_q[3][63:0],wide_mul_result_q[2][63:0],wide_mul_result_q[1][63:0],wide_mul_result_q[0][63:0]};
+                wide_mul_b_q <= {4{ldlt_d_mem[ldlt_p_base_q]}};
+                wide_mul_start_q <= 1'b1;
+                state <= S_LDL_ROW_MUL2_WAIT;
+            end
+            S_LDL_ROW_MUL2_WAIT: begin
+                if (wide_mul_done_q) begin
+                    for (gi = 0; gi < 4; gi = gi + 1)
+                        ldlt_acc_lane_q[gi] <= ldlt_acc_lane_q[gi] + ($signed(wide_mul_result_q[gi]) >>> 32);
+                    if (ldlt_p_base_q + 1'b1 < ldlt_k_q) begin
+                        ldlt_p_base_q <= ldlt_p_base_q + 1'b1;
+                        ldlt_lane_q <= 3'd0;
+                        state <= S_LDL_ROW_P_READ;
+                    end else begin
+                        state <= S_LDL_ROW_FINAL_MUL;
+                    end
+                end
+            end
+            S_LDL_ROW_FINAL_MUL: begin
+                wide_mul_a_q <= {
+                    (ldlt_a_lane_q[3] - ldlt_acc_lane_q[3]),
+                    (ldlt_a_lane_q[2] - ldlt_acc_lane_q[2]),
+                    (ldlt_a_lane_q[1] - ldlt_acc_lane_q[1]),
+                    (ldlt_a_lane_q[0] - ldlt_acc_lane_q[0])};
+                wide_mul_b_q <= {4{ge_x[ldlt_k_q]}};
+                wide_mul_start_q <= 1'b1;
+                state <= S_LDL_ROW_FINAL_WAIT;
+            end
+            S_LDL_ROW_FINAL_WAIT: begin
+                if (wide_mul_done_q) begin
+                    for (gi = 0; gi < 4; gi = gi + 1)
+                        ldlt_l_lane_q[gi] <= $signed(wide_mul_result_q[gi]) >>> 32;
+                    ldlt_lane_q <= 3'd0;
+                    state <= S_LDL_ROW_WRITE;
+                end
+            end
+            S_LDL_ROW_WRITE: begin
+                if ((ldlt_i_base_q + ldlt_lane_q) < active_k_count) begin
+                    ls_start_q <= 1'b1;
+                    ls_op_q <= LS_OP_WRITE;
+                    ls_row_a_q <= ldlt_i_base_q + ldlt_lane_q;
+                    ls_col_a_q <= ldlt_k_q;
+                    ls_wdata_q <= ldlt_l_lane_q[ldlt_lane_q][GE_MAT_W-1:0];
+                    state <= S_LDL_ROW_WRITE_WAIT;
+                end else if (ldlt_lane_q == 3) begin
+                    if (ldlt_i_base_q + 5'd4 < active_k_count) begin
+                        ldlt_i_base_q <= ldlt_i_base_q + 5'd4;
+                        state <= S_LDL_ROW_INIT;
+                    end else begin
+                        ldlt_k_q <= ldlt_k_q + 1'b1;
+                        state <= S_LDL_DIAG_READ;
+                    end
+                end else begin
+                    ldlt_lane_q <= ldlt_lane_q + 1'b1;
+                end
+            end
+            S_LDL_ROW_WRITE_WAIT: begin
+                if (ls_done_w) begin
+                    if (ldlt_lane_q == 3) begin
+                        if (ldlt_i_base_q + 5'd4 < active_k_count) begin
+                            ldlt_i_base_q <= ldlt_i_base_q + 5'd4;
+                            state <= S_LDL_ROW_INIT;
+                        end else begin
+                            ldlt_k_q <= ldlt_k_q + 1'b1;
+                            state <= S_LDL_DIAG_READ;
+                        end
+                    end else begin
+                        ldlt_lane_q <= ldlt_lane_q + 1'b1;
+                        state <= S_LDL_ROW_WRITE;
+                    end
                 end
             end
             S_SOLVE_SYM_READ: begin
@@ -2229,57 +2678,70 @@ case (state)
             end
             S_ELIM_START: begin
                 if (solve_i >= active_k_count) begin
-                    back_i <= active_k_last;
+                    ldlt_i_base_q <= 5'd0;
                     state <= S_BACK_INIT;
+                end else if (solve_i == 0) begin
+                    // Unit-lower forward solve: z[0] = b[0].
+                    solve_i <= 5'd1;
                 end else begin
-                    solve_j <= solve_i + 5'd1;
+                    ldlt_p_base_q <= 5'd0;
+                    ldlt_lane_q <= 3'd0;
+                    ge_acc <= 64'sd0;
                     state <= S_ELIM_ROW;
                 end
             end
             S_ELIM_ROW: begin
-                if (solve_j >= active_k_count) begin
-                    solve_i <= solve_i + 5'd1;
-                    state <= S_ELIM_START;
-                end else begin
+                if ((ldlt_p_base_q + ldlt_lane_q) < solve_i) begin
                     ls_start_q <= 1'b1;
                     ls_op_q <= LS_OP_READ2;
-                    ls_row_a_q <= solve_j;
-                    ls_col_a_q <= solve_i;
+                    ls_row_a_q <= solve_i;
+                    ls_col_a_q <= ldlt_p_base_q + ldlt_lane_q;
                     ls_row_b_q <= solve_i;
-                    ls_col_b_q <= solve_i;
-                    solve_k <= solve_i;
+                    ls_col_b_q <= ldlt_p_base_q + ldlt_lane_q;
                     state <= S_ELIM_ROW_READ;
+                end else begin
+                    ldlt_l_lane_q[ldlt_lane_q] <= 64'sd0;
+                    ldlt_lkp_lane_q[ldlt_lane_q] <= 64'sd0;
+                    if (ldlt_lane_q == 3)
+                        state <= S_ELIM_PREP;
+                    else
+                        ldlt_lane_q <= ldlt_lane_q + 1'b1;
                 end
             end
             S_ELIM_ROW_READ: begin
                 if (ls_done_w) begin
-                    ge_div_num <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w} <<< 16;
-                    ge_div_den <= (ls_rdata_b_w != 0) ? {{(64-GE_MAT_W){ls_rdata_b_w[GE_MAT_W-1]}}, ls_rdata_b_w} : 64'sd1;
-                    div_return_back <= 1'b0;
-                    state <= S_DIV_INIT;
+                    ldlt_l_lane_q[ldlt_lane_q] <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w};
+                    ldlt_lkp_lane_q[ldlt_lane_q] <= rhs[ldlt_p_base_q + ldlt_lane_q];
+                    if (ldlt_lane_q == 3)
+                        state <= S_ELIM_PREP;
+                    else begin
+                        ldlt_lane_q <= ldlt_lane_q + 1'b1;
+                        state <= S_ELIM_ROW;
+                    end
                 end
             end
             S_ELIM_PREP: begin
-                div_return_back <= 1'b0;
-                state <= S_DIV_INIT;
+                // Four j terms are evaluated together; PE row r owns j=base+r.
+                wide_mul_a_q <= {ldlt_l_lane_q[3],ldlt_l_lane_q[2],ldlt_l_lane_q[1],ldlt_l_lane_q[0]};
+                wide_mul_b_q <= {ldlt_lkp_lane_q[3],ldlt_lkp_lane_q[2],ldlt_lkp_lane_q[1],ldlt_lkp_lane_q[0]};
+                wide_mul_start_q <= 1'b1;
+                state <= S_ELIM_MUL;
             end
             S_ELIM_MUL: begin
-                ge_mul_p <= $signed(ge_factor) * $signed(ge_mul_b);
-                state <= S_ELIM_UPDATE;
+                if (wide_mul_done_q)
+                    state <= S_ELIM_UPDATE;
             end
             S_ELIM_UPDATE: begin
-                ls_start_q <= 1'b1;
-                ls_op_q <= LS_OP_ROW_UPDATE;
-                ls_row_a_q <= solve_j;
-                ls_col_a_q <= solve_k;
-                ls_row_b_q <= solve_i;
-                ls_col_b_q <= solve_k;
-                ls_factor_q <= ge_factor;
-                ls_row_update_block_q <= 1'b1;
-                for (gi = 0; gi < COLS; gi = gi + 1) begin
-                    ls_lane_valid_q[gi] <= ((solve_k + gi[4:0]) < active_k_count);
+                if (ldlt_p_base_q + 5'd4 < solve_i) begin
+                    ge_acc <= ge_acc + ldlt_wide_q16_sum;
+                    ldlt_p_base_q <= ldlt_p_base_q + 5'd4;
+                    ldlt_lane_q <= 3'd0;
+                    state <= S_ELIM_ROW;
+                end else begin
+                    rhs[solve_i] <= rhs[solve_i] - ge_acc - ldlt_wide_q16_sum;
+                    solve_i <= solve_i + 1'b1;
+                    state <= S_ELIM_START;
                 end
-                state <= S_ELIM_UPDATE_WAIT;
             end
             S_ELIM_UPDATE_WAIT: begin
                 if (ls_done_w) begin
@@ -2307,66 +2769,79 @@ case (state)
                 end
             end
             S_BACK_INIT: begin
-                if (active_k == 0) begin
-                    state <= S_SOLVE_DONE;
-                end else begin
-                    ge_acc <= 64'sd0;
-                    back_j <= back_i + 5'd1;
-                    // Keep the small back-solve controller here.  Issuing the
-                    // first upper read in this state saves only one cycle per
-                    // row, but causes a large mux replication after synthesis.
-                    // S_BACK_ACC_READ still prefetches the diagonal on the last
-                    // upper term, which retains the inexpensive fast path.
-                    state <= S_BACK_ACC;
+                // Diagonal solve w = D^-1 z in batches of four PE rows.
+                for (gi = 0; gi < 4; gi = gi + 1) begin
+                    if ((ldlt_i_base_q + gi) < active_k_count) begin
+                        ldlt_l_lane_q[gi] <= rhs[ldlt_i_base_q + gi];
+                        ldlt_lkp_lane_q[gi] <= ge_x[ldlt_i_base_q + gi];
+                    end else begin
+                        ldlt_l_lane_q[gi] <= 64'sd0;
+                        ldlt_lkp_lane_q[gi] <= 64'sd0;
+                    end
                 end
+                state <= S_BACK_ACC;
             end
             S_BACK_ACC: begin
-                if (back_j >= active_k_count) begin
-                    state <= S_BACK_PREP;
-                end else begin
-                    ls_start_q <= 1'b1;
-                    ls_op_q <= LS_OP_READ2;
-                    ls_row_a_q <= back_i;
-                    ls_col_a_q <= back_j;
-                    ls_row_b_q <= 5'd0;
-                    ls_col_b_q <= 5'd0;
-                    state <= S_BACK_ACC_READ;
-                end
+                wide_mul_a_q <= {ldlt_l_lane_q[3],ldlt_l_lane_q[2],ldlt_l_lane_q[1],ldlt_l_lane_q[0]};
+                wide_mul_b_q <= {ldlt_lkp_lane_q[3],ldlt_lkp_lane_q[2],ldlt_lkp_lane_q[1],ldlt_lkp_lane_q[0]};
+                wide_mul_start_q <= 1'b1;
+                state <= S_BACK_ACC_READ;
             end
             S_BACK_ACC_READ: begin
-                if (ls_done_w) begin
-                    ge_acc <= ge_acc + $signed(back_mul_p_w >>> 16);
-                    back_j <= back_j + 5'd1;
-                    if ((back_j + 5'd1) >= active_k_count) begin
-                        ls_start_q <= 1'b1;
-                        ls_op_q <= LS_OP_READ2;
-                        ls_row_a_q <= back_i;
-                        ls_col_a_q <= back_i;
-                        ls_row_b_q <= 5'd0;
-                        ls_col_b_q <= 5'd0;
-                        state <= S_BACK_PREP_READ;
+                if (wide_mul_done_q) begin
+                    for (gi = 0; gi < 4; gi = gi + 1)
+                        if ((ldlt_i_base_q + gi) < active_k_count)
+                            ge_x[ldlt_i_base_q + gi] <= $signed(wide_mul_result_q[gi]) >>> 32;
+                    if (ldlt_i_base_q + 5'd4 < active_k_count) begin
+                        ldlt_i_base_q <= ldlt_i_base_q + 5'd4;
+                        state <= S_BACK_INIT;
                     end else begin
-                        state <= S_BACK_ACC;
+                        back_i <= active_k_last;
+                        state <= S_BACK_PREP;
                     end
                 end
             end
             S_BACK_MUL: begin
-                ge_mul_p <= $signed(ge_mul_a) * $signed(ge_mul_b);
+                // Back substitution: PE row r owns j=base+r.
+                wide_mul_a_q <= {ldlt_l_lane_q[3],ldlt_l_lane_q[2],ldlt_l_lane_q[1],ldlt_l_lane_q[0]};
+                wide_mul_b_q <= {ldlt_lkp_lane_q[3],ldlt_lkp_lane_q[2],ldlt_lkp_lane_q[1],ldlt_lkp_lane_q[0]};
+                wide_mul_start_q <= 1'b1;
                 state <= S_BACK_UPDATE;
             end
             S_BACK_UPDATE: begin
-                ge_acc <= ge_acc + $signed(ge_mul_p >>> 16);
-                back_j <= back_j + 5'd1;
-                state <= S_BACK_ACC;
+                if (wide_mul_done_q) begin
+                    if (ldlt_p_base_q + 5'd4 < active_k_count) begin
+                        ge_acc <= ge_acc + ldlt_wide_q16_sum;
+                        ldlt_p_base_q <= ldlt_p_base_q + 5'd4;
+                        ldlt_lane_q <= 3'd0;
+                        state <= S_BACK_RHS_READ;
+                    end else begin
+                        ge_x[back_i] <= ge_x[back_i] - ge_acc - ldlt_wide_q16_sum;
+                        coeff_mem[back_i] <= sat_s24(ge_x[back_i] - ge_acc - ldlt_wide_q16_sum);
+                        if (back_i == 0)
+                            state <= S_SOLVE_DONE;
+                        else begin
+                            back_i <= back_i - 1'b1;
+                            state <= S_BACK_PREP;
+                        end
+                    end
+                end
             end
             S_BACK_PREP: begin
-                ls_start_q <= 1'b1;
-                ls_op_q <= LS_OP_READ2;
-                ls_row_a_q <= back_i;
-                ls_col_a_q <= back_i;
-                ls_row_b_q <= 5'd0;
-                ls_col_b_q <= 5'd0;
-                state <= S_BACK_PREP_READ;
+                ge_acc <= 64'sd0;
+                ldlt_p_base_q <= back_i + 1'b1;
+                ldlt_lane_q <= 3'd0;
+                if (back_i + 1'b1 >= active_k_count) begin
+                    coeff_mem[back_i] <= sat_s24(ge_x[back_i]);
+                    if (back_i == 0)
+                        state <= S_SOLVE_DONE;
+                    else begin
+                        back_i <= back_i - 1'b1;
+                        state <= S_BACK_PREP;
+                    end
+                end else begin
+                    state <= S_BACK_RHS_READ;
+                end
             end
             S_BACK_PREP_READ: begin
                 if (ls_done_w) begin
@@ -2378,21 +2853,37 @@ case (state)
                 end
             end
             S_BACK_RHS_READ: begin
-                ls_start_q <= 1'b1;
-                ls_op_q <= LS_OP_RHS_READ;
-                ls_row_a_q <= back_i;
-                state <= S_BACK_RHS_READ_WAIT;
+                if ((ldlt_p_base_q + ldlt_lane_q) < active_k_count) begin
+                    ls_start_q <= 1'b1;
+                    ls_op_q <= LS_OP_READ2;
+                    ls_row_a_q <= ldlt_p_base_q + ldlt_lane_q;
+                    ls_col_a_q <= back_i;
+                    ls_row_b_q <= ldlt_p_base_q + ldlt_lane_q;
+                    ls_col_b_q <= back_i;
+                    state <= S_BACK_RHS_READ_WAIT;
+                end else begin
+                    ldlt_l_lane_q[ldlt_lane_q] <= 64'sd0;
+                    ldlt_lkp_lane_q[ldlt_lane_q] <= 64'sd0;
+                    if (ldlt_lane_q == 3)
+                        state <= S_BACK_MUL;
+                    else
+                        ldlt_lane_q <= ldlt_lane_q + 1'b1;
+                end
             end
             S_BACK_RHS_READ_WAIT: begin
                 if (ls_done_w) begin
-                    ge_div_num <= (ls_rhs_rdata_w - ge_acc) <<< 16;
-                    div_return_back <= 1'b1;
-                    state <= S_DIV_INIT;
+                    ldlt_l_lane_q[ldlt_lane_q] <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w};
+                    ldlt_lkp_lane_q[ldlt_lane_q] <= ge_x[ldlt_p_base_q + ldlt_lane_q];
+                    if (ldlt_lane_q == 3)
+                        state <= S_BACK_MUL;
+                    else begin
+                        ldlt_lane_q <= ldlt_lane_q + 1'b1;
+                        state <= S_BACK_RHS_READ;
+                    end
                 end
             end
             S_BACK_DIV: begin
-                div_return_back <= 1'b1;
-                state <= S_DIV_INIT;
+                state <= S_BACK_MUL;
             end
             S_DIV_INIT: begin
                 div_neg <= ge_div_num[63] ^ ge_div_den[63];
@@ -2406,7 +2897,8 @@ case (state)
             S_DIV_STEP: begin
                 if (div_abs_den == 0) begin
                                 div_result <= 64'sd0;
-                    state <= div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE);
+                    state <= div_return_ldlt ? S_LDL_INV_DONE :
+                             (div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE));
                 end else begin
                     div_trial_rem = div_rem;
                     div_trial_quot = div_quot;
@@ -2447,7 +2939,8 @@ case (state)
                         div_result <= div_neg ? -$signed(div_trial_quot[63:0]) : $signed(div_trial_quot[63:0]);
                         div_rem <= div_trial_rem;
                         div_quot <= div_trial_quot;
-                        state <= div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE);
+                        state <= div_return_ldlt ? S_LDL_INV_DONE :
+                                 (div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE));
                     end else begin
                         div_rem <= div_trial_rem;
                         div_quot <= div_trial_quot;
@@ -2532,6 +3025,8 @@ case (state)
                 corr_scan_col <= {IDX_W{1'b0}};
                 corr_acc <= 64'sd0;
                 corr_phi_lane <= {COLS*DATA_W{1'b0}};
+                corr_y_block <= {COLS*DATA_W{1'b0}};
+                corr_y_next_block <= {COLS*DATA_W{1'b0}};
                 rd_addr <= 10'h080;
                 phi_state_q <= corr_block_state;
                 corr_row_state <= corr_block_state;
@@ -2547,14 +3042,28 @@ case (state)
                 end
                 phi_state_q <= corr_row_next_state;
                 corr_scan_col <= {IDX_W{1'b0}};
+                // One startup wait lets the synchronous SPM port publish the
+                // complete 8-sample residual word.  Subsequent words are
+                // prefetched while the current word streams at II=1.
+                state <= S_CORR_LATCH;
+            end
+            S_CORR_LATCH: begin
+                corr_y_block <= rd_data;
                 state <= S_CORR_ACC;
             end
             S_CORR_ACC: begin
-                state <= S_CORR_PE_WAIT;
-            end
-            S_CORR_PE_WAIT: begin
+                // Start the next synchronous SPM read early enough that it is
+                // cached before the current eight-row word is exhausted.
+                if ((corr_row[2:0] == 3'd0) &&
+                    (((corr_row >> 3) + 1'b1) << 3 < m_size))
+                    rd_addr <= 10'h080 + (corr_row >> 3) + 1'b1;
+
+                // rd_data for the prefetched word is stable by stream slot 2.
+                if ((corr_row[2:0] == 3'd2) &&
+                    (((corr_row >> 3) + 1'b1) << 3 < m_size))
+                    corr_y_next_block <= rd_data;
+
                 if (corr_row + 1 < m_size) begin
-                    rd_addr <= 10'h080 + ((corr_row + 1'b1) >> 3);
                     for (corr_lane = 0; corr_lane < COLS; corr_lane = corr_lane + 1) begin
                         if ((corr_col + corr_lane[IDX_W-1:0]) < n_size)
                             corr_phi_lane[corr_lane*DATA_W +: DATA_W] <= phi_from_lfsr_state(lfsr_advance(corr_row_next_state, corr_lane[IDX_W-1:0] + 1'b1));
@@ -2564,29 +3073,22 @@ case (state)
                     phi_state_q <= lfsr_jump_padded(corr_row_next_state, padded_n_q);
                     corr_scan_col <= {IDX_W{1'b0}};
                 end
-                // Retain the latch bubble only at SPM bank boundaries.
-                if ((corr_row != 0) && (corr_row[2:0] == 3'd0)) begin
-                    state <= S_CORR_LATCH;
-                end else if (corr_row + 1 >= m_size) begin
-                    write_idx <= corr_col;
-                    state <= S_CORR_WRITE;
+                if (corr_row + 1 >= m_size) begin
+                    // The PE input register still holds the final sample; one
+                    // drain clock commits it to its row accumulator.
+                    state <= S_CORR_PE_WAIT;
                 end else begin
+                    if (corr_row[2:0] == 3'd7)
+                        corr_y_block <= corr_y_next_block;
                     corr_row <= corr_row + 1'b1;
                     corr_row_state <= corr_row_next_state;
                     corr_row_next_state <= lfsr_jump_padded(corr_row_next_state, padded_n_q);
                     state <= S_CORR_ACC;
                 end
             end
-            S_CORR_LATCH: begin
-                if (corr_row + 1 >= m_size) begin
-                    write_idx <= corr_col;
-                    state <= S_CORR_WRITE;
-                end else begin
-                    corr_row <= corr_row + 1'b1;
-                    corr_row_state <= corr_row_next_state;
-                    corr_row_next_state <= lfsr_jump_padded(corr_row_next_state, padded_n_q);
-                    state <= S_CORR_ACC;
-                end
+            S_CORR_PE_WAIT: begin
+                write_idx <= corr_col;
+                state <= S_CORR_WRITE;
             end
             S_CORR_WRITE: begin
                 corr_stream_valid_q <= busy;

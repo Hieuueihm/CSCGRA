@@ -12,6 +12,7 @@ localparam SOP_REFINE=8'h80, SOP_CORR=8'h81, SOP_IHT_UPDATE=8'h82, SOP_RESID=8'h
 localparam ALG_OMP=0, ALG_COSAMP=1, ALG_IHT=2, ALG_HTP=3, ALG_SP=4, ALG_GP=5, ALG_GOMP=6, ALG_MP=7;
 integer pass_cnt, fail_cnt, run_pass_cnt, run_fail_cnt;
 integer i, alg, pc, timeout, mism, nz, program_len, start_alg, end_alg, trace_corr_count;
+integer corr_role_count0, corr_role_count1, corr_role_count2, corr_role_count3;
 reg clk,rst_n;
 reg [13:0] s_axi_awaddr; reg s_axi_awvalid; wire s_axi_awready;
 reg [31:0] s_axi_wdata; reg [3:0] s_axi_wstrb; reg s_axi_wvalid; wire s_axi_wready;
@@ -2714,6 +2715,11 @@ task run_alg; input integer a; integer fail_before; begin
         run_fail_cnt=run_fail_cnt+1;
         $display("CASE ALG=%0s iter=%0d plen=%0d nz=%0d mism=%0d cycles=%0d FAIL", alg_name(a), alg_iters(a), program_len, nz, mism, timeout);
     end
+    if($test$plusargs("ROW_ROLE_REPORT")) begin
+        $display("CORR_4ROW_ROLE row0=%0d row1=%0d row2=%0d row3=%0d",
+                 corr_role_count0, corr_role_count1,
+                 corr_role_count2, corr_role_count3);
+    end
 end endtask
 
 always @(*) begin
@@ -2753,14 +2759,87 @@ always @(posedge clk) begin
     end
 end
 
+always @(posedge clk) begin
+    if($test$plusargs("TRACE_CORR_OUT") &&
+       (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state == 7'd37)) begin
+        $display("CORR_OUT col=%0d v0=%0d v1=%0d v2=%0d v3=%0d v4=%0d v5=%0d v6=%0d v7=%0d",
+                 dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.corr_col,
+                 $signed(dut.pe_corr_acc_bus[0*64 +: 64]),
+                 $signed(dut.pe_corr_acc_bus[1*64 +: 64]),
+                 $signed(dut.pe_corr_acc_bus[2*64 +: 64]),
+                 $signed(dut.pe_corr_acc_bus[3*64 +: 64]),
+                 $signed(dut.pe_corr_acc_bus[4*64 +: 64]),
+                 $signed(dut.pe_corr_acc_bus[5*64 +: 64]),
+                 $signed(dut.pe_corr_acc_bus[6*64 +: 64]),
+                 $signed(dut.pe_corr_acc_bus[7*64 +: 64]));
+    end
+end
+
+always @(posedge clk) begin
+    if(!rst_n) begin
+        corr_role_count0=0; corr_role_count1=0;
+        corr_role_count2=0; corr_role_count3=0;
+    end else if(dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.pe_corr_acc_en) begin
+        case(dut.u_pearray.corr_slot_q)
+            2'd0: corr_role_count0=corr_role_count0+1;
+            2'd1: corr_role_count1=corr_role_count1+1;
+            2'd2: corr_role_count2=corr_role_count2+1;
+            default: corr_role_count3=corr_role_count3+1;
+        endcase
+    end
+end
+
+task run_wide_mul_4row_selftest;
+    reg signed [63:0] a0, a1, a2, a3;
+    reg signed [63:0] b0, b1, b2, b3;
+    reg signed [127:0] e0, e1, e2, e3;
+    integer wide_timeout;
+begin
+    a0 = 64'sd123456789;       b0 = -64'sd9876543;
+    a1 = 64'sh0000123456789abc; b1 = 64'sh00000000fedcba98;
+    a2 = -64'sh00000123456789ab; b2 = -64'sh00000000000abcde;
+    a3 = 64'sh00007fff0000ffff; b3 = -64'sh0000000100020003;
+    e0 = a0 * b0; e1 = a1 * b1; e2 = a2 * b2; e3 = a3 * b3;
+    force dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_a_q = {a3,a2,a1,a0};
+    force dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_b_q = {b3,b2,b1,b0};
+    force dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_start_q = 1'b1;
+    @(posedge clk); #1;
+    release dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_start_q;
+    wide_timeout = 0;
+    while (!dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_done_q && wide_timeout < 32) begin
+        @(posedge clk); #1; wide_timeout = wide_timeout + 1;
+    end
+    if ((dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[0] !== e0) ||
+        (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[1] !== e1) ||
+        (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[2] !== e2) ||
+        (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[3] !== e3)) begin
+        $display("WIDE_MUL_4ROW FAIL timeout=%0d", wide_timeout);
+        $display("row0 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[0], e0);
+        $display("row1 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[1], e1);
+        $display("row2 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[2], e2);
+        $display("row3 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[3], e3);
+        $fatal(1);
+    end else begin
+        $display("WIDE_MUL_4ROW PASS cycles=%0d", wide_timeout);
+    end
+    release dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_a_q;
+    release dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_b_q;
+end
+endtask
+
 initial begin
     clk=0; pass_cnt=0; fail_cnt=0; run_pass_cnt=0; run_fail_cnt=0; trace_corr_count=0;
+    corr_role_count0=0; corr_role_count1=0; corr_role_count2=0; corr_role_count3=0;
     start_alg=0; end_alg=7;
     if($value$plusargs("ALG=%d",start_alg)) end_alg=start_alg;
     if($value$plusargs("START_ALG=%d",start_alg)) begin
         if(!$value$plusargs("END_ALG=%d",end_alg)) end_alg=start_alg;
     end
     reset_dut();
+    if($test$plusargs("WIDE_MUL_SELFTEST")) begin
+        run_wide_mul_4row_selftest();
+        $finish;
+    end
     for(alg=start_alg; alg<=end_alg; alg=alg+1) run_alg(alg);
     $display("tb_run1_noisy24_k8_rep: runs %0d PASS, %0d FAIL | checks %0d PASS, %0d FAIL", run_pass_cnt, run_fail_cnt, pass_cnt, fail_cnt);
     $finish;

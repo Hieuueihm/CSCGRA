@@ -55,6 +55,9 @@ module pearray #(
     input  wire                       corr_acc_en,
     input  wire [3:0]                 sparse_op,
     input  wire [7:0]                 sparse_k_active,
+    input  wire                       ls_wide_mul_active,
+    input  wire [ROWS*COLS*DATA_W-1:0] ls_wide_a_bus,
+    input  wire [ROWS*COLS*DATA_W-1:0] ls_wide_b_bus,
 
     output wire [COLS*DATA_W-1:0]     spm_wdata,
     output wire [COLS-1:0]            spm_wen,
@@ -63,6 +66,7 @@ module pearray #(
     output wire [COLS*ACC_W-1:0]      acc_data,
     output wire [COLS*64-1:0]         sparse_rhs_product_bus,
     output wire [COLS*64-1:0]         corr_acc_bus,
+    output wire [ROWS*COLS*ACC_W-1:0] ls_wide_product_bus,
     output wire [COLS*DATA_W-1:0]     mesh_ctx_commit_data,
     // v3 result interface (replaces external reduction_unit / scalar_unit latch)
     output wire [SCALAR_W-1:0]        result_value,
@@ -121,6 +125,12 @@ module pearray #(
     wire [ROWS*CLUSTER_COLS*DATA_W-1:0] cluster1_mesh_ctx_data_bus;
     wire [ROWS*CLUSTER_COLS*ACC_W-1:0]  cluster0_tile_acc_bus;
     wire [ROWS*CLUSTER_COLS*ACC_W-1:0]  cluster1_tile_acc_bus;
+    wire [ROWS*CLUSTER_COLS*ACC_W-1:0]  cluster0_all_mul_product_bus;
+    wire [ROWS*CLUSTER_COLS*ACC_W-1:0]  cluster1_all_mul_product_bus;
+    wire [ROWS*CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_a_bus;
+    wire [ROWS*CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_a_bus;
+    wire [ROWS*CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_b_bus;
+    wire [ROWS*CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_b_bus;
     wire [ROWS*CLUSTER_COLS*IDX_W-1:0]  cluster0_idx_out_bus;
     wire [ROWS*CLUSTER_COLS*IDX_W-1:0]  cluster1_idx_out_bus;
     wire [CLUSTER_COLS*DATA_W-1:0] cluster0_colbus_r0_bus;
@@ -129,7 +139,7 @@ module pearray #(
     wire [CLUSTER_COLS*ACC_W-1:0] cluster1_sparse_product_comb_bus;
     wire [COLS*ACC_W-1:0] sparse_product_comb_bus = {cluster1_sparse_product_comb_bus, cluster0_sparse_product_comb_bus};
     reg [3:0] mesh_keepalive_q;
-    reg signed [63:0] corr_acc_bank [0:COLS-1];
+    reg [1:0] corr_slot_q;
     wire mesh_active_req = ctx_valid | sparse_active;
     reg [31:0] row_exec_count [0:ROWS-1];
     reg [31:0] col_exec_count [0:COLS-1];
@@ -142,6 +152,7 @@ module pearray #(
     reg [31:0] phys_corr_row0_mac_count;
     reg [31:0] phys_corr_row1_accum_count;
     reg [31:0] phys_corr_row2_update_count;
+    reg [31:0] phys_corr_row3_write_count;
     reg [31:0] phys_refine_row0_mac_count;
     reg [31:0] phys_refine_row1_accum_count;
     reg [31:0] phys_refine_row2_update_count;
@@ -167,12 +178,16 @@ module pearray #(
         .phi_bus(phi_bus[0 +: CLUSTER_COLS*DATA_W]),
         .scalar_bus(scalar_bus[0 +: CLUSTER_COLS*DATA_W]),
         .sparse_active(sparse_active), .sparse_op(sparse_op), .sparse_k_active(sparse_k_active),
+        .corr_acc_clear(corr_acc_clear), .corr_acc_en(corr_acc_en), .corr_slot(corr_slot_q),
+        .ls_wide_mul_active(ls_wide_mul_active),
+        .ls_wide_a_bus(cluster0_ls_wide_a_bus),
+        .ls_wide_b_bus(cluster0_ls_wide_b_bus),
         .mesh_keepalive(mesh_keepalive_q),
         .west_boundary_data_i(boundary_zero_data), .west_boundary_idx_i(boundary_zero_idx),
         .east_boundary_data_i(cc_east_to_west_data_bus), .east_boundary_idx_i(cc_east_to_west_idx_bus),
         .west_boundary_data_o(cluster0_west_data_unused), .west_boundary_idx_o(cluster0_west_idx_unused),
         .east_boundary_data_o(cluster0_east_data_bus), .east_boundary_idx_o(cluster0_east_idx_bus),
-        .tile_out_bus(cluster0_tile_out_bus), .mesh_ctx_data_bus(cluster0_mesh_ctx_data_bus), .tile_acc_bus(cluster0_tile_acc_bus),
+        .tile_out_bus(cluster0_tile_out_bus), .mesh_ctx_data_bus(cluster0_mesh_ctx_data_bus), .tile_acc_bus(cluster0_tile_acc_bus), .all_mul_product_bus(cluster0_all_mul_product_bus),
         .idx_out_bus(cluster0_idx_out_bus), .colbus_r0_bus(cluster0_colbus_r0_bus), .sparse_product_comb_bus(cluster0_sparse_product_comb_bus)
     );
 
@@ -193,12 +208,16 @@ module pearray #(
         .phi_bus(phi_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W]),
         .scalar_bus(scalar_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W]),
         .sparse_active(sparse_active), .sparse_op(sparse_op), .sparse_k_active(sparse_k_active),
+        .corr_acc_clear(corr_acc_clear), .corr_acc_en(corr_acc_en), .corr_slot(corr_slot_q),
+        .ls_wide_mul_active(ls_wide_mul_active),
+        .ls_wide_a_bus(cluster1_ls_wide_a_bus),
+        .ls_wide_b_bus(cluster1_ls_wide_b_bus),
         .mesh_keepalive(mesh_keepalive_q),
         .west_boundary_data_i(cc_west_to_east_data_bus), .west_boundary_idx_i(cc_west_to_east_idx_bus),
         .east_boundary_data_i(boundary_zero_data), .east_boundary_idx_i(boundary_zero_idx),
         .west_boundary_data_o(cluster1_west_data_bus), .west_boundary_idx_o(cluster1_west_idx_bus),
         .east_boundary_data_o(cluster1_east_data_unused), .east_boundary_idx_o(cluster1_east_idx_unused),
-        .tile_out_bus(cluster1_tile_out_bus), .mesh_ctx_data_bus(cluster1_mesh_ctx_data_bus), .tile_acc_bus(cluster1_tile_acc_bus),
+        .tile_out_bus(cluster1_tile_out_bus), .mesh_ctx_data_bus(cluster1_mesh_ctx_data_bus), .tile_acc_bus(cluster1_tile_acc_bus), .all_mul_product_bus(cluster1_all_mul_product_bus),
         .idx_out_bus(cluster1_idx_out_bus), .colbus_r0_bus(cluster1_colbus_r0_bus), .sparse_product_comb_bus(cluster1_sparse_product_comb_bus)
     );
 
@@ -209,10 +228,16 @@ module pearray #(
                 assign tile_acc[r*COLS+lc] = cluster0_tile_acc_bus[(r*CLUSTER_COLS+lc)*ACC_W +: ACC_W];
                 assign idx_out[r*COLS+lc] = cluster0_idx_out_bus[(r*CLUSTER_COLS+lc)*IDX_W +: IDX_W];
                 assign colbus_r0[lc] = cluster0_colbus_r0_bus[lc*DATA_W +: DATA_W];
+                assign cluster0_ls_wide_a_bus[(r*CLUSTER_COLS+lc)*DATA_W +: DATA_W] = ls_wide_a_bus[(r*COLS+lc)*DATA_W +: DATA_W];
+                assign cluster0_ls_wide_b_bus[(r*CLUSTER_COLS+lc)*DATA_W +: DATA_W] = ls_wide_b_bus[(r*COLS+lc)*DATA_W +: DATA_W];
+                assign ls_wide_product_bus[(r*COLS+lc)*ACC_W +: ACC_W] = cluster0_all_mul_product_bus[(r*CLUSTER_COLS+lc)*ACC_W +: ACC_W];
                 assign tile_out[r*COLS+CLUSTER_COLS+lc] = cluster1_tile_out_bus[(r*CLUSTER_COLS+lc)*DATA_W +: DATA_W];
                 assign tile_acc[r*COLS+CLUSTER_COLS+lc] = cluster1_tile_acc_bus[(r*CLUSTER_COLS+lc)*ACC_W +: ACC_W];
                 assign idx_out[r*COLS+CLUSTER_COLS+lc] = cluster1_idx_out_bus[(r*CLUSTER_COLS+lc)*IDX_W +: IDX_W];
                 assign colbus_r0[CLUSTER_COLS+lc] = cluster1_colbus_r0_bus[lc*DATA_W +: DATA_W];
+                assign cluster1_ls_wide_a_bus[(r*CLUSTER_COLS+lc)*DATA_W +: DATA_W] = ls_wide_a_bus[(r*COLS+CLUSTER_COLS+lc)*DATA_W +: DATA_W];
+                assign cluster1_ls_wide_b_bus[(r*CLUSTER_COLS+lc)*DATA_W +: DATA_W] = ls_wide_b_bus[(r*COLS+CLUSTER_COLS+lc)*DATA_W +: DATA_W];
+                assign ls_wide_product_bus[(r*COLS+CLUSTER_COLS+lc)*ACC_W +: ACC_W] = cluster1_all_mul_product_bus[(r*CLUSTER_COLS+lc)*ACC_W +: ACC_W];
             end
         end
     endgenerate
@@ -244,10 +269,19 @@ module pearray #(
 
     generate
         for (c = 0; c < COLS; c = c + 1) begin : gen_outputs
+            wire signed [64:0] corr_sum01 =
+                $signed({tile_acc[c][63], tile_acc[c][63:0]}) +
+                $signed({tile_acc[COLS+c][63], tile_acc[COLS+c][63:0]});
+            wire signed [64:0] corr_sum23 =
+                $signed({tile_acc[(2*COLS)+c][63], tile_acc[(2*COLS)+c][63:0]}) +
+                $signed({tile_acc[(3*COLS)+c][63], tile_acc[(3*COLS)+c][63:0]});
+            wire signed [65:0] corr_sum_all =
+                $signed({corr_sum01[64], corr_sum01}) +
+                $signed({corr_sum23[64], corr_sum23});
             assign reduce_data[c*DATA_W +: DATA_W] = tile_out[(ROWS-1)*COLS+c];
             assign acc_data[c*ACC_W +: ACC_W]      = tile_acc[(ROWS-1)*COLS+c];
             assign sparse_rhs_product_bus[c*64 +: 64] = tile_acc[c][63:0];
-            assign corr_acc_bus[c*64 +: 64] = corr_acc_bank[c];
+            assign corr_acc_bus[c*64 +: 64] = corr_sum_all[63:0];
             assign spm_wdata[c*DATA_W +: DATA_W]   = tile_out[(ROWS-1)*COLS+c];
             assign spm_wen[c] = ctx_valid && spm_wr_en && lane_valid[c];
         end
@@ -268,8 +302,7 @@ module pearray #(
     integer util_i;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            for (util_i = 0; util_i < COLS; util_i = util_i + 1)
-                corr_acc_bank[util_i] <= 64'sd0;
+            corr_slot_q <= 2'd0;
             if (ENABLE_DEBUG_COUNTERS) begin
                 for (util_i = 0; util_i < ROWS; util_i = util_i + 1) row_exec_count[util_i] <= 32'd0;
                 for (util_i = 0; util_i < COLS; util_i = util_i + 1) col_exec_count[util_i] <= 32'd0;
@@ -282,19 +315,16 @@ module pearray #(
                 phys_corr_row0_mac_count <= 32'd0;
                 phys_corr_row1_accum_count <= 32'd0;
                 phys_corr_row2_update_count <= 32'd0;
+                phys_corr_row3_write_count <= 32'd0;
                 phys_refine_row0_mac_count <= 32'd0;
                 phys_refine_row1_accum_count <= 32'd0;
                 phys_refine_row2_update_count <= 32'd0;
             end
         end else begin
-            if (corr_acc_clear) begin
-                for (util_i = 0; util_i < COLS; util_i = util_i + 1)
-                    corr_acc_bank[util_i] <= 64'sd0;
-            end else if (corr_acc_en) begin
-                for (util_i = 0; util_i < COLS; util_i = util_i + 1)
-                    corr_acc_bank[util_i] <= corr_acc_bank[util_i] +
-                        $signed(sparse_product_comb_bus[util_i*ACC_W +: ACC_W]);
-            end
+            if (corr_acc_clear)
+                corr_slot_q <= 2'd0;
+            else if (corr_acc_en)
+                corr_slot_q <= corr_slot_q + 2'd1;
             if (ENABLE_DEBUG_COUNTERS && ctx_valid) begin
                 for (util_i = 0; util_i < ROWS; util_i = util_i + 1)
                     if (row_en[util_i]) row_exec_count[util_i] <= row_exec_count[util_i] + 1'b1;
@@ -313,14 +343,17 @@ module pearray #(
                 end
             end
             if (ENABLE_DEBUG_COUNTERS && sparse_active) begin
-                phys_row0_pe_mac_count <= phys_row0_pe_mac_count + 1'b1;
-                phys_row1_pe_accum_count <= phys_row1_pe_accum_count + 1'b1;
-                phys_row2_pe_update_count <= phys_row2_pe_update_count + 1'b1;
-                if (sparse_op == 4'd1) begin
-                    phys_corr_row0_mac_count <= phys_corr_row0_mac_count + 1'b1;
-                    phys_corr_row1_accum_count <= phys_corr_row1_accum_count + 1'b1;
-                    phys_corr_row2_update_count <= phys_corr_row2_update_count + 1'b1;
+                if ((sparse_op == 4'd1) && corr_acc_en) begin
+                    case (corr_slot_q)
+                        2'd0: phys_corr_row0_mac_count <= phys_corr_row0_mac_count + 1'b1;
+                        2'd1: phys_corr_row1_accum_count <= phys_corr_row1_accum_count + 1'b1;
+                        2'd2: phys_corr_row2_update_count <= phys_corr_row2_update_count + 1'b1;
+                        default: phys_corr_row3_write_count <= phys_corr_row3_write_count + 1'b1;
+                    endcase
                 end else if (sparse_op == 4'd0) begin
+                    phys_row0_pe_mac_count <= phys_row0_pe_mac_count + 1'b1;
+                    phys_row1_pe_accum_count <= phys_row1_pe_accum_count + 1'b1;
+                    phys_row2_pe_update_count <= phys_row2_pe_update_count + 1'b1;
                     phys_refine_row0_mac_count <= phys_refine_row0_mac_count + 1'b1;
                     phys_refine_row1_accum_count <= phys_refine_row1_accum_count + 1'b1;
                     phys_refine_row2_update_count <= phys_refine_row2_update_count + 1'b1;
