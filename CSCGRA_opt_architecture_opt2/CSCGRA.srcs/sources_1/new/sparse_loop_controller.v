@@ -112,12 +112,16 @@ S_LDL_ROW_MUL1=85, S_LDL_ROW_MUL1_WAIT=118, S_LDL_ROW_MUL2=119,
 S_LDL_ROW_MUL2_WAIT=120, S_LDL_ROW_FINAL_MUL=121,
 S_LDL_ROW_FINAL_WAIT=122, S_LDL_ROW_WRITE=123,
 S_LDL_ROW_WRITE_WAIT=124;
+localparam [6:0] S_FACTOR_CHECK_INIT=125, S_FACTOR_CHECK_SCAN=126,
+                 S_FACTOR_CHECK_DONE=127;
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GRAD_STEP=4'd7; // OP_GRAD_STEP: scaled projected-gradient x += (Phi^T r >>> mu_shift), followed by prune/residual in context
 localparam [1:0] MESH_CTX_NONE=2'd0, MESH_CTX_UPDATE=2'd1, MESH_CTX_PRUNE=2'd2, MESH_CTX_RESID=2'd3;
 localparam [3:0] MESH_CTX_WAIT_CYCLES = 4'd6;
 localparam [4:0] RHS_BLOCK_STRIDE = COLS;
 localparam [4:0] LS_ROW_UPDATE_STRIDE = COLS;
 localparam [3:0] LS_OP_CLEAR=4'd0, LS_OP_WRITE=4'd1, LS_OP_READ2=4'd2, LS_OP_ACC_BLOCK=4'd3, LS_OP_ROW_UPDATE=4'd4, LS_OP_RHS_WRITE=4'd5, LS_OP_RHS_READ=4'd6, LS_OP_RHS_UPDATE=4'd7, LS_OP_READ4=4'd8, LS_OP_WRITE4=4'd9, LS_OP_ACC4=4'd10;
+localparam [1:0] FACTOR_REUSE_NONE=2'd0, FACTOR_REUSE_EXACT=2'd1,
+                 FACTOR_REUSE_PREFIX=2'd2;
 
 localparam [31:0] LFSR_TAPS = 32'h80200003;
 localparam [31:0] DEFAULT_SEED = 32'hDEADBEEF;
@@ -1634,6 +1638,33 @@ reg signed [127:0] residual_acc;
 reg signed [127:0] residual_block_sum;
 reg signed [DATA_W-1:0] phi_cache [0:MAX_K-1];
 reg [IDX_W-1:0] support_cache [0:MAX_K-1];
+reg [MAX_K*IDX_W-1:0] factor_support_cache_q;
+// Four inverse-D banks match the four physical PE rows.  The solve reads one
+// aligned entry from each bank, avoiding four 16:1 x 64-bit register muxes.
+(* ram_style = "distributed" *) reg signed [63:0] ldlt_inv_d_bank0 [0:(MAX_K/4)-1];
+(* ram_style = "distributed" *) reg signed [63:0] ldlt_inv_d_bank1 [0:(MAX_K/4)-1];
+(* ram_style = "distributed" *) reg signed [63:0] ldlt_inv_d_bank2 [0:(MAX_K/4)-1];
+(* ram_style = "distributed" *) reg signed [63:0] ldlt_inv_d_bank3 [0:(MAX_K/4)-1];
+reg factor_valid_q;
+reg [5:0] factor_k_q;
+reg [IDX_W-1:0] factor_m_q;
+reg [IDX_W-1:0] factor_n_q;
+reg [31:0] factor_seed_q;
+reg [DATA_W-1:0] factor_scale_q;
+reg [1:0] factor_phi_kind_q;
+reg [31:0] factor_support_fingerprint_q;
+reg [31:0] request_support_fingerprint_q;
+reg [1:0] factor_reuse_mode_q;
+reg [MAX_K*IDX_W-1:0] request_support_cache_q;
+reg [MAX_K*IDX_W-1:0] factor_check_request_shift_q;
+reg [4:0] factor_check_req_idx_q;
+reg [IDX_W-1:0] factor_check_request_value_q;
+reg [4:0] factor_check_cached_idx_q;
+reg factor_check_set_mode_q;
+reg factor_check_ordered_match_q;
+reg [5:0] factor_check_append_rank_q;
+reg [MAX_K-1:0] factor_check_seen_mask_q;
+reg [31:0] factor_check_fingerprint_q;
 reg [7:0] refine_prime_k_eff;
 reg [31:0] phi_state_q;
 reg [5:0] phi_load_i;
@@ -1680,6 +1711,7 @@ integer gi, gj, gk;
 integer row2_prune_lane;
 integer row2_prune_rank;
 integer row3_lane;
+integer factor_cmp;
 reg row2_prune_support_hit;
 reg [IDX_W-1:0] row2_prune_support_idx;
 reg [IDX_W-1:0] row2_prune_lane_index;
@@ -1785,6 +1817,54 @@ always @(*) begin
 end
 wire [5:0] active_k_count = (active_k > MAX_K[7:0]) ? MAX_K[5:0] : active_k[5:0];
 wire [5:0] active_k_last = (active_k_count == 6'd0) ? 6'd0 : (active_k_count - 6'd1);
+
+wire [5:0] request_k_eff_w = (support_depth0 < k_active[5:0]) ?
+                             support_depth0 : k_active[5:0];
+wire [31:0] request_seed_eff_w = (|seed) ? seed : DEFAULT_SEED;
+wire [32*IDX_W-1:0] request_support_flat_w = {
+    support31, support30, support29, support28, support27, support26,
+    support25, support24, support23, support22, support21, support20,
+    support19, support18, support17, support16, support15, support14,
+    support13, support12, support11, support10, support9, support8,
+    support7, support6, support5, support4, support3, support2,
+    support1, support0};
+wire factor_config_match_w = factor_valid_q &&
+    (factor_m_q == m_size) && (factor_n_q == n_size) &&
+    (factor_seed_q == request_seed_eff_w) &&
+    (factor_scale_q == scale_q) && (factor_phi_kind_q == phi_kind);
+wire [31:0] factor_check_word_w = {{(32-IDX_W){1'b0}},
+    factor_check_request_value_q};
+wire [31:0] factor_check_fingerprint_next_w =
+    factor_check_fingerprint_q ^ factor_check_word_w ^
+    (factor_check_word_w << 10) ^ (factor_check_word_w << 20) ^
+    32'h9e3779b9;
+wire factor_check_current_equal_w = factor_config_match_w &&
+    (factor_check_cached_idx_q < factor_k_q) &&
+    (factor_check_request_value_q ==
+     factor_support_cache_q[factor_check_cached_idx_q*IDX_W +: IDX_W]);
+wire factor_check_ordered_step_match_w = factor_check_ordered_match_q &&
+    ((factor_check_req_idx_q >= factor_k_q) || factor_check_current_equal_w);
+reg factor_check_all_seen_w;
+always @(*) begin
+    factor_check_all_seen_w = 1'b1;
+    for (factor_cmp = 0; factor_cmp < MAX_K; factor_cmp = factor_cmp + 1) begin
+        if ((factor_cmp < factor_k_q) && !factor_check_seen_mask_q[factor_cmp])
+            factor_check_all_seen_w = 1'b0;
+    end
+end
+
+// The fingerprint is only a reject filter.  Exact/prefix acceptance also
+// requires every cached support entry to have been observed by the sequential
+// set scanner, so a fingerprint collision cannot authorize factor reuse.
+wire factor_exact_hit_w = factor_config_match_w &&
+    (k_active != 0) && (k_active <= MAX_K) &&
+    (request_k_eff_w == factor_k_q) &&
+    (factor_check_fingerprint_q == factor_support_fingerprint_q) &&
+    factor_check_all_seen_w;
+wire factor_prefix_hit_w = factor_config_match_w &&
+    (k_active != 0) && (k_active <= MAX_K) &&
+    (factor_k_q != 0) && (request_k_eff_w > factor_k_q) &&
+    factor_check_all_seen_w;
 
 
 function [IDX_W-1:0] support_cached_at;
@@ -2055,6 +2135,27 @@ active_op <= OP_REFINE;
         ldlt_diag_a_q <= 64'sd0;
         ldlt_diag_acc_q <= 128'sd0;
         ldlt_d_cur_q <= 64'sd0;
+        factor_valid_q <= 1'b0;
+        factor_k_q <= 6'd0;
+        factor_m_q <= {IDX_W{1'b0}};
+        factor_n_q <= {IDX_W{1'b0}};
+        factor_seed_q <= DEFAULT_SEED;
+        factor_scale_q <= {DATA_W{1'b0}};
+        factor_phi_kind_q <= 2'd0;
+        factor_support_fingerprint_q <= 32'd0;
+        request_support_fingerprint_q <= 32'd0;
+        factor_reuse_mode_q <= FACTOR_REUSE_NONE;
+        factor_check_req_idx_q <= 5'd0;
+        factor_check_request_value_q <= {IDX_W{1'b0}};
+        factor_check_cached_idx_q <= 5'd0;
+        factor_check_set_mode_q <= 1'b0;
+        factor_check_ordered_match_q <= 1'b0;
+        factor_check_append_rank_q <= 6'd0;
+        factor_check_seen_mask_q <= {MAX_K{1'b0}};
+        factor_check_fingerprint_q <= 32'd0;
+        factor_support_cache_q <= {MAX_K*IDX_W{1'b0}};
+        request_support_cache_q <= {MAX_K*IDX_W{1'b0}};
+        factor_check_request_shift_q <= {MAX_K*IDX_W{1'b0}};
         for (gi = 0; gi < MAX_K; gi = gi + 1) begin
             rhs[gi] <= 64'sd0;
             coeff_mem[gi] <= {DATA_W{1'b0}};
@@ -2078,28 +2179,169 @@ case (state)
                     done <= 1'b0;
                     busy <= 1'b1;
                     active_op <= op_sel;
-                    support_cache[0] <= support0;
-                    support_cache[1] <= support1;
-                    support_cache[2] <= support2;
-                    support_cache[3] <= support3;
-                    support_cache[4] <= support4;
-                    support_cache[5] <= support5;
-                    support_cache[6] <= support6;
-                    support_cache[7] <= support7;
-                    support_cache[8] <= support8;
-                    support_cache[9] <= support9;
-                    support_cache[10] <= support10;
-                    support_cache[11] <= support11;
-                    support_cache[12] <= support12;
-                    support_cache[13] <= support13;
-                    support_cache[14] <= support14;
-                    support_cache[15] <= support15;
+                    request_support_cache_q <=
+                        request_support_flat_w[MAX_K*IDX_W-1:0];
+                    for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                        if (!(((op_sel == OP_REFINE) ||
+                               (op_sel == OP_REFINE_SPARSE)) &&
+                              (k_active != 0) && (k_active <= MAX_K)))
+                            support_cache[gi] <=
+                                request_support_flat_w[gi*IDX_W +: IDX_W];
+                    end
+                    factor_reuse_mode_q <= FACTOR_REUSE_NONE;
                     write_idx <= {IDX_W{1'b0}};
                     phase_residual <= 1'b0;
                     write_limit <= (op_sel == OP_CORR) ? n_size : n_size;
                     write_value <= {DATA_W{1'b0}};
-                    state <= S_PRIME;
+                    state <= (((op_sel == OP_REFINE) ||
+                               (op_sel == OP_REFINE_SPARSE)) &&
+                              (k_active != 0) && (k_active <= MAX_K)) ?
+                             S_FACTOR_CHECK_INIT : S_PRIME;
                 end
+            end
+            S_FACTOR_CHECK_INIT: begin
+                factor_check_req_idx_q <= 5'd0;
+                factor_check_request_value_q <=
+                    request_support_cache_q[0 +: IDX_W];
+                factor_check_request_shift_q <=
+                    request_support_cache_q >> IDX_W;
+                factor_check_cached_idx_q <= 5'd0;
+                factor_check_set_mode_q <= 1'b0;
+                factor_check_ordered_match_q <= factor_config_match_w;
+                factor_check_seen_mask_q <= {MAX_K{1'b0}};
+                factor_check_fingerprint_q <=
+                    32'h6d2b79f5 ^ {26'd0, request_k_eff_w};
+                factor_check_append_rank_q <= factor_config_match_w ?
+                                              factor_k_q : 6'd0;
+                if (factor_config_match_w) begin
+                    for (gi = 0; gi < MAX_K; gi = gi + 1)
+                        support_cache[gi] <=
+                            factor_support_cache_q[gi*IDX_W +: IDX_W];
+                end
+                state <= S_FACTOR_CHECK_SCAN;
+            end
+            S_FACTOR_CHECK_SCAN: begin
+                if (!factor_check_set_mode_q) begin
+                    // Fast path: exact ordered match (HTP) or ordered prefix
+                    // extension (OMP).  One support entry is checked per cycle.
+                    factor_check_fingerprint_q <=
+                        factor_check_fingerprint_next_w;
+                    factor_check_ordered_match_q <=
+                        factor_check_ordered_step_match_w;
+                    if ((factor_check_req_idx_q < factor_k_q) &&
+                        factor_check_current_equal_w)
+                        factor_check_seen_mask_q[factor_check_req_idx_q] <= 1'b1;
+                    if (factor_config_match_w &&
+                        (factor_check_req_idx_q >= factor_k_q) &&
+                        (factor_check_append_rank_q < MAX_K)) begin
+                        support_cache[factor_check_append_rank_q] <=
+                            factor_check_request_value_q;
+                        factor_check_append_rank_q <=
+                            factor_check_append_rank_q + 1'b1;
+                    end
+
+                    if (factor_check_req_idx_q + 1'b1 >= request_k_eff_w) begin
+                        if (factor_config_match_w && (factor_k_q != 0) &&
+                            (request_k_eff_w >= factor_k_q) &&
+                            factor_check_ordered_step_match_w) begin
+                            state <= S_FACTOR_CHECK_DONE;
+                        end else if (factor_config_match_w &&
+                                     (factor_k_q != 0) &&
+                                     (request_k_eff_w >= factor_k_q)) begin
+                            // Sorted GOMP support can insert new entries before
+                            // cached ones.  Fall back to a serial set-membership
+                            // scan instead of a 16x16 comparator crossbar.
+                            factor_check_set_mode_q <= 1'b1;
+                            factor_check_req_idx_q <= 5'd0;
+                            factor_check_request_value_q <=
+                                request_support_cache_q[0 +: IDX_W];
+                            factor_check_request_shift_q <=
+                                request_support_cache_q >> IDX_W;
+                            factor_check_cached_idx_q <= 5'd0;
+                            factor_check_seen_mask_q <= {MAX_K{1'b0}};
+                            factor_check_append_rank_q <= factor_k_q;
+                            for (gi = 0; gi < MAX_K; gi = gi + 1)
+                                support_cache[gi] <=
+                                    factor_support_cache_q[gi*IDX_W +: IDX_W];
+                        end else begin
+                            state <= S_FACTOR_CHECK_DONE;
+                        end
+                    end else begin
+                        factor_check_req_idx_q <= factor_check_req_idx_q + 1'b1;
+                        factor_check_cached_idx_q <=
+                            factor_check_req_idx_q + 1'b1;
+                        factor_check_request_value_q <=
+                            factor_check_request_shift_q[0 +: IDX_W];
+                        factor_check_request_shift_q <=
+                            factor_check_request_shift_q >> IDX_W;
+                    end
+                end else begin
+                    // One comparator performs full collision-checked set
+                    // membership.  A match ends the current request-entry scan;
+                    // otherwise the cached entries are visited serially.
+                    if (factor_check_current_equal_w) begin
+                        factor_check_seen_mask_q[factor_check_cached_idx_q] <= 1'b1;
+                        if (factor_check_req_idx_q + 1'b1 >= request_k_eff_w) begin
+                            state <= S_FACTOR_CHECK_DONE;
+                        end else begin
+                            factor_check_req_idx_q <= factor_check_req_idx_q + 1'b1;
+                            factor_check_request_value_q <=
+                                factor_check_request_shift_q[0 +: IDX_W];
+                            factor_check_request_shift_q <=
+                                factor_check_request_shift_q >> IDX_W;
+                            factor_check_cached_idx_q <= 5'd0;
+                        end
+                    end else if (factor_check_cached_idx_q + 1'b1 < factor_k_q) begin
+                        factor_check_cached_idx_q <=
+                            factor_check_cached_idx_q + 1'b1;
+                    end else begin
+                        if (factor_check_append_rank_q < MAX_K) begin
+                            support_cache[factor_check_append_rank_q] <=
+                                factor_check_request_value_q;
+                            factor_check_append_rank_q <=
+                                factor_check_append_rank_q + 1'b1;
+                        end
+                        if (factor_check_req_idx_q + 1'b1 >= request_k_eff_w) begin
+                            state <= S_FACTOR_CHECK_DONE;
+                        end else begin
+                            factor_check_req_idx_q <= factor_check_req_idx_q + 1'b1;
+                            factor_check_request_value_q <=
+                                factor_check_request_shift_q[0 +: IDX_W];
+                            factor_check_request_shift_q <=
+                                factor_check_request_shift_q >> IDX_W;
+                            factor_check_cached_idx_q <= 5'd0;
+                        end
+                    end
+                end
+            end
+            S_FACTOR_CHECK_DONE: begin
+                request_support_fingerprint_q <= factor_check_fingerprint_q;
+                if (factor_exact_hit_w)
+                    factor_reuse_mode_q <= FACTOR_REUSE_EXACT;
+                else if (factor_prefix_hit_w)
+                    factor_reuse_mode_q <= FACTOR_REUSE_PREFIX;
+                else begin
+                    factor_reuse_mode_q <= FACTOR_REUSE_NONE;
+                    for (gi = 0; gi < MAX_K; gi = gi + 1)
+                        support_cache[gi] <=
+                            request_support_cache_q[gi*IDX_W +: IDX_W];
+                end
+`ifdef TB_FACTOR_REUSE_TRACE
+                $display("FACTOR_REUSE_REQ time=%0t op=%0d k=%0d cached_k=%0d valid=%0d exact=%0d prefix=%0d fp=%08x cached_fp=%08x s0=%0d s1=%0d s2=%0d s3=%0d s4=%0d s5=%0d s6=%0d s7=%0d",
+                    $time, active_op, request_k_eff_w, factor_k_q,
+                    factor_valid_q, factor_exact_hit_w, factor_prefix_hit_w,
+                    factor_check_fingerprint_q,
+                    factor_support_fingerprint_q,
+                    request_support_cache_q[0*IDX_W +: IDX_W],
+                    request_support_cache_q[1*IDX_W +: IDX_W],
+                    request_support_cache_q[2*IDX_W +: IDX_W],
+                    request_support_cache_q[3*IDX_W +: IDX_W],
+                    request_support_cache_q[4*IDX_W +: IDX_W],
+                    request_support_cache_q[5*IDX_W +: IDX_W],
+                    request_support_cache_q[6*IDX_W +: IDX_W],
+                    request_support_cache_q[7*IDX_W +: IDX_W]);
+`endif
+                state <= S_PRIME;
             end
             S_PRIME: begin
                 if (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && (k_active == 0) && (n_size != 0) && (m_size != 0)) begin
@@ -2130,7 +2372,17 @@ case (state)
                     phase_residual <= 1'b0;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         phi_cache[gi] <= {DATA_W{1'b0}};
-                    state <= S_LS_CLEAR_START;
+                    if (factor_reuse_mode_q != FACTOR_REUSE_NONE) begin
+                        // Preserve the cached L/D banks.  The scan still
+                        // rebuilds RHS; exact hits skip Gram, while prefix
+                        // hits accumulate only the newly appended columns.
+                        phi_scan_col_q <= {IDX_W{1'b0}};
+                        phi_scan_state_q <= (|seed) ? seed : DEFAULT_SEED;
+                        state <= S_SCAN_DIRECT_STEP;
+                    end else begin
+                        factor_valid_q <= 1'b0;
+                        state <= S_LS_CLEAR_START;
+                    end
                 end else if ((active_op == OP_CORR) && (n_size != 0) && (m_size != 0)) begin
                     corr_col <= {IDX_W{1'b0}};
                     corr_row <= {IDX_W{1'b0}};
@@ -2220,9 +2472,31 @@ case (state)
                     state <= S_ACC_PE_WAIT;
                 end else begin
                     acc_i <= 5'd0;
-                    acc_j <= 5'd0;
-                    rhs_block_base <= 5'd0;
-                    state <= S_GRAM_PE_WAIT;
+                    if (factor_reuse_mode_q == FACTOR_REUSE_EXACT) begin
+                        rhs_block_base <= 5'd0;
+                        if (write_idx + 1 >= write_limit) begin
+                            state <= S_SOLVE_INIT;
+                        end else begin
+                            write_idx <= write_idx + 1'b1;
+                            if ((write_idx[2:0] == 3'd7) &&
+                                ((write_idx + 1'b1) < write_limit))
+                                rd_addr <= 10'h100 + ((write_idx + 1'b1) >> 3);
+                            for (gi = 0; gi < MAX_K; gi = gi + 1)
+                                phi_cache[gi] <= {DATA_W{1'b0}};
+                            phi_scan_col_q <= {IDX_W{1'b0}};
+                            phi_scan_state_q <= phi_state_q;
+                            state <= S_SCAN_DIRECT_STEP;
+                        end
+                    end else begin
+                        // A border extension must rebuild every cross term
+                        // A(new_row, old_col), not only the new/new corner.
+                        // Scan all Gram columns while the lane mask below keeps
+                        // the already-factorized old/old triangle untouched.
+                        acc_j <= 6'd0;
+                        rhs_block_base <= (factor_reuse_mode_q == FACTOR_REUSE_PREFIX) ?
+                            ((factor_k_q / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE) : 6'd0;
+                        state <= S_GRAM_PE_WAIT;
+                    end
                 end
             end
             S_GRAM_PE_WAIT: begin
@@ -2243,7 +2517,9 @@ case (state)
                         ls_acc4_lane_valid_q[gi*COLS+acc4_valid_col] <=
                             (((rhs_block_base + acc4_valid_col) < active_k_count) &&
                              ((rhs_block_base + acc4_valid_col) >= (acc_j + gi)) &&
-                             ((acc_j + gi) < active_k_count));
+                             ((acc_j + gi) < active_k_count) &&
+                             ((factor_reuse_mode_q != FACTOR_REUSE_PREFIX) ||
+                              ((rhs_block_base + acc4_valid_col) >= factor_k_q)));
                     end
                 end
                 // The row-banked matrix store drains the captured four-column
@@ -2263,7 +2539,16 @@ case (state)
                     end else if (acc_j + 5'd4 < active_k_count) begin
                         acc_j <= acc_j + 5'd4;
                         acc_i <= 5'd0;
-                        rhs_block_base <= ((acc_j + 5'd4) / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE;
+                        // For a border extension, every column batch starts no
+                        // earlier than the block containing the first new row.
+                        // This covers old/new cross terms without revisiting the
+                        // cached old/old factor.
+                        if ((factor_reuse_mode_q == FACTOR_REUSE_PREFIX) &&
+                            ((((acc_j + 5'd4) / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE) <
+                             ((factor_k_q / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE)))
+                            rhs_block_base <= (factor_k_q / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE;
+                        else
+                            rhs_block_base <= ((acc_j + 5'd4) / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE;
                         state <= S_GRAM_PE_WAIT;
                     end else begin
                     acc_i <= 5'd0;
@@ -2402,7 +2687,8 @@ case (state)
             S_RHS_INIT_WRITE: begin
                 if (solve_i >= active_k_count) begin
                     solve_i <= 5'd0;
-                    state <= S_LDL_INIT;
+                    state <= (factor_reuse_mode_q == FACTOR_REUSE_EXACT) ?
+                             S_ELIM_START : S_LDL_INIT;
                 end else begin
                     ls_start_q <= 1'b1;
                     ls_op_q <= LS_OP_RHS_WRITE;
@@ -2418,8 +2704,29 @@ case (state)
                 end
             end
             S_LDL_INIT: begin
-                ldlt_k_q <= 5'd0;
-                state <= S_LDL_DIAG_READ;
+                if (factor_reuse_mode_q == FACTOR_REUSE_PREFIX) begin
+                    // Border LDLT extension has two parts.  First replay each
+                    // cached pivot only across the newly appended rows to turn
+                    // A(new,old) into L(new,old).  The cached old/old L and D
+                    // triangle is never rewritten.  Once all old pivots have
+                    // participated, factor the first new diagonal normally.
+                    ldlt_k_q <= 5'd0;
+                    ldlt_i_base_q <= factor_k_q[4:0];
+                    for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                        if (gi < factor_k_q) begin
+                            case (gi % 4)
+                                0: ge_x[gi] <= ldlt_inv_d_bank0[gi/4];
+                                1: ge_x[gi] <= ldlt_inv_d_bank1[gi/4];
+                                2: ge_x[gi] <= ldlt_inv_d_bank2[gi/4];
+                                default: ge_x[gi] <= ldlt_inv_d_bank3[gi/4];
+                            endcase
+                        end
+                    end
+                    state <= S_LDL_ROW_INIT;
+                end else begin
+                    ldlt_k_q <= 5'd0;
+                    state <= S_LDL_DIAG_READ;
+                end
             end
             S_LDL_DIAG_READ: begin
                 ls_start_q <= 1'b1;
@@ -2536,14 +2843,30 @@ case (state)
             end
             S_LDL_INV_DONE: begin
                 div_return_ldlt <= 1'b0;
-                // ge_x is scratch until back substitution: first inv(D), then
-                // w=D^-1*z, and finally the solved x.  Reusing it avoids three
-                // separate MAX_K x 64 register arrays.
+                // Keep inv(D) in the factor cache so an exact support hit can
+                // enter the solve without rerunning the divider/factor states.
                 ge_x[ldlt_k_q] <= div_result;
+                case (ldlt_k_q[1:0])
+                    2'd0: ldlt_inv_d_bank0[ldlt_k_q[4:2]] <= div_result;
+                    2'd1: ldlt_inv_d_bank1[ldlt_k_q[4:2]] <= div_result;
+                    2'd2: ldlt_inv_d_bank2[ldlt_k_q[4:2]] <= div_result;
+                    default: ldlt_inv_d_bank3[ldlt_k_q[4:2]] <= div_result;
+                endcase
                 if (ldlt_k_q + 1'b1 < active_k_count) begin
                     ldlt_i_base_q <= ldlt_k_q + 1'b1;
                     state <= S_LDL_ROW_INIT;
                 end else begin
+                    factor_valid_q <= 1'b1;
+                    factor_k_q <= active_k_count;
+                    factor_m_q <= m_size;
+                    factor_n_q <= n_size;
+                    factor_seed_q <= (|seed) ? seed : DEFAULT_SEED;
+                    factor_scale_q <= scale_q;
+                    factor_phi_kind_q <= phi_kind;
+                    factor_support_fingerprint_q <= request_support_fingerprint_q;
+                    for (gi = 0; gi < MAX_K; gi = gi + 1)
+                        factor_support_cache_q[gi*IDX_W +: IDX_W] <=
+                            support_cache[gi];
                     solve_i <= 5'd0;
                     state <= S_ELIM_START;
                 end
@@ -2664,6 +2987,13 @@ case (state)
                 if (ls_done_w) begin
                     if (ldlt_i_base_q + 5'd4 < active_k_count) begin
                         ldlt_i_base_q <= ldlt_i_base_q + 5'd4;
+                        state <= S_LDL_ROW_INIT;
+                    end else if ((factor_reuse_mode_q == FACTOR_REUSE_PREFIX) &&
+                                 (ldlt_k_q + 1'b1 < factor_k_q)) begin
+                        // Reuse the next cached pivot, again updating only the
+                        // appended border rows.
+                        ldlt_k_q <= ldlt_k_q + 1'b1;
+                        ldlt_i_base_q <= factor_k_q[4:0];
                         state <= S_LDL_ROW_INIT;
                     end else begin
                         ldlt_k_q <= ldlt_k_q + 1'b1;
@@ -2819,12 +3149,18 @@ case (state)
                 for (gi = 0; gi < 4; gi = gi + 1) begin
                     if ((ldlt_i_base_q + gi) < active_k_count) begin
                         ldlt_l_lane_q[gi] <= rhs[ldlt_i_base_q + gi];
-                        ldlt_lkp_lane_q[gi] <= ge_x[ldlt_i_base_q + gi];
                     end else begin
                         ldlt_l_lane_q[gi] <= 64'sd0;
-                        ldlt_lkp_lane_q[gi] <= 64'sd0;
                     end
                 end
+                ldlt_lkp_lane_q[0] <= (ldlt_i_base_q < active_k_count) ?
+                    ldlt_inv_d_bank0[ldlt_i_base_q[4:2]] : 64'sd0;
+                ldlt_lkp_lane_q[1] <= (ldlt_i_base_q + 1 < active_k_count) ?
+                    ldlt_inv_d_bank1[ldlt_i_base_q[4:2]] : 64'sd0;
+                ldlt_lkp_lane_q[2] <= (ldlt_i_base_q + 2 < active_k_count) ?
+                    ldlt_inv_d_bank2[ldlt_i_base_q[4:2]] : 64'sd0;
+                ldlt_lkp_lane_q[3] <= (ldlt_i_base_q + 3 < active_k_count) ?
+                    ldlt_inv_d_bank3[ldlt_i_base_q[4:2]] : 64'sd0;
                 state <= S_BACK_ACC;
             end
             S_BACK_ACC: begin

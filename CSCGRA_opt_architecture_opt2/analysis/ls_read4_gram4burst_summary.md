@@ -82,10 +82,10 @@ although faster, it synthesized to 138,747 LUT and 5,888 LUTRAM.
 
 ## Next optimization targets
 
-1. Cache a collision-checked support signature and reuse Cholesky factors when
-   the support and sensing-matrix configuration are unchanged.
-2. Add prefix/border factor reuse when OMP or GOMP grows an unchanged support.
-3. Fuse correlation and coefficient/residual update for IHT and GP to remove
+1. Fuse correlation and coefficient/residual update for IHT and GP to remove
    redundant vector scans.
-4. Replace the remaining divider latency with a verified fixed-point reciprocal
+2. Replace the remaining divider latency with a verified fixed-point reciprocal
    refinement only after the factor-reuse paths pass the full regression.
+
+Collision-checked exact/set-extension reuse is implemented in the successor
+checkpoint documented by `analysis/factor_reuse_summary.md`.
