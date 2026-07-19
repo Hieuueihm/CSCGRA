@@ -82,20 +82,11 @@ The trade is retained: the design spends LUT/FF on exact PE-limb scheduling
 and LDLT state while removing 23 DSPs, preserving BRAM and 100 MHz timing, and
 reducing the full-sweep cycle count by 14.36%.
 
-## QR assessment
+## Solver direction
 
-QR is numerically preferable when the selected sensing matrix is nearly rank
-deficient because it avoids explicitly solving the normal equations and their
-squared condition number.  It is not expected to reduce cycles on the current
-architecture by simply replacing LDLT: the existing dataflow already produces
-the Gram matrix and RHS, while direct QR would require streaming/storing MxK
-data plus norm, square-root/reciprocal, and rotation updates.
-
-For K <= 16, four-row LDLT remains the default cycle/resource choice.  A useful
-future QR experiment is an optional four-row systolic Givens path with one
-shared pipelined CORDIC/reciprocal unit, enabled only for a small/negative LDLT
-pivot or a robustness mode.  QR should replace the default only after the same
-62-entry sweep and OOC resource/timing comparison demonstrate a net benefit.
+The retained and future LS path is regularized Cholesky LDLT.  Optimization is
+focused on four-row matrix bandwidth, Gram/RHS batching, factor reuse, and a
+lower-latency reciprocal while preserving the same fixed-point equations.
 
 ## Reproducibility
 
@@ -106,3 +97,7 @@ pivot or a robustness mode.  QR should replace the default only after the same
 - K sweep logs: `runs/opt2/ldlt_4row_ksweep/` (local, ignored).
 - Synthesis reports: `runs/opt2/synth_corr_ii1_ldlt4_cgra_top/` (local, ignored).
 - Synthesis script: `scripts/run_synth_corr_ii1_ldlt4_cgra_top.tcl`.
+
+The successor four-row matrix-bandwidth checkpoint, including READ4/WRITE4,
+Gram/RHS batching, per-phase cycle reports, and updated synthesis results, is
+documented in `analysis/ls_read4_gram4burst_summary.md`.

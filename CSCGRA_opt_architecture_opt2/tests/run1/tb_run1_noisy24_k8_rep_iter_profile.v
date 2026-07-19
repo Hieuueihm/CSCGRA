@@ -14,6 +14,8 @@ integer pass_cnt, fail_cnt, run_pass_cnt, run_fail_cnt;
 integer i, alg, pc, timeout, mism, nz, program_len;
 integer state_cycles [0:127];
 integer uop_cycles [0:15];
+integer phase_cycles [0:5];
+integer phase_busy_cycles;
 integer profile_active, profile_i, start_alg, end_alg, max_only;
 reg clk,rst_n;
 reg [13:0] s_axi_awaddr; reg s_axi_awvalid; wire s_axi_awready;
@@ -2705,6 +2707,9 @@ task reset_phase_profile; begin
         state_cycles[profile_i] = 0;
     for (profile_i = 0; profile_i < 16; profile_i = profile_i + 1)
         uop_cycles[profile_i] = 0;
+    for (profile_i = 0; profile_i < 6; profile_i = profile_i + 1)
+        phase_cycles[profile_i] = 0;
+    phase_busy_cycles = 0;
     profile_active = 1;
 end endtask
 
@@ -2716,6 +2721,14 @@ task dump_phase_profile; input integer a; input integer it; begin
     for (profile_i = 0; profile_i < 128; profile_i = profile_i + 1)
         if (state_cycles[profile_i] != 0)
             $display("STATE_CYCLE ALG=%0s iter=%0d state=%0d cycles=%0d", alg_name(a), it, profile_i, state_cycles[profile_i]);
+    $display("PHASE_CYCLE ALG=%0s iter=%0d phase=correlation cycles=%0d", alg_name(a), it, phase_cycles[0]);
+    $display("PHASE_CYCLE ALG=%0s iter=%0d phase=gram_rhs cycles=%0d", alg_name(a), it, phase_cycles[1]);
+    $display("PHASE_CYCLE ALG=%0s iter=%0d phase=ldlt_factor cycles=%0d", alg_name(a), it, phase_cycles[2]);
+    $display("PHASE_CYCLE ALG=%0s iter=%0d phase=forward cycles=%0d", alg_name(a), it, phase_cycles[3]);
+    $display("PHASE_CYCLE ALG=%0s iter=%0d phase=diagonal cycles=%0d", alg_name(a), it, phase_cycles[4]);
+    $display("PHASE_CYCLE ALG=%0s iter=%0d phase=backward cycles=%0d", alg_name(a), it, phase_cycles[5]);
+    $display("PHASE_CYCLE ALG=%0s iter=%0d phase=other_busy cycles=%0d", alg_name(a), it,
+             phase_busy_cycles-phase_cycles[0]-phase_cycles[1]-phase_cycles[2]-phase_cycles[3]-phase_cycles[4]-phase_cycles[5]);
 end endtask
 
 
@@ -2784,6 +2797,39 @@ always @(posedge clk) begin
         if (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.busy)
             state_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state] =
                 state_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state] + 1;
+        if (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.busy) begin
+            phase_busy_cycles = phase_busy_cycles + 1;
+            case (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state)
+                // Correlation stream, PE drain, reduction and score writeback.
+                34,35,36,37,54,57: phase_cycles[0] = phase_cycles[0] + 1;
+                // RHS/Gram construction and solver handoff.  Shared Phi scan
+                // states are counted only for the non-residual half of a
+                // Cholesky refine, not for IHT/GP/MP residual generation.
+                3,11,19,20,47,48,49,53,86,87,100,102,103:
+                    if ((dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.active_op == 4'd0) ||
+                        (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.active_op == 4'd6))
+                        phase_cycles[1] = phase_cycles[1] + 1;
+                55,77,101:
+                    if (((dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.active_op == 4'd0) ||
+                         (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.active_op == 4'd6)) &&
+                        !dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.phase_residual)
+                        phase_cycles[1] = phase_cycles[1] + 1;
+                // Cholesky LDL^T diagonal/column factorization.
+                58,59,60,61,62,63,64,65,66,67,68,69,79,80,81,82,83,84,85,118,119,120,121,122,123,124:
+                    phase_cycles[2] = phase_cycles[2] + 1;
+                // Unit-lower triangular forward solve Lz=b.
+                12,13,14,24,25,92,93: phase_cycles[3] = phase_cycles[3] + 1;
+                // Four-row diagonal solve w=D^-1z.
+                15,16,96: phase_cycles[4] = phase_cycles[4] + 1;
+                // Unit-upper backward solve L^T x=w.
+                23,26,27,106,107: phase_cycles[5] = phase_cycles[5] + 1;
+                // Divider cycles belong to factorization only when computing
+                // the reciprocal pivot D^-1.
+                29: if (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.div_return_ldlt)
+                        phase_cycles[2] = phase_cycles[2] + 1;
+                default: begin end
+            endcase
+        end
     end
 end
 
@@ -2794,6 +2840,39 @@ initial begin
     if($value$plusargs("START_ALG=%d",start_alg)) begin
         if(!$value$plusargs("END_ALG=%d",end_alg)) end_alg=start_alg;
     end
+`ifdef TB_ALG
+    start_alg=`TB_ALG; end_alg=`TB_ALG;
+`endif
+`ifdef TB_ALG_0
+    start_alg=0; end_alg=0;
+`endif
+`ifdef TB_ALG_1
+    start_alg=1; end_alg=1;
+`endif
+`ifdef TB_ALG_2
+    start_alg=2; end_alg=2;
+`endif
+`ifdef TB_ALG_3
+    start_alg=3; end_alg=3;
+`endif
+`ifdef TB_ALG_4
+    start_alg=4; end_alg=4;
+`endif
+`ifdef TB_ALG_5
+    start_alg=5; end_alg=5;
+`endif
+`ifdef TB_ALG_6
+    start_alg=6; end_alg=6;
+`endif
+`ifdef TB_ALG_7
+    start_alg=7; end_alg=7;
+`endif
+`ifdef TB_ALL_ALGS
+    start_alg=0; end_alg=7;
+`endif
+`ifdef TB_MAX_ONLY
+    max_only=1;
+`endif
     reset_dut();
     for(alg=start_alg; alg<=end_alg; alg=alg+1) profile_alg_iters(alg);
     $display("tb_run1_noisy24_k8_rep_iter_profile: iter profile complete | checks %0d PASS, %0d FAIL", pass_cnt, fail_cnt);
