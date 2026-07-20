@@ -36,9 +36,20 @@ module sparse_loop_controller #(
     output reg pe_corr_acc_en,
     output reg [3:0] pe_sparse_op,
     output reg ls_wide_mul_active,
+    output wire ls_wide_vertical_active,
+    output wire [4:0] ls_wide_vertical_tag,
     output reg [4*COLS*DATA_W-1:0] ls_wide_a_bus,
     output reg [4*COLS*DATA_W-1:0] ls_wide_b_bus,
     input wire [4*COLS*64-1:0] ls_wide_product_bus,
+    output reg factor_pipe_valid,
+    output reg [4:0] factor_pipe_tag,
+    output reg [IDX_W-1:0] factor_pipe_value,
+    output wire [5:0] factor_pipe_cache_k,
+    output wire [MAX_K*IDX_W-1:0] factor_pipe_cache_bus,
+    input wire factor_pipe_resp_valid,
+    input wire [4:0] factor_pipe_resp_tag,
+    input wire [IDX_W-1:0] factor_pipe_resp_value,
+    input wire [MAX_K-1:0] factor_pipe_resp_match_mask,
     output wire corr_stream_valid,
     output wire corr_stream_done,
     output wire [IDX_W-1:0] corr_stream_base_idx,
@@ -96,7 +107,7 @@ module sparse_loop_controller #(
     output reg done,
     output reg [SCALAR_W-1:0] result
 );
-localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_WR_ACC=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_RESID_PE_WAIT2=51, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
+localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_WR_ACC=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_RESID_PE_WAIT2=51, S_RESID_PE_WAIT3=52, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
 S_CACHE_BUILD=56, S_SCAN_DIRECT=55,
 S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76, S_SCAN_DIRECT_STEP=77, S_CACHE_BUILD_STEP=78,
 S_LS_CLEAR_START=86, S_LS_CLEAR_WAIT=87, S_SOLVE_SYM_READ=88, S_SOLVE_SYM_WAIT=89, S_SOLVE_SYM_WRITE=90, S_SOLVE_SYM_WRITE_WAIT=91,
@@ -117,7 +128,9 @@ localparam [6:0] S_FACTOR_CHECK_INIT=125, S_FACTOR_CHECK_SCAN=126,
 localparam [6:0] S_FUSED_UPDATE_CAPTURE=7'd2;
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GRAD_STEP=4'd7, OP_CORR_UPDATE=4'd8; // OP_CORR_UPDATE: fused Phi^T*r score writeback plus four-row x update
 localparam [1:0] MESH_CTX_NONE=2'd0, MESH_CTX_UPDATE=2'd1, MESH_CTX_PRUNE=2'd2, MESH_CTX_RESID=2'd3;
-localparam [3:0] MESH_CTX_WAIT_CYCLES = 4'd6;
+// Mesh tokens bypass the generic core-input register and advance through the
+// registered PE0->PE1->PE2->PE3 south links in three clocks.
+localparam [3:0] MESH_CTX_WAIT_CYCLES = 4'd3;
 localparam [4:0] RHS_BLOCK_STRIDE = COLS;
 localparam [4:0] LS_ROW_UPDATE_STRIDE = COLS;
 localparam [3:0] LS_OP_CLEAR=4'd0, LS_OP_WRITE=4'd1, LS_OP_READ2=4'd2, LS_OP_ACC_BLOCK=4'd3, LS_OP_ROW_UPDATE=4'd4, LS_OP_RHS_WRITE=4'd5, LS_OP_RHS_READ=4'd6, LS_OP_RHS_UPDATE=4'd7, LS_OP_READ4=4'd8, LS_OP_WRITE4=4'd9, LS_OP_ACC4=4'd10;
@@ -1444,11 +1457,18 @@ ls_matrix_service #(
 // Each physical row evaluates one signed 64x64 product.  Sixteen unsigned
 // 16x16 limb products are issued over the eight PE columns in two clocks;
 // no extra wide multiplier or DSP array is instantiated in the LS controller.
-localparam [1:0] WIDE_MUL_IDLE=2'd0, WIDE_MUL_ISSUE0=2'd1,
-                 WIDE_MUL_ISSUE1=2'd2, WIDE_MUL_DRAIN=2'd3;
-reg [1:0] wide_mul_state_q;
+localparam [2:0] WIDE_MUL_IDLE=3'd0, WIDE_MUL_ISSUE0=3'd1,
+                 WIDE_MUL_ISSUE1=3'd2, WIDE_MUL_DRAIN=3'd3,
+                 WIDE_MUL_VDRAIN1=3'd4, WIDE_MUL_VDRAIN2=3'd5,
+                 WIDE_MUL_VDRAIN3=3'd6;
+reg [2:0] wide_mul_state_q;
 reg wide_mul_start_q;
 reg wide_mul_done_q;
+reg wide_mul_vertical_done_q;
+reg wide_mul_vertical_request_q;
+reg wide_mul_vertical_q;
+assign ls_wide_vertical_active =
+    (wide_mul_state_q != WIDE_MUL_IDLE) && wide_mul_vertical_q;
 reg signed [4*64-1:0] wide_mul_a_q;
 reg signed [4*64-1:0] wide_mul_b_q;
 reg [63:0] wide_mul_abs_a_q [0:3];
@@ -1457,8 +1477,11 @@ reg wide_mul_neg_q [0:3];
 reg [127:0] wide_mul_acc_q [0:3];
 reg signed [127:0] wide_mul_result_q [0:3];
 reg [127:0] wide_partial_sum [0:3];
+reg wide_row_product_valid [0:3];
+reg wide_row_product_part1 [0:3];
 reg [4:0] ldlt_k_q;
 reg [4:0] ldlt_i_base_q;
+assign ls_wide_vertical_tag = ldlt_i_base_q;
 reg [4:0] ldlt_p_base_q;
 reg [2:0] ldlt_lane_q;
 reg [3:0] ldlt_lane_valid_q;
@@ -1514,6 +1537,10 @@ always @(*) begin
     ls_wide_b_bus = {4*COLS*DATA_W{1'b0}};
     for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
         wide_partial_sum[wide_row] = 128'd0;
+    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
+        wide_row_product_valid[wide_row] = 1'b0;
+        wide_row_product_part1[wide_row] = 1'b0;
+    end
 
     if (ls_batch4_active && (wide_mul_state_q == WIDE_MUL_IDLE)) begin
         for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
@@ -1549,11 +1576,49 @@ always @(*) begin
         end
     end
 
-    if ((wide_mul_state_q == WIDE_MUL_ISSUE1) ||
-        (wide_mul_state_q == WIDE_MUL_DRAIN)) begin
+    if (wide_mul_vertical_q) begin
+        case (wide_mul_state_q)
+            WIDE_MUL_ISSUE1: begin
+                wide_row_product_valid[0] = 1'b1;
+                wide_row_product_part1[0] = 1'b0;
+            end
+            WIDE_MUL_DRAIN: begin
+                wide_row_product_valid[0] = 1'b1;
+                wide_row_product_part1[0] = 1'b1;
+                wide_row_product_valid[1] = 1'b1;
+                wide_row_product_part1[1] = 1'b0;
+            end
+            WIDE_MUL_VDRAIN1: begin
+                wide_row_product_valid[1] = 1'b1;
+                wide_row_product_part1[1] = 1'b1;
+                wide_row_product_valid[2] = 1'b1;
+                wide_row_product_part1[2] = 1'b0;
+            end
+            WIDE_MUL_VDRAIN2: begin
+                wide_row_product_valid[2] = 1'b1;
+                wide_row_product_part1[2] = 1'b1;
+                wide_row_product_valid[3] = 1'b1;
+                wide_row_product_part1[3] = 1'b0;
+            end
+            WIDE_MUL_VDRAIN3: begin
+                wide_row_product_valid[3] = 1'b1;
+                wide_row_product_part1[3] = 1'b1;
+            end
+            default: begin end
+        endcase
+    end else if ((wide_mul_state_q == WIDE_MUL_ISSUE1) ||
+                 (wide_mul_state_q == WIDE_MUL_DRAIN)) begin
         for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
+            wide_row_product_valid[wide_row] = 1'b1;
+            wide_row_product_part1[wide_row] =
+                (wide_mul_state_q == WIDE_MUL_DRAIN);
+        end
+    end
+
+    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
+        if (wide_row_product_valid[wide_row]) begin
             for (wide_col = 0; wide_col < COLS; wide_col = wide_col + 1) begin
-                wide_part = ((wide_mul_state_q == WIDE_MUL_DRAIN) ? COLS : 0) + wide_col;
+                wide_part = (wide_row_product_part1[wide_row] ? COLS : 0) + wide_col;
                 wide_a_limb = wide_part >> 2;
                 wide_b_limb = wide_part & 3;
                 wide_shift = (wide_a_limb + wide_b_limb) * 16;
@@ -1568,6 +1633,8 @@ always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         wide_mul_state_q <= WIDE_MUL_IDLE;
         wide_mul_done_q <= 1'b0;
+        wide_mul_vertical_done_q <= 1'b0;
+        wide_mul_vertical_q <= 1'b0;
         for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
             wide_mul_abs_a_q[wide_row] <= 64'd0;
             wide_mul_abs_b_q[wide_row] <= 64'd0;
@@ -1577,9 +1644,11 @@ always @(posedge clk or negedge rst_n) begin
         end
     end else begin
         wide_mul_done_q <= 1'b0;
+        wide_mul_vertical_done_q <= 1'b0;
         case (wide_mul_state_q)
             WIDE_MUL_IDLE: begin
                 if (wide_mul_start_q) begin
+                    wide_mul_vertical_q <= wide_mul_vertical_request_q;
                     for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
                         wide_mul_abs_a_q[wide_row] <= wide_mul_a_q[wide_row*64+63] ?
                             -$signed(wide_mul_a_q[wide_row*64 +: 64]) : $signed(wide_mul_a_q[wide_row*64 +: 64]);
@@ -1592,23 +1661,76 @@ always @(posedge clk or negedge rst_n) begin
             end
             WIDE_MUL_ISSUE0: wide_mul_state_q <= WIDE_MUL_ISSUE1;
             WIDE_MUL_ISSUE1: begin
-                for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
-                    wide_mul_acc_q[wide_row] <= wide_partial_sum[wide_row];
+                if (wide_mul_vertical_q)
+                    wide_mul_acc_q[0] <= wide_partial_sum[0];
+                else
+                    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
+                        wide_mul_acc_q[wide_row] <= wide_partial_sum[wide_row];
                 wide_mul_state_q <= WIDE_MUL_DRAIN;
             end
             WIDE_MUL_DRAIN: begin
-                for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
-                    if (wide_mul_neg_q[wide_row])
-                        wide_mul_result_q[wide_row] <= -$signed(wide_mul_acc_q[wide_row] + wide_partial_sum[wide_row]);
+                if (wide_mul_vertical_q) begin
+                    if (wide_mul_neg_q[0])
+                        wide_mul_result_q[0] <= -$signed(wide_mul_acc_q[0] + wide_partial_sum[0]);
                     else
-                        wide_mul_result_q[wide_row] <= $signed(wide_mul_acc_q[wide_row] + wide_partial_sum[wide_row]);
+                        wide_mul_result_q[0] <= $signed(wide_mul_acc_q[0] + wide_partial_sum[0]);
+                    wide_mul_acc_q[1] <= wide_partial_sum[1];
+                    wide_mul_state_q <= WIDE_MUL_VDRAIN1;
+                end else begin
+                    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
+                        if (wide_mul_neg_q[wide_row])
+                            wide_mul_result_q[wide_row] <= -$signed(wide_mul_acc_q[wide_row] + wide_partial_sum[wide_row]);
+                        else
+                            wide_mul_result_q[wide_row] <= $signed(wide_mul_acc_q[wide_row] + wide_partial_sum[wide_row]);
+                    end
+                    wide_mul_done_q <= 1'b1;
+                    wide_mul_state_q <= WIDE_MUL_IDLE;
+                    wide_mul_vertical_q <= 1'b0;
                 end
+            end
+            WIDE_MUL_VDRAIN1: begin
+                if (wide_mul_neg_q[1])
+                    wide_mul_result_q[1] <= -$signed(wide_mul_acc_q[1] + wide_partial_sum[1]);
+                else
+                    wide_mul_result_q[1] <= $signed(wide_mul_acc_q[1] + wide_partial_sum[1]);
+                wide_mul_acc_q[2] <= wide_partial_sum[2];
+                wide_mul_state_q <= WIDE_MUL_VDRAIN2;
+            end
+            WIDE_MUL_VDRAIN2: begin
+                if (wide_mul_neg_q[2])
+                    wide_mul_result_q[2] <= -$signed(wide_mul_acc_q[2] + wide_partial_sum[2]);
+                else
+                    wide_mul_result_q[2] <= $signed(wide_mul_acc_q[2] + wide_partial_sum[2]);
+                wide_mul_acc_q[3] <= wide_partial_sum[3];
+                wide_mul_state_q <= WIDE_MUL_VDRAIN3;
+            end
+            WIDE_MUL_VDRAIN3: begin
+                if (wide_mul_neg_q[3])
+                    wide_mul_result_q[3] <= -$signed(wide_mul_acc_q[3] + wide_partial_sum[3]);
+                else
+                    wide_mul_result_q[3] <= $signed(wide_mul_acc_q[3] + wide_partial_sum[3]);
                 wide_mul_done_q <= 1'b1;
+                wide_mul_vertical_done_q <= 1'b1;
                 wide_mul_state_q <= WIDE_MUL_IDLE;
+                wide_mul_vertical_q <= 1'b0;
             end
         endcase
     end
 end
+
+`ifndef SYNTHESIS
+reg wide_vertical_pe3_done_prev_q;
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        wide_vertical_pe3_done_prev_q <= 1'b0;
+    end else begin
+        if (wide_mul_vertical_done_q && !wide_vertical_pe3_done_prev_q)
+            $error("PE_VERTICAL_ASSERT LDLT wide result committed before PE3 drain");
+        wide_vertical_pe3_done_prev_q <=
+            wide_mul_vertical_q && (wide_mul_state_q == WIDE_MUL_VDRAIN3);
+    end
+end
+`endif
 
 reg [64:0] div_abs_num;
 reg [63:0] div_abs_den;
@@ -1660,8 +1782,6 @@ reg [MAX_K*IDX_W-1:0] request_support_cache_q;
 reg [MAX_K*IDX_W-1:0] factor_check_request_shift_q;
 reg [4:0] factor_check_req_idx_q;
 reg [IDX_W-1:0] factor_check_request_value_q;
-reg [4:0] factor_check_cached_idx_q;
-reg factor_check_set_mode_q;
 reg factor_check_ordered_match_q;
 reg [5:0] factor_check_append_rank_q;
 reg [MAX_K-1:0] factor_check_seen_mask_q;
@@ -1706,6 +1826,7 @@ wire [COLS*DATA_W-1:0] pe_update_block_w = mesh_ctx_commit_data;
 reg [5:0] load_i;
 reg [5:0] rhs_block_base;
 reg [2:0] gram_drain_wait_q;
+reg [1:0] corr_drain_wait_q;
 reg [IDX_W-1:0] load_support_q;
 reg [IDX_W-1:0] load_support_next_q;
 integer gi, gj, gk;
@@ -1718,6 +1839,7 @@ reg [IDX_W-1:0] row2_prune_support_idx;
 reg [IDX_W-1:0] row2_prune_lane_index;
 reg signed [63:0] row3_residual_delta;
 reg [COLS*DATA_W-1:0] mesh_ctx_residual_delta_bus;
+reg [COLS*DATA_W-1:0] residual_delta_block_q;
 
 integer comb_k;
 integer rhs_lane;
@@ -1754,6 +1876,7 @@ wire row3_update_block_mode_w = (((active_op == OP_IHT_UPDATE) ||
                                  (state == S_IHT_MESH_WRITE));
 wire row3_resid_write_op_w = (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_RESID) || (active_op == OP_MP_UPDATE)) && (k_active <= MAX_K));
 wire row3_resid_mode_w = (row3_resid_write_op_w && (state == S_WR_MESH_COMMIT));
+wire residual_block_last_w = (write_idx[2:0] == (COLS-1)) || (write_idx + 1'b1 >= write_limit);
 wire row3_commit_value_mode_w = row3_update_block_mode_w || row3_prune_block_mode_w || row3_resid_mode_w;
 wire [DATA_W-1:0] row3_commit_value_w = row3_commit_value_mode_w ? row3_selected_value : write_value_now;
 wire [COLS*DATA_W-1:0] row3_block_value_w = (row3_update_block_mode_w || row3_prune_block_mode_w || row3_resid_mode_w) ? pe_update_block_w : rd_data;
@@ -1761,7 +1884,7 @@ wire wx_commit_mode_w = (((active_op == OP_REFINE) || (active_op == OP_REFINE_SP
 wire [2:0] row3_target_lane_w = wx_commit_mode_w ? wx_target_idx_q[2:0] : write_idx[2:0];
 wire mesh_ctx_update_issue_w = 1'b0;
 wire mesh_ctx_prune_issue_w = 1'b0;
-wire mesh_ctx_resid_issue_w = (row3_resid_write_op_w && (state == S_WR));
+wire mesh_ctx_resid_issue_w = (row3_resid_write_op_w && (state == S_WR) && residual_block_last_w);
 wire mesh_ctx_update_active_w = mesh_ctx_update_issue_w || (state == S_IHT_MESH_WAIT) || (state == S_IHT_MESH_WRITE);
 wire mesh_ctx_prune_active_w = mesh_ctx_prune_issue_w || (state == S_PRUNE_MESH_WAIT) || (state == S_PRUNE_MESH_WRITE);
 wire mesh_ctx_resid_active_w = mesh_ctx_resid_issue_w || (state == S_WR_MESH_WAIT) || (state == S_WR_MESH_COMMIT);
@@ -1806,9 +1929,11 @@ end
 
 always @(*) begin
     row3_residual_delta = $signed(residual_acc >>> 16);
-    mesh_ctx_residual_delta_bus = {COLS*DATA_W{1'b0}};
-    for (row3_lane = 0; row3_lane < COLS; row3_lane = row3_lane + 1)
-        mesh_ctx_residual_delta_bus[row3_lane*DATA_W +: DATA_W] = row3_residual_delta[DATA_W-1:0];
+    // Seven lanes come from the block accumulator; the lane currently being
+    // evaluated bypasses its register so the final lane can launch the block
+    // wavefront without an extra staging clock.
+    mesh_ctx_residual_delta_bus = residual_delta_block_q;
+    mesh_ctx_residual_delta_bus[write_idx[2:0]*DATA_W +: DATA_W] = row3_residual_delta[DATA_W-1:0];
     row3_selected_value = row3_commit_value_mode_w ? row3_block_value_w[row3_target_lane_w*DATA_W +: DATA_W] : write_value_now;
     row3_wr_addr = {COLS*MEM_AW{1'b0}};
     row3_wr_data = {COLS*DATA_W{1'b0}};
@@ -1824,6 +1949,10 @@ always @(*) begin
         end else if (row3_prune_block_mode_w) begin
             row3_wr_data[row3_lane*DATA_W +: DATA_W] = row3_block_value_w[row3_lane*DATA_W +: DATA_W];
             row3_wr_en[row3_lane] = busy && row3_scalar_write_en_w && ((write_idx + row3_lane[IDX_W-1:0]) < write_limit);
+        end else if (row3_resid_mode_w) begin
+            row3_wr_data[row3_lane*DATA_W +: DATA_W] = row3_block_value_w[row3_lane*DATA_W +: DATA_W];
+            row3_wr_en[row3_lane] = busy && row3_scalar_write_en_w &&
+                                   (({write_idx[IDX_W-1:3], 3'b000} + row3_lane[IDX_W-1:0]) < write_limit);
         end else if (row3_target_lane_w == row3_lane[2:0]) begin
             row3_wr_data[row3_lane*DATA_W +: DATA_W] = row3_selected_value;
             row3_wr_en[row3_lane] = busy && row3_scalar_write_en_w;
@@ -1847,18 +1976,18 @@ wire factor_config_match_w = factor_valid_q &&
     (factor_m_q == m_size) && (factor_n_q == n_size) &&
     (factor_seed_q == request_seed_eff_w) &&
     (factor_scale_q == scale_q) && (factor_phi_kind_q == phi_kind);
+assign factor_pipe_cache_k = factor_k_q;
+assign factor_pipe_cache_bus = factor_support_cache_q;
 wire [31:0] factor_check_word_w = {{(32-IDX_W){1'b0}},
     factor_check_request_value_q};
 wire [31:0] factor_check_fingerprint_next_w =
     factor_check_fingerprint_q ^ factor_check_word_w ^
     (factor_check_word_w << 10) ^ (factor_check_word_w << 20) ^
     32'h9e3779b9;
-wire factor_check_current_equal_w = factor_config_match_w &&
-    (factor_check_cached_idx_q < factor_k_q) &&
-    (factor_check_request_value_q ==
-     factor_support_cache_q[factor_check_cached_idx_q*IDX_W +: IDX_W]);
-wire factor_check_ordered_step_match_w = factor_check_ordered_match_q &&
-    ((factor_check_req_idx_q >= factor_k_q) || factor_check_current_equal_w);
+wire factor_pipe_resp_any_match_w = |factor_pipe_resp_match_mask;
+wire factor_pipe_resp_ordered_match_w =
+    (factor_pipe_resp_tag >= factor_k_q) ||
+    factor_pipe_resp_match_mask[factor_pipe_resp_tag];
 reg factor_check_all_seen_w;
 always @(*) begin
     factor_check_all_seen_w = 1'b1;
@@ -1961,14 +2090,15 @@ always @(*) begin
     pe_corr_acc_en = busy && corr_active_op_w && (state == S_CORR_ACC);
     // The PE array already has the four-row striped OP_CORR datapath.  The
     // fused opcode reuses that datapath, then enters the mesh update pipeline.
-    pe_sparse_op = busy ? ((corr_active_op_w && corr_pe_state_w) ? OP_CORR : active_op) :
+    pe_sparse_op = busy ? ((corr_active_op_w && corr_pe_state_w) ? OP_CORR :
+                           (phase_residual ? OP_RESID : active_op)) :
                           (corr_request_op_w ? OP_CORR : op_sel);
-    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC))) || (corr_active_op_w && (state == S_CORR_ACC)));
+    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE) || (active_op == OP_RESID)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_RESID_PE_WAIT3) || (state == S_WR_ACC))) || (corr_active_op_w && (state == S_CORR_ACC)));
     pe_rhs_phi_bus = {COLS*DATA_W{1'b0}};
     pe_rhs_y_bus = {COLS*DATA_W{1'b0}};
     for (rhs_lane = 0; rhs_lane < COLS; rhs_lane = rhs_lane + 1) begin
         pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] = corr_active_op_w ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] : (((rhs_block_base + rhs_lane) < active_k) ? phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}});
-        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : (corr_active_op_w ? corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
+        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_RESID_PE_WAIT3) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : (corr_active_op_w ? corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
     end
 end
 
@@ -2078,6 +2208,7 @@ active_op <= OP_REFINE;
         residual_acc <= 128'sd0;
         rhs_block_base <= 6'd0;
         gram_drain_wait_q <= 3'd0;
+        corr_drain_wait_q <= 2'd0;
         wx_target_idx_q <= {IDX_W{1'b0}};
         wx_value_q <= {DATA_W{1'b0}};
         phi_support_q <= {IDX_W{1'b0}};
@@ -2121,6 +2252,7 @@ active_op <= OP_REFINE;
         ls_rhs_wdata_q <= 64'sd0;
         ls_row_update_block_q <= 1'b0;
         wide_mul_start_q <= 1'b0;
+        wide_mul_vertical_request_q <= 1'b0;
         div_abs_num <= 65'd0;
         div_abs_den <= 64'd1;
         div_rem <= 65'd0;
@@ -2145,6 +2277,7 @@ active_op <= OP_REFINE;
         mesh_ctx_limit_block <= {IDX_W{1'b0}};
         mesh_ctx_shift_block <= 4'd0;
         mesh_ctx_wait_count <= 4'd0;
+        residual_delta_block_q <= {COLS*DATA_W{1'b0}};
         ldlt_k_q <= 5'd0;
         ldlt_i_base_q <= 5'd0;
         ldlt_p_base_q <= 5'd0;
@@ -2165,8 +2298,6 @@ active_op <= OP_REFINE;
         factor_reuse_mode_q <= FACTOR_REUSE_NONE;
         factor_check_req_idx_q <= 5'd0;
         factor_check_request_value_q <= {IDX_W{1'b0}};
-        factor_check_cached_idx_q <= 5'd0;
-        factor_check_set_mode_q <= 1'b0;
         factor_check_ordered_match_q <= 1'b0;
         factor_check_append_rank_q <= 6'd0;
         factor_check_seen_mask_q <= {MAX_K{1'b0}};
@@ -2174,6 +2305,9 @@ active_op <= OP_REFINE;
         factor_support_cache_q <= {MAX_K*IDX_W{1'b0}};
         request_support_cache_q <= {MAX_K*IDX_W{1'b0}};
         factor_check_request_shift_q <= {MAX_K*IDX_W{1'b0}};
+        factor_pipe_valid <= 1'b0;
+        factor_pipe_tag <= 5'd0;
+        factor_pipe_value <= {IDX_W{1'b0}};
         for (gi = 0; gi < MAX_K; gi = gi + 1) begin
             rhs[gi] <= 64'sd0;
             coeff_mem[gi] <= {DATA_W{1'b0}};
@@ -2184,10 +2318,12 @@ active_op <= OP_REFINE;
     end else begin
                 ls_start_q <= 1'b0;
                 wide_mul_start_q <= 1'b0;
+                wide_mul_vertical_request_q <= 1'b0;
                 if (ls_done_w)
                     ls_row_update_block_q <= 1'b0;
         corr_stream_valid_q <= 1'b0;
         corr_stream_done_q <= 1'b0;
+        factor_pipe_valid <= 1'b0;
 case (state)
             S_IDLE: begin
                 busy <= 1'b0;
@@ -2223,8 +2359,6 @@ case (state)
                     request_support_cache_q[0 +: IDX_W];
                 factor_check_request_shift_q <=
                     request_support_cache_q >> IDX_W;
-                factor_check_cached_idx_q <= 5'd0;
-                factor_check_set_mode_q <= 1'b0;
                 factor_check_ordered_match_q <= factor_config_match_w;
                 factor_check_seen_mask_q <= {MAX_K{1'b0}};
                 factor_check_fingerprint_q <=
@@ -2236,100 +2370,46 @@ case (state)
                         support_cache[gi] <=
                             factor_support_cache_q[gi*IDX_W +: IDX_W];
                 end
-                state <= S_FACTOR_CHECK_SCAN;
+                state <= (request_k_eff_w == 0) ?
+                         S_FACTOR_CHECK_DONE : S_FACTOR_CHECK_SCAN;
             end
             S_FACTOR_CHECK_SCAN: begin
-                if (!factor_check_set_mode_q) begin
-                    // Fast path: exact ordered match (HTP) or ordered prefix
-                    // extension (OMP).  One support entry is checked per cycle.
+                // One request token enters PE row0 per cycle.  The four rows
+                // compare rank groups (rank mod 4) and PE3 returns a complete
+                // match mask after the vertical pipe drain.
+                if (factor_check_req_idx_q < request_k_eff_w) begin
+                    factor_pipe_valid <= 1'b1;
+                    factor_pipe_tag <= factor_check_req_idx_q;
+                    factor_pipe_value <= factor_check_request_value_q;
                     factor_check_fingerprint_q <=
                         factor_check_fingerprint_next_w;
-                    factor_check_ordered_match_q <=
-                        factor_check_ordered_step_match_w;
-                    if ((factor_check_req_idx_q < factor_k_q) &&
-                        factor_check_current_equal_w)
-                        factor_check_seen_mask_q[factor_check_req_idx_q] <= 1'b1;
-                    if (factor_config_match_w &&
-                        (factor_check_req_idx_q >= factor_k_q) &&
-                        (factor_check_append_rank_q < MAX_K)) begin
-                        support_cache[factor_check_append_rank_q] <=
-                            factor_check_request_value_q;
-                        factor_check_append_rank_q <=
-                            factor_check_append_rank_q + 1'b1;
-                    end
-
-                    if (factor_check_req_idx_q + 1'b1 >= request_k_eff_w) begin
-                        if (factor_config_match_w && (factor_k_q != 0) &&
-                            (request_k_eff_w >= factor_k_q) &&
-                            factor_check_ordered_step_match_w) begin
-                            state <= S_FACTOR_CHECK_DONE;
-                        end else if (factor_config_match_w &&
-                                     (factor_k_q != 0) &&
-                                     (request_k_eff_w >= factor_k_q)) begin
-                            // Sorted GOMP support can insert new entries before
-                            // cached ones.  Fall back to a serial set-membership
-                            // scan instead of a 16x16 comparator crossbar.
-                            factor_check_set_mode_q <= 1'b1;
-                            factor_check_req_idx_q <= 5'd0;
-                            factor_check_request_value_q <=
-                                request_support_cache_q[0 +: IDX_W];
-                            factor_check_request_shift_q <=
-                                request_support_cache_q >> IDX_W;
-                            factor_check_cached_idx_q <= 5'd0;
-                            factor_check_seen_mask_q <= {MAX_K{1'b0}};
-                            factor_check_append_rank_q <= factor_k_q;
-                            for (gi = 0; gi < MAX_K; gi = gi + 1)
-                                support_cache[gi] <=
-                                    factor_support_cache_q[gi*IDX_W +: IDX_W];
-                        end else begin
-                            state <= S_FACTOR_CHECK_DONE;
-                        end
-                    end else begin
+                    if (factor_check_req_idx_q + 1'b1 < request_k_eff_w) begin
                         factor_check_req_idx_q <= factor_check_req_idx_q + 1'b1;
-                        factor_check_cached_idx_q <=
-                            factor_check_req_idx_q + 1'b1;
                         factor_check_request_value_q <=
                             factor_check_request_shift_q[0 +: IDX_W];
                         factor_check_request_shift_q <=
                             factor_check_request_shift_q >> IDX_W;
-                    end
-                end else begin
-                    // One comparator performs full collision-checked set
-                    // membership.  A match ends the current request-entry scan;
-                    // otherwise the cached entries are visited serially.
-                    if (factor_check_current_equal_w) begin
-                        factor_check_seen_mask_q[factor_check_cached_idx_q] <= 1'b1;
-                        if (factor_check_req_idx_q + 1'b1 >= request_k_eff_w) begin
-                            state <= S_FACTOR_CHECK_DONE;
-                        end else begin
-                            factor_check_req_idx_q <= factor_check_req_idx_q + 1'b1;
-                            factor_check_request_value_q <=
-                                factor_check_request_shift_q[0 +: IDX_W];
-                            factor_check_request_shift_q <=
-                                factor_check_request_shift_q >> IDX_W;
-                            factor_check_cached_idx_q <= 5'd0;
-                        end
-                    end else if (factor_check_cached_idx_q + 1'b1 < factor_k_q) begin
-                        factor_check_cached_idx_q <=
-                            factor_check_cached_idx_q + 1'b1;
                     end else begin
-                        if (factor_check_append_rank_q < MAX_K) begin
-                            support_cache[factor_check_append_rank_q] <=
-                                factor_check_request_value_q;
-                            factor_check_append_rank_q <=
-                                factor_check_append_rank_q + 1'b1;
-                        end
-                        if (factor_check_req_idx_q + 1'b1 >= request_k_eff_w) begin
-                            state <= S_FACTOR_CHECK_DONE;
-                        end else begin
-                            factor_check_req_idx_q <= factor_check_req_idx_q + 1'b1;
-                            factor_check_request_value_q <=
-                                factor_check_request_shift_q[0 +: IDX_W];
-                            factor_check_request_shift_q <=
-                                factor_check_request_shift_q >> IDX_W;
-                            factor_check_cached_idx_q <= 5'd0;
-                        end
+                        // Mark all requests issued; responses continue to drain.
+                        factor_check_req_idx_q <= request_k_eff_w[4:0];
                     end
+                end
+
+                if (factor_pipe_resp_valid) begin
+                    factor_check_seen_mask_q <= factor_check_seen_mask_q |
+                                                factor_pipe_resp_match_mask;
+                    factor_check_ordered_match_q <=
+                        factor_check_ordered_match_q &&
+                        factor_pipe_resp_ordered_match_w;
+                    if (!factor_pipe_resp_any_match_w &&
+                        (factor_check_append_rank_q < MAX_K)) begin
+                        support_cache[factor_check_append_rank_q] <=
+                            factor_pipe_resp_value;
+                        factor_check_append_rank_q <=
+                            factor_check_append_rank_q + 1'b1;
+                    end
+                    if (factor_pipe_resp_tag + 1'b1 >= request_k_eff_w)
+                        state <= S_FACTOR_CHECK_DONE;
                 end
             end
             S_FACTOR_CHECK_DONE: begin
@@ -2627,6 +2707,9 @@ case (state)
                 state <= S_RESID_PE_WAIT2;
             end
             S_RESID_PE_WAIT2: begin
+                state <= S_RESID_PE_WAIT3;
+            end
+            S_RESID_PE_WAIT3: begin
                 state <= S_WR_ACC;
             end
             S_WR_ACC: begin
@@ -2647,14 +2730,26 @@ case (state)
                 phi1_cur <= phi_cache[1];
                 write_value <= row3_commit_value_w;
                 if (row3_resid_write_op_w) begin
-                    mesh_ctx_x_block <= rd_data;
-                    mesh_ctx_delta_block <= mesh_ctx_residual_delta_bus;
-                    mesh_ctx_keep_block <= {COLS{1'b1}};
-                    mesh_ctx_base_idx_block <= {write_idx[IDX_W-1:3], 3'b000};
-                    mesh_ctx_limit_block <= write_limit;
-                    mesh_ctx_shift_block <= mu_shift_eff;
-                    mesh_ctx_wait_count <= MESH_CTX_WAIT_CYCLES;
-                    state <= S_WR_MESH_WAIT;
+                    residual_delta_block_q[write_idx[2:0]*DATA_W +: DATA_W] <= row3_residual_delta[DATA_W-1:0];
+                    if (residual_block_last_w) begin
+                        // One complete eight-lane residual word enters row 0;
+                        // subtract/mask/range-check then flow through rows 1..3.
+                        mesh_ctx_x_block <= rd_data;
+                        mesh_ctx_delta_block <= mesh_ctx_residual_delta_bus;
+                        mesh_ctx_keep_block <= {COLS{1'b1}};
+                        mesh_ctx_base_idx_block <= {write_idx[IDX_W-1:3], 3'b000};
+                        mesh_ctx_limit_block <= write_limit;
+                        mesh_ctx_shift_block <= mu_shift_eff;
+                        mesh_ctx_wait_count <= MESH_CTX_WAIT_CYCLES;
+                        state <= S_WR_MESH_WAIT;
+                    end else begin
+                        write_idx <= write_idx + 1'b1;
+                        for (gi = 0; gi < MAX_K; gi = gi + 1)
+                            phi_cache[gi] <= {DATA_W{1'b0}};
+                        phi_scan_col_q <= {IDX_W{1'b0}};
+                        phi_scan_state_q <= phi_state_q;
+                        state <= S_SCAN_DIRECT_STEP;
+                    end
                 end else if (write_idx + 1 >= write_limit) begin
                     state <= S_DONE;
                 end else begin
@@ -2681,6 +2776,7 @@ case (state)
                     state <= S_DONE;
                 end else begin
                     write_idx <= write_idx + 1'b1;
+                    residual_delta_block_q <= {COLS*DATA_W{1'b0}};
                     if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
                         rd_addr <= ((active_op == OP_MP_UPDATE) ? 10'h080 : 10'h100) + ((write_idx + 1'b1) >> 3);
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
@@ -2949,6 +3045,7 @@ case (state)
                 wide_mul_a_q <= {ldlt_l_lane_q[3],ldlt_l_lane_q[2],ldlt_l_lane_q[1],ldlt_l_lane_q[0]};
                 wide_mul_b_q <= {ldlt_lkp_lane_q[3],ldlt_lkp_lane_q[2],ldlt_lkp_lane_q[1],ldlt_lkp_lane_q[0]};
                 wide_mul_start_q <= 1'b1;
+                wide_mul_vertical_request_q <= 1'b1;
                 state <= S_LDL_ROW_MUL1_WAIT;
             end
             S_LDL_ROW_MUL1_WAIT: begin
@@ -2959,6 +3056,7 @@ case (state)
                 wide_mul_a_q <= {wide_mul_result_q[3][63:0],wide_mul_result_q[2][63:0],wide_mul_result_q[1][63:0],wide_mul_result_q[0][63:0]};
                 wide_mul_b_q <= {4{ldlt_d_mem[ldlt_p_base_q]}};
                 wide_mul_start_q <= 1'b1;
+                wide_mul_vertical_request_q <= 1'b1;
                 state <= S_LDL_ROW_MUL2_WAIT;
             end
             S_LDL_ROW_MUL2_WAIT: begin
@@ -2981,6 +3079,7 @@ case (state)
                     (ldlt_a_lane_q[0] - ldlt_acc_lane_q[0])};
                 wide_mul_b_q <= {4{ge_x[ldlt_k_q]}};
                 wide_mul_start_q <= 1'b1;
+                wide_mul_vertical_request_q <= 1'b1;
                 state <= S_LDL_ROW_FINAL_WAIT;
             end
             S_LDL_ROW_FINAL_WAIT: begin
@@ -3471,6 +3570,10 @@ case (state)
                 if (corr_row + 1 >= m_size) begin
                     // The PE input register still holds the final sample; one
                     // drain clock commits it to its row accumulator.
+                    // Row 3 consumes the final m mod 4 token, then its PE
+                    // accumulator commits on the following edge.  Keep one
+                    // explicit capture clock before exposing corr_acc_bus.
+                    corr_drain_wait_q <= 2'd2;
                     state <= S_CORR_PE_WAIT;
                 end else begin
                     if (corr_row[2:0] == 3'd7)
@@ -3482,10 +3585,14 @@ case (state)
                 end
             end
             S_CORR_PE_WAIT: begin
-                write_idx <= corr_col;
-                if (active_op == OP_CORR_UPDATE)
-                    rd_addr <= 10'h000 + (corr_col >> 3);
-                state <= S_CORR_WRITE;
+                if (corr_drain_wait_q != 0) begin
+                    corr_drain_wait_q <= corr_drain_wait_q - 1'b1;
+                end else begin
+                    write_idx <= corr_col;
+                    if (active_op == OP_CORR_UPDATE)
+                        rd_addr <= 10'h000 + (corr_col >> 3);
+                    state <= S_CORR_WRITE;
+                end
             end
             S_CORR_WRITE: begin
                 corr_stream_valid_q <= busy;

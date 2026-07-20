@@ -7,6 +7,7 @@ module pearray #(
     parameter integer SCALAR_W = 56,
     parameter integer MEM_AW = 10,
     parameter integer IDX_W  = 10,
+    parameter integer MAX_K  = 16,
     parameter integer Q_FRAC_W = DATA_W - 8,
     parameter integer ENABLE_DEBUG_COUNTERS = 0,
     parameter integer ENABLE_MESH_CTX = 1
@@ -56,8 +57,22 @@ module pearray #(
     input  wire [3:0]                 sparse_op,
     input  wire [7:0]                 sparse_k_active,
     input  wire                       ls_wide_mul_active,
+    input  wire                       ls_wide_vertical_active,
+    input  wire [4:0]                 ls_wide_vertical_tag,
     input  wire [ROWS*COLS*DATA_W-1:0] ls_wide_a_bus,
     input  wire [ROWS*COLS*DATA_W-1:0] ls_wide_b_bus,
+    input  wire                       factor_pipe_valid,
+    input  wire [4:0]                 factor_pipe_tag,
+    input  wire [IDX_W-1:0]           factor_pipe_value,
+    input  wire [5:0]                 factor_pipe_cache_k,
+    input  wire [MAX_K*IDX_W-1:0]     factor_pipe_cache_bus,
+    input  wire                       topk_pipe_clear,
+    input  wire                       topk_pipe_token_valid,
+    input  wire [IDX_W-1:0]           topk_pipe_token_idx,
+    input  wire [DATA_W-1:0]          topk_pipe_token_score,
+    input  wire                       topk_pipe_token_eligible,
+    input  wire                       topk_pipe_stream_done,
+    input  wire [5:0]                 topk_pipe_max_count,
 
     output wire [COLS*DATA_W-1:0]     spm_wdata,
     output wire [COLS-1:0]            spm_wen,
@@ -67,6 +82,13 @@ module pearray #(
     output wire [COLS*64-1:0]         sparse_rhs_product_bus,
     output wire [COLS*64-1:0]         corr_acc_bus,
     output wire [ROWS*COLS*ACC_W-1:0] ls_wide_product_bus,
+    output wire                       factor_pipe_resp_valid,
+    output wire [4:0]                 factor_pipe_resp_tag,
+    output wire [IDX_W-1:0]           factor_pipe_resp_value,
+    output wire [MAX_K-1:0]           factor_pipe_resp_match_mask,
+    output wire                       topk_pipe_result_valid,
+    output wire [5:0]                 topk_pipe_result_count,
+    output wire [MAX_K*IDX_W-1:0]     topk_pipe_result_idx_bus,
     output wire [COLS*DATA_W-1:0]     mesh_ctx_commit_data,
     // v3 result interface (replaces external reduction_unit / scalar_unit latch)
     output wire [SCALAR_W-1:0]        result_value,
@@ -137,6 +159,27 @@ module pearray #(
     wire [CLUSTER_COLS*DATA_W-1:0] cluster1_colbus_r0_bus;
     wire [CLUSTER_COLS*ACC_W-1:0] cluster0_sparse_product_comb_bus;
     wire [CLUSTER_COLS*ACC_W-1:0] cluster1_sparse_product_comb_bus;
+    wire cluster0_factor_pipe_resp_valid;
+    wire [4:0] cluster0_factor_pipe_resp_tag;
+    wire [IDX_W-1:0] cluster0_factor_pipe_resp_value;
+    wire [MAX_K-1:0] cluster0_factor_pipe_resp_match_mask;
+    wire cluster1_factor_pipe_resp_valid_unused;
+    wire [4:0] cluster1_factor_pipe_resp_tag_unused;
+    wire [IDX_W-1:0] cluster1_factor_pipe_resp_value_unused;
+    wire [MAX_K-1:0] cluster1_factor_pipe_resp_match_mask_unused;
+    wire cluster0_topk_pipe_result_valid;
+    wire [5:0] cluster0_topk_pipe_result_count;
+    wire [MAX_K*IDX_W-1:0] cluster0_topk_pipe_result_idx_bus;
+    wire cluster1_topk_pipe_result_valid_unused;
+    wire [5:0] cluster1_topk_pipe_result_count_unused;
+    wire [MAX_K*IDX_W-1:0] cluster1_topk_pipe_result_idx_bus_unused;
+    assign factor_pipe_resp_valid = cluster0_factor_pipe_resp_valid;
+    assign factor_pipe_resp_tag = cluster0_factor_pipe_resp_tag;
+    assign factor_pipe_resp_value = cluster0_factor_pipe_resp_value;
+    assign factor_pipe_resp_match_mask = cluster0_factor_pipe_resp_match_mask;
+    assign topk_pipe_result_valid = cluster0_topk_pipe_result_valid;
+    assign topk_pipe_result_count = cluster0_topk_pipe_result_count;
+    assign topk_pipe_result_idx_bus = cluster0_topk_pipe_result_idx_bus;
     wire [COLS*ACC_W-1:0] sparse_product_comb_bus = {cluster1_sparse_product_comb_bus, cluster0_sparse_product_comb_bus};
     reg [3:0] mesh_keepalive_q;
     reg [1:0] corr_slot_q;
@@ -163,7 +206,7 @@ module pearray #(
 
     pe_cluster_4x4 #(
         .ROWS(ROWS), .CLUSTER_COLS(CLUSTER_COLS), .TOTAL_COLS(COLS), .COL_OFFSET(0),
-        .DATA_W(DATA_W), .ACC_W(ACC_W), .IDX_W(IDX_W), .Q_FRAC_W(Q_FRAC_W), .ENABLE_MESH_CTX(ENABLE_MESH_CTX)
+        .DATA_W(DATA_W), .ACC_W(ACC_W), .IDX_W(IDX_W), .MAX_K(MAX_K), .Q_FRAC_W(Q_FRAC_W), .ENABLE_MESH_CTX(ENABLE_MESH_CTX)
     ) u_pe_cluster0_4x4 (
         .clk(clk), .rst_n(rst_n), .ctx_valid(ctx_valid), .pe_op(pe_op),
         .src_a_sel(src_a_sel), .src_b_sel(src_b_sel), .rf_rd_addr(rf_rd_addr),
@@ -177,23 +220,36 @@ module pearray #(
         .spm_b_rdata(spm_b_rdata[0 +: CLUSTER_COLS*DATA_W]),
         .phi_bus(phi_bus[0 +: CLUSTER_COLS*DATA_W]),
         .scalar_bus(scalar_bus[0 +: CLUSTER_COLS*DATA_W]),
-        .sparse_active(sparse_active), .sparse_op(sparse_op), .sparse_k_active(sparse_k_active),
+        .sparse_active(sparse_active), .sparse_step_active(sparse_step_active), .sparse_op(sparse_op), .sparse_k_active(sparse_k_active),
         .corr_acc_clear(corr_acc_clear), .corr_acc_en(corr_acc_en), .corr_slot(corr_slot_q),
         .ls_wide_mul_active(ls_wide_mul_active),
+        .ls_wide_vertical_active(ls_wide_vertical_active),
+        .ls_wide_vertical_tag(ls_wide_vertical_tag),
         .ls_wide_a_bus(cluster0_ls_wide_a_bus),
         .ls_wide_b_bus(cluster0_ls_wide_b_bus),
         .mesh_keepalive(mesh_keepalive_q),
+        .factor_pipe_valid(factor_pipe_valid), .factor_pipe_tag(factor_pipe_tag),
+        .factor_pipe_value(factor_pipe_value), .factor_pipe_cache_k(factor_pipe_cache_k),
+        .factor_pipe_cache_bus(factor_pipe_cache_bus),
+        .topk_pipe_clear(topk_pipe_clear), .topk_pipe_token_valid(topk_pipe_token_valid),
+        .topk_pipe_token_idx(topk_pipe_token_idx), .topk_pipe_token_score(topk_pipe_token_score),
+        .topk_pipe_token_eligible(topk_pipe_token_eligible), .topk_pipe_stream_done(topk_pipe_stream_done),
+        .topk_pipe_max_count(topk_pipe_max_count),
         .west_boundary_data_i(boundary_zero_data), .west_boundary_idx_i(boundary_zero_idx),
         .east_boundary_data_i(cc_east_to_west_data_bus), .east_boundary_idx_i(cc_east_to_west_idx_bus),
         .west_boundary_data_o(cluster0_west_data_unused), .west_boundary_idx_o(cluster0_west_idx_unused),
         .east_boundary_data_o(cluster0_east_data_bus), .east_boundary_idx_o(cluster0_east_idx_bus),
         .tile_out_bus(cluster0_tile_out_bus), .mesh_ctx_data_bus(cluster0_mesh_ctx_data_bus), .tile_acc_bus(cluster0_tile_acc_bus), .all_mul_product_bus(cluster0_all_mul_product_bus),
-        .idx_out_bus(cluster0_idx_out_bus), .colbus_r0_bus(cluster0_colbus_r0_bus), .sparse_product_comb_bus(cluster0_sparse_product_comb_bus)
+        .idx_out_bus(cluster0_idx_out_bus), .colbus_r0_bus(cluster0_colbus_r0_bus), .sparse_product_comb_bus(cluster0_sparse_product_comb_bus),
+        .factor_pipe_resp_valid(cluster0_factor_pipe_resp_valid), .factor_pipe_resp_tag(cluster0_factor_pipe_resp_tag),
+        .factor_pipe_resp_value(cluster0_factor_pipe_resp_value), .factor_pipe_resp_match_mask(cluster0_factor_pipe_resp_match_mask),
+        .topk_pipe_result_valid(cluster0_topk_pipe_result_valid), .topk_pipe_result_count(cluster0_topk_pipe_result_count),
+        .topk_pipe_result_idx_bus(cluster0_topk_pipe_result_idx_bus)
     );
 
     pe_cluster_4x4 #(
         .ROWS(ROWS), .CLUSTER_COLS(CLUSTER_COLS), .TOTAL_COLS(COLS), .COL_OFFSET(CLUSTER_COLS),
-        .DATA_W(DATA_W), .ACC_W(ACC_W), .IDX_W(IDX_W), .Q_FRAC_W(Q_FRAC_W), .ENABLE_MESH_CTX(ENABLE_MESH_CTX)
+        .DATA_W(DATA_W), .ACC_W(ACC_W), .IDX_W(IDX_W), .MAX_K(MAX_K), .Q_FRAC_W(Q_FRAC_W), .ENABLE_MESH_CTX(ENABLE_MESH_CTX)
     ) u_pe_cluster1_4x4 (
         .clk(clk), .rst_n(rst_n), .ctx_valid(ctx_valid), .pe_op(pe_op),
         .src_a_sel(src_a_sel), .src_b_sel(src_b_sel), .rf_rd_addr(rf_rd_addr),
@@ -207,18 +263,30 @@ module pearray #(
         .spm_b_rdata(spm_b_rdata[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W]),
         .phi_bus(phi_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W]),
         .scalar_bus(scalar_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W]),
-        .sparse_active(sparse_active), .sparse_op(sparse_op), .sparse_k_active(sparse_k_active),
+        .sparse_active(sparse_active), .sparse_step_active(sparse_step_active), .sparse_op(sparse_op), .sparse_k_active(sparse_k_active),
         .corr_acc_clear(corr_acc_clear), .corr_acc_en(corr_acc_en), .corr_slot(corr_slot_q),
         .ls_wide_mul_active(ls_wide_mul_active),
+        .ls_wide_vertical_active(ls_wide_vertical_active),
+        .ls_wide_vertical_tag(ls_wide_vertical_tag),
         .ls_wide_a_bus(cluster1_ls_wide_a_bus),
         .ls_wide_b_bus(cluster1_ls_wide_b_bus),
         .mesh_keepalive(mesh_keepalive_q),
+        .factor_pipe_valid(1'b0), .factor_pipe_tag(5'd0),
+        .factor_pipe_value({IDX_W{1'b0}}), .factor_pipe_cache_k(6'd0),
+        .factor_pipe_cache_bus({MAX_K*IDX_W{1'b0}}),
+        .topk_pipe_clear(1'b0), .topk_pipe_token_valid(1'b0),
+        .topk_pipe_token_idx({IDX_W{1'b0}}), .topk_pipe_token_score({DATA_W{1'b0}}),
+        .topk_pipe_token_eligible(1'b0), .topk_pipe_stream_done(1'b0), .topk_pipe_max_count(6'd0),
         .west_boundary_data_i(cc_west_to_east_data_bus), .west_boundary_idx_i(cc_west_to_east_idx_bus),
         .east_boundary_data_i(boundary_zero_data), .east_boundary_idx_i(boundary_zero_idx),
         .west_boundary_data_o(cluster1_west_data_bus), .west_boundary_idx_o(cluster1_west_idx_bus),
         .east_boundary_data_o(cluster1_east_data_unused), .east_boundary_idx_o(cluster1_east_idx_unused),
         .tile_out_bus(cluster1_tile_out_bus), .mesh_ctx_data_bus(cluster1_mesh_ctx_data_bus), .tile_acc_bus(cluster1_tile_acc_bus), .all_mul_product_bus(cluster1_all_mul_product_bus),
-        .idx_out_bus(cluster1_idx_out_bus), .colbus_r0_bus(cluster1_colbus_r0_bus), .sparse_product_comb_bus(cluster1_sparse_product_comb_bus)
+        .idx_out_bus(cluster1_idx_out_bus), .colbus_r0_bus(cluster1_colbus_r0_bus), .sparse_product_comb_bus(cluster1_sparse_product_comb_bus),
+        .factor_pipe_resp_valid(cluster1_factor_pipe_resp_valid_unused), .factor_pipe_resp_tag(cluster1_factor_pipe_resp_tag_unused),
+        .factor_pipe_resp_value(cluster1_factor_pipe_resp_value_unused), .factor_pipe_resp_match_mask(cluster1_factor_pipe_resp_match_mask_unused),
+        .topk_pipe_result_valid(cluster1_topk_pipe_result_valid_unused), .topk_pipe_result_count(cluster1_topk_pipe_result_count_unused),
+        .topk_pipe_result_idx_bus(cluster1_topk_pipe_result_idx_bus_unused)
     );
 
     generate
@@ -280,7 +348,8 @@ module pearray #(
                 $signed({corr_sum23[64], corr_sum23});
             assign reduce_data[c*DATA_W +: DATA_W] = tile_out[(ROWS-1)*COLS+c];
             assign acc_data[c*ACC_W +: ACC_W]      = tile_acc[(ROWS-1)*COLS+c];
-            assign sparse_rhs_product_bus[c*64 +: 64] = tile_acc[c][63:0];
+            assign sparse_rhs_product_bus[c*64 +: 64] = (sparse_op == 4'd3) ?
+                sparse_product_comb_bus[c*ACC_W +: 64] : tile_acc[c][63:0];
             assign corr_acc_bus[c*64 +: 64] = corr_sum_all[63:0];
             assign spm_wdata[c*DATA_W +: DATA_W]   = tile_out[(ROWS-1)*COLS+c];
             assign spm_wen[c] = ctx_valid && spm_wr_en && lane_valid[c];

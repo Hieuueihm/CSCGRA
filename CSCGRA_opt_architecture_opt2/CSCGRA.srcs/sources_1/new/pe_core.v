@@ -259,6 +259,8 @@ module pe_core #(
                 if (this_is_row0)
                     comb_out = mesh_ctx_update_delta_s[DATA_W-1:0];
                 else if (this_is_row1)
+                    // src_a is the shifted delta forwarded by row 0; x is a
+                    // registered sideband that followed the same vertical hop.
                     comb_out = sat_data(mesh_ctx_update_wide);
                 else if (this_is_row2)
                     comb_out = mesh_ctx_keep ? src_a : {DATA_W{1'b0}};
@@ -277,6 +279,7 @@ module pe_core #(
                 if (this_is_row0)
                     comb_out = mesh_ctx_delta;
                 else if (this_is_row1)
+                    // src_a is the dot-product delta forwarded by row 0.
                     comb_out = sat_data(mesh_ctx_resid_wide);
                 else if (this_is_row2)
                     comb_out = mesh_ctx_keep ? src_a : {DATA_W{1'b0}};
