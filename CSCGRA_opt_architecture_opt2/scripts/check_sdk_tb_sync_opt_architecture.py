@@ -11,7 +11,7 @@ SNR_C_FILES = [
 SWEEP_TB = ROOT / "tests/run1/tb_run1_k_sweep.v"
 NOISY_MU_TB = ROOT / "tests/tb_soc_program_noisy24_mu.v"
 NOISY_MU_VH = ROOT / "tests/noisy_lfsr_24bit_cases.vh"
-NOISY_MU_GP_JSON = Path(r"D:/vivado_pj/analysis/reconstruction_quality_noisy24/noisy_lfsr_24bit_gp_grad_step_fixed_k16_seed434.json")
+NOISY_MU_GP_JSON = ROOT.parent / "analysis/reconstruction_quality_noisy24/noisy_lfsr_24bit_gp_grad_step_fixed_k16_seed434.json"
 SWEEP_C_FILES = [
     (ROOT / "sdk_app/src/main_tb_soc_program_k_sweep_all_ls_serial_write.c", "sweep LS C"),
 ]

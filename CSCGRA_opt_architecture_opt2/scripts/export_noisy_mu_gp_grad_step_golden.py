@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
 
-ROOT = Path(r"D:\vivado_pj")
-REPO = ROOT / "CSCGRA_opt_architecture"
-OLD_JSON = ROOT / "analysis" / "reconstruction_quality_noisy24" / "noisy_lfsr_24bit_per_algorithm_seed_python.json"
-OUT_JSON = ROOT / "analysis" / "reconstruction_quality_noisy24" / "noisy_lfsr_24bit_gp_grad_step_k16.json"
+REPO = Path(__file__).resolve().parents[1]
+WORKSPACE = REPO.parent
+OLD_JSON = WORKSPACE / "analysis" / "reconstruction_quality_noisy24" / "noisy_lfsr_24bit_per_algorithm_seed_python.json"
+OUT_JSON = WORKSPACE / "analysis" / "reconstruction_quality_noisy24" / "noisy_lfsr_24bit_gp_grad_step_k16.json"
 VH_PATH = REPO / "tests" / "noisy_lfsr_24bit_cases.vh"
 
 Q = 16

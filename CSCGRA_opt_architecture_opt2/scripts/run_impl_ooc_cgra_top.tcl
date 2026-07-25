@@ -1,4 +1,4 @@
-set root "D:/vivado_pj/CSCGRA_opt_architecture"
+set root [file normalize [file join [file dirname [info script]] ..]]
 set outdir "$root/runs/impl_ooc_cgra_top"
 file mkdir $outdir
 create_project -in_memory -part xczu7ev-ffvc1156-2-e

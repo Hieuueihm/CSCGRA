@@ -1,8 +1,8 @@
 import json, re
 from pathlib import Path
-ROOT=Path(r'D:\vivado_pj'); REPO=ROOT/'CSCGRA_opt_architecture'
-SCAN=ROOT/'analysis/reconstruction_quality_noisy24/gp_grad_step_fixed_seed_scan_k16_lt1000.json'
-OUT=ROOT/'analysis/reconstruction_quality_noisy24/noisy_lfsr_24bit_gp_grad_step_fixed_k16_seed434.json'
+REPO=Path(__file__).resolve().parents[1]; WORKSPACE=REPO.parent
+SCAN=WORKSPACE/'analysis/reconstruction_quality_noisy24/gp_grad_step_fixed_seed_scan_k16_lt1000.json'
+OUT=WORKSPACE/'analysis/reconstruction_quality_noisy24/noisy_lfsr_24bit_gp_grad_step_fixed_k16_seed434.json'
 VH=REPO/'tests/noisy_lfsr_24bit_cases.vh'; TARGET=434; MASK24=(1<<24)-1
 scan=json.loads(SCAN.read_text()); entries=scan['top_by_snr']+scan.get('all_gt20',[]); entry=next(r for r in entries if r['seed']==TARGET)
 OUT.write_text(json.dumps({'source_scan':str(SCAN),'algorithm':'GP_grad_step_scaled_fixed_rtl_phi','N':scan['N'],'M':scan['M'],'K':scan['K'],'mu_shift':scan['mu_shift'],'iters':scan['iters'],'x_seed':entry['seed'],'mse':entry['mse'],'snr_db':entry['snr_db'],'support_overlap':f"{entry['overlap']}/{scan['K']}",'true_support':entry['support'],'x_true_q24':entry['x_true_q24'],'y_clean_q24':entry['y_clean_q24'],'y_noisy_q24':entry['y_noisy_q24'],'x_hat_q24':entry['x_hat_q24']},indent=2))

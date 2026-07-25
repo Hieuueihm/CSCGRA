@@ -1,9 +1,9 @@
 import json, re
 from pathlib import Path
-ROOT=Path(r'D:\vivado_pj')
-REPO=ROOT/'CSCGRA_opt_architecture'
-SCAN=ROOT/'analysis/reconstruction_quality_noisy24/gp_grad_step_fixed_seed_scan_k16_lt1000.json'
-OUT=ROOT/'analysis/reconstruction_quality_noisy24/noisy_lfsr_24bit_gp_grad_step_fixed_k16_seed924.json'
+REPO=Path(__file__).resolve().parents[1]
+WORKSPACE=REPO.parent
+SCAN=WORKSPACE/'analysis/reconstruction_quality_noisy24/gp_grad_step_fixed_seed_scan_k16_lt1000.json'
+OUT=WORKSPACE/'analysis/reconstruction_quality_noisy24/noisy_lfsr_24bit_gp_grad_step_fixed_k16_seed924.json'
 VH=REPO/'tests/noisy_lfsr_24bit_cases.vh'
 TARGET=924; MASK24=(1<<24)-1
 scan=json.loads(SCAN.read_text())

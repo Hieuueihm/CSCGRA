@@ -2,9 +2,10 @@ import math
 import re
 from pathlib import Path
 
-ROOT = Path(r"D:\vivado_pj")
-IMMUTABLE = ROOT / "golden_model" / "golden_cases.vh"
-OUT = ROOT / "CSCGRA_opt_architecture" / "tests" / "run1" / "k_sweep_golden_mu3.vh"
+REPO = Path(__file__).resolve().parents[1]
+WORKSPACE = REPO.parent
+IMMUTABLE = WORKSPACE / "golden_model" / "golden_cases.vh"
+OUT = REPO / "tests" / "run1" / "k_sweep_golden_mu3.vh"
 
 Q = 16
 DATA_MASK = (1 << 24) - 1

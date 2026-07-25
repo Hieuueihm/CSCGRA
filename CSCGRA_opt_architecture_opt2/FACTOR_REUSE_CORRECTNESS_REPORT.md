@@ -8,9 +8,10 @@
 - Simulator: Vivado XSIM 2018.1
 - Timing target: `xczu7ev-ffvc1156-2-e`, 100 MHz OOC
 
-Only this report is added after the checkpoint. The RTL under
-`CSCGRA.srcs/sources_1/new/` remains byte-for-byte identical to commit
-`96305d1`.
+The original verification commit `f443b7f` added only this report after the
+checkpoint. On the cleanup branch, generated lookup logic and a secondary
+module are moved into adjacent include files without changing their contents;
+the post-refactor regression is recorded in `REFACTOR_REPORT.md`.
 
 ## Correctness results
 

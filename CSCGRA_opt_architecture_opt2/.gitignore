@@ -7,6 +7,8 @@ runs/*
 *.dcp
 *.bak_*
 xsim.dir/
+obj_dir/
+.Xil/
 .cache/
 .hw/
 .sim/

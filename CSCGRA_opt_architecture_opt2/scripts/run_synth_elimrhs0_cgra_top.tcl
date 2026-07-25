@@ -1,4 +1,4 @@
-set root "D:/vivado_pj/CSCGRA_opt_architecture_opt2"
+set root [file normalize [file join [file dirname [info script]] ..]]
 set outdir "$root/runs/opt2/synth_elimrhs0_cgra_top"
 file mkdir $outdir
 create_project -in_memory -part xczu7ev-ffvc1156-2-e

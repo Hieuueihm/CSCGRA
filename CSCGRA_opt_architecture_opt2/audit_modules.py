@@ -1,6 +1,7 @@
 import re, pathlib, json
 root=pathlib.Path('CSCGRA.srcs/sources_1/new')
-texts={p:p.read_text(errors='ignore') for p in root.glob('*.v')}
+rtl_files=sorted(root.glob('*.v')) + sorted(root.glob('*.vh'))
+texts={p:p.read_text(errors='ignore') for p in rtl_files}
 modules={}
 for p,t in texts.items():
     for m in re.finditer(r'(?m)^\s*module\s+([A-Za-z_][A-Za-z0-9_$]*)\b', t):

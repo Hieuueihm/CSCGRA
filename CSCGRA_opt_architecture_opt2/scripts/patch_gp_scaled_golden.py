@@ -1,7 +1,7 @@
 import json, re
 from pathlib import Path
-root=Path(r'D:\vivado_pj\CSCGRA_opt_architecture')
-json_path=Path(r'D:\vivado_pj\analysis\reconstruction_quality_noisy24\noisy_lfsr_24bit_per_algorithm_seed_k8_gp_scaled.json')
+root=Path(__file__).resolve().parents[1]
+json_path=root.parent/'analysis/reconstruction_quality_noisy24/noisy_lfsr_24bit_per_algorithm_seed_k8_gp_scaled.json'
 data=json.loads(json_path.read_text())
 gp=data['algorithms']['GP']
 
