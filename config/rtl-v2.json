@@ -1,0 +1,15 @@
+{
+  "version": "v2",
+  "description": "Factor-reuse optimization baseline",
+  "rtl_filelist": "rtl/v2/files.f",
+  "verification_root": "verification/v2",
+  "default_testbench": "verification/v2/run1/tb_run1_k_sweep.v",
+  "default_top": "cgra_top",
+  "part": "xczu7ev-ffvc1156-2-e",
+  "clock_period_ns": 10.0,
+  "baseline": {
+    "commit": "741c0f2b5a01f8e3da6b2765170f2e7870d8cd79",
+    "wns_ns": 3.001,
+    "omp_m64_n256_k16_cycles": 110785
+  }
+}

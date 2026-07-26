@@ -38,6 +38,12 @@ obj_dir/
 xvlog_*.out
 xvlog_*.err
 
+# Canonical disposable run areas
+work/*
+!work/README.md
+logs/*
+!logs/README.md
+
 # Python/cache
 __pycache__/
 *.pyc
@@ -47,26 +53,16 @@ Thumbs.db
 .DS_Store
 .vscode/
 
-# Verilator cache
-analysis/verilator_build/
-analysis/verification/verilator_smoke/
-
-# Local optimization/verification scratch trees
-analysis/current_fulliter_diag/
-analysis/cycle_mismatch_check/
-analysis/synth_cgra_top_current/
-analysis/soc_bd_current/artifacts/
-analysis/soc_bd_current/vivado_zcu106_soc/
-analysis/runs/
+# Verilator and research caches
+research/**/verilator_build/
+verification/research/verilator_smoke/
 iter_*_CongestedCLBsAndNets.txt
 paper_figures/
-CSCGRA/runs/
-CSCGRA/.Xil/
-CSCGRA/$repo/
 
-# Local packaged Vivado project/output; canonical RTL and build scripts live in
-# CSCGRA_opt_architecture*.
+# Pre-refactor local workspaces. The tracked sources now live under rtl/,
+# verification/, sw/, scripts/, docs/, reports/, models/, and research/.
+analysis/
+golden_model/
+CSCGRA_opt_architecture/
+CSCGRA_opt_architecture_opt2/
 bd_release_optarch_20260706/
-
-# Current generated synthesis tree (keep scripts/reports outside this folder).
-analysis/synth_cgra_soc_top_opt/
