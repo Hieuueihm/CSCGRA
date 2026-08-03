@@ -63,36 +63,28 @@ Result:
 The raw log is intentionally ignored; this file preserves the sign-off
 summary.
 
-## Work remaining
+## Completion update: 2026-08-03
 
-No full regression or new synthesis was started after the low-battery request.
-Continue in this order:
+The remaining sign-off work is complete:
 
-1. Run `scripts/maintenance/check_layout.ps1`.
-2. Run a v1 smoke test, preferably case 7 first.
-3. Run the complete v2 K-sweep and compare all cycle/status/NZ rows against
-   the pre-refactor 62-row baseline.
-4. Run the complete v1 regression supported by its existing testbench.
-5. Run v2 OOC synthesis and confirm WNS remains positive; expected baseline is
-   +3.001 ns with no resource change.
-6. Run v1 OOC synthesis as a reproducibility check.
-7. Add final full-regression and timing results to a release report.
+- RTL v1 full regression: 348 PASS, 0 FAIL.
+- RTL v2 full regression: 348 PASS, 0 FAIL.
+- V1 comparison with `clean_check_run1_k_sweep_by_case`: 62/62 result rows
+  and 2/2 skip rows match exactly.
+- V2 comparison with `refactor_case0_v2/full_sweep.log`: 62/62 result rows
+  and 2/2 skip rows match exactly.
+- Compared fields: M, N, K, algorithm, iteration, cycle, status, PC, and NZ.
+- V1 OOC synthesis: WNS +3.487 ns, data path 6.503 ns; resource totals match
+  the pre-refactor `synth_incr_cgra_top` report exactly.
+- V2 OOC synthesis: WNS +3.001 ns, data path 6.989 ns; resource totals match
+  the factor-reuse baseline exactly.
+- Both synthesis runs completed with 0 errors and 0 critical warnings.
 
-Commands:
+Vivado 2018.1 compatibility was added to the canonical OOC runner by setting
+the fileset `include_dirs` property before `read_verilog`. The first attempt
+using the newer `read_verilog -include_dirs` option stopped before reading RTL
+and was replaced by a successful clean retry.
 
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass `
-  -File .\scripts\run.ps1 `
-  -Flow sim -RtlVersion v1 -Cases 7 -RunId layout-smoke-v1
-
-powershell.exe -NoProfile -ExecutionPolicy Bypass `
-  -File .\scripts\run.ps1 `
-  -Flow sim -RtlVersion v2 -RunId layout-full-v2
-
-powershell.exe -NoProfile -ExecutionPolicy Bypass `
-  -File .\scripts\run.ps1 `
-  -Flow synth -RtlVersion v2 -Top cgra_top -RunId layout-synth-v2
-```
-
-All Vivado/XSim processes were stopped naturally after the v2 case-0 smoke
-test. There are no tool processes intentionally left running.
+Detailed final results are in
+`reports/releases/REPOSITORY_LAYOUT_SIGNOFF_20260803.md`. No correctness,
+cycle, timing, or resource work remains for the layout refactor.

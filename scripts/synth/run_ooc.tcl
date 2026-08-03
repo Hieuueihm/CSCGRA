@@ -34,7 +34,8 @@ set include_dirs [list \
 file mkdir $log_dir
 create_project -in_memory -part $part_name
 set_property target_language Verilog [current_project]
-read_verilog -include_dirs $include_dirs $rtl_files
+set_property include_dirs $include_dirs [current_fileset]
+read_verilog $rtl_files
 synth_design -top $top_name -part $part_name -mode out_of_context \
     -flatten_hierarchy rebuilt -directive RuntimeOptimized
 create_clock -period $clock_period_ns -name clk [get_ports clk]
