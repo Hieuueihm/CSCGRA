@@ -6,4 +6,5 @@ not tracked.
 
 - `v1/history` and `v2/history`: reports migrated from the previous projects.
 - `v1/baselines` and `v2/baselines`: preserved baseline measurements.
-- `releases`: future signed-off release summaries.
+- `releases`: signed-off release summaries, including the current optimization
+  baseline, complete K-sweep cycle matrix, and continuation priorities.

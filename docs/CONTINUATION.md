@@ -1,6 +1,6 @@
 # Repository refactor continuation log
 
-Last updated: 2026-07-26 (Asia/Saigon)
+Last updated: 2026-08-03 (Asia/Saigon)
 
 ## Checkpoint
 
@@ -88,3 +88,11 @@ and was replaced by a successful clean retry.
 Detailed final results are in
 `reports/releases/REPOSITORY_LAYOUT_SIGNOFF_20260803.md`. No correctness,
 cycle, timing, or resource work remains for the layout refactor.
+
+## Optimization continuation baseline
+
+The consolidated performance data, implemented optimization inventory,
+strict-PE0 architecture gap, rejected trials, and ordered next-work backlog are
+recorded in `reports/releases/OPTIMIZATION_BASELINE_20260803.md`. The complete
+configured v1/v2 cycle matrix is also available as
+`reports/releases/optimization_baseline_k_sweep_20260803.csv`.
