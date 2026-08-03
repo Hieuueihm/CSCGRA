@@ -1,6 +1,23 @@
 # Repository refactor continuation log
 
-Last updated: 2026-08-03 (Asia/Saigon)
+Last updated: 2026-08-04 (Asia/Saigon)
+
+## Active optimization checkpoint
+
+- Branch: `codex/strict-pe0-timing`
+- P0 strict PE0 ingress and 100 MHz timing closure: complete locally.
+- Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
+- Timing: WNS +0.109 ns, TNS 0, zero failing endpoints.
+- Resources: 114728 LUT, 47345 FF, 24 RAMB36, 71 DSP48.
+- Detailed report:
+  `reports/releases/STRICT_PE0_TIMING_SIGNOFF_20260804.md`.
+- Compact cycle data:
+  `reports/releases/strict_pe0_timing_k_sweep_20260804.csv`.
+
+Next work must start from this timing-clean checkpoint: tagged LDLT border
+streaming, residual block-8 chaining, exact top-K/factor-check optimization,
+then a separate optional QR robustness study. Positive WNS and strict PE0
+provenance are now release gates.
 
 ## Checkpoint
 

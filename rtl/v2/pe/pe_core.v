@@ -259,6 +259,8 @@ module pe_core #(
                 if (this_is_row0)
                     comb_out = mesh_ctx_update_delta_s[DATA_W-1:0];
                 else if (this_is_row1)
+                    // src_a is the shifted delta forwarded by row 0; x is a
+                    // registered sideband that followed the same vertical hop.
                     comb_out = sat_data(mesh_ctx_update_wide);
                 else if (this_is_row2)
                     comb_out = mesh_ctx_keep ? src_a : {DATA_W{1'b0}};
@@ -277,6 +279,7 @@ module pe_core #(
                 if (this_is_row0)
                     comb_out = mesh_ctx_delta;
                 else if (this_is_row1)
+                    // src_a is the dot-product delta forwarded by row 0.
                     comb_out = sat_data(mesh_ctx_resid_wide);
                 else if (this_is_row2)
                     comb_out = mesh_ctx_keep ? src_a : {DATA_W{1'b0}};
@@ -297,7 +300,11 @@ module pe_core #(
             for (i = 0; i < RF_DEPTH; i = i + 1)
                 rf[i] <= {DATA_W{1'b0}};
         end else if (ce) begin
-            mac_out_pipe <= acc_to_q(acc_clear ? acc_mac_clear_next : acc_mac_next);
+            // Timing stage: convert the already-registered accumulator instead
+            // of chaining multiply -> 64-bit saturating add -> Q conversion in
+            // one cycle.  MAC consumers account for this single output-drain
+            // stage; the accumulator update itself remains bit-exact.
+            mac_out_pipe <= acc_to_q(acc);
             pe_out <= comb_out;
             idx_out <= comb_idx;
 

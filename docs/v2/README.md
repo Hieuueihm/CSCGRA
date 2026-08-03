@@ -1,7 +1,8 @@
 # CSCGRA opt2
 
-This directory contains the verified factor-reuse architecture based on RTL
-checkpoint `96305d1`.
+This directory documents the v2 architecture. The factor-reuse checkpoint
+`96305d1` is its historical baseline; the current signed-off source adds
+strict PE0 ingress and timing-closed four-row wavefront pipelines.
 
 ## Layout
 
@@ -53,8 +54,11 @@ Cleanup changes must preserve:
 2. reported cycle counts for a fixed test configuration;
 3. the factor-reuse behavior of checkpoint `96305d1`;
 4. the four-row PE participation already present in large LS operations;
-5. the validated 100 MHz timing result (`WNS = +3.001 ns`) unless a new
-   synthesis report explicitly supersedes it.
+5. strict PE0 -> PE1 -> PE2 -> PE3 operand provenance; and
+6. the current validated 100 MHz timing result (`WNS = +0.109 ns`).
 
 See `FACTOR_REUSE_CORRECTNESS_REPORT.md` for the signed-off regression matrix,
 cycle counts, timing, resources, and local log checksums.
+
+The superseding strict-ingress report is
+`reports/releases/STRICT_PE0_TIMING_SIGNOFF_20260804.md`.

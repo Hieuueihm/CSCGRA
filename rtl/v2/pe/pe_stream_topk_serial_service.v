@@ -19,6 +19,20 @@ module pe_stream_topk_serial_service #(
     input  wire [COLS*DATA_W-1:0]       stream_data,
     input  wire [5:0]                   support_depth,
     input  wire [MAX_SUPPORT*IDX_W-1:0] support_bus,
+
+    // Score tokens are serialized only at the row0 ingress.  Ranking state
+    // lives in the PE0->PE3 wavefront and returns a PE3-committed list.
+    output reg                          pe_clear,
+    output reg                          pe_token_valid,
+    output reg  [IDX_W-1:0]             pe_token_idx,
+    output reg  [DATA_W-1:0]            pe_token_score,
+    output reg                          pe_token_eligible,
+    output reg                          pe_stream_done,
+    output reg  [5:0]                   pe_max_count,
+    input  wire                         pe_result_valid,
+    input  wire [5:0]                   pe_result_count,
+    input  wire [MAX_SEL*IDX_W-1:0]     pe_result_idx_bus,
+
     input  wire                         append_done,
     output reg                          append_valid,
     output reg  [IDX_W-1:0]             append_idx,
@@ -30,55 +44,56 @@ module pe_stream_topk_serial_service #(
     function [DATA_W-1:0] abs_data;
         input [DATA_W-1:0] value;
         begin
-            if (value == {1'b1, {(DATA_W-1){1'b0}}}) abs_data = {1'b0, {(DATA_W-1){1'b1}}};
-            else if (value[DATA_W-1]) abs_data = ~value + 1'b1;
-            else abs_data = value;
+            if (value == {1'b1, {(DATA_W-1){1'b0}}})
+                abs_data = {1'b0, {(DATA_W-1){1'b1}}};
+            else if (value[DATA_W-1])
+                abs_data = ~value + 1'b1;
+            else
+                abs_data = value;
         end
     endfunction
 
     function support_has_idx;
         input [IDX_W-1:0] idx;
-        integer si;
+        integer support_rank;
         begin
             support_has_idx = 1'b0;
-            for (si = 0; si < MAX_SUPPORT; si = si + 1)
-                if ((si < support_depth) && (support_bus[si*IDX_W +: IDX_W] == idx))
+            for (support_rank = 0; support_rank < MAX_SUPPORT; support_rank = support_rank + 1)
+                if ((support_rank < support_depth) &&
+                    (support_bus[support_rank*IDX_W +: IDX_W] == idx))
                     support_has_idx = 1'b1;
         end
     endfunction
 
-    localparam [2:0] S_IDLE=3'd0, S_CAPTURE=3'd1, S_LANE=3'd2, S_INSERT=3'd3, S_SHIFT=3'd4, S_APPEND=3'd5, S_DONE=3'd6;
+    localparam [2:0] S_IDLE=3'd0, S_CAPTURE=3'd1, S_ISSUE=3'd2,
+                     S_WAIT_RESULT=3'd3, S_APPEND=3'd4, S_DONE=3'd5;
     reg [2:0] state_q;
-    reg [IDX_W-1:0] sel_mem [0:MAX_SEL-1];
-    reg [DATA_W-1:0] sel_score [0:MAX_SEL-1];
     reg [COLS-1:0] block_valid_q;
     reg [COLS*DATA_W-1:0] block_data_q;
     reg [IDX_W-1:0] block_base_q;
     reg block_done_q;
     reg [2:0] lane_q;
-    reg [5:0] sel_count_q;
-    reg [5:0] max_count_q;
+    reg [5:0] result_count_q;
+    reg [MAX_SEL*IDX_W-1:0] result_idx_bus_q;
     reg [5:0] append_pos_q;
     reg append_wait_q;
-    reg [IDX_W-1:0] cand_idx_q;
-    reg [DATA_W-1:0] cand_abs_q;
-    reg cand_valid_q;
-    reg [5:0] insert_pos_q;
-    reg [4:0] shift_pos_q;
-    integer r;
-
-    always @(*) begin
-        insert_pos_q = MAX_SEL[5:0];
-        for (r = 0; r < MAX_SEL; r = r + 1) begin
-            if ((r < max_count_q) && (r <= sel_count_q) && (insert_pos_q == MAX_SEL[5:0]) &&
-                ((r == sel_count_q) || (cand_abs_q > sel_score[r]) || ((cand_abs_q == sel_score[r]) && (cand_idx_q < sel_mem[r]))))
-                insert_pos_q = r[5:0];
-        end
-    end
+    wire [IDX_W-1:0] issue_idx_w = block_base_q + lane_q;
+    wire [DATA_W-1:0] issue_abs_w =
+        abs_data(block_data_q[lane_q*DATA_W +: DATA_W]);
+    wire issue_eligible_w = block_valid_q[lane_q] &&
+        (allow_tiny || (issue_abs_w > {{(DATA_W-1){1'b0}}, 1'b1})) &&
+        (!exclude_support || !support_has_idx(issue_idx_w));
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state_q <= S_IDLE;
+            pe_clear <= 1'b0;
+            pe_token_valid <= 1'b0;
+            pe_token_idx <= {IDX_W{1'b0}};
+            pe_token_score <= {DATA_W{1'b0}};
+            pe_token_eligible <= 1'b0;
+            pe_stream_done <= 1'b0;
+            pe_max_count <= 6'd0;
             append_valid <= 1'b0;
             append_idx <= {IDX_W{1'b0}};
             append_path <= 3'd0;
@@ -86,23 +101,18 @@ module pe_stream_topk_serial_service #(
             busy <= 1'b0;
             done <= 1'b0;
             block_valid_q <= {COLS{1'b0}};
-            block_data_q <= {(COLS*DATA_W){1'b0}};
+            block_data_q <= {COLS*DATA_W{1'b0}};
             block_base_q <= {IDX_W{1'b0}};
             block_done_q <= 1'b0;
             lane_q <= 3'd0;
-            sel_count_q <= 6'd0;
-            max_count_q <= 6'd0;
+            result_count_q <= 6'd0;
+            result_idx_bus_q <= {MAX_SEL*IDX_W{1'b0}};
             append_pos_q <= 6'd0;
             append_wait_q <= 1'b0;
-            cand_idx_q <= {IDX_W{1'b0}};
-            cand_abs_q <= {DATA_W{1'b0}};
-            cand_valid_q <= 1'b0;
-            shift_pos_q <= 5'd0;
-            for (r = 0; r < MAX_SEL; r = r + 1) begin
-                sel_mem[r] <= {IDX_W{1'b1}};
-                sel_score[r] <= {DATA_W{1'b0}};
-            end
         end else begin
+            pe_clear <= 1'b0;
+            pe_token_valid <= 1'b0;
+            pe_stream_done <= 1'b0;
             append_valid <= 1'b0;
             done <= 1'b0;
             case (state_q)
@@ -112,17 +122,12 @@ module pe_stream_topk_serial_service #(
                     if (start) begin
                         busy <= 1'b1;
                         stream_ready <= 1'b1;
-                        state_q <= S_CAPTURE;
-                        max_count_q <= (max_count == 6'd0) ? MAX_SEL[5:0] : max_count;
-                        sel_count_q <= 6'd0;
+                        pe_clear <= 1'b1;
+                        pe_max_count <= (max_count == 6'd0) ? MAX_SEL[5:0] : max_count;
+                        append_path <= append_path_in;
                         append_pos_q <= 6'd0;
                         append_wait_q <= 1'b0;
-                        append_path <= append_path_in;
-                        block_done_q <= 1'b0;
-                        for (r = 0; r < MAX_SEL; r = r + 1) begin
-                            sel_mem[r] <= {IDX_W{1'b1}};
-                            sel_score[r] <= {DATA_W{1'b0}};
-                        end
+                        state_q <= S_CAPTURE;
                     end
                 end
                 S_CAPTURE: begin
@@ -135,53 +140,44 @@ module pe_stream_topk_serial_service #(
                         block_done_q <= stream_done;
                         lane_q <= 3'd0;
                         stream_ready <= 1'b0;
-                        state_q <= S_LANE;
+                        state_q <= S_ISSUE;
                     end else if (stream_done) begin
                         stream_ready <= 1'b0;
-                        append_pos_q <= 6'd0;
-                        state_q <= (sel_count_q == 6'd0) ? S_DONE : S_APPEND;
+                        pe_stream_done <= 1'b1;
+                        state_q <= S_WAIT_RESULT;
                     end
                 end
-                S_LANE: begin
-                    cand_idx_q <= block_base_q + lane_q;
-                    cand_abs_q <= abs_data(block_data_q[lane_q*DATA_W +: DATA_W]);
-                    cand_valid_q <= block_valid_q[lane_q] &&
-                                    (allow_tiny || (abs_data(block_data_q[lane_q*DATA_W +: DATA_W]) > {{(DATA_W-1){1'b0}}, 1'b1})) &&
-                                    (!exclude_support || !support_has_idx(block_base_q + lane_q));
-                    state_q <= S_INSERT;
-                end
-                S_INSERT: begin
-                    if (cand_valid_q && (insert_pos_q < max_count_q)) begin
-                        shift_pos_q <= max_count_q[4:0] - 5'd1;
-                        state_q <= S_SHIFT;
-                    end else if (lane_q == COLS-1) begin
-                        state_q <= block_done_q ? ((sel_count_q == 6'd0) ? S_DONE : S_APPEND) : S_CAPTURE;
+                S_ISSUE: begin
+                    busy <= 1'b1;
+                    pe_token_valid <= 1'b1;
+                    pe_token_idx <= issue_idx_w;
+                    pe_token_score <= issue_abs_w;
+                    pe_token_eligible <= issue_eligible_w;
+                    if (lane_q == COLS-1) begin
+                        if (block_done_q) begin
+                            pe_stream_done <= 1'b1;
+                            state_q <= S_WAIT_RESULT;
+                        end else begin
+                            stream_ready <= 1'b1;
+                            state_q <= S_CAPTURE;
+                        end
                     end else begin
                         lane_q <= lane_q + 1'b1;
-                        state_q <= S_LANE;
                     end
                 end
-                S_SHIFT: begin
-                    if ((shift_pos_q > insert_pos_q) && (shift_pos_q < max_count_q)) begin
-                        sel_mem[shift_pos_q] <= sel_mem[shift_pos_q-1];
-                        sel_score[shift_pos_q] <= sel_score[shift_pos_q-1];
-                        shift_pos_q <= shift_pos_q - 1'b1;
-                    end else begin
-                        sel_mem[insert_pos_q[4:0]] <= cand_idx_q;
-                        sel_score[insert_pos_q[4:0]] <= cand_abs_q;
-                        if (sel_count_q < max_count_q)
-                            sel_count_q <= sel_count_q + 1'b1;
-                        if (lane_q == COLS-1)
-                            state_q <= block_done_q ? S_APPEND : S_CAPTURE;
-                        else begin
-                            lane_q <= lane_q + 1'b1;
-                            state_q <= S_LANE;
-                        end
+                S_WAIT_RESULT: begin
+                    busy <= 1'b1;
+                    stream_ready <= 1'b0;
+                    if (pe_result_valid) begin
+                        result_count_q <= pe_result_count;
+                        result_idx_bus_q <= pe_result_idx_bus;
+                        append_pos_q <= 6'd0;
+                        state_q <= (pe_result_count == 0) ? S_DONE : S_APPEND;
                     end
                 end
                 S_APPEND: begin
                     busy <= 1'b1;
-                    if (append_pos_q >= sel_count_q) begin
+                    if (append_pos_q >= result_count_q) begin
                         state_q <= S_DONE;
                     end else if (append_wait_q) begin
                         if (append_done) begin
@@ -190,8 +186,7 @@ module pe_stream_topk_serial_service #(
                         end
                     end else begin
                         append_valid <= 1'b1;
-                        append_idx <= sel_mem[append_pos_q[4:0]];
-                        append_path <= append_path;
+                        append_idx <= result_idx_bus_q[append_pos_q*IDX_W +: IDX_W];
                         append_wait_q <= 1'b1;
                     end
                 end
@@ -209,5 +204,3 @@ module pe_stream_topk_serial_service #(
         end
     end
 endmodule
-
-

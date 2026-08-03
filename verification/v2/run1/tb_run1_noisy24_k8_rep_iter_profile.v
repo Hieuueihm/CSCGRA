@@ -8,7 +8,7 @@ localparam DDR_Y_BASE=32'h00100000;
 localparam DDR_X_BASE=32'h00200000;
 localparam M=64; localparam N=256; localparam K=8;
 localparam PHI_SEED=32'hDEADBEEF; localparam PHI_SCALE=24'h004000; localparam PHI_KIND=2'd0;
-localparam SOP_REFINE=8'h80, SOP_CORR=8'h81, SOP_IHT_UPDATE=8'h82, SOP_RESID=8'h83, SOP_PRUNE_X=8'h84, SOP_MP_UPDATE=8'h85, SOP_GP_NO_LS_UPDATE=8'h85, SOP_REFINE_SPARSE=8'h86, SOP_GRAD_STEP=8'h87;
+localparam SOP_REFINE=8'h80, SOP_CORR=8'h81, SOP_IHT_UPDATE=8'h82, SOP_RESID=8'h83, SOP_PRUNE_X=8'h84, SOP_MP_UPDATE=8'h85, SOP_GP_NO_LS_UPDATE=8'h85, SOP_REFINE_SPARSE=8'h86, SOP_GRAD_STEP=8'h87, SOP_CORR_UPDATE=8'h88;
 localparam ALG_OMP=0, ALG_COSAMP=1, ALG_IHT=2, ALG_HTP=3, ALG_SP=4, ALG_GP=5, ALG_GOMP=6, ALG_MP=7;
 integer pass_cnt, fail_cnt, run_pass_cnt, run_fail_cnt;
 integer i, alg, pc, timeout, mism, nz, program_len;
@@ -16,6 +16,7 @@ integer state_cycles [0:127];
 integer uop_cycles [0:15];
 integer phase_cycles [0:5];
 integer phase_busy_cycles;
+integer wave_cycles [0:4][0:2]; // pipeline x {fill, steady, drain}
 integer profile_active, profile_i, start_alg, end_alg, max_only;
 reg clk,rst_n;
 reg [13:0] s_axi_awaddr; reg s_axi_awvalid; wire s_axi_awready;
@@ -33,6 +34,13 @@ reg [31:0] ddr_x [0:255];
 integer rd_count, rd_len, rd_base_word, wr_count, wr_len, wr_base_word;
 reg rd_sel_x;
 cgra_top dut(.clk(clk),.rst_n(rst_n),.s_axi_awaddr(s_axi_awaddr),.s_axi_awvalid(s_axi_awvalid),.s_axi_awready(s_axi_awready),.s_axi_wdata(s_axi_wdata),.s_axi_wstrb(s_axi_wstrb),.s_axi_wvalid(s_axi_wvalid),.s_axi_wready(s_axi_wready),.s_axi_bresp(s_axi_bresp),.s_axi_bvalid(s_axi_bvalid),.s_axi_bready(s_axi_bready),.s_axi_araddr(s_axi_araddr),.s_axi_arvalid(s_axi_arvalid),.s_axi_arready(s_axi_arready),.s_axi_rdata(s_axi_rdata),.s_axi_rresp(s_axi_rresp),.s_axi_rvalid(s_axi_rvalid),.s_axi_rready(s_axi_rready),.m_axi_araddr(m_axi_araddr),.m_axi_arlen(m_axi_arlen),.m_axi_arsize(m_axi_arsize),.m_axi_arburst(m_axi_arburst),.m_axi_arvalid(m_axi_arvalid),.m_axi_arready(m_axi_arready),.m_axi_rdata(m_axi_rdata),.m_axi_rvalid(m_axi_rvalid),.m_axi_rlast(m_axi_rlast),.m_axi_rready(m_axi_rready),.m_axi_awaddr(m_axi_awaddr),.m_axi_awlen(m_axi_awlen),.m_axi_awsize(m_axi_awsize),.m_axi_awburst(m_axi_awburst),.m_axi_awvalid(m_axi_awvalid),.m_axi_awready(m_axi_awready),.m_axi_wdata(m_axi_wdata),.m_axi_wstrb(m_axi_wstrb),.m_axi_wlast(m_axi_wlast),.m_axi_wvalid(m_axi_wvalid),.m_axi_wready(m_axi_wready),.m_axi_bresp(m_axi_bresp),.m_axi_bvalid(m_axi_bvalid),.m_axi_bready(m_axi_bready),.irq_done(irq_done),.irq_error(irq_error));
+wire wave_resid_in = dut.u_pearray.u_pe_cluster0_4x4.sparse_active &&
+                     dut.u_pearray.u_pe_cluster0_4x4.sparse_step_active &&
+                     (dut.u_pearray.u_pe_cluster0_4x4.sparse_op == 4'd3);
+wire wave_corr_in = dut.u_pearray.u_pe_cluster0_4x4.corr_acc_en;
+wire wave_factor_in = dut.u_pearray.u_pe_cluster0_4x4.factor_pipe_valid;
+wire wave_topk_in = dut.u_pearray.u_pe_cluster0_4x4.topk_pipe_token_valid;
+wire wave_ldlt_in = dut.u_pearray.u_pe_cluster0_4x4.ls_wide_vertical_active;
 always #5 clk=~clk;
 task tick; begin @(posedge clk); #1; end endtask
 function [8*8-1:0] alg_name; input integer a; begin case(a) 0:alg_name="OMP"; 1:alg_name="CoSaMP"; 2:alg_name="IHT"; 3:alg_name="HTP"; 4:alg_name="SP"; 5:alg_name="GP"; 6:alg_name="GOMP"; 7:alg_name="MP"; default:alg_name="?"; endcase end endfunction
@@ -2674,10 +2682,10 @@ task emit_loop_tail; input integer body_start; input integer count; integer rel;
 task build_program; input integer a; input integer iter_count; integer body_start; begin pc=0; write_ctx(pc[10:0],dma_ctx(8'd0,8'd0,0,0)); pc=pc+1; write_ctx(pc[10:0],dma_ctx(8'd1,8'd1,0,0)); pc=pc+1; write_ctx(pc[10:0],dma_ctx(8'd2,8'd1,0,0)); pc=pc+1; body_start=pc; case(a)
 ALG_OMP: begin emit_select_append(); write_ctx(pc[10:0],sparse_op_ctx(SOP_REFINE_SPARSE,0)); pc=pc+1; end
 ALG_COSAMP: begin write_ctx(pc[10:0],stream_topk_ctx(3'd0,8'd8,1'b1,1'b0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; write_ctx(pc[10:0],candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc[10:0],candidate_select_path_ctx(1,0)); pc=pc+1; emit_reduce_append_loop(reduce_x_support_ctx(0),candidate_append_path_ctx(1,0),K); write_ctx(pc[10:0],candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
-ALG_IHT: begin write_ctx(pc[10:0],sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_IHT_UPDATE,0)); pc=pc+1; write_ctx(pc[10:0],candidate_meta_depth_ctx(0,0,0)); pc=pc+1; emit_reduce_append_loop(reduce_x_ctx(0),candidate_append_path_ctx(0,0),K); write_ctx(pc[10:0],sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_RESID,0)); pc=pc+1; end
+ALG_IHT: begin write_ctx(pc[10:0],sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc[10:0],candidate_meta_depth_ctx(0,0,0)); pc=pc+1; emit_reduce_append_loop(reduce_x_ctx(0),candidate_append_path_ctx(0,0),K); write_ctx(pc[10:0],sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_RESID,0)); pc=pc+1; end
 ALG_HTP: begin write_ctx(pc[10:0],sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_IHT_UPDATE,0)); pc=pc+1; write_ctx(pc[10:0],candidate_meta_depth_ctx(0,0,0)); pc=pc+1; emit_reduce_append_loop(reduce_x_ctx(0),candidate_append_path_ctx(0,0),K); write_ctx(pc[10:0],sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
 ALG_SP: begin write_ctx(pc[10:0],sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc[10:0],candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc[10:0],candidate_select_path_ctx(1,0)); pc=pc+1; emit_reduce_append_loop(reduce_argmax_ctx(0),candidate_append_path_ctx(1,0),K); write_ctx(pc[10:0],candidate_select_path_ctx(1,0)); pc=pc+1; write_ctx(pc[10:0],candidate_merge_path_ctx(0,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; write_ctx(pc[10:0],candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc[10:0],candidate_select_path_ctx(1,0)); pc=pc+1; emit_reduce_append_loop(reduce_x_support_ctx(0),candidate_append_path_ctx(1,0),K); write_ctx(pc[10:0],candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
-ALG_GP: begin emit_select_append(); write_ctx(pc[10:0],sparse_op_ctx(SOP_GRAD_STEP,0)); pc=pc+1; write_ctx(pc[10:0],candidate_meta_depth_ctx(0,0,0)); pc=pc+1; emit_reduce_append_loop(reduce_x_ctx(0),candidate_append_path_ctx(0,0),K); write_ctx(pc[10:0],sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_RESID,0)); pc=pc+1; end
+ALG_GP: begin write_ctx(pc[10:0],sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc[10:0],reduce_argmax_ctx(0)); pc=pc+1; write_ctx(pc[10:0],candidate_append_result_ctx(0)); pc=pc+1; write_ctx(pc[10:0],candidate_meta_depth_ctx(0,0,0)); pc=pc+1; emit_reduce_append_loop(reduce_x_ctx(0),candidate_append_path_ctx(0,0),K); write_ctx(pc[10:0],sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_RESID,0)); pc=pc+1; end
 ALG_GOMP: begin write_ctx(pc[10:0],sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc[10:0],reduce_argmax_ctx(0)); pc=pc+1; write_ctx(pc[10:0],candidate_append_path_ctx(0,0)); pc=pc+1; write_ctx(pc[10:0],reduce_argmax_ctx(0)); pc=pc+1; write_ctx(pc[10:0],candidate_append_path_ctx(0,0)); pc=pc+1; write_ctx(pc[10:0],sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
 ALG_MP: begin emit_mp_select_append(); write_ctx(pc[10:0],sparse_op_ctx(SOP_MP_UPDATE,0)); pc=pc+1; end
 endcase emit_loop_tail(body_start,iter_count); write_ctx(pc[10:0],dma_ctx(8'd0,8'd0,1,1)); pc=pc+1; program_len=pc; end endtask
@@ -2709,6 +2717,8 @@ task reset_phase_profile; begin
         uop_cycles[profile_i] = 0;
     for (profile_i = 0; profile_i < 6; profile_i = profile_i + 1)
         phase_cycles[profile_i] = 0;
+    for (profile_i = 0; profile_i < 15; profile_i = profile_i + 1)
+        wave_cycles[profile_i/3][profile_i%3] = 0;
     phase_busy_cycles = 0;
     profile_active = 1;
 end endtask
@@ -2729,7 +2739,28 @@ task dump_phase_profile; input integer a; input integer it; begin
     $display("PHASE_CYCLE ALG=%0s iter=%0d phase=backward cycles=%0d", alg_name(a), it, phase_cycles[5]);
     $display("PHASE_CYCLE ALG=%0s iter=%0d phase=other_busy cycles=%0d", alg_name(a), it,
              phase_busy_cycles-phase_cycles[0]-phase_cycles[1]-phase_cycles[2]-phase_cycles[3]-phase_cycles[4]-phase_cycles[5]);
+    $display("WAVE_CYCLE ALG=%0s iter=%0d pipe=residual fill=%0d steady=%0d drain=%0d", alg_name(a), it, wave_cycles[0][0], wave_cycles[0][1], wave_cycles[0][2]);
+    $display("WAVE_CYCLE ALG=%0s iter=%0d pipe=correlation fill=%0d steady=%0d drain=%0d", alg_name(a), it, wave_cycles[1][0], wave_cycles[1][1], wave_cycles[1][2]);
+    $display("WAVE_CYCLE ALG=%0s iter=%0d pipe=topk fill=%0d steady=%0d drain=%0d", alg_name(a), it, wave_cycles[2][0], wave_cycles[2][1], wave_cycles[2][2]);
+    $display("WAVE_CYCLE ALG=%0s iter=%0d pipe=factor fill=%0d steady=%0d drain=%0d", alg_name(a), it, wave_cycles[3][0], wave_cycles[3][1], wave_cycles[3][2]);
+    $display("WAVE_CYCLE ALG=%0s iter=%0d pipe=ldlt_border fill=%0d steady=%0d drain=%0d", alg_name(a), it, wave_cycles[4][0], wave_cycles[4][1], wave_cycles[4][2]);
 end endtask
+
+task count_wave;
+    input integer pipe_id;
+    input ingress;
+    input row1_valid;
+    input row2_valid;
+    input row3_valid;
+    begin
+        if (ingress && !row3_valid)
+            wave_cycles[pipe_id][0] = wave_cycles[pipe_id][0] + 1;
+        else if (ingress && row3_valid)
+            wave_cycles[pipe_id][1] = wave_cycles[pipe_id][1] + 1;
+        else if (!ingress && (row1_valid || row2_valid || row3_valid))
+            wave_cycles[pipe_id][2] = wave_cycles[pipe_id][2] + 1;
+    end
+endtask
 
 
 task profile_alg_iters; input integer a; integer it; integer first_it; integer prev_cycles; integer cur_cycles; begin
@@ -2793,6 +2824,26 @@ end
 
 always @(posedge clk) begin
     if (profile_active) begin
+        count_wave(0, wave_resid_in,
+            dut.u_pearray.u_pe_cluster0_4x4.sparse_valid_r1_q,
+            dut.u_pearray.u_pe_cluster0_4x4.sparse_valid_r2_q,
+            dut.u_pearray.u_pe_cluster0_4x4.sparse_valid_r3_q);
+        count_wave(1, wave_corr_in,
+            dut.u_pearray.u_pe_cluster0_4x4.corr_valid_r1_q,
+            dut.u_pearray.u_pe_cluster0_4x4.corr_valid_r2_q,
+            dut.u_pearray.u_pe_cluster0_4x4.corr_valid_r3_q);
+        count_wave(2, wave_topk_in,
+            dut.u_pearray.u_pe_cluster0_4x4.topk_valid_r1_q,
+            dut.u_pearray.u_pe_cluster0_4x4.topk_valid_r2_q,
+            dut.u_pearray.u_pe_cluster0_4x4.topk_valid_r3_q);
+        count_wave(3, wave_factor_in,
+            dut.u_pearray.u_pe_cluster0_4x4.factor_valid_r1_q,
+            dut.u_pearray.u_pe_cluster0_4x4.factor_valid_r2_q,
+            dut.u_pearray.u_pe_cluster0_4x4.factor_valid_r3_q);
+        count_wave(4, wave_ldlt_in,
+            dut.u_pearray.u_pe_cluster0_4x4.ls_wide_vertical_r1_q,
+            dut.u_pearray.u_pe_cluster0_4x4.ls_wide_vertical_r2_q,
+            dut.u_pearray.u_pe_cluster0_4x4.ls_wide_vertical_r3_q);
         uop_cycles[dut.uop_class] = uop_cycles[dut.uop_class] + 1;
         if (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.busy)
             state_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state] =
@@ -2801,7 +2852,7 @@ always @(posedge clk) begin
             phase_busy_cycles = phase_busy_cycles + 1;
             case (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state)
                 // Correlation stream, PE drain, reduction and score writeback.
-                34,35,36,37,54,57: phase_cycles[0] = phase_cycles[0] + 1;
+                2,34,35,36,37,54,57,108,110: phase_cycles[0] = phase_cycles[0] + 1;
                 // RHS/Gram construction and solver handoff.  Shared Phi scan
                 // states are counted only for the non-residual half of a
                 // Cholesky refine, not for IHT/GP/MP residual generation.
