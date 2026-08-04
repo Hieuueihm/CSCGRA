@@ -5,19 +5,33 @@ Last updated: 2026-08-04 (Asia/Saigon)
 ## Active optimization checkpoint
 
 - Branch: `codex/strict-pe0-timing`
-- P0 strict PE0 ingress and 100 MHz timing closure: complete locally.
+- Latest pushed checkpoint: `cfedb27` (tagged LDLT border stream).
 - Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
-- Timing: WNS +0.109 ns, TNS 0, zero failing endpoints.
-- Resources: 114728 LUT, 47345 FF, 24 RAMB36, 71 DSP48.
+- Aggregate cycles: 1771732, down 132562 (6.96%) from the preceding
+  factor-check-clean checkpoint and down 197447 (10.03%) from strict P0.
+- Timing: WNS +0.018 ns, TNS 0, zero failing endpoints at 100 MHz.
+- Resources: 118199 LUT, 53554 FF, 24 RAMB36, 71 DSP48.
 - Detailed report:
-  `reports/releases/STRICT_PE0_TIMING_SIGNOFF_20260804.md`.
+  `reports/releases/LDLT_BORDER_STREAM_SIGNOFF_20260804.md`.
 - Compact cycle data:
-  `reports/releases/strict_pe0_timing_k_sweep_20260804.csv`.
+  `reports/releases/ldlt_border_stream_k_sweep_20260804.csv`.
 
-Next work must start from this timing-clean checkpoint: tagged LDLT border
-streaming, residual block-8 chaining, exact top-K/factor-check optimization,
-then a separate optional QR robustness study. Positive WNS and strict PE0
-provenance are now release gates.
+Completed checkpoints on this branch are strict PE0 ingress/timing closure,
+residual block-8 chaining, exact factor-check early rejection/dead-path
+cleanup, and multi-transaction LDLT border streaming.  Correlation/vector
+update fusion for IHT/GP and exact four-row top-K remain intact.  A replicated
+eight-lane top-K eligibility mask was tested and rejected because it increased
+area; it is not in source.
+
+Strict PE0 provenance and positive WNS remain release gates.  The current
+WNS margin is only +0.018 ns, so the next implementation should first reduce
+LDLT scoreboard/cache routing or add a timing-isolation stage, accepting a
+small cycle increase if needed.  Do not add another large datapath until that
+margin is improved.
+
+QR has been evaluated only as an optional robustness fallback and is not in
+RTL.  The study and entry criteria are in
+`reports/releases/QR_ROBUSTNESS_STUDY_20260804.md`.
 
 ### Residual chaining update
 
@@ -28,7 +42,8 @@ provenance are now release gates.
   71 DSP48.
 - Detailed report: `reports/releases/RESIDUAL_CHAIN_SIGNOFF_20260804.md`.
 - Next implementation target: multiple in-flight tagged LDLT border
-  transactions, then exact top-K/factor-check cost reduction.
+  transactions, then exact top-K/factor-check cost reduction. (Completed;
+  retained here as historical checkpoint context.)
 
 ## Checkpoint
 
