@@ -107,7 +107,7 @@ module sparse_loop_controller #(
     output reg done,
     output reg [SCALAR_W-1:0] result
 );
-localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_WR_ACC=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_RESID_PE_WAIT2=51, S_RESID_PE_WAIT3=52, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
+localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
 S_CACHE_BUILD=56, S_SCAN_DIRECT=55,
 S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76, S_SCAN_DIRECT_STEP=77, S_CACHE_BUILD_STEP=78,
 S_LS_CLEAR_START=86, S_LS_CLEAR_WAIT=87, S_SOLVE_SYM_READ=88, S_SOLVE_SYM_WAIT=89, S_SOLVE_SYM_WRITE=90, S_SOLVE_SYM_WRITE_WAIT=91,
@@ -126,8 +126,6 @@ S_LDL_ROW_WRITE_WAIT=124;
 localparam [6:0] S_FACTOR_CHECK_INIT=125, S_FACTOR_CHECK_SCAN=126,
                  S_FACTOR_CHECK_DONE=127;
 localparam [6:0] S_FUSED_UPDATE_CAPTURE=7'd2;
-localparam [6:0] S_WR_ACC_COMMIT=7'd32;
-localparam [6:0] S_WR_ACC_REDUCE=7'd33;
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GRAD_STEP=4'd7, OP_CORR_UPDATE=4'd8; // OP_CORR_UPDATE: fused Phi^T*r score writeback plus four-row x update
 localparam [1:0] MESH_CTX_NONE=2'd0, MESH_CTX_UPDATE=2'd1, MESH_CTX_PRUNE=2'd2, MESH_CTX_RESID=2'd3;
 // Mesh tokens bypass the generic core-input register and advance through the
@@ -688,13 +686,9 @@ reg [5:0] solve_j;
 reg [5:0] solve_k;
 reg [4:0] acc_i;
 reg [5:0] acc_j;
-reg [4:0] resid_i;
 reg [5:0] back_i;
 reg [5:0] back_j;
 reg signed [127:0] residual_acc;
-reg signed [127:0] residual_block_sum;
-reg signed [127:0] residual_block_sum_q;
-reg [COLS*64-1:0] residual_product_bus_q;
 reg signed [127:0] residual_row_partial [0:3];
 reg signed [127:0] residual_pipe_sum_r1_q;
 reg signed [127:0] residual_pipe_sum_r2_q;
@@ -791,7 +785,6 @@ reg [COLS*DATA_W-1:0] residual_delta_block_q;
 integer comb_k;
 integer rhs_lane;
 integer corr_lane;
-integer block_lane;
 integer residual_lane;
 integer residual_row;
 integer cache_pos;
@@ -1022,14 +1015,6 @@ end
 
 
 always @(*) begin
-    residual_block_sum = 128'sd0;
-    for (block_lane = 0; block_lane < RHS_BLOCK_STRIDE; block_lane = block_lane + 1) begin
-        if ((rhs_block_base + block_lane) < active_k_count)
-            residual_block_sum = residual_block_sum + $signed(residual_product_bus_q[block_lane*64 +: 64]);
-    end
-end
-
-always @(*) begin
     // Clear on the request edge as well as in the internal clear states.  The
     // PE tiles register their control inputs, so waiting for busy/S_CORR_INIT
     // leaves one stale accumulator cycle at the first column block of every
@@ -1056,7 +1041,7 @@ always @(*) begin
     pe_rhs_y_bus = {COLS*DATA_W{1'b0}};
     for (rhs_lane = 0; rhs_lane < COLS; rhs_lane = rhs_lane + 1) begin
         pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] = corr_active_op_w ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] : (((rhs_block_base + rhs_lane) < active_k) ? phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}});
-        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_RESID_PE_WAIT3) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : (corr_active_op_w ? corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
+        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : ((state == S_RESID_PE_WAIT) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : (corr_active_op_w ? corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
     end
 end
 
@@ -1174,10 +1159,7 @@ active_op <= OP_REFINE;
         solve_i <= 6'd0;
         acc_j <= 6'd0;
         acc_i <= 5'd0;
-        resid_i <= 5'd0;
         residual_acc <= 128'sd0;
-        residual_block_sum_q <= 128'sd0;
-        residual_product_bus_q <= {(COLS*64){1'b0}};
         residual_pipe_sum_r1_q <= 128'sd0;
         residual_pipe_sum_r2_q <= 128'sd0;
         residual_pipe_sum_r3_q <= 128'sd0;
@@ -1367,7 +1349,13 @@ case (state)
                         support_cache[gi] <=
                             factor_support_cache_q[gi*IDX_W +: IDX_W];
                 end
-                state <= (request_k_eff_w == 0) ?
+                // No exact scan can authorize reuse when the cached sensing
+                // configuration differs, or when the request is smaller than
+                // the cached factor.  Copying the request in DONE is already
+                // the exact miss behavior, so do not inject useless tokens.
+                state <= (!factor_config_match_w ||
+                          (request_k_eff_w < factor_k_q) ||
+                          (request_k_eff_w == 0)) ?
                          S_FACTOR_CHECK_DONE : S_FACTOR_CHECK_SCAN;
             end
             S_FACTOR_CHECK_SCAN: begin
@@ -1698,7 +1686,6 @@ case (state)
             end
             S_WR_ACC_INIT: begin
                 residual_acc <= 128'sd0;
-                resid_i <= 5'd0;
                 rhs_block_base <= 5'd0;
                 residual_blocks_total_q <= (active_k_count + (RHS_BLOCK_STRIDE-1)) / RHS_BLOCK_STRIDE;
                 residual_blocks_issued_q <= 2'd0;
@@ -1719,39 +1706,8 @@ case (state)
                     if (residual_blocks_retired_q + 1'b1 >= residual_blocks_total_q) begin
                         residual_stream_issue_q <= 1'b0;
                         rhs_block_base <= 5'd0;
-                        resid_i <= 5'd0;
                         state <= S_WR;
                     end
-                end
-            end
-            S_RESID_PE_WAIT2: begin
-                state <= S_RESID_PE_WAIT3;
-            end
-            S_RESID_PE_WAIT3: begin
-                state <= S_WR_ACC;
-            end
-            S_WR_ACC: begin
-                // First isolate the PE products.  The live PE multiplier and
-                // the block reduction must not sit in the same timing stage.
-                residual_product_bus_q <= pe_rhs_product_bus;
-                state <= S_WR_ACC_REDUCE;
-            end
-            S_WR_ACC_REDUCE: begin
-                // Reduce only registered products.  This preserves the PE0 ->
-                // PE3 provenance while breaking multiply -> reduction timing.
-                residual_block_sum_q <= residual_block_sum;
-                state <= S_WR_ACC_COMMIT;
-            end
-            S_WR_ACC_COMMIT: begin
-                residual_acc <= residual_acc + residual_block_sum_q;
-                if (rhs_block_base + RHS_BLOCK_STRIDE < active_k_count) begin
-                    rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
-                    resid_i <= 5'd0;
-                    state <= S_RESID_PE_WAIT;
-                end else begin
-                    rhs_block_base <= 5'd0;
-                    resid_i <= 5'd0;
-                    state <= S_WR;
                 end
             end
             S_WR: begin
