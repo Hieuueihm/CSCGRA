@@ -119,8 +119,7 @@ S_LDL_DIAG_MUL1_WAIT=64, S_LDL_DIAG_MUL2=65, S_LDL_DIAG_MUL2_WAIT=66,
 S_LDL_DIAG_WRITE=67, S_LDL_DIAG_WRITE_WAIT=68, S_LDL_INV_DIV=69,
 S_LDL_INV_DONE=79, S_LDL_ROW_INIT=80, S_LDL_ROW_A_READ=81,
 S_LDL_ROW_A_WAIT=82, S_LDL_ROW_P_READ=83, S_LDL_ROW_P_WAIT=84,
-S_LDL_ROW_MUL1=85, S_LDL_ROW_MUL1_WAIT=118, S_LDL_ROW_MUL2=119,
-S_LDL_ROW_MUL2_WAIT=120, S_LDL_ROW_FINAL_MUL=121,
+S_LDL_ROW_MUL1=85, S_LDL_ROW_MUL2=119, S_LDL_ROW_FINAL_MUL=121,
 S_LDL_ROW_FINAL_WAIT=122, S_LDL_ROW_WRITE=123,
 S_LDL_ROW_WRITE_WAIT=124;
 localparam [6:0] S_FACTOR_CHECK_INIT=125, S_FACTOR_CHECK_SCAN=126,
@@ -371,8 +370,6 @@ reg wide_mul_done_q;
 reg wide_mul_vertical_done_q;
 reg wide_mul_vertical_request_q;
 reg wide_mul_vertical_q;
-assign ls_wide_vertical_active =
-    (wide_mul_state_q != WIDE_MUL_IDLE) && wide_mul_vertical_q;
 reg signed [4*64-1:0] wide_mul_a_q;
 reg signed [4*64-1:0] wide_mul_b_q;
 reg [63:0] wide_mul_abs_a_q [0:3];
@@ -389,7 +386,6 @@ reg wide_row_product_valid [0:3];
 reg wide_row_product_part1 [0:3];
 reg [4:0] ldlt_k_q;
 reg [4:0] ldlt_i_base_q;
-assign ls_wide_vertical_tag = ldlt_i_base_q;
 reg [4:0] ldlt_p_base_q;
 reg [2:0] ldlt_lane_q;
 reg [3:0] ldlt_lane_valid_q;
@@ -401,6 +397,37 @@ reg signed [63:0] ldlt_lkp_lane_q [0:3];
 reg signed [63:0] ldlt_a_lane_q [0:3];
 reg signed [63:0] ldlt_acc_lane_q [0:3];
 reg signed [63:0] ldlt_d_mem [0:MAX_K-1];
+// Border factorization is split into two tagged streams.  Preloading removes
+// the matrix-read bubbles between transactions; every transaction still
+// enters at PE0 as two 16x16-limb tokens and advances one physical row per
+// clock before retirement at PE3.
+(* ram_style = "distributed" *) reg signed [4*GE_MAT_W-1:0] ldlt_border_lip_cache_q [0:MAX_K-1];
+(* ram_style = "distributed" *) reg signed [GE_MAT_W-1:0] ldlt_border_lkp_cache_q [0:MAX_K-1];
+(* ram_style = "distributed" *) reg signed [4*64-1:0] ldlt_border_mul1_cache_q [0:MAX_K-1];
+reg [4:0] ldlt_border_issue_p_q;
+reg ldlt_border_issue_part_q;
+reg [4:0] ldlt_border_complete_q;
+reg border_token_valid_q [0:3];
+reg [4:0] border_token_tag_q [0:3];
+reg border_token_part_q [0:3];
+reg [3:0] border_token_neg_q [0:3];
+reg border_capture_valid_q [0:3];
+reg [4:0] border_capture_tag_q [0:3];
+reg border_capture_part_q [0:3];
+reg [3:0] border_capture_neg_q [0:3];
+reg [COLS*64-1:0] border_product_q [0:3];
+reg signed [4*128-1:0] border_acc_slot_q [0:3];
+reg signed [4*128-1:0] border_result_slot_q [0:3];
+reg border_done_pending_q;
+reg [4:0] border_done_pending_tag_q;
+reg border_done_q;
+reg [4:0] border_done_tag_q;
+reg signed [63:0] border_operand_a [0:3];
+reg signed [63:0] border_operand_b [0:3];
+reg [63:0] border_operand_abs_a [0:3];
+reg [63:0] border_operand_abs_b [0:3];
+reg [3:0] border_ingress_neg;
+reg [127:0] border_partial_sum [0:3];
 integer wide_row;
 integer wide_col;
 integer wide_part;
@@ -408,6 +435,22 @@ integer wide_a_limb;
 integer wide_b_limb;
 integer wide_shift;
 integer acc4_valid_col;
+integer border_row;
+integer border_col;
+integer border_part;
+integer border_a_limb;
+integer border_b_limb;
+integer border_shift;
+wire ldlt_border_stream_state_w = (state == S_LDL_ROW_MUL1) ||
+                                  (state == S_LDL_ROW_MUL2);
+wire ldlt_border_issue_active_w = ldlt_border_stream_state_w &&
+                                  (ldlt_border_issue_p_q < ldlt_k_q);
+wire legacy_wide_vertical_active_w =
+    (wide_mul_state_q != WIDE_MUL_IDLE) && wide_mul_vertical_q;
+assign ls_wide_vertical_active = legacy_wide_vertical_active_w ||
+                                 ldlt_border_issue_active_w;
+assign ls_wide_vertical_tag = ldlt_border_issue_active_w ?
+                              ldlt_border_issue_p_q : ldlt_i_base_q;
 wire signed [127:0] ldlt_wide_q32_sum =
     ($signed(wide_mul_result_q[0]) >>> 32) +
     ($signed(wide_mul_result_q[1]) >>> 32) +
@@ -440,7 +483,8 @@ generate
 endgenerate
 
 always @(*) begin
-    ls_wide_mul_active = (wide_mul_state_q != WIDE_MUL_IDLE) || ls_batch4_active;
+    ls_wide_mul_active = (wide_mul_state_q != WIDE_MUL_IDLE) ||
+                         ls_batch4_active || ldlt_border_issue_active_w;
     ls_wide_a_bus = {4*COLS*DATA_W{1'b0}};
     ls_wide_b_bus = {4*COLS*DATA_W{1'b0}};
     for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
@@ -450,7 +494,19 @@ always @(*) begin
         wide_row_product_part1[wide_row] = 1'b0;
     end
 
-    if (ls_batch4_active && (wide_mul_state_q == WIDE_MUL_IDLE)) begin
+    if (ldlt_border_issue_active_w) begin
+        for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
+            for (wide_col = 0; wide_col < COLS; wide_col = wide_col + 1) begin
+                wide_part = (ldlt_border_issue_part_q ? COLS : 0) + wide_col;
+                wide_a_limb = wide_part >> 2;
+                wide_b_limb = wide_part & 3;
+                ls_wide_a_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                    {{(DATA_W-16){1'b0}}, border_operand_abs_a[wide_row][wide_a_limb*16 +: 16]};
+                ls_wide_b_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                    {{(DATA_W-16){1'b0}}, border_operand_abs_b[wide_row][wide_b_limb*16 +: 16]};
+            end
+        end
+    end else if (ls_batch4_active && (wide_mul_state_q == WIDE_MUL_IDLE)) begin
         for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
             for (wide_col = 0; wide_col < COLS; wide_col = wide_col + 1) begin
                 if ((rhs_block_base + wide_col) < active_k_count) begin
@@ -647,6 +703,121 @@ always @(posedge clk or negedge rst_n) begin
                 wide_mul_vertical_q <= 1'b0;
             end
         endcase
+    end
+end
+
+always @(*) begin
+    border_ingress_neg = 4'd0;
+    for (border_row = 0; border_row < 4; border_row = border_row + 1) begin
+        if (state == S_LDL_ROW_MUL1) begin
+            border_operand_a[border_row] =
+                {{(64-GE_MAT_W){ldlt_border_lip_cache_q[ldlt_border_issue_p_q]
+                    [border_row*GE_MAT_W+GE_MAT_W-1]}},
+                 ldlt_border_lip_cache_q[ldlt_border_issue_p_q]
+                    [border_row*GE_MAT_W +: GE_MAT_W]};
+            border_operand_b[border_row] =
+                {{(64-GE_MAT_W){ldlt_border_lkp_cache_q[ldlt_border_issue_p_q]
+                    [GE_MAT_W-1]}}, ldlt_border_lkp_cache_q[ldlt_border_issue_p_q]};
+        end else begin
+            border_operand_a[border_row] =
+                ldlt_border_mul1_cache_q[ldlt_border_issue_p_q][border_row*64 +: 64];
+            border_operand_b[border_row] =
+                ldlt_d_mem[ldlt_border_issue_p_q];
+        end
+        border_ingress_neg[border_row] =
+            border_operand_a[border_row][63] ^ border_operand_b[border_row][63];
+        border_operand_abs_a[border_row] = border_operand_a[border_row][63] ?
+            -$signed(border_operand_a[border_row]) : $signed(border_operand_a[border_row]);
+        border_operand_abs_b[border_row] = border_operand_b[border_row][63] ?
+            -$signed(border_operand_b[border_row]) : $signed(border_operand_b[border_row]);
+    end
+
+    for (border_row = 0; border_row < 4; border_row = border_row + 1) begin
+        border_partial_sum[border_row] = 128'd0;
+        if (border_capture_valid_q[border_row]) begin
+            for (border_col = 0; border_col < COLS; border_col = border_col + 1) begin
+                border_part = (border_capture_part_q[border_row] ? COLS : 0) + border_col;
+                border_a_limb = border_part >> 2;
+                border_b_limb = border_part & 3;
+                border_shift = (border_a_limb + border_b_limb) * 16;
+                border_partial_sum[border_row] = border_partial_sum[border_row] +
+                    ({64'd0, $unsigned(border_product_q[border_row][border_col*64 +: 64])} << border_shift);
+            end
+        end
+    end
+end
+
+// Metadata follows the same registered south links as the operand bundle.
+// Products are captured before the shifted limb reduction so the PE
+// multiplier is never on the same timing path as the 128-bit adder tree.
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        border_done_pending_q <= 1'b0;
+        border_done_pending_tag_q <= 5'd0;
+        border_done_q <= 1'b0;
+        border_done_tag_q <= 5'd0;
+        for (border_row = 0; border_row < 4; border_row = border_row + 1) begin
+            border_token_valid_q[border_row] <= 1'b0;
+            border_token_tag_q[border_row] <= 5'd0;
+            border_token_part_q[border_row] <= 1'b0;
+            border_token_neg_q[border_row] <= 4'd0;
+            border_capture_valid_q[border_row] <= 1'b0;
+            border_capture_tag_q[border_row] <= 5'd0;
+            border_capture_part_q[border_row] <= 1'b0;
+            border_capture_neg_q[border_row] <= 4'd0;
+            border_product_q[border_row] <= {(COLS*64){1'b0}};
+            border_acc_slot_q[border_row] <= {4*128{1'b0}};
+            border_result_slot_q[border_row] <= {4*128{1'b0}};
+        end
+    end else begin
+        border_done_q <= border_done_pending_q;
+        if (border_done_pending_q)
+            border_done_tag_q <= border_done_pending_tag_q;
+        border_done_pending_q <= 1'b0;
+
+        border_token_valid_q[0] <= ldlt_border_issue_active_w;
+        border_token_tag_q[0] <= ldlt_border_issue_p_q;
+        border_token_part_q[0] <= ldlt_border_issue_part_q;
+        border_token_neg_q[0] <= border_ingress_neg;
+        for (border_row = 1; border_row < 4; border_row = border_row + 1) begin
+            border_token_valid_q[border_row] <= border_token_valid_q[border_row-1];
+            border_token_tag_q[border_row] <= border_token_tag_q[border_row-1];
+            border_token_part_q[border_row] <= border_token_part_q[border_row-1];
+            border_token_neg_q[border_row] <= border_token_neg_q[border_row-1];
+        end
+
+        for (border_row = 0; border_row < 4; border_row = border_row + 1) begin
+            border_capture_valid_q[border_row] <= border_token_valid_q[border_row];
+            if (border_token_valid_q[border_row]) begin
+                border_capture_tag_q[border_row] <= border_token_tag_q[border_row];
+                border_capture_part_q[border_row] <= border_token_part_q[border_row];
+                border_capture_neg_q[border_row] <= border_token_neg_q[border_row];
+                border_product_q[border_row] <=
+                    ls_wide_product_bus[border_row*COLS*64 +: COLS*64];
+            end
+
+            if (border_capture_valid_q[border_row]) begin
+                if (!border_capture_part_q[border_row]) begin
+                    border_acc_slot_q[border_capture_tag_q[border_row][1:0]]
+                        [border_row*128 +: 128] <= border_partial_sum[border_row];
+                end else begin
+                    if (border_capture_neg_q[border_row][border_row])
+                        border_result_slot_q[border_capture_tag_q[border_row][1:0]]
+                            [border_row*128 +: 128] <=
+                            -$signed(border_acc_slot_q[border_capture_tag_q[border_row][1:0]]
+                                [border_row*128 +: 128] + border_partial_sum[border_row]);
+                    else
+                        border_result_slot_q[border_capture_tag_q[border_row][1:0]]
+                            [border_row*128 +: 128] <=
+                            $signed(border_acc_slot_q[border_capture_tag_q[border_row][1:0]]
+                                [border_row*128 +: 128] + border_partial_sum[border_row]);
+                    if (border_row == 3) begin
+                        border_done_pending_q <= 1'b1;
+                        border_done_pending_tag_q <= border_capture_tag_q[border_row];
+                    end
+                end
+            end
+        end
     end
 end
 
@@ -1247,6 +1418,9 @@ active_op <= OP_REFINE;
         ldlt_p_base_q <= 5'd0;
         ldlt_lane_q <= 3'd0;
         ldlt_lane_valid_q <= 4'd0;
+        ldlt_border_issue_p_q <= 5'd0;
+        ldlt_border_issue_part_q <= 1'b0;
+        ldlt_border_complete_q <= 5'd0;
         ldlt_diag_a_q <= 64'sd0;
         ldlt_diag_acc_q <= 128'sd0;
         ldlt_d_cur_q <= 64'sd0;
@@ -2015,46 +2189,71 @@ case (state)
             end
             S_LDL_ROW_P_WAIT: begin
                 if (ls_done_w) begin
-                    for (gi = 0; gi < 4; gi = gi + 1) begin
-                        if ((ldlt_i_base_q + gi) < active_k_count) begin
-                            ldlt_l_lane_q[gi] <= {{(64-GE_MAT_W){ls_read4_rdata_w[gi*GE_MAT_W+GE_MAT_W-1]}}, ls_read4_rdata_w[gi*GE_MAT_W +: GE_MAT_W]};
-                            ldlt_lkp_lane_q[gi] <= {{(64-GE_MAT_W){ls_rdata_b_w[GE_MAT_W-1]}}, ls_rdata_b_w};
-                        end else begin
-                            ldlt_l_lane_q[gi] <= 64'sd0;
-                            ldlt_lkp_lane_q[gi] <= 64'sd0;
-                        end
-                    end
-                    state <= S_LDL_ROW_MUL1;
-                end
-            end
-            S_LDL_ROW_MUL1: begin
-                wide_mul_a_q <= {ldlt_l_lane_q[3],ldlt_l_lane_q[2],ldlt_l_lane_q[1],ldlt_l_lane_q[0]};
-                wide_mul_b_q <= {ldlt_lkp_lane_q[3],ldlt_lkp_lane_q[2],ldlt_lkp_lane_q[1],ldlt_lkp_lane_q[0]};
-                wide_mul_start_q <= 1'b1;
-                wide_mul_vertical_request_q <= 1'b1;
-                state <= S_LDL_ROW_MUL1_WAIT;
-            end
-            S_LDL_ROW_MUL1_WAIT: begin
-                if (wide_mul_done_q)
-                    state <= S_LDL_ROW_MUL2;
-            end
-            S_LDL_ROW_MUL2: begin
-                wide_mul_a_q <= {wide_mul_result_q[3][63:0],wide_mul_result_q[2][63:0],wide_mul_result_q[1][63:0],wide_mul_result_q[0][63:0]};
-                wide_mul_b_q <= {4{ldlt_d_mem[ldlt_p_base_q]}};
-                wide_mul_start_q <= 1'b1;
-                wide_mul_vertical_request_q <= 1'b1;
-                state <= S_LDL_ROW_MUL2_WAIT;
-            end
-            S_LDL_ROW_MUL2_WAIT: begin
-                if (wide_mul_done_q) begin
-                    for (gi = 0; gi < 4; gi = gi + 1)
-                        ldlt_acc_lane_q[gi] <= ldlt_acc_lane_q[gi] + ($signed(wide_mul_result_q[gi]) >>> 32);
+                    // Whole-word writes let Vivado map the preload cache to
+                    // distributed RAM instead of four independent FF banks.
+                    ldlt_border_lip_cache_q[ldlt_p_base_q] <= {
+                        ((ldlt_i_base_q + 3 < active_k_count) ?
+                            ls_read4_rdata_w[3*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}}),
+                        ((ldlt_i_base_q + 2 < active_k_count) ?
+                            ls_read4_rdata_w[2*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}}),
+                        ((ldlt_i_base_q + 1 < active_k_count) ?
+                            ls_read4_rdata_w[1*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}}),
+                        ((ldlt_i_base_q < active_k_count) ?
+                            ls_read4_rdata_w[0*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}})};
+                    ldlt_border_lkp_cache_q[ldlt_p_base_q] <=
+                        ls_rdata_b_w;
                     if (ldlt_p_base_q + 1'b1 < ldlt_k_q) begin
                         ldlt_p_base_q <= ldlt_p_base_q + 1'b1;
                         state <= S_LDL_ROW_P_READ;
                     end else begin
-                        state <= S_LDL_ROW_FINAL_MUL;
+                        ldlt_border_issue_p_q <= 5'd0;
+                        ldlt_border_issue_part_q <= 1'b0;
+                        ldlt_border_complete_q <= 5'd0;
+                        state <= S_LDL_ROW_MUL1;
                     end
+                end
+            end
+            S_LDL_ROW_MUL1: begin
+                if (ldlt_border_issue_active_w) begin
+                    if (ldlt_border_issue_part_q) begin
+                        ldlt_border_issue_part_q <= 1'b0;
+                        ldlt_border_issue_p_q <= ldlt_border_issue_p_q + 1'b1;
+                    end else begin
+                        ldlt_border_issue_part_q <= 1'b1;
+                    end
+                end
+                if (border_done_q) begin
+                    ldlt_border_mul1_cache_q[border_done_tag_q] <= {
+                        border_result_slot_q[border_done_tag_q[1:0]][3*128 +: 64],
+                        border_result_slot_q[border_done_tag_q[1:0]][2*128 +: 64],
+                        border_result_slot_q[border_done_tag_q[1:0]][1*128 +: 64],
+                        border_result_slot_q[border_done_tag_q[1:0]][0*128 +: 64]};
+                    ldlt_border_complete_q <= ldlt_border_complete_q + 1'b1;
+                    if (ldlt_border_complete_q + 1'b1 >= ldlt_k_q) begin
+                        ldlt_border_issue_p_q <= 5'd0;
+                        ldlt_border_issue_part_q <= 1'b0;
+                        ldlt_border_complete_q <= 5'd0;
+                        state <= S_LDL_ROW_MUL2;
+                    end
+                end
+            end
+            S_LDL_ROW_MUL2: begin
+                if (ldlt_border_issue_active_w) begin
+                    if (ldlt_border_issue_part_q) begin
+                        ldlt_border_issue_part_q <= 1'b0;
+                        ldlt_border_issue_p_q <= ldlt_border_issue_p_q + 1'b1;
+                    end else begin
+                        ldlt_border_issue_part_q <= 1'b1;
+                    end
+                end
+                if (border_done_q) begin
+                    for (gi = 0; gi < 4; gi = gi + 1)
+                        ldlt_acc_lane_q[gi] <= ldlt_acc_lane_q[gi] +
+                            ($signed(border_result_slot_q[border_done_tag_q[1:0]]
+                                [gi*128 +: 128]) >>> 32);
+                    ldlt_border_complete_q <= ldlt_border_complete_q + 1'b1;
+                    if (ldlt_border_complete_q + 1'b1 >= ldlt_k_q)
+                        state <= S_LDL_ROW_FINAL_MUL;
                 end
             end
             S_LDL_ROW_FINAL_MUL: begin
