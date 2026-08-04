@@ -695,6 +695,17 @@ reg signed [127:0] residual_acc;
 reg signed [127:0] residual_block_sum;
 reg signed [127:0] residual_block_sum_q;
 reg [COLS*64-1:0] residual_product_bus_q;
+reg signed [127:0] residual_row_partial [0:3];
+reg signed [127:0] residual_pipe_sum_r1_q;
+reg signed [127:0] residual_pipe_sum_r2_q;
+reg signed [127:0] residual_pipe_sum_r3_q;
+reg residual_pipe_valid_r1_q;
+reg residual_pipe_valid_r2_q;
+reg residual_pipe_valid_r3_q;
+reg [1:0] residual_blocks_total_q;
+reg [1:0] residual_blocks_issued_q;
+reg [1:0] residual_blocks_retired_q;
+reg residual_stream_issue_q;
 reg signed [DATA_W-1:0] phi_cache [0:MAX_K-1];
 reg [IDX_W-1:0] support_cache [0:MAX_K-1];
 reg [MAX_K*IDX_W-1:0] factor_support_cache_q;
@@ -781,6 +792,8 @@ integer comb_k;
 integer rhs_lane;
 integer corr_lane;
 integer block_lane;
+integer residual_lane;
+integer residual_row;
 integer cache_pos;
 integer cache_cmp;
 reg [COLS-1:0] row2_prune_keep_mask;
@@ -897,6 +910,10 @@ always @(*) begin
 end
 wire [5:0] active_k_count = (active_k > MAX_K[7:0]) ? MAX_K[5:0] : active_k[5:0];
 wire [5:0] active_k_last = (active_k_count == 6'd0) ? 6'd0 : (active_k_count - 6'd1);
+wire residual_stream_issue_w = (state == S_RESID_PE_WAIT) && residual_stream_issue_q;
+wire residual_stream_retire_w = (state == S_RESID_PE_WAIT) && residual_pipe_valid_r3_q;
+wire signed [127:0] residual_stream_retire_sum_w =
+    residual_pipe_sum_r3_q + residual_row_partial[3];
 
 wire [5:0] request_k_eff_w = (support_depth0 < k_active[5:0]) ?
                              support_depth0 : k_active[5:0];
@@ -1029,12 +1046,29 @@ always @(*) begin
     pe_sparse_op = busy ? ((corr_active_op_w && corr_pe_state_w) ? OP_CORR :
                            (phase_residual ? OP_RESID : active_op)) :
                           (corr_request_op_w ? OP_CORR : op_sel);
-    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE) || (active_op == OP_RESID)) && ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) || (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM) || (state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_RESID_PE_WAIT3) || (state == S_WR_ACC))) || (corr_active_op_w && (state == S_CORR_ACC)));
+    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE) || (active_op == OP_RESID)) &&
+                      ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) ||
+                       (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) ||
+                       (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM))) ||
+                     residual_stream_issue_w ||
+                     (corr_active_op_w && (state == S_CORR_ACC)));
     pe_rhs_phi_bus = {COLS*DATA_W{1'b0}};
     pe_rhs_y_bus = {COLS*DATA_W{1'b0}};
     for (rhs_lane = 0; rhs_lane < COLS; rhs_lane = rhs_lane + 1) begin
         pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] = corr_active_op_w ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] : (((rhs_block_base + rhs_lane) < active_k) ? phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}});
         pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : (((state == S_RESID_PE_WAIT) || (state == S_RESID_PE_WAIT2) || (state == S_RESID_PE_WAIT3) || (state == S_WR_ACC)) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : (corr_active_op_w ? corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
+    end
+end
+
+// Tagged residual block-8 wavefront.  Row r owns lanes whose index modulo
+// four equals r.  The partial sum follows its transaction from PE0 to PE3.
+always @(*) begin
+    for (residual_row = 0; residual_row < 4; residual_row = residual_row + 1)
+        residual_row_partial[residual_row] = 128'sd0;
+    for (residual_lane = 0; residual_lane < COLS; residual_lane = residual_lane + 1) begin
+        residual_row_partial[residual_lane % 4] =
+            residual_row_partial[residual_lane % 4] +
+            $signed(ls_wide_product_bus[((residual_lane % 4)*COLS+residual_lane)*64 +: 64]);
     end
 end
 
@@ -1144,6 +1178,16 @@ active_op <= OP_REFINE;
         residual_acc <= 128'sd0;
         residual_block_sum_q <= 128'sd0;
         residual_product_bus_q <= {(COLS*64){1'b0}};
+        residual_pipe_sum_r1_q <= 128'sd0;
+        residual_pipe_sum_r2_q <= 128'sd0;
+        residual_pipe_sum_r3_q <= 128'sd0;
+        residual_pipe_valid_r1_q <= 1'b0;
+        residual_pipe_valid_r2_q <= 1'b0;
+        residual_pipe_valid_r3_q <= 1'b0;
+        residual_blocks_total_q <= 2'd0;
+        residual_blocks_issued_q <= 2'd0;
+        residual_blocks_retired_q <= 2'd0;
+        residual_stream_issue_q <= 1'b0;
         rhs_block_base <= 6'd0;
         gram_drain_wait_q <= 3'd0;
         corr_drain_wait_q <= 2'd0;
@@ -1257,6 +1301,21 @@ active_op <= OP_REFINE;
                 ls_start_q <= 1'b0;
                 wide_mul_start_q <= 1'b0;
                 wide_mul_vertical_request_q <= 1'b0;
+                if (state == S_RESID_PE_WAIT) begin
+                    residual_pipe_valid_r1_q <= residual_stream_issue_w;
+                    residual_pipe_valid_r2_q <= residual_pipe_valid_r1_q;
+                    residual_pipe_valid_r3_q <= residual_pipe_valid_r2_q;
+                    if (residual_stream_issue_w)
+                        residual_pipe_sum_r1_q <= residual_row_partial[0];
+                    if (residual_pipe_valid_r1_q)
+                        residual_pipe_sum_r2_q <= residual_pipe_sum_r1_q + residual_row_partial[1];
+                    if (residual_pipe_valid_r2_q)
+                        residual_pipe_sum_r3_q <= residual_pipe_sum_r2_q + residual_row_partial[2];
+                end else begin
+                    residual_pipe_valid_r1_q <= 1'b0;
+                    residual_pipe_valid_r2_q <= 1'b0;
+                    residual_pipe_valid_r3_q <= 1'b0;
+                end
                 if (ls_done_w)
                     ls_row_update_block_q <= 1'b0;
         corr_stream_valid_q <= 1'b0;
@@ -1641,10 +1700,29 @@ case (state)
                 residual_acc <= 128'sd0;
                 resid_i <= 5'd0;
                 rhs_block_base <= 5'd0;
+                residual_blocks_total_q <= (active_k_count + (RHS_BLOCK_STRIDE-1)) / RHS_BLOCK_STRIDE;
+                residual_blocks_issued_q <= 2'd0;
+                residual_blocks_retired_q <= 2'd0;
+                residual_stream_issue_q <= (active_k_count != 0);
                 state <= S_RESID_PE_WAIT;
             end
             S_RESID_PE_WAIT: begin
-                state <= S_RESID_PE_WAIT2;
+                if (residual_stream_issue_w) begin
+                    residual_blocks_issued_q <= residual_blocks_issued_q + 1'b1;
+                    rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
+                    residual_stream_issue_q <=
+                        (residual_blocks_issued_q + 1'b1 < residual_blocks_total_q);
+                end
+                if (residual_stream_retire_w) begin
+                    residual_acc <= residual_acc + residual_stream_retire_sum_w;
+                    residual_blocks_retired_q <= residual_blocks_retired_q + 1'b1;
+                    if (residual_blocks_retired_q + 1'b1 >= residual_blocks_total_q) begin
+                        residual_stream_issue_q <= 1'b0;
+                        rhs_block_base <= 5'd0;
+                        resid_i <= 5'd0;
+                        state <= S_WR;
+                    end
+                end
             end
             S_RESID_PE_WAIT2: begin
                 state <= S_RESID_PE_WAIT3;

@@ -19,6 +19,17 @@ streaming, residual block-8 chaining, exact top-K/factor-check optimization,
 then a separate optional QR robustness study. Positive WNS and strict PE0
 provenance are now release gates.
 
+### Residual chaining update
+
+- Tagged residual block-8 chaining is signed off after the P0 checkpoint.
+- Full K-sweep: 348 PASS, 0 FAIL.
+- Aggregate cycles: 1904934, down 64245 (3.26%) from strict P0.
+- Timing/resources: WNS +0.249 ns, 105383 LUT, 39884 FF, 24 RAMB36,
+  71 DSP48.
+- Detailed report: `reports/releases/RESIDUAL_CHAIN_SIGNOFF_20260804.md`.
+- Next implementation target: multiple in-flight tagged LDLT border
+  transactions, then exact top-K/factor-check cost reduction.
+
 ## Checkpoint
 
 - Working branch: `codex/clean-repository-layout`
