@@ -279,6 +279,10 @@ reg signed [127:0] k2_b0;
 reg signed [127:0] k2_b1;
 reg signed [127:0] k2_det;
 reg [7:0] active_k;
+// Stable, local fan-out source for the LS/residual datapaths.  KEEP prevents
+// Vivado from merging this timing-isolation register back into the support-set
+// depth register; MAX_FANOUT allows local replicas near the four PE rows.
+(* keep = "true", max_fanout = 16 *) reg [5:0] active_k_count_q;
 reg signed [63:0] rhs [0:MAX_K-1];
 reg signed [DATA_W-1:0] coeff_mem [0:MAX_K-1];
 localparam integer GE_MAT_W = 56;
@@ -871,6 +875,12 @@ reg [1:0] residual_blocks_total_q;
 reg [1:0] residual_blocks_issued_q;
 reg [1:0] residual_blocks_retired_q;
 reg residual_stream_issue_q;
+// Residual operands are prepared one clock before they enter PE0.  This keeps
+// active_k/range selection out of the PE multiply-and-reduce timing path while
+// preserving the registered PE0 -> PE1 -> PE2 -> PE3 wavefront.
+reg residual_ingress_valid_q;
+reg signed [COLS*DATA_W-1:0] residual_ingress_phi_q;
+reg signed [COLS*DATA_W-1:0] residual_ingress_coeff_q;
 reg signed [DATA_W-1:0] phi_cache [0:MAX_K-1];
 reg [IDX_W-1:0] support_cache [0:MAX_K-1];
 reg [MAX_K*IDX_W-1:0] factor_support_cache_q;
@@ -1072,9 +1082,10 @@ always @(*) begin
         end
     end
 end
-wire [5:0] active_k_count = (active_k > MAX_K[7:0]) ? MAX_K[5:0] : active_k[5:0];
+wire [5:0] active_k_count = active_k_count_q;
 wire [5:0] active_k_last = (active_k_count == 6'd0) ? 6'd0 : (active_k_count - 6'd1);
-wire residual_stream_issue_w = (state == S_RESID_PE_WAIT) && residual_stream_issue_q;
+wire residual_stream_prepare_w = (state == S_RESID_PE_WAIT) && residual_stream_issue_q;
+wire residual_stream_issue_w = (state == S_RESID_PE_WAIT) && residual_ingress_valid_q;
 wire residual_stream_retire_w = (state == S_RESID_PE_WAIT) && residual_pipe_valid_r3_q;
 wire signed [127:0] residual_stream_retire_sum_w =
     residual_pipe_sum_r3_q + residual_row_partial[3];
@@ -1211,8 +1222,20 @@ always @(*) begin
     pe_rhs_phi_bus = {COLS*DATA_W{1'b0}};
     pe_rhs_y_bus = {COLS*DATA_W{1'b0}};
     for (rhs_lane = 0; rhs_lane < COLS; rhs_lane = rhs_lane + 1) begin
-        pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] = corr_active_op_w ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] : (((rhs_block_base + rhs_lane) < active_k) ? phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}});
-        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] = (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM)) ? phi_cache[acc_j] : ((state == S_RESID_PE_WAIT) ? (((rhs_block_base + rhs_lane) < active_k) ? coeff_mem[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}) : (corr_active_op_w ? corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] : rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
+        pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] =
+            (state == S_RESID_PE_WAIT) ?
+                residual_ingress_phi_q[rhs_lane*DATA_W +: DATA_W] :
+            (corr_active_op_w ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] :
+                (((rhs_block_base + rhs_lane) < active_k) ?
+                    phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}));
+        pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] =
+            (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) ||
+              (state == S_ACC_GRAM)) ? phi_cache[acc_j] :
+             ((state == S_RESID_PE_WAIT) ?
+                residual_ingress_coeff_q[rhs_lane*DATA_W +: DATA_W] :
+              (corr_active_op_w ?
+                corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] :
+                rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
     end
 end
 
@@ -1321,6 +1344,7 @@ active_op <= OP_REFINE;
         write_value <= {DATA_W{1'b0}};
         phase_residual <= 1'b0;
         active_k <= 8'd0;
+        active_k_count_q <= 6'd0;
         phi_state_q <= DEFAULT_SEED;
         phi_load_i <= 5'd0;
         back_j <= 6'd0;
@@ -1341,6 +1365,9 @@ active_op <= OP_REFINE;
         residual_blocks_issued_q <= 2'd0;
         residual_blocks_retired_q <= 2'd0;
         residual_stream_issue_q <= 1'b0;
+        residual_ingress_valid_q <= 1'b0;
+        residual_ingress_phi_q <= {COLS*DATA_W{1'b0}};
+        residual_ingress_coeff_q <= {COLS*DATA_W{1'b0}};
         rhs_block_base <= 6'd0;
         gram_drain_wait_q <= 3'd0;
         corr_drain_wait_q <= 2'd0;
@@ -1457,6 +1484,22 @@ active_op <= OP_REFINE;
                 ls_start_q <= 1'b0;
                 wide_mul_start_q <= 1'b0;
                 wide_mul_vertical_request_q <= 1'b0;
+                residual_ingress_valid_q <= residual_stream_prepare_w;
+                if (residual_stream_prepare_w) begin
+                    for (gi = 0; gi < COLS; gi = gi + 1) begin
+                        if ((rhs_block_base + gi) < active_k_count) begin
+                            residual_ingress_phi_q[gi*DATA_W +: DATA_W] <=
+                                phi_cache[rhs_block_base + gi];
+                            residual_ingress_coeff_q[gi*DATA_W +: DATA_W] <=
+                                coeff_mem[rhs_block_base + gi];
+                        end else begin
+                            residual_ingress_phi_q[gi*DATA_W +: DATA_W] <=
+                                {DATA_W{1'b0}};
+                            residual_ingress_coeff_q[gi*DATA_W +: DATA_W] <=
+                                {DATA_W{1'b0}};
+                        end
+                    end
+                end
                 if (state == S_RESID_PE_WAIT) begin
                     residual_pipe_valid_r1_q <= residual_stream_issue_w;
                     residual_pipe_valid_r2_q <= residual_pipe_valid_r1_q;
@@ -1603,6 +1646,7 @@ case (state)
             S_PRIME: begin
                 if (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && (k_active == 0) && (n_size != 0) && (m_size != 0)) begin
                     active_k <= 8'd0;
+                    active_k_count_q <= 6'd0;
                     write_idx <= {IDX_W{1'b0}};
                     write_limit <= m_size;
                     phase_residual <= 1'b1;
@@ -1611,6 +1655,8 @@ case (state)
                     state <= S_WR;
                 end else if (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && (k_active <= MAX_K) && (k_active != 0) && (n_size != 0) && (m_size != 0)) begin
                     active_k <= (support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active;
+                    active_k_count_q <= (support_depth0 < k_active[5:0]) ?
+                                        support_depth0 : k_active[5:0];
                     write_idx <= {IDX_W{1'b0}};
                     write_limit <= m_size;
                     rd_addr <= 10'h100;
@@ -1660,6 +1706,8 @@ case (state)
                     state <= S_IHT_X_READ;
                 end else if ((active_op == OP_RESID) && (k_active != 0) && (k_active <= MAX_K) && (m_size != 0)) begin
                     active_k <= (support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active;
+                    active_k_count_q <= (support_depth0 < k_active[5:0]) ?
+                                        support_depth0 : k_active[5:0];
                     load_i <= 5'd0;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         coeff_mem[gi] <= {DATA_W{1'b0}};
@@ -1668,6 +1716,7 @@ case (state)
                     state <= S_LOAD_COEFF_READ;
                 end else if ((active_op == OP_RESID) && (k_active == 0) && (m_size != 0)) begin
                     active_k <= 8'd0;
+                    active_k_count_q <= 6'd0;
                     write_idx <= {IDX_W{1'b0}};
                     write_limit <= m_size;
                     phase_residual <= 1'b1;
@@ -1676,6 +1725,7 @@ case (state)
                     state <= S_WR;
                 end else if ((active_op == OP_MP_UPDATE) && (support_depth0 != 0) && (n_size != 0) && (m_size != 0)) begin
                     active_k <= 8'd1;
+                    active_k_count_q <= 6'd1;
                     mp_idx_q <= last_result_idx;
                     write_idx <= last_result_idx;
                     mp_den_q <= (($signed(mul_s24_s24(scale_q, scale_q)) + 64'sd32768) >>> 16) * $signed({1'b0, m_size});
@@ -1683,6 +1733,8 @@ case (state)
                     state <= S_MP_X_READ;
                 end else if ((active_op == OP_PRUNE_X) && (n_size != 0)) begin
                     active_k <= (support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active;
+                    active_k_count_q <= (support_depth0 < k_active[5:0]) ?
+                                        support_depth0 : k_active[5:0];
                     write_idx <= {IDX_W{1'b0}};
                     write_limit <= n_size;
                     phase_residual <= 1'b0;
@@ -1721,7 +1773,8 @@ case (state)
             S_ACC_RHS: begin
                 for (gi = 0; gi < RHS_BLOCK_STRIDE; gi = gi + 1) begin
                     if ((rhs_block_base + gi) < active_k_count)
-                        rhs[rhs_block_base + gi] <= rhs[rhs_block_base + gi] + $signed(rhs4_product_bus[gi*64 +: 64]);
+                        rhs[rhs_block_base + gi] <= rhs[rhs_block_base + gi] +
+                            $signed(rhs4_product_bus[gi*64 +: 64]);
                 end
                 if (rhs_block_base + RHS_BLOCK_STRIDE < active_k_count) begin
                     rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
@@ -1868,7 +1921,7 @@ case (state)
                 state <= S_RESID_PE_WAIT;
             end
             S_RESID_PE_WAIT: begin
-                if (residual_stream_issue_w) begin
+                if (residual_stream_prepare_w) begin
                     residual_blocks_issued_q <= residual_blocks_issued_q + 1'b1;
                     rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
                     residual_stream_issue_q <=
@@ -2678,6 +2731,7 @@ case (state)
             end
             S_MP_X_WRITE: begin
                 active_k <= 8'd1;
+                active_k_count_q <= 6'd1;
                 support_cache[0] <= mp_idx_q;
                 write_idx <= {IDX_W{1'b0}};
                 write_limit <= m_size;

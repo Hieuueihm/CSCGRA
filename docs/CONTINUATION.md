@@ -1,8 +1,29 @@
 # Repository refactor continuation log
 
-Last updated: 2026-08-04 (Asia/Saigon)
+Last updated: 2026-08-05 (Asia/Saigon)
 
 ## Active optimization checkpoint
+
+- Current sign-off checkpoint: strict-PE0 timing isolation.
+- Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
+- Aggregate cycles: 1789828, up 18096 (1.02%) from tagged LDLT border
+  streaming in exchange for timing margin.
+- Timing: WNS +0.168 ns, TNS 0, zero failing endpoints at 100 MHz.
+- Resources: 119105 LUT, 53653 FF, 24 RAMB36, 71 DSP48.
+- Detailed report:
+  `reports/releases/TIMING_ISOLATION_SIGNOFF_20260805.md`.
+- Compact cycle data:
+  `reports/releases/timing_isolation_k_sweep_20260805.csv`.
+- Architecture: residual operands are registered before PE0 and then flow
+  PE0 -> PE1 -> PE2 -> PE3; no downstream row has direct controller ingress.
+
+The next checkpoint should reduce the LDLT border scoreboard/cache footprint
+without losing positive WNS.  Prefer per-row banking and removal of resets from
+valid-protected data storage before attempting double-buffered preload.  Any
+resource change must repeat the full correctness, per-algorithm cycle, resource,
+and WNS report.
+
+## Previous optimization checkpoint
 
 - Branch: `codex/strict-pe0-timing`
 - Latest pushed checkpoint: `cfedb27` (tagged LDLT border stream).
