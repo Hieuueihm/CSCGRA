@@ -4,32 +4,34 @@ Last updated: 2026-08-05 (Asia/Saigon)
 
 ## Active optimization checkpoint
 
-- Current sign-off checkpoint: chained LDLT border preload on top of the
-  per-row LUTRAM scoreboard.
+- Current sign-off checkpoint: stability-oriented LS/RHS command chaining on
+  top of the chained LDLT preload and per-row LUTRAM scoreboard.
 - Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
-- Aggregate cycles: 1779097, down 10731 (0.60%) from the per-row LUTRAM
-  scoreboard checkpoint.
-- Timing: WNS +0.090 ns, TNS 0, zero failing endpoints at 100 MHz.
-- Resources: 109755 LUT, 50375 FF, 24 RAMB36, 71 DSP48.
+- Aggregate cycles: 1774300, down 4797 (0.27%) from the chained-preload
+  checkpoint `2a7ba9e`.
+- Timing: WNS +0.309 ns, TNS 0, zero failing endpoints at 100 MHz.
+- Resources: 113628 LUT, 50762 FF, 24 RAMB36, 71 DSP48.  The additional
+  3873 LUT and 387 FF buy +0.219 ns WNS margin while cycle count also falls.
 - Detailed report:
-  `reports/releases/LDLT_PRELOAD_CHAIN_SIGNOFF_20260805.md`.
+  `reports/releases/STABLE_LS_COMMAND_CHAIN_SIGNOFF_20260805.md`.
 - Compact cycle data:
-  `reports/releases/ldlt_preload_chain_k_sweep_20260805.csv`.
+  `reports/releases/stable_ls_command_chain_k_sweep_20260805.csv`.
 - Architecture: each physical PE row owns one distributed-RAM scoreboard bank.
-  LS reads are chained from the preceding completion pulse with exactly one
-  request in flight; no second matrix port or double buffer was added.
+  LS reads and RHS writes are chained from the preceding completion pulse with
+  exactly one request in flight.  Registered four-row LDLT results feed WRITE4
+  directly; no second matrix port or double buffer was added.
   Controller arithmetic ingress remains PE0-only and work flows
   PE0 -> PE1 -> PE2 -> PE3.
 
-The next checkpoint should first restore timing margin on the residual
-`write_idx -> residual_acc` route without adding a cycle to every residual dot
-product.  Prefer fan-out/placement isolation or a locally derived block-valid
-index over another full datapath stage.  Only after WNS margin is improved
-should a true ping-pong LDLT preload be considered; require state-residency
-evidence that the remaining uncovered preload time repays duplicated storage,
-ownership tags, and arbitration.  Every large arithmetic transaction must
-still enter PE0 and advance through all four rows.  Any cycle change must repeat
-the full correctness, per-algorithm cycle, resource, and WNS report.
+The next low-risk checkpoint should chain valid LDLT diagonal-gather reads or
+back/forward-solve READ4 commands from their completion pulses.  Keep one LS
+request in flight and avoid adding fan-in to the residual path.  Measure the
+area impact after each command family because this checkpoint already trades
+3.53% more LUT for stronger timing margin.  A true ping-pong preload remains a
+later option only with state-residency evidence.  Every large arithmetic
+transaction must still enter PE0 and advance through all four rows.  Any cycle
+change must repeat the full correctness, per-algorithm cycle, resource, and WNS
+report.
 
 ## Previous optimization checkpoint
 

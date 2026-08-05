@@ -111,7 +111,7 @@ localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=
 S_CACHE_BUILD=56, S_SCAN_DIRECT=55,
 S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76, S_SCAN_DIRECT_STEP=77, S_CACHE_BUILD_STEP=78,
 S_LS_CLEAR_START=86, S_LS_CLEAR_WAIT=87, S_SOLVE_SYM_READ=88, S_SOLVE_SYM_WAIT=89, S_SOLVE_SYM_WRITE=90, S_SOLVE_SYM_WRITE_WAIT=91,
-S_ELIM_ROW_READ=92, S_ELIM_ROW_WAIT=93, S_ELIM_UPDATE_START=94, S_ELIM_UPDATE_WAIT=95, S_BACK_ACC_READ=96, S_BACK_ACC_WAIT=97, S_BACK_PREP_READ=98, S_BACK_PREP_WAIT=99, S_GRAM_ACC_WAIT=100, S_SCAN_DIRECT_LATCH=101, S_RHS_INIT_WRITE=102, S_RHS_INIT_WAIT=103, S_ELIM_RHS_READ_WAIT=104, S_ELIM_RHS_UPDATE_WAIT=105, S_BACK_RHS_READ=106, S_BACK_RHS_READ_WAIT=107;
+S_ELIM_ROW_READ=92, S_ELIM_ROW_WAIT=93, S_ELIM_UPDATE_START=94, S_ELIM_UPDATE_WAIT=95, S_BACK_ACC_READ=96, S_BACK_ACC_WAIT=97, S_BACK_PREP_READ=98, S_BACK_PREP_WAIT=99, S_GRAM_ACC_WAIT=100, S_SCAN_DIRECT_LATCH=101, S_RHS_INIT_WAIT=103, S_ELIM_RHS_READ_WAIT=104, S_ELIM_RHS_UPDATE_WAIT=105, S_BACK_RHS_READ=106, S_BACK_RHS_READ_WAIT=107;
 localparam [6:0] S_IHT_MESH_WAIT=108, S_IHT_MESH_WRITE=110, S_PRUNE_MESH_WAIT=111, S_PRUNE_MESH_WRITE=113, S_WR_MESH_WAIT=114, S_WR_MESH_COMMIT=116, S_WX_COMMIT=117;
 localparam [6:0] S_LDL_INIT=58, S_LDL_DIAG_READ=59, S_LDL_DIAG_WAIT=60,
 S_LDL_DIAG_GATHER=61, S_LDL_DIAG_GATHER_WAIT=62, S_LDL_DIAG_MUL1=63,
@@ -120,7 +120,7 @@ S_LDL_DIAG_WRITE=67, S_LDL_DIAG_WRITE_WAIT=68, S_LDL_INV_DIV=69,
 S_LDL_INV_DONE=79, S_LDL_ROW_INIT=80,
 S_LDL_ROW_A_WAIT=82, S_LDL_ROW_P_WAIT=84,
 S_LDL_ROW_MUL1=85, S_LDL_ROW_MUL2=119, S_LDL_ROW_FINAL_MUL=121,
-S_LDL_ROW_FINAL_WAIT=122, S_LDL_ROW_WRITE=123,
+S_LDL_ROW_FINAL_WAIT=122,
 S_LDL_ROW_WRITE_WAIT=124;
 localparam [6:0] S_FACTOR_CHECK_INIT=125, S_FACTOR_CHECK_SCAN=126,
                  S_FACTOR_CHECK_DONE=127;
@@ -2045,25 +2045,33 @@ case (state)
                 back_i <= active_k_last;
                 back_j <= 5'd0;
                 ge_acc <= 64'sd0;
-                state <= S_RHS_INIT_WRITE;
-            end
-            S_RHS_INIT_WRITE: begin
-                if (solve_i >= active_k_count) begin
-                    solve_i <= 5'd0;
+                if (active_k_count == 0) begin
                     state <= (factor_reuse_mode_q == FACTOR_REUSE_EXACT) ?
                              S_ELIM_START : S_LDL_INIT;
                 end else begin
+                    // Start the first RHS transfer while solve state is being
+                    // initialized.  Subsequent entries are chained from the
+                    // preceding completion pulse below.
                     ls_start_q <= 1'b1;
                     ls_op_q <= LS_OP_RHS_WRITE;
-                    ls_row_a_q <= solve_i;
-                    ls_rhs_wdata_q <= rhs[solve_i];
+                    ls_row_a_q <= 5'd0;
+                    ls_rhs_wdata_q <= rhs[0];
                     state <= S_RHS_INIT_WAIT;
                 end
             end
             S_RHS_INIT_WAIT: begin
                 if (ls_done_w) begin
-                    solve_i <= solve_i + 5'd1;
-                    state <= S_RHS_INIT_WRITE;
+                    if (solve_i + 5'd1 >= active_k_count) begin
+                        solve_i <= 5'd0;
+                        state <= (factor_reuse_mode_q == FACTOR_REUSE_EXACT) ?
+                                 S_ELIM_START : S_LDL_INIT;
+                    end else begin
+                        solve_i <= solve_i + 5'd1;
+                        ls_start_q <= 1'b1;
+                        ls_op_q <= LS_OP_RHS_WRITE;
+                        ls_row_a_q <= solve_i + 5'd1;
+                        ls_rhs_wdata_q <= rhs[solve_i + 5'd1];
+                    end
                 end
             end
             S_LDL_INIT: begin
@@ -2371,21 +2379,22 @@ case (state)
             end
             S_LDL_ROW_FINAL_WAIT: begin
                 if (wide_mul_done_q) begin
-                    for (gi = 0; gi < 4; gi = gi + 1)
-                        ldlt_l_lane_q[gi] <= $signed(wide_mul_result_q[gi]) >>> 32;
-                    state <= S_LDL_ROW_WRITE;
+                    // The four PE-row results are already registered by the
+                    // wide multiplier.  Forward them into the WRITE4 command
+                    // registers here instead of staging through a command-only
+                    // controller state.
+                    ls_start_q <= 1'b1;
+                    ls_op_q <= LS_OP_WRITE4;
+                    ls_row_a_q <= ldlt_i_base_q;
+                    ls_col_a_q <= ldlt_k_q;
+                    for (gi = 0; gi < 4; gi = gi + 1) begin
+                        ls_write4_wdata_q[gi*GE_MAT_W +: GE_MAT_W] <=
+                            $signed(wide_mul_result_q[gi]) >>> 32;
+                        ls_write4_valid_q[gi] <=
+                            ((ldlt_i_base_q + gi) < active_k_count);
+                    end
+                    state <= S_LDL_ROW_WRITE_WAIT;
                 end
-            end
-            S_LDL_ROW_WRITE: begin
-                ls_start_q <= 1'b1;
-                ls_op_q <= LS_OP_WRITE4;
-                ls_row_a_q <= ldlt_i_base_q;
-                ls_col_a_q <= ldlt_k_q;
-                for (gi = 0; gi < 4; gi = gi + 1) begin
-                    ls_write4_wdata_q[gi*GE_MAT_W +: GE_MAT_W] <= ldlt_l_lane_q[gi][GE_MAT_W-1:0];
-                    ls_write4_valid_q[gi] <= ((ldlt_i_base_q + gi) < active_k_count);
-                end
-                state <= S_LDL_ROW_WRITE_WAIT;
             end
             S_LDL_ROW_WRITE_WAIT: begin
                 if (ls_done_w) begin
