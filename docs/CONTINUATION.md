@@ -1,6 +1,6 @@
 # Repository refactor continuation log
 
-Last updated: 2026-08-05 (Asia/Saigon)
+Last updated: 2026-08-06 (Asia/Saigon)
 
 ## Active optimization checkpoint
 
@@ -23,15 +23,22 @@ Last updated: 2026-08-05 (Asia/Saigon)
   Controller arithmetic ingress remains PE0-only and work flows
   PE0 -> PE1 -> PE2 -> PE3.
 
-The next low-risk checkpoint should chain valid LDLT diagonal-gather reads or
-back/forward-solve READ4 commands from their completion pulses.  Keep one LS
-request in flight and avoid adding fan-in to the residual path.  Measure the
-area impact after each command family because this checkpoint already trades
-3.53% more LUT for stronger timing margin.  A true ping-pong preload remains a
-later option only with state-residency evidence.  Every large arithmetic
-transaction must still enter PE0 and advance through all four rows.  Any cycle
-change must repeat the full correctness, per-algorithm cycle, resource, and WNS
-report.
+The proposed completion-driven LS read chaining has now been measured and
+rejected.  Diagonal-gather chaining failed timing at WNS -0.299 ns.  Back-solve
+READ4, direct divider initialization, and forward-solve READ2 retained positive
+WNS but reduced the margin to +0.134, +0.152, and +0.176 ns for only 21, 20,
+and 15 K2 cycles respectively.  Forward solve cannot use the existing READ4
+operation because it needs four columns from one row bank, whereas READ4 reads
+one column from four row banks.  No trial RTL is retained; details are in
+`reports/releases/LS_READ_CHAIN_TRIALS_20260806.md`.
+
+Do not add more LS completion/address mux fan-in without state-residency data
+showing a material K8/K16 benefit.  The next checkpoint should profile state
+residency and choose a datapath-local target with a larger cycle share, such as
+exact factor-check/top-K control or a timing-isolated residual control stage.
+Every large arithmetic transaction must still enter PE0 and advance through
+all four rows.  Full correctness, per-algorithm cycles, resources, and WNS with
+a preferred margin of at least +0.2 ns remain release gates.
 
 ## Previous optimization checkpoint
 
