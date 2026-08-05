@@ -420,8 +420,17 @@ reg [4:0] border_capture_tag_q [0:3];
 reg border_capture_part_q [0:3];
 reg [3:0] border_capture_neg_q [0:3];
 reg [COLS*64-1:0] border_product_q [0:3];
-reg signed [4*128-1:0] border_acc_slot_q [0:3];
-reg signed [4*128-1:0] border_result_slot_q [0:3];
+// One single-write scoreboard bank belongs to each physical PE row.  Data is
+// never read without the associated capture/done valid, so the payload banks
+// need no reset and can map to distributed RAM instead of resettable FFs.
+(* ram_style = "distributed" *) reg signed [127:0] border_acc_bank0_q [0:3];
+(* ram_style = "distributed" *) reg signed [127:0] border_acc_bank1_q [0:3];
+(* ram_style = "distributed" *) reg signed [127:0] border_acc_bank2_q [0:3];
+(* ram_style = "distributed" *) reg signed [127:0] border_acc_bank3_q [0:3];
+(* ram_style = "distributed" *) reg signed [127:0] border_result_bank0_q [0:3];
+(* ram_style = "distributed" *) reg signed [127:0] border_result_bank1_q [0:3];
+(* ram_style = "distributed" *) reg signed [127:0] border_result_bank2_q [0:3];
+(* ram_style = "distributed" *) reg signed [127:0] border_result_bank3_q [0:3];
 reg border_done_pending_q;
 reg [4:0] border_done_pending_tag_q;
 reg border_done_q;
@@ -770,8 +779,6 @@ always @(posedge clk or negedge rst_n) begin
             border_capture_part_q[border_row] <= 1'b0;
             border_capture_neg_q[border_row] <= 4'd0;
             border_product_q[border_row] <= {(COLS*64){1'b0}};
-            border_acc_slot_q[border_row] <= {4*128{1'b0}};
-            border_result_slot_q[border_row] <= {4*128{1'b0}};
         end
     end else begin
         border_done_q <= border_done_pending_q;
@@ -800,28 +807,57 @@ always @(posedge clk or negedge rst_n) begin
                     ls_wide_product_bus[border_row*COLS*64 +: COLS*64];
             end
 
-            if (border_capture_valid_q[border_row]) begin
-                if (!border_capture_part_q[border_row]) begin
-                    border_acc_slot_q[border_capture_tag_q[border_row][1:0]]
-                        [border_row*128 +: 128] <= border_partial_sum[border_row];
-                end else begin
-                    if (border_capture_neg_q[border_row][border_row])
-                        border_result_slot_q[border_capture_tag_q[border_row][1:0]]
-                            [border_row*128 +: 128] <=
-                            -$signed(border_acc_slot_q[border_capture_tag_q[border_row][1:0]]
-                                [border_row*128 +: 128] + border_partial_sum[border_row]);
-                    else
-                        border_result_slot_q[border_capture_tag_q[border_row][1:0]]
-                            [border_row*128 +: 128] <=
-                            $signed(border_acc_slot_q[border_capture_tag_q[border_row][1:0]]
-                                [border_row*128 +: 128] + border_partial_sum[border_row]);
-                    if (border_row == 3) begin
-                        border_done_pending_q <= 1'b1;
-                        border_done_pending_tag_q <= border_capture_tag_q[border_row];
-                    end
-                end
-            end
         end
+
+        if (border_capture_valid_q[3] && border_capture_part_q[3]) begin
+            border_done_pending_q <= 1'b1;
+            border_done_pending_tag_q <= border_capture_tag_q[3];
+        end
+    end
+end
+
+// Keep payload storage out of the asynchronously-reset metadata process.  The
+// valid pipeline guarantees that uninitialized entries are never observed.
+always @(posedge clk) begin
+    if (border_capture_valid_q[0]) begin
+        if (!border_capture_part_q[0])
+            border_acc_bank0_q[border_capture_tag_q[0][1:0]] <= border_partial_sum[0];
+        else if (border_capture_neg_q[0][0])
+            border_result_bank0_q[border_capture_tag_q[0][1:0]] <=
+                -$signed(border_acc_bank0_q[border_capture_tag_q[0][1:0]] + border_partial_sum[0]);
+        else
+            border_result_bank0_q[border_capture_tag_q[0][1:0]] <=
+                $signed(border_acc_bank0_q[border_capture_tag_q[0][1:0]] + border_partial_sum[0]);
+    end
+    if (border_capture_valid_q[1]) begin
+        if (!border_capture_part_q[1])
+            border_acc_bank1_q[border_capture_tag_q[1][1:0]] <= border_partial_sum[1];
+        else if (border_capture_neg_q[1][1])
+            border_result_bank1_q[border_capture_tag_q[1][1:0]] <=
+                -$signed(border_acc_bank1_q[border_capture_tag_q[1][1:0]] + border_partial_sum[1]);
+        else
+            border_result_bank1_q[border_capture_tag_q[1][1:0]] <=
+                $signed(border_acc_bank1_q[border_capture_tag_q[1][1:0]] + border_partial_sum[1]);
+    end
+    if (border_capture_valid_q[2]) begin
+        if (!border_capture_part_q[2])
+            border_acc_bank2_q[border_capture_tag_q[2][1:0]] <= border_partial_sum[2];
+        else if (border_capture_neg_q[2][2])
+            border_result_bank2_q[border_capture_tag_q[2][1:0]] <=
+                -$signed(border_acc_bank2_q[border_capture_tag_q[2][1:0]] + border_partial_sum[2]);
+        else
+            border_result_bank2_q[border_capture_tag_q[2][1:0]] <=
+                $signed(border_acc_bank2_q[border_capture_tag_q[2][1:0]] + border_partial_sum[2]);
+    end
+    if (border_capture_valid_q[3]) begin
+        if (!border_capture_part_q[3])
+            border_acc_bank3_q[border_capture_tag_q[3][1:0]] <= border_partial_sum[3];
+        else if (border_capture_neg_q[3][3])
+            border_result_bank3_q[border_capture_tag_q[3][1:0]] <=
+                -$signed(border_acc_bank3_q[border_capture_tag_q[3][1:0]] + border_partial_sum[3]);
+        else
+            border_result_bank3_q[border_capture_tag_q[3][1:0]] <=
+                $signed(border_acc_bank3_q[border_capture_tag_q[3][1:0]] + border_partial_sum[3]);
     end
 end
 
@@ -1226,7 +1262,7 @@ always @(*) begin
             (state == S_RESID_PE_WAIT) ?
                 residual_ingress_phi_q[rhs_lane*DATA_W +: DATA_W] :
             (corr_active_op_w ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] :
-                (((rhs_block_base + rhs_lane) < active_k) ?
+                (((rhs_block_base + rhs_lane) < active_k_count) ?
                     phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}));
         pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] =
             (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) ||
@@ -2277,10 +2313,10 @@ case (state)
                 end
                 if (border_done_q) begin
                     ldlt_border_mul1_cache_q[border_done_tag_q] <= {
-                        border_result_slot_q[border_done_tag_q[1:0]][3*128 +: 64],
-                        border_result_slot_q[border_done_tag_q[1:0]][2*128 +: 64],
-                        border_result_slot_q[border_done_tag_q[1:0]][1*128 +: 64],
-                        border_result_slot_q[border_done_tag_q[1:0]][0*128 +: 64]};
+                        border_result_bank3_q[border_done_tag_q[1:0]][0 +: 64],
+                        border_result_bank2_q[border_done_tag_q[1:0]][0 +: 64],
+                        border_result_bank1_q[border_done_tag_q[1:0]][0 +: 64],
+                        border_result_bank0_q[border_done_tag_q[1:0]][0 +: 64]};
                     ldlt_border_complete_q <= ldlt_border_complete_q + 1'b1;
                     if (ldlt_border_complete_q + 1'b1 >= ldlt_k_q) begin
                         ldlt_border_issue_p_q <= 5'd0;
@@ -2300,10 +2336,14 @@ case (state)
                     end
                 end
                 if (border_done_q) begin
-                    for (gi = 0; gi < 4; gi = gi + 1)
-                        ldlt_acc_lane_q[gi] <= ldlt_acc_lane_q[gi] +
-                            ($signed(border_result_slot_q[border_done_tag_q[1:0]]
-                                [gi*128 +: 128]) >>> 32);
+                    ldlt_acc_lane_q[0] <= ldlt_acc_lane_q[0] +
+                        ($signed(border_result_bank0_q[border_done_tag_q[1:0]]) >>> 32);
+                    ldlt_acc_lane_q[1] <= ldlt_acc_lane_q[1] +
+                        ($signed(border_result_bank1_q[border_done_tag_q[1:0]]) >>> 32);
+                    ldlt_acc_lane_q[2] <= ldlt_acc_lane_q[2] +
+                        ($signed(border_result_bank2_q[border_done_tag_q[1:0]]) >>> 32);
+                    ldlt_acc_lane_q[3] <= ldlt_acc_lane_q[3] +
+                        ($signed(border_result_bank3_q[border_done_tag_q[1:0]]) >>> 32);
                     ldlt_border_complete_q <= ldlt_border_complete_q + 1'b1;
                     if (ldlt_border_complete_q + 1'b1 >= ldlt_k_q)
                         state <= S_LDL_ROW_FINAL_MUL;
