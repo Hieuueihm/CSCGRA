@@ -117,8 +117,8 @@ localparam [6:0] S_LDL_INIT=58, S_LDL_DIAG_READ=59, S_LDL_DIAG_WAIT=60,
 S_LDL_DIAG_GATHER=61, S_LDL_DIAG_GATHER_WAIT=62, S_LDL_DIAG_MUL1=63,
 S_LDL_DIAG_MUL1_WAIT=64, S_LDL_DIAG_MUL2=65, S_LDL_DIAG_MUL2_WAIT=66,
 S_LDL_DIAG_WRITE=67, S_LDL_DIAG_WRITE_WAIT=68, S_LDL_INV_DIV=69,
-S_LDL_INV_DONE=79, S_LDL_ROW_INIT=80, S_LDL_ROW_A_READ=81,
-S_LDL_ROW_A_WAIT=82, S_LDL_ROW_P_READ=83, S_LDL_ROW_P_WAIT=84,
+S_LDL_INV_DONE=79, S_LDL_ROW_INIT=80,
+S_LDL_ROW_A_WAIT=82, S_LDL_ROW_P_WAIT=84,
 S_LDL_ROW_MUL1=85, S_LDL_ROW_MUL2=119, S_LDL_ROW_FINAL_MUL=121,
 S_LDL_ROW_FINAL_WAIT=122, S_LDL_ROW_WRITE=123,
 S_LDL_ROW_WRITE_WAIT=124;
@@ -2240,11 +2240,10 @@ case (state)
                     ldlt_a_lane_q[gi] <= 64'sd0;
                     ldlt_acc_lane_q[gi] <= 128'sd0;
                 end
-                state <= S_LDL_ROW_A_READ;
-            end
-            S_LDL_ROW_A_READ: begin
                 // Four consecutive target rows occupy four independent row
                 // banks, so all A(i,k) operands are fetched in one request.
+                // Launch that request during initialization to remove the
+                // command-only state before every four-row block.
                 ls_start_q <= 1'b1;
                 ls_op_q <= LS_OP_READ4;
                 ls_row_a_q <= ldlt_i_base_q;
@@ -2262,19 +2261,21 @@ case (state)
                             ldlt_a_lane_q[gi] <= 64'sd0;
                     end
                     ldlt_p_base_q <= 5'd0;
-                    state <= (ldlt_k_q == 0) ? S_LDL_ROW_FINAL_MUL : S_LDL_ROW_P_READ;
+                    if (ldlt_k_q == 0) begin
+                        state <= S_LDL_ROW_FINAL_MUL;
+                    end else begin
+                        // The completion pulse means that the matrix service
+                        // has returned to IDLE.  Chain p=0 immediately without
+                        // adding a second request or a memory-port conflict.
+                        ls_start_q <= 1'b1;
+                        ls_op_q <= LS_OP_READ4;
+                        ls_row_a_q <= ldlt_i_base_q;
+                        ls_col_a_q <= 5'd0;
+                        ls_row_b_q <= ldlt_k_q;
+                        ls_col_b_q <= 5'd0;
+                        state <= S_LDL_ROW_P_WAIT;
+                    end
                 end
-            end
-            S_LDL_ROW_P_READ: begin
-                // READ4 supplies L(i+r,p) to the four PE rows.  The duplicated
-                // scalar read port supplies their common L(k,p) operand.
-                ls_start_q <= 1'b1;
-                ls_op_q <= LS_OP_READ4;
-                ls_row_a_q <= ldlt_i_base_q;
-                ls_col_a_q <= ldlt_p_base_q;
-                ls_row_b_q <= ldlt_k_q;
-                ls_col_b_q <= ldlt_p_base_q;
-                state <= S_LDL_ROW_P_WAIT;
             end
             S_LDL_ROW_P_WAIT: begin
                 if (ls_done_w) begin
@@ -2293,7 +2294,15 @@ case (state)
                         ls_rdata_b_w;
                     if (ldlt_p_base_q + 1'b1 < ldlt_k_q) begin
                         ldlt_p_base_q <= ldlt_p_base_q + 1'b1;
-                        state <= S_LDL_ROW_P_READ;
+                        // Chain p+1 from p's completion pulse.  Only one LS
+                        // request remains in flight, but the controller no
+                        // longer inserts a command-only bubble per preload.
+                        ls_start_q <= 1'b1;
+                        ls_op_q <= LS_OP_READ4;
+                        ls_row_a_q <= ldlt_i_base_q;
+                        ls_col_a_q <= ldlt_p_base_q + 1'b1;
+                        ls_row_b_q <= ldlt_k_q;
+                        ls_col_b_q <= ldlt_p_base_q + 1'b1;
                     end else begin
                         ldlt_border_issue_p_q <= 5'd0;
                         ldlt_border_issue_part_q <= 1'b0;

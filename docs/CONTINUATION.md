@@ -4,29 +4,32 @@ Last updated: 2026-08-05 (Asia/Saigon)
 
 ## Active optimization checkpoint
 
-- Current sign-off checkpoint: LDLT per-row scoreboard mapped to LUTRAM.
+- Current sign-off checkpoint: chained LDLT border preload on top of the
+  per-row LUTRAM scoreboard.
 - Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
-- Aggregate cycles: 1789828, unchanged from strict-PE0 timing isolation.
-- Timing: WNS +0.148 ns, TNS 0, zero failing endpoints at 100 MHz.
-- Resources: 110098 LUT, 50413 FF, 24 RAMB36, 71 DSP48.  Relative to
-  timing isolation this removes 9007 LUT and 3240 FF while adding no cycles.
+- Aggregate cycles: 1779097, down 10731 (0.60%) from the per-row LUTRAM
+  scoreboard checkpoint.
+- Timing: WNS +0.090 ns, TNS 0, zero failing endpoints at 100 MHz.
+- Resources: 109755 LUT, 50375 FF, 24 RAMB36, 71 DSP48.
 - Detailed report:
-  `reports/releases/LDLT_SCOREBOARD_LUTRAM_SIGNOFF_20260805.md`.
+  `reports/releases/LDLT_PRELOAD_CHAIN_SIGNOFF_20260805.md`.
 - Compact cycle data:
-  `reports/releases/ldlt_scoreboard_lutram_k_sweep_20260805.csv`.
-- Architecture: each physical PE row owns one LDLT scoreboard bank.  Payload
-  storage is valid-protected, non-reset, distributed RAM; metadata remains
-  resettable.  Controller ingress is still PE0-only and work flows
+  `reports/releases/ldlt_preload_chain_k_sweep_20260805.csv`.
+- Architecture: each physical PE row owns one distributed-RAM scoreboard bank.
+  LS reads are chained from the preceding completion pulse with exactly one
+  request in flight; no second matrix port or double buffer was added.
+  Controller arithmetic ingress remains PE0-only and work flows
   PE0 -> PE1 -> PE2 -> PE3.
 
-The next checkpoint should overlap LS/LDLT preload with preceding controller
-work using explicit ping-pong ownership and valid tags.  Do not expose a
-downstream PE to controller data: preload may fill controller-side storage,
-but every large arithmetic transaction must still enter PE0 and advance through
-all four rows.  First measure state residency and memory-port availability;
-only implement overlap where it cannot contend with active matrix reads.  Any
-cycle change must repeat the full correctness, per-algorithm cycle, resource,
-and WNS report.
+The next checkpoint should first restore timing margin on the residual
+`write_idx -> residual_acc` route without adding a cycle to every residual dot
+product.  Prefer fan-out/placement isolation or a locally derived block-valid
+index over another full datapath stage.  Only after WNS margin is improved
+should a true ping-pong LDLT preload be considered; require state-residency
+evidence that the remaining uncovered preload time repays duplicated storage,
+ownership tags, and arbitration.  Every large arithmetic transaction must
+still enter PE0 and advance through all four rows.  Any cycle change must repeat
+the full correctness, per-algorithm cycle, resource, and WNS report.
 
 ## Previous optimization checkpoint
 
