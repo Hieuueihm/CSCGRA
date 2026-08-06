@@ -1027,7 +1027,7 @@ reg [COLS*MEM_AW-1:0] row3_wr_addr;
 reg [COLS*DATA_W-1:0] row3_wr_data;
 reg [COLS-1:0] row3_wr_en;
 wire row3_corr_mode_w = corr_active_op_w && (state == S_CORR_WRITE);
-wire row3_scalar_write_en_w = ((state == S_WX) || (state == S_WX_COMMIT) || (state == S_WR_MESH_COMMIT) || (state == S_IHT_MESH_WRITE) || (state == S_PRUNE_MESH_WRITE) || (state == S_IHT_SCORE_READ) || (state == S_PRUNE_X_WAIT) || (state == S_MP_X_WRITE));
+wire row3_scalar_write_en_w = ((state == S_WX) || (state == S_WX_COMMIT) || (state == S_WR_MESH_COMMIT) || (state == S_IHT_MESH_WRITE) || (state == S_PRUNE_MESH_WRITE) || (state == S_IHT_SCORE_READ) || (state == S_MP_X_WRITE));
 wire row3_prune_block_mode_w = ((active_op == OP_PRUNE_X) && (state == S_PRUNE_MESH_WRITE));
 wire row3_update_block_mode_w = (((active_op == OP_IHT_UPDATE) ||
                                   (active_op == OP_GRAD_STEP) ||
@@ -1042,10 +1042,15 @@ wire [COLS*DATA_W-1:0] row3_block_value_w = (row3_update_block_mode_w || row3_pr
 wire wx_commit_mode_w = (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && (state == S_WX_COMMIT));
 wire [2:0] row3_target_lane_w = wx_commit_mode_w ? wx_target_idx_q[2:0] : write_idx[2:0];
 wire mesh_ctx_update_issue_w = 1'b0;
-wire mesh_ctx_prune_issue_w = 1'b0;
+// Present a prune token to PE0 for exactly one cycle.  The cluster registers
+// carry the token, keep mask, and metadata through PE1..PE3 after PE0 ingress;
+// keeping mesh_ctx_valid asserted throughout WAIT/WRITE needlessly couples the
+// controller state/address cones into the PE arithmetic timing paths.
+wire mesh_ctx_prune_issue_w = ((state == S_PRUNE_MESH_WAIT) &&
+                               (mesh_ctx_wait_count == MESH_CTX_WAIT_CYCLES));
 wire mesh_ctx_resid_issue_w = (row3_resid_write_op_w && (state == S_WR) && residual_block_last_w);
 wire mesh_ctx_update_active_w = mesh_ctx_update_issue_w || (state == S_IHT_MESH_WAIT) || (state == S_IHT_MESH_WRITE);
-wire mesh_ctx_prune_active_w = mesh_ctx_prune_issue_w || (state == S_PRUNE_MESH_WAIT) || (state == S_PRUNE_MESH_WRITE);
+wire mesh_ctx_prune_active_w = mesh_ctx_prune_issue_w;
 wire mesh_ctx_resid_active_w = mesh_ctx_resid_issue_w || (state == S_WR_MESH_WAIT) || (state == S_WR_MESH_COMMIT);
 assign mesh_ctx_valid = mesh_ctx_update_active_w || mesh_ctx_prune_active_w || mesh_ctx_resid_active_w;
 assign mesh_ctx_word = ctx_word;
@@ -2990,12 +2995,30 @@ case (state)
                 state <= S_PRUNE_X_WAIT;
             end
             S_PRUNE_X_WAIT: begin
-                write_value <= write_value_now;
-                if (write_idx + 1'b1 >= write_limit) begin
+                // One complete x word enters PE0.  The support keep mask and
+                // address metadata follow the same registered southward token
+                // through PE1, PE2, and PE3; no lower row receives controller
+                // data directly.
+                mesh_ctx_delta_block <= rd_data;
+                mesh_ctx_keep_block <= row2_prune_keep_mask;
+                mesh_ctx_base_idx_block <= write_idx;
+                mesh_ctx_limit_block <= write_limit;
+                mesh_ctx_shift_block <= 4'd0;
+                mesh_ctx_wait_count <= MESH_CTX_WAIT_CYCLES;
+                state <= S_PRUNE_MESH_WAIT;
+            end
+            S_PRUNE_MESH_WAIT: begin
+                if (mesh_ctx_wait_count == 0)
+                    state <= S_PRUNE_MESH_WRITE;
+                else
+                    mesh_ctx_wait_count <= mesh_ctx_wait_count - 1'b1;
+            end
+            S_PRUNE_MESH_WRITE: begin
+                if (write_idx + COLS[IDX_W-1:0] >= write_limit) begin
                     state <= S_DONE;
                 end else begin
-                    write_idx <= write_idx + 1'b1;
-                    rd_addr <= 10'h000 + ((write_idx + 1'b1) >> 3);
+                    write_idx <= write_idx + COLS[IDX_W-1:0];
+                    rd_addr <= 10'h000 + ((write_idx + COLS[IDX_W-1:0]) >> 3);
                     state <= S_PRUNE_X_READ;
                 end
             end

@@ -4,27 +4,25 @@ Last updated: 2026-08-06 (Asia/Saigon)
 
 ## Active optimization checkpoint
 
-- Current sign-off checkpoint: canonical v2 programs activate the existing
-  fused correlation/vector-update operation for IHT, HTP, and GP, on top of
-  the stability-oriented LS/RHS command-chain hardware checkpoint.
+- Current sign-off checkpoint: strict-PE0 block-8 prune for IHT, HTP, and GP,
+  on top of the fused correlation-update and stable LS command-chain
+  checkpoints.
 - Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
-- Aggregate cycles: 1682044, down 92256 (5.20%) from the prior canonical
-  program and hardware checkpoint.
-- Timing: WNS +0.309 ns, TNS 0, zero failing endpoints at 100 MHz.
-- Resources: 113628 LUT, 50762 FF, 24 RAMB36, 71 DSP48.  RTL is unchanged,
-  so timing and utilization are inherited exactly from the signed-off LS
-  command-chain netlist.
+- Aggregate cycles: 1650508, down 31536 (1.87%) from the fused-program
+  checkpoint.  IHT, HTP, and GP each save 10512 cycles over the full sweep.
+- Timing: WNS +0.091 ns, TNS 0, zero failing endpoints at 100 MHz.
+- Resources: 112478 LUT, 50606 FF, 24 RAMB36, 71 DSP48.
 - Detailed report:
-  `reports/releases/FUSED_CORR_UPDATE_PROGRAM_SIGNOFF_20260806.md`.
+  `reports/releases/STRICT_PE0_PRUNE_BLOCK8_SIGNOFF_20260806.md`.
 - Compact cycle data:
-  `reports/releases/fused_corr_update_program_k_sweep_20260806.csv`.
+  `reports/releases/strict_pe0_prune_block8_k_sweep_20260806.csv`.
 - Architecture: each physical PE row owns one distributed-RAM scoreboard bank.
   LS reads and RHS writes are chained from the preceding completion pulse with
   exactly one request in flight.  Registered four-row LDLT results feed WRITE4
-  directly; fused correlation-update blocks also use the existing registered
-  four-row wavefront.  No second matrix port or double buffer was added.
-  Controller arithmetic ingress remains PE0-only and work flows
-  PE0 -> PE1 -> PE2 -> PE3.
+  directly.  Fused correlation-update and prune blocks use the registered
+  four-row wavefront.  Prune presents a one-cycle token only to PE0; PE1 takes
+  abs/threshold, PE2 applies the keep mask, and PE3 range-masks and commits the
+  eight-lane word.  No second ingress, matrix port, or double buffer was added.
 
 The proposed completion-driven LS read chaining has now been measured and
 rejected.  Diagonal-gather chaining failed timing at WNS -0.299 ns.  Back-solve
@@ -36,12 +34,14 @@ one column from four row banks.  No trial RTL is retained; details are in
 `reports/releases/LS_READ_CHAIN_TRIALS_20260806.md`.
 
 Do not add more LS completion/address mux fan-in without state-residency data
-showing a material K8/K16 benefit.  The next checkpoint should profile state
-residency and choose a datapath-local target with a larger cycle share, such as
-exact factor-check/top-K control or a timing-isolated residual control stage.
-Every large arithmetic transaction must still enter PE0 and advance through
-all four rows.  Full correctness, per-algorithm cycles, resources, and WNS with
-a preferred margin of at least +0.2 ns remain release gates.
+showing a material K8/K16 benefit.  The retained prune path passes timing, but
+WNS is only +0.091 ns.  The next checkpoint should first timing-isolate the
+support-depth to residual-accumulator path and recover a preferred margin of
+at least +0.2 ns; a small cycle increase is acceptable.  Then profile state
+residency and choose a datapath-local target such as exact factor-check/top-K
+control.  Every large arithmetic transaction must still enter PE0 and advance
+through all four rows.  Full correctness, per-algorithm cycles, resources, and
+positive WNS remain release gates.
 
 ## Previous optimization checkpoint
 
