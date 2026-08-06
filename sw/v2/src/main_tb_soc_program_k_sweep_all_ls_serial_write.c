@@ -53,6 +53,7 @@
 #define SOP_MP_UPDATE       0x85U
 #define SOP_REFINE_SPARSE   0x86U
 #define SOP_GRAD_STEP       0x87U
+#define SOP_CORR_UPDATE     0x88U
 
 #define ALG_OMP     0U
 #define ALG_COSAMP  1U
@@ -315,16 +316,14 @@ static uint32_t build_program(uint32_t alg, uint32_t iter_count)
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         break;
     case ALG_IHT:
-        cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR, 0));
-        cgra_write_ctx(pc++, sparse_op_ctx(SOP_IHT_UPDATE, 0));
+        cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR_UPDATE, 0));
         cgra_write_ctx(pc++, candidate_meta_depth_ctx(0U, 0U, 0));
         emit_reduce_append_loop(&pc, reduce_x_ctx(0), candidate_append_path_ctx(0U, 0), (uint8_t)iter_count, 1U);
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_PRUNE_X, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_RESID, 0));
         break;
     case ALG_HTP:
-        cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR, 0));
-        cgra_write_ctx(pc++, sparse_op_ctx(SOP_IHT_UPDATE, 0));
+        cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR_UPDATE, 0));
         cgra_write_ctx(pc++, candidate_meta_depth_ctx(0U, 0U, 0));
         emit_reduce_append_loop(&pc, reduce_x_ctx(0), candidate_append_path_ctx(0U, 0), (uint8_t)iter_count, 1U);
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_PRUNE_X, 0));
@@ -345,8 +344,9 @@ static uint32_t build_program(uint32_t alg, uint32_t iter_count)
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         break;
     case ALG_GP:
-        emit_select_append(&pc);
-        cgra_write_ctx(pc++, sparse_op_ctx(SOP_GRAD_STEP, 0));
+        cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR_UPDATE, 0));
+        cgra_write_ctx(pc++, reduce_argmax_ctx(0));
+        cgra_write_ctx(pc++, candidate_append_result_ctx(0));
         cgra_write_ctx(pc++, candidate_meta_depth_ctx(0U, 0U, 0));
         emit_reduce_append_loop(&pc, reduce_x_ctx(0), candidate_append_path_ctx(0U, 0), (uint8_t)iter_count, 1U);
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_PRUNE_X, 0));

@@ -4,22 +4,25 @@ Last updated: 2026-08-06 (Asia/Saigon)
 
 ## Active optimization checkpoint
 
-- Current sign-off checkpoint: stability-oriented LS/RHS command chaining on
-  top of the chained LDLT preload and per-row LUTRAM scoreboard.
+- Current sign-off checkpoint: canonical v2 programs activate the existing
+  fused correlation/vector-update operation for IHT, HTP, and GP, on top of
+  the stability-oriented LS/RHS command-chain hardware checkpoint.
 - Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
-- Aggregate cycles: 1774300, down 4797 (0.27%) from the chained-preload
-  checkpoint `2a7ba9e`.
+- Aggregate cycles: 1682044, down 92256 (5.20%) from the prior canonical
+  program and hardware checkpoint.
 - Timing: WNS +0.309 ns, TNS 0, zero failing endpoints at 100 MHz.
-- Resources: 113628 LUT, 50762 FF, 24 RAMB36, 71 DSP48.  The additional
-  3873 LUT and 387 FF buy +0.219 ns WNS margin while cycle count also falls.
+- Resources: 113628 LUT, 50762 FF, 24 RAMB36, 71 DSP48.  RTL is unchanged,
+  so timing and utilization are inherited exactly from the signed-off LS
+  command-chain netlist.
 - Detailed report:
-  `reports/releases/STABLE_LS_COMMAND_CHAIN_SIGNOFF_20260805.md`.
+  `reports/releases/FUSED_CORR_UPDATE_PROGRAM_SIGNOFF_20260806.md`.
 - Compact cycle data:
-  `reports/releases/stable_ls_command_chain_k_sweep_20260805.csv`.
+  `reports/releases/fused_corr_update_program_k_sweep_20260806.csv`.
 - Architecture: each physical PE row owns one distributed-RAM scoreboard bank.
   LS reads and RHS writes are chained from the preceding completion pulse with
   exactly one request in flight.  Registered four-row LDLT results feed WRITE4
-  directly; no second matrix port or double buffer was added.
+  directly; fused correlation-update blocks also use the existing registered
+  four-row wavefront.  No second matrix port or double buffer was added.
   Controller arithmetic ingress remains PE0-only and work flows
   PE0 -> PE1 -> PE2 -> PE3.
 
