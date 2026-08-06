@@ -195,7 +195,22 @@ module cgra_top #(
     wire [IDX_W-1:0] support8_w, support9_w, support10_w, support11_w, support12_w, support13_w, support14_w, support15_w;
     wire [IDX_W-1:0] support16_w, support17_w, support18_w, support19_w, support20_w, support21_w, support22_w, support23_w;
     wire [IDX_W-1:0] support24_w, support25_w, support26_w, support27_w, support28_w, support29_w, support30_w, support31_w;
-    wire [7:0] sparse_k_active = (support_depth0 != 0) ? ((support_depth0 > SPARSE_MAX_K[5:0]) ? SPARSE_MAX_K[7:0] : {2'b00, support_depth0}) : k_param;
+    // Isolate the support-state memory from the high-fanout PE/controller
+    // active-K cone.  The matching controller depth sample is registered in
+    // sparse_kernel_service_engine on this same edge.
+    wire [7:0] sparse_k_active_next_w =
+        (support_depth0 != 0) ?
+        ((support_depth0 > SPARSE_MAX_K[5:0]) ?
+         SPARSE_MAX_K[7:0] : {2'b00, support_depth0}) : k_param;
+    reg [7:0] sparse_k_active_q;
+    wire [7:0] sparse_k_active = sparse_k_active_q;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            sparse_k_active_q <= 8'd0;
+        else
+            sparse_k_active_q <= sparse_k_active_next_w;
+    end
     wire scalar_valid     = (scalar_uop && (scalar_op[7:4] == 4'h8)) ? ls_done : (result_valid && scalar_uop);
     wire [SCALAR_W-1:0] scalar_result = (scalar_uop && (scalar_op[7:4] == 4'h8)) ? ls_result : result_value;
     wire [DATA_W-1:0] scalar_q8_8 = scalar_result[DATA_W-1:0];
@@ -340,8 +355,8 @@ module cgra_top #(
     wire ls_pe_sparse_clear, ls_pe_corr_acc_clear, ls_pe_corr_acc_en;
     wire [COLS*DATA_W-1:0] ls_pe_rhs_phi_bus, ls_pe_rhs_y_bus;
     wire ls_pe_rhs_active;
-    wire [CTX_W-1:0] mesh_ctx_word;
-    wire [DATA_W-1:0] mesh_ctx_threshold;
+    wire [CTX_W-1:0] mesh_ctx_word_raw;
+    wire [DATA_W-1:0] mesh_ctx_threshold_raw;
     reg  [COLS*DATA_W-1:0] pe_spm_pa_rdata_q, pe_spm_pb_rdata_q;
     wire [COLS*DATA_W-1:0] pe_spm_pa_rdata = pe_active_q ? pe_spm_pa_rdata_q : spm_pa_rdata;
     wire [COLS*DATA_W-1:0] pe_spm_pb_rdata = pe_active_q ? pe_spm_pb_rdata_q : spm_pb_rdata;
@@ -351,14 +366,34 @@ module cgra_top #(
     reg  [COLS-1:0] pe_wen_pipe1_q;
     wire [COLS*DATA_W-1:0] reduce_data;
     wire [COLS*DATA_W-1:0] mesh_ctx_commit_data;
-    wire mesh_ctx_valid;
-    wire [1:0] mesh_ctx_mode;
-    wire [IDX_W-1:0] mesh_ctx_base_idx;
-    wire [IDX_W-1:0] mesh_ctx_limit;
-    wire [3:0] mesh_ctx_shift;
-    wire [COLS*DATA_W-1:0] mesh_ctx_x_bus;
-    wire [COLS*DATA_W-1:0] mesh_ctx_delta_bus;
-    wire [COLS-1:0] mesh_ctx_keep_bus;
+    wire mesh_ctx_valid_raw;
+    wire [1:0] mesh_ctx_mode_raw;
+    wire [IDX_W-1:0] mesh_ctx_base_idx_raw;
+    wire [IDX_W-1:0] mesh_ctx_limit_raw;
+    wire [3:0] mesh_ctx_shift_raw;
+    wire [COLS*DATA_W-1:0] mesh_ctx_x_bus_raw;
+    wire [COLS*DATA_W-1:0] mesh_ctx_delta_bus_raw;
+    wire [COLS-1:0] mesh_ctx_keep_bus_raw;
+    reg mesh_ctx_valid_q;
+    reg [CTX_W-1:0] mesh_ctx_word_q;
+    reg [1:0] mesh_ctx_mode_q;
+    reg [IDX_W-1:0] mesh_ctx_base_idx_q;
+    reg [IDX_W-1:0] mesh_ctx_limit_q;
+    reg [DATA_W-1:0] mesh_ctx_threshold_q;
+    reg [3:0] mesh_ctx_shift_q;
+    reg [COLS*DATA_W-1:0] mesh_ctx_x_bus_q;
+    reg [COLS*DATA_W-1:0] mesh_ctx_delta_bus_q;
+    reg [COLS-1:0] mesh_ctx_keep_bus_q;
+    wire mesh_ctx_valid = mesh_ctx_valid_q;
+    wire [CTX_W-1:0] mesh_ctx_word = mesh_ctx_word_q;
+    wire [1:0] mesh_ctx_mode = mesh_ctx_mode_q;
+    wire [IDX_W-1:0] mesh_ctx_base_idx = mesh_ctx_base_idx_q;
+    wire [IDX_W-1:0] mesh_ctx_limit = mesh_ctx_limit_q;
+    wire [DATA_W-1:0] mesh_ctx_threshold = mesh_ctx_threshold_q;
+    wire [3:0] mesh_ctx_shift = mesh_ctx_shift_q;
+    wire [COLS*DATA_W-1:0] mesh_ctx_x_bus = mesh_ctx_x_bus_q;
+    wire [COLS*DATA_W-1:0] mesh_ctx_delta_bus = mesh_ctx_delta_bus_q;
+    wire [COLS-1:0] mesh_ctx_keep_bus = mesh_ctx_keep_bus_q;
     wire [COLS*ACC_W-1:0] acc_data;
     wire [COLS*DATA_W-1:0] scalar_bus;
     reg [DATA_W-1:0] spm_b_broadcast;
@@ -367,6 +402,36 @@ module cgra_top #(
     wire [COLS*DATA_W-1:0] dma_spm_wdata;
     wire [COLS-1:0] dma_spm_wen;
     wire dma_phase = (uop_class == 4'd7);
+
+    // Registered PE0 ingress boundary for controller-generated mesh work.
+    // The controller already budgets a full four-row drain, so this stage is
+    // absorbed without adding a visible program cycle.  It prevents address
+    // and controller-state cones from feeding PE arithmetic combinationally.
+    always @(posedge clk or negedge rst_core_n) begin
+        if (!rst_core_n) begin
+            mesh_ctx_valid_q <= 1'b0;
+            mesh_ctx_word_q <= {CTX_W{1'b0}};
+            mesh_ctx_mode_q <= 2'd0;
+            mesh_ctx_base_idx_q <= {IDX_W{1'b0}};
+            mesh_ctx_limit_q <= {IDX_W{1'b0}};
+            mesh_ctx_threshold_q <= {DATA_W{1'b0}};
+            mesh_ctx_shift_q <= 4'd0;
+            mesh_ctx_x_bus_q <= {COLS*DATA_W{1'b0}};
+            mesh_ctx_delta_bus_q <= {COLS*DATA_W{1'b0}};
+            mesh_ctx_keep_bus_q <= {COLS{1'b0}};
+        end else begin
+            mesh_ctx_valid_q <= mesh_ctx_valid_raw;
+            mesh_ctx_word_q <= mesh_ctx_word_raw;
+            mesh_ctx_mode_q <= mesh_ctx_mode_raw;
+            mesh_ctx_base_idx_q <= mesh_ctx_base_idx_raw;
+            mesh_ctx_limit_q <= mesh_ctx_limit_raw;
+            mesh_ctx_threshold_q <= mesh_ctx_threshold_raw;
+            mesh_ctx_shift_q <= mesh_ctx_shift_raw;
+            mesh_ctx_x_bus_q <= mesh_ctx_x_bus_raw;
+            mesh_ctx_delta_bus_q <= mesh_ctx_delta_bus_raw;
+            mesh_ctx_keep_bus_q <= mesh_ctx_keep_bus_raw;
+        end
+    end
 
     spm_cluster #(.COLS(COLS), .WORD_W(DATA_W), .MEM_AW(MEM_AW), .BANK_DEPTH(1 << MEM_AW)) u_spm (
         .clk(clk),
@@ -418,7 +483,7 @@ module cgra_top #(
         .topk_pipe_token_eligible(topk_pipe_token_eligible), .topk_pipe_stream_done(topk_pipe_stream_done),
         .topk_pipe_max_count(topk_pipe_max_count), .topk_pipe_result_valid(topk_pipe_result_valid),
         .topk_pipe_result_count(topk_pipe_result_count), .topk_pipe_result_idx_bus(topk_pipe_result_idx_bus),
-        .mesh_ctx_valid(mesh_ctx_valid), .mesh_ctx_word(mesh_ctx_word), .mesh_ctx_mode(mesh_ctx_mode), .mesh_ctx_base_idx(mesh_ctx_base_idx), .mesh_ctx_limit(mesh_ctx_limit), .mesh_ctx_threshold(mesh_ctx_threshold), .mesh_ctx_shift(mesh_ctx_shift), .mesh_ctx_x_bus(mesh_ctx_x_bus), .mesh_ctx_delta_bus(mesh_ctx_delta_bus), .mesh_ctx_keep_bus(mesh_ctx_keep_bus), .mesh_ctx_commit_data(mesh_ctx_commit_data),
+        .mesh_ctx_valid(mesh_ctx_valid_raw), .mesh_ctx_word(mesh_ctx_word_raw), .mesh_ctx_mode(mesh_ctx_mode_raw), .mesh_ctx_base_idx(mesh_ctx_base_idx_raw), .mesh_ctx_limit(mesh_ctx_limit_raw), .mesh_ctx_threshold(mesh_ctx_threshold_raw), .mesh_ctx_shift(mesh_ctx_shift_raw), .mesh_ctx_x_bus(mesh_ctx_x_bus_raw), .mesh_ctx_delta_bus(mesh_ctx_delta_bus_raw), .mesh_ctx_keep_bus(mesh_ctx_keep_bus_raw), .mesh_ctx_commit_data(mesh_ctx_commit_data),
         .support_done(skse_support_done), .support_result_idx(skse_support_result_idx), .support_result_valid(skse_support_result_valid), .select_done(skse_select_done)
     );
 

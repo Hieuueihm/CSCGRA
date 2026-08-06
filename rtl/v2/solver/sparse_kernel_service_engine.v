@@ -161,6 +161,10 @@ module sparse_kernel_service_engine #(
     assign select_done = select_done_q;
     reg stream_select_pending_q;
     reg ls_done_deferred_q;
+    // Timing-isolated sample used only by the loop controller.  It is aligned
+    // with cgra_top's registered sparse_k_active value, so both operands seen
+    // by the controller describe the same support-depth cycle.
+    reg [5:0] support_depth_ctrl_q;
 
     wire ls_corr_stream_valid;
     wire ls_corr_stream_done;
@@ -215,7 +219,9 @@ module sparse_kernel_service_engine #(
         if (!rst_n) begin
             select_busy_q <= 1'b0;
             select_done_q <= 1'b0;
+            support_depth_ctrl_q <= 6'd0;
         end else begin
+            support_depth_ctrl_q <= support_depth0;
             select_done_q <= 1'b0;
             if (stream_select_start) begin
                 select_busy_q <= 1'b1;
@@ -234,7 +240,7 @@ module sparse_kernel_service_engine #(
     sparse_loop_controller #(.COLS(COLS), .DATA_W(DATA_W), .SCALAR_W(SCALAR_W), .MEM_AW(MEM_AW), .IDX_W(IDX_W), .MAX_M(MAX_M), .MAX_N(MAX_N), .MAX_K(MAX_K), .REFINE_ITERS(REFINE_ITERS)) u_sparse_loop_controller (
         .clk(clk), .rst_n(rst_n), .ctx_valid(ctx_valid), .ctx_word(ctx_word),
         .start(ls_start), .op(scalar_op_low), .m_size(m_size), .n_size(n_size),
-        .k_active(sparse_k_active), .support_depth0(support_depth0), .seed(seed), .mu_shift_cfg(mu_shift_cfg), .scale_q(phi_scale_q8_8), .phi_kind(phi_kind), .phi_bus(phi_bus),
+        .k_active(sparse_k_active), .support_depth0(support_depth_ctrl_q), .seed(seed), .mu_shift_cfg(mu_shift_cfg), .scale_q(phi_scale_q8_8), .phi_kind(phi_kind), .phi_bus(phi_bus),
         .pe_rhs_product_bus(pe_rhs_product_bus), .pe_corr_acc_bus(pe_corr_acc_bus), .last_result_value(last_result_value), .last_result_idx(last_result_idx), .pe_rhs_phi_bus(ls_pe_rhs_phi_bus), .pe_rhs_y_bus(ls_pe_rhs_y_bus), .pe_rhs_active(ls_pe_rhs_active), .pe_sparse_clear(pe_sparse_clear), .pe_corr_acc_clear(pe_corr_acc_clear), .pe_corr_acc_en(pe_corr_acc_en), .pe_sparse_op(pe_sparse_op),
         .factor_pipe_valid(factor_pipe_valid), .factor_pipe_tag(factor_pipe_tag), .factor_pipe_value(factor_pipe_value), .factor_pipe_cache_k(factor_pipe_cache_k), .factor_pipe_cache_bus(factor_pipe_cache_bus),
         .factor_pipe_resp_valid(factor_pipe_resp_valid), .factor_pipe_resp_tag(factor_pipe_resp_tag), .factor_pipe_resp_value(factor_pipe_resp_value), .factor_pipe_resp_match_mask(factor_pipe_resp_match_mask),
