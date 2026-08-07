@@ -161,6 +161,19 @@ static uint64_t reduce_x_support_ctx(int is_last)
     return w;
 }
 
+static uint64_t stream_topk_ctx(uint8_t path, uint8_t count, int exclude_support, int is_last)
+{
+    uint64_t w = 0;
+    w |= 1ULL << 60;
+    w |= 5ULL << 56;
+    if (is_last) w |= 6ULL << 44;
+    w |= 1ULL << 31;
+    w |= ((uint64_t)(exclude_support ? 2U : 1U)) << 24;
+    w |= ((uint64_t)(path & 7U)) << 20;
+    w |= ((uint64_t)(count & 0x1fU)) << 11;
+    return w;
+}
+
 static uint64_t candidate_append_result_ctx(int is_last)
 {
     uint64_t w = 0;
@@ -254,9 +267,8 @@ static uint64_t ctrl_loop_rel_ctx(int8_t rel_off, uint8_t count, uint8_t loop_id
 
 static void emit_select_append(uint32_t *pc)
 {
+    cgra_write_ctx((*pc)++, stream_topk_ctx(0U, 1U, 1, 0));
     cgra_write_ctx((*pc)++, sparse_op_ctx(SOP_CORR, 0));
-    cgra_write_ctx((*pc)++, reduce_argmax_ctx(0));
-    cgra_write_ctx((*pc)++, candidate_append_result_ctx(0));
 }
 
 static void emit_mp_select_append(uint32_t *pc)
@@ -353,11 +365,8 @@ static uint32_t build_program(uint32_t alg, uint32_t iter_count)
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_RESID, 0));
         break;
     case ALG_GOMP:
+        cgra_write_ctx(pc++, stream_topk_ctx(0U, 2U, 1, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR, 0));
-        cgra_write_ctx(pc++, reduce_argmax_ctx(0));
-        cgra_write_ctx(pc++, candidate_append_path_ctx(0U, 0));
-        cgra_write_ctx(pc++, reduce_argmax_ctx(0));
-        cgra_write_ctx(pc++, candidate_append_path_ctx(0U, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         break;
     case ALG_MP:

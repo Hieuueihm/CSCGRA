@@ -455,7 +455,8 @@ static uint32_t build_program(uint32_t alg, uint32_t iter_count)
     switch (alg)
     {
     case ALG_OMP:
-        emit_select_append(&pc);
+        cgra_write_ctx(pc++, stream_topk_ctx(0U, 1U, 1, 0));
+        cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE_SPARSE, 0));
         break;
     case ALG_COSAMP:
@@ -507,11 +508,8 @@ static uint32_t build_program(uint32_t alg, uint32_t iter_count)
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_RESID, 0));
         break;
     case ALG_GOMP:
+        cgra_write_ctx(pc++, stream_topk_ctx(0U, 2U, 1, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR, 0));
-        cgra_write_ctx(pc++, reduce_argmax_ctx(0));
-        cgra_write_ctx(pc++, candidate_append_path_ctx(0U, 0));
-        cgra_write_ctx(pc++, reduce_argmax_ctx(0));
-        cgra_write_ctx(pc++, candidate_append_path_ctx(0U, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         break;
     case ALG_MP:

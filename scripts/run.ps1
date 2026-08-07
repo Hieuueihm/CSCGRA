@@ -8,6 +8,7 @@ param(
 
     [int[]]$Cases = @(0, 1, 2, 3, 4, 5, 6, 7),
     [int[]]$Algorithms = @(),
+    [switch]$ProfileStates,
     [string]$Top = "cgra_top",
     [string]$RunId = "",
     [string]$VivadoBin = "C:\Xilinx\Vivado\2018.1\bin"
@@ -22,6 +23,7 @@ switch ($Flow) {
             -RtlVersion $RtlVersion `
             -Cases $Cases `
             -Algorithms $Algorithms `
+            -ProfileStates:$ProfileStates `
             -RunId $RunId `
             -VivadoBin $VivadoBin
     }

@@ -49,8 +49,13 @@ reg [8:0] wr_len, wr_count;
 reg [31:0] status_rd, cycle_rd, pc_rd;
 reg [23:0] got; reg signed [24:0] diff;
 integer pass_cnt, fail_cnt, alg, i, timeout, pc, ctx_loop_count, iter;
-integer start_alg, end_alg, case_idx, start_case, end_case;
+integer start_alg, end_alg, case_idx, start_case, end_case, run_case_alg;
 integer case_m, case_n, case_k, nz_count, mismatch_prints;
+integer profile_states, profile_total_cycles;
+integer profile_ctrl_cycles [0:127];
+integer profile_topk_cycles [0:7];
+integer profile_support_cycles [0:15];
+integer profile_uop_cycles [0:15];
 reg done_seen, error_seen;
 
 `include "k_sweep_golden_mu3.vh"
@@ -60,6 +65,37 @@ cgra_top dut(.clk(clk),.rst_n(rst_n),.s_axi_awaddr(s_axi_awaddr),.s_axi_awvalid(
 always #5 clk=~clk;
 task tick; begin @(posedge clk); #1; end endtask
 task check; input [255:0] name; input cond; begin if(cond) begin pass_cnt=pass_cnt+1; end else begin $display("FAIL %0s",name); fail_cnt=fail_cnt+1; end end endtask
+task profile_reset; integer p; begin
+    profile_total_cycles=0;
+    for(p=0;p<128;p=p+1) profile_ctrl_cycles[p]=0;
+    for(p=0;p<8;p=p+1) profile_topk_cycles[p]=0;
+    for(p=0;p<16;p=p+1) begin
+        profile_support_cycles[p]=0;
+        profile_uop_cycles[p]=0;
+    end
+end endtask
+task profile_dump; input integer alg_id; integer p; integer factor_total; integer topk_total; integer support_total; begin
+    if(profile_states) begin
+        factor_total=profile_ctrl_cycles[125]+profile_ctrl_cycles[126]+profile_ctrl_cycles[127];
+        topk_total=0; support_total=0;
+        for(p=0;p<8;p=p+1) topk_total=topk_total+profile_topk_cycles[p];
+        for(p=1;p<16;p=p+1) support_total=support_total+profile_support_cycles[p];
+        $display("STATE_PROFILE_SUMMARY case=%0d alg=%0d total=%0d factor=%0d topk=%0d support_nonidle=%0d reduce_uop=%0d",
+                 case_idx,alg_id,profile_total_cycles,factor_total,topk_total,support_total,profile_uop_cycles[4]);
+        for(p=0;p<128;p=p+1)
+            if(profile_ctrl_cycles[p]!=0)
+                $display("STATE_PROFILE case=%0d alg=%0d kind=CTRL state=%0d cycles=%0d",case_idx,alg_id,p,profile_ctrl_cycles[p]);
+        for(p=0;p<8;p=p+1)
+            if(profile_topk_cycles[p]!=0)
+                $display("STATE_PROFILE case=%0d alg=%0d kind=TOPK state=%0d cycles=%0d",case_idx,alg_id,p,profile_topk_cycles[p]);
+        for(p=1;p<16;p=p+1)
+            if(profile_support_cycles[p]!=0)
+                $display("STATE_PROFILE case=%0d alg=%0d kind=SUPPORT state=%0d cycles=%0d",case_idx,alg_id,p,profile_support_cycles[p]);
+        for(p=0;p<16;p=p+1)
+            if(profile_uop_cycles[p]!=0)
+                $display("STATE_PROFILE case=%0d alg=%0d kind=UOP state=%0d cycles=%0d",case_idx,alg_id,p,profile_uop_cycles[p]);
+    end
+end endtask
 function absdiff_le; input [23:0] a,b; input integer tol; begin diff={a[23],a}-{b[23],b}; if(diff<0) diff=-diff; absdiff_le=(diff<=tol); end endfunction
 task axi_write; input [13:0] a; input [31:0] d; begin
     while(!s_axi_awready || !s_axi_wready) tick();
@@ -86,6 +122,17 @@ function [63:0] reduce_argmax_ctx; input is_last; begin reduce_argmax_ctx=64'd0;
 function [63:0] reduce_argmax_mp_ctx; input is_last; begin reduce_argmax_mp_ctx=reduce_argmax_ctx(is_last); reduce_argmax_mp_ctx[34:32]=3'd0; end endfunction
 function [63:0] reduce_x_ctx; input is_last; begin reduce_x_ctx=64'd0; reduce_x_ctx[63:60]=4'h1; reduce_x_ctx[59:56]=4'd4; reduce_x_ctx[55:52]=4'd1; reduce_x_ctx[51:48]=4'd2; if(is_last) reduce_x_ctx[47:44]=4'd6; reduce_x_ctx[43:41]=3'd0; reduce_x_ctx[34:32]=3'd3; reduce_x_ctx[27:24]=4'd4; end endfunction
 function [63:0] reduce_x_support_ctx; input is_last; begin reduce_x_support_ctx=reduce_x_ctx(is_last); reduce_x_support_ctx[34:32]=3'd4; end endfunction
+function [63:0] stream_topk_ctx; input [7:0] count; input [7:0] path; input exclude_support; input allow_tiny; input is_last; begin
+    stream_topk_ctx=64'd0;
+    stream_topk_ctx[63:60]=4'h1;
+    stream_topk_ctx[59:56]=4'd5;
+    if(is_last) stream_topk_ctx[47:44]=4'd6;
+    stream_topk_ctx[31]=1'b1;
+    stream_topk_ctx[30]=allow_tiny;
+    stream_topk_ctx[27:24]=exclude_support ? 4'd2 : (allow_tiny ? 4'd3 : 4'd1);
+    stream_topk_ctx[22:20]=path[2:0];
+    stream_topk_ctx[15:11]=count[4:0];
+end endfunction
 function [63:0] candidate_append_result_ctx; input is_last; begin candidate_append_result_ctx=64'd0; candidate_append_result_ctx[63:60]=4'h1; candidate_append_result_ctx[59:56]=4'd6; if(is_last) candidate_append_result_ctx[47:44]=4'd6; candidate_append_result_ctx[19:16]=4'd1; end endfunction
 function [63:0] candidate_append_path_ctx; input [7:0] path; input is_last; begin candidate_append_path_ctx=64'd0; candidate_append_path_ctx[63:60]=4'h1; candidate_append_path_ctx[59:56]=4'd6; if(is_last) candidate_append_path_ctx[47:44]=4'd6; candidate_append_path_ctx[22:20]=path[2:0]; candidate_append_path_ctx[19:16]=4'd9; end endfunction
 function [63:0] candidate_meta_depth_ctx; input [7:0] path; input [7:0] depth; input is_last; begin candidate_meta_depth_ctx=64'd0; candidate_meta_depth_ctx[63:60]=4'h1; candidate_meta_depth_ctx[59:56]=4'd6; if(is_last) candidate_meta_depth_ctx[47:44]=4'd6; candidate_meta_depth_ctx[22:20]=path[2:0]; candidate_meta_depth_ctx[19:16]=4'd4; candidate_meta_depth_ctx[15:11]=depth[4:0]; end endfunction
@@ -95,7 +142,7 @@ function [63:0] candidate_copy_to_p0_ctx; input [7:0] path; input is_last; begin
 function [63:0] dma_ctx; input [7:0] vec_id; input [7:0] addr_dim; input ddr_write; input is_last; begin dma_ctx=64'd0; dma_ctx[63:60]=4'h1; dma_ctx[59:56]=4'd7; if(is_last) dma_ctx[47:44]=4'd6; dma_ctx[43:41]=vec_id[2:0]; dma_ctx[31:28]=addr_dim[3:0]; dma_ctx[0]=ddr_write; end endfunction
 function [63:0] ctrl_loop_rel_ctx; input integer rel_off; input [7:0] count; input [7:0] loop_id; input is_last; reg [5:0] rel6; begin rel6=rel_off[5:0]; ctrl_loop_rel_ctx=64'd0; ctrl_loop_rel_ctx[63:60]=4'h1; ctrl_loop_rel_ctx[59:56]=4'd9; if(is_last) ctrl_loop_rel_ctx[47:44]=4'd6; ctrl_loop_rel_ctx[43:40]=4'd3; ctrl_loop_rel_ctx[33:28]=rel6; ctrl_loop_rel_ctx[27:20]=count; ctrl_loop_rel_ctx[19:18]=loop_id[1:0]; end endfunction
 
-task emit_select_append; inout integer pcv; begin write_ctx(pcv, sparse_op_ctx(SOP_CORR,0)); pcv=pcv+1; write_ctx(pcv, reduce_argmax_ctx(0)); pcv=pcv+1; write_ctx(pcv, candidate_append_result_ctx(0)); pcv=pcv+1; end endtask
+task emit_select_append; inout integer pcv; begin write_ctx(pcv, stream_topk_ctx(1,0,1,0,0)); pcv=pcv+1; write_ctx(pcv, sparse_op_ctx(SOP_CORR,0)); pcv=pcv+1; end endtask
 task emit_mp_select_append; inout integer pcv; begin write_ctx(pcv, sparse_op_ctx(SOP_CORR,0)); pcv=pcv+1; write_ctx(pcv, reduce_argmax_mp_ctx(0)); pcv=pcv+1; write_ctx(pcv, candidate_append_result_ctx(0)); pcv=pcv+1; end endtask
 task emit_reduce_append_loop; inout integer pcv; input [63:0] reduce_word; input [63:0] append_word; input [7:0] count; input [7:0] loop_id; begin write_ctx(pcv, reduce_word); pcv=pcv+1; write_ctx(pcv, append_word); pcv=pcv+1; write_ctx(pcv, ctrl_loop_rel_ctx(-2,count,loop_id,0)); pcv=pcv+1; end endtask
 task emit_loop_tail; inout integer pcv; input integer body_start; input [7:0] count; input [7:0] loop_id; integer rel; begin if(count>1) begin rel=body_start-pcv; write_ctx(pcv, ctrl_loop_rel_ctx(rel,count,loop_id,0)); pcv=pcv+1; end end endtask
@@ -113,7 +160,7 @@ task build_program; input integer alg_id; input integer k_param; output integer 
     ALG_HTP: begin write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(0,0,0)); pc=pc+1; emit_reduce_append_loop(pc,reduce_x_ctx(0),candidate_append_path_ctx(0,0),k_param,1); write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
     ALG_SP: begin write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,candidate_select_path_ctx(1,0)); pc=pc+1; emit_reduce_append_loop(pc,reduce_argmax_ctx(0),candidate_append_path_ctx(1,0),k_param,1); write_ctx(pc,candidate_select_path_ctx(1,0)); pc=pc+1; write_ctx(pc,candidate_merge_path_ctx(0,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,candidate_select_path_ctx(1,0)); pc=pc+1; emit_reduce_append_loop(pc,reduce_x_support_ctx(0),candidate_append_path_ctx(1,0),k_param,1); write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
     ALG_5: begin write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,reduce_argmax_ctx(0)); pc=pc+1; write_ctx(pc,candidate_append_result_ctx(0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(0,0,0)); pc=pc+1; emit_reduce_append_loop(pc,reduce_x_ctx(0),candidate_append_path_ctx(0,0),k_param,1); write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_RESID,0)); pc=pc+1; end
-    ALG_6: begin write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc,reduce_argmax_ctx(0)); pc=pc+1; write_ctx(pc,candidate_append_path_ctx(0,0)); pc=pc+1; write_ctx(pc,reduce_argmax_ctx(0)); pc=pc+1; write_ctx(pc,candidate_append_path_ctx(0,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
+    ALG_6: begin write_ctx(pc,stream_topk_ctx(2,0,1,0,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
     ALG_MP: begin emit_mp_select_append(pc); write_ctx(pc,sparse_op_ctx(SOP_MP_UPDATE,0)); pc=pc+1; end
     endcase
     emit_loop_tail(pc,body_start,k_param,0);
@@ -139,8 +186,10 @@ task run_alg_case_iter; input integer alg_id; input integer m; input integer n; 
     axi_write(REG_M_SIZE,m); axi_write(REG_N_SIZE,n); axi_write(REG_K_PARAM,k);
     axi_write(REG_Y_DDR,DDR_Y_BASE); axi_write(REG_X_DDR,DDR_X_BASE); axi_write(REG_SEED,ksgold_case_seed(case_idx)); axi_write(REG_PHI_SCALE,ksgold_case_scale(case_idx));
     axi_write(REG_FLAGS,{28'd0,ksgold_case_phi_kind(case_idx),1'b0,1'b0}); axi_write(REG_MU_SHIFT,32'd3); axi_write(REG_MAX_ITER,iter_count); axi_write(REG_PROG_BASE,0); axi_write(REG_PROG_LEN,plen);
+    profile_reset();
     axi_write(REG_CTRL,1);
     done_seen=0; error_seen=0; timeout=0; while(!done_seen && !error_seen && timeout<50000000) begin timeout=timeout+1; tick(); if(irq_done) done_seen=1; if(irq_error) error_seen=1; end
+    profile_dump(alg_id);
     axi_read(REG_STATUS,status_rd); axi_read(REG_CYCLE_CNT,cycle_rd); axi_read(REG_PC_DBG,pc_rd);
     nz_count=0;
     mismatch_prints=0;
@@ -185,6 +234,21 @@ always @(posedge clk or negedge rst_n) begin
     end
 end
 
+always @(posedge clk) begin
+    if(profile_states && dut.seq_busy) begin
+        profile_total_cycles=profile_total_cycles+1;
+        profile_ctrl_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state]=
+            profile_ctrl_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state]+1;
+        profile_uop_cycles[dut.uop_class]=profile_uop_cycles[dut.uop_class]+1;
+        if(dut.u_sparse_kernel_service_engine.u_stream_topk.state_q!=0)
+            profile_topk_cycles[dut.u_sparse_kernel_service_engine.u_stream_topk.state_q]=
+                profile_topk_cycles[dut.u_sparse_kernel_service_engine.u_stream_topk.state_q]+1;
+        if(dut.u_sparse_kernel_service_engine.u_support_service.state_q!=0)
+            profile_support_cycles[dut.u_sparse_kernel_service_engine.u_support_service.state_q]=
+                profile_support_cycles[dut.u_sparse_kernel_service_engine.u_support_service.state_q]+1;
+    end
+end
+
 always @(posedge clk or negedge rst_n) begin
     if(!rst_n) begin m_axi_bvalid<=0; wr_count<=0; end
     else begin
@@ -195,11 +259,18 @@ always @(posedge clk or negedge rst_n) begin
 end
 
 initial begin
-    clk=0; pass_cnt=0; fail_cnt=0; start_alg=0; end_alg=7; start_case=0; end_case=CASE_COUNT-1;
+    clk=0; pass_cnt=0; fail_cnt=0; start_alg=0; end_alg=7; start_case=0; end_case=CASE_COUNT-1; profile_states=0;
+`ifdef TB_STATE_PROFILE
+    profile_states=1;
+`endif
     if($value$plusargs("ALG=%d", start_alg)) end_alg=start_alg;
     if($value$plusargs("START_ALG=%d", start_alg)) begin if(!$value$plusargs("END_ALG=%d", end_alg)) end_alg=start_alg; end
     if($value$plusargs("CASE=%d", start_case)) end_case=start_case;
     if($value$plusargs("START_CASE=%d", start_case)) begin if(!$value$plusargs("END_CASE=%d", end_case)) end_case=start_case; end
+    if($value$plusargs("RUN_CASE_ALG=%d", run_case_alg)) begin
+        start_case=run_case_alg/8; end_case=start_case;
+        start_alg=run_case_alg%8; end_alg=start_alg;
+    end
 `ifdef TB_ALG
     start_alg=`TB_ALG; end_alg=`TB_ALG;
 `endif
@@ -267,6 +338,7 @@ initial begin
 `ifdef TB_ALG_7
     start_alg=7; end_alg=7;
 `endif
+    profile_reset();
     reset_dut();
     $display("tb_soc_program_k_sweep CASES: 0=(64,256,16) 1=(64,256,8) 2=(64,256,4) 3=(32,128,8) 4=(32,128,4) 5=(32,128,2) 6=(16,64,4) 7=(16,64,2)");
     for(case_idx=start_case; case_idx<=end_case; case_idx=case_idx+1) begin

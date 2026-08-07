@@ -3,6 +3,7 @@ param(
     [string]$RtlVersion = "v2",
     [int[]]$Cases = @(0, 1, 2, 3, 4, 5, 6, 7),
     [int[]]$Algorithms = @(),
+    [switch]$ProfileStates,
     [string]$RunId = "",
     [string]$VivadoBin = "C:\Xilinx\Vivado\2018.1\bin"
 )
@@ -68,6 +69,7 @@ $metadata = [ordered]@{
     testbench = $config.default_testbench
     cases = @($Cases)
     algorithms = @($Algorithms)
+    profile_states = $ProfileStates.IsPresent
     started_at = (Get-Date).ToString("o")
     work_dir = $workDir
     log_dir = $logDir
@@ -78,6 +80,9 @@ $metadata | ConvertTo-Json -Depth 4 |
 Push-Location $workDir
 try {
     $xvlogArgs = @("-sv")
+    if ($ProfileStates) {
+        $xvlogArgs += @("-d", "TB_STATE_PROFILE")
+    }
     foreach ($includeDir in $includeDirs) {
         $xvlogArgs += @("-i", $includeDir)
     }
@@ -104,14 +109,10 @@ try {
             $caseLog = Join-Path $logDir "$name.log"
             $xsimArgs = @(
                 $snapshot,
-                "-runall",
-                "-testplusarg", ('"CASE={0}"' -f $case),
-                "--log", $caseLog
+                "-runall"
             )
-            if (-not $allAlgorithms) {
-                $xsimArgs += @("-testplusarg", ('"ALG={0}"' -f $algorithm))
-            }
-
+            $runSelector = if ($allAlgorithms) { "CASE=$case" } else { "RUN_CASE_ALG=$(($case * 8) + $algorithm)" }
+            $xsimArgs += @("-testplusarg", ('"{0}"' -f $runSelector), "--log", $caseLog)
             & $xsim @xsimArgs
             if ($LASTEXITCODE -ne 0) {
                 throw "xsim failed for $name with exit code $LASTEXITCODE"
