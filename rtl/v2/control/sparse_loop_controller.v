@@ -55,6 +55,8 @@ module sparse_loop_controller #(
     output wire [IDX_W-1:0] corr_stream_base_idx,
     output wire [COLS-1:0] corr_stream_lane_valid,
     output wire [COLS*DATA_W-1:0] corr_stream_data,
+    input wire corr_stream_active,
+    input wire corr_stream_ready,
     input wire [IDX_W-1:0] support0,
     input wire [IDX_W-1:0] support1,
     input wire [IDX_W-1:0] support2,
@@ -1558,8 +1560,10 @@ active_op <= OP_REFINE;
                 end
                 if (ls_done_w)
                     ls_row_update_block_q <= 1'b0;
-        corr_stream_valid_q <= 1'b0;
-        corr_stream_done_q <= 1'b0;
+        if (corr_stream_valid_q && corr_stream_ready) begin
+            corr_stream_valid_q <= 1'b0;
+            corr_stream_done_q <= 1'b0;
+        end
         factor_pipe_valid <= 1'b0;
 case (state)
             S_IDLE: begin
@@ -2889,6 +2893,12 @@ case (state)
             S_CORR_PE_WAIT: begin
                 if (corr_drain_wait_q != 0) begin
                     corr_drain_wait_q <= corr_drain_wait_q - 1'b1;
+                end else if (corr_stream_active && corr_stream_valid_q && !corr_stream_ready) begin
+                    // Keep the completed correlation block in the registered
+                    // producer slot until the PE0 serial consumer accepts it.
+                    // Correlation may prepare the next block in parallel, but
+                    // it cannot overwrite an unconsumed stream transaction.
+                    state <= S_CORR_PE_WAIT;
                 end else begin
                     write_idx <= corr_col;
                     if (active_op == OP_CORR_UPDATE)
@@ -2897,8 +2907,9 @@ case (state)
                 end
             end
             S_CORR_WRITE: begin
-                corr_stream_valid_q <= busy;
-                corr_stream_done_q <= (corr_col + COLS[IDX_W-1:0] >= n_size);
+                corr_stream_valid_q <= busy && corr_stream_active;
+                corr_stream_done_q <= corr_stream_active &&
+                                      (corr_col + COLS[IDX_W-1:0] >= n_size);
                 corr_stream_base_idx_q <= corr_col;
                 for (corr_lane = 0; corr_lane < COLS; corr_lane = corr_lane + 1) begin
                     corr_stream_lane_valid_q[corr_lane] <= ((corr_col + corr_lane[IDX_W-1:0]) < n_size);

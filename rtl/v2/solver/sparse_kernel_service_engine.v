@@ -171,6 +171,7 @@ module sparse_kernel_service_engine #(
     wire [IDX_W-1:0] ls_corr_stream_base_idx;
     wire [COLS-1:0] ls_corr_stream_lane_valid;
     wire [COLS*DATA_W-1:0] ls_corr_stream_data;
+    wire topk_stream_ready;
     wire [32*IDX_W-1:0] support_bus_w;
     assign support_bus_w = {support31_w, support30_w, support29_w, support28_w, support27_w, support26_w, support25_w, support24_w, support23_w, support22_w, support21_w, support20_w, support19_w, support18_w, support17_w, support16_w, support15_w, support14_w, support13_w, support12_w, support11_w, support10_w, support9_w, support8_w, support7_w, support6_w, support5_w, support4_w, support3_w, support2_w, support1_w, support0_w};
 
@@ -212,7 +213,7 @@ module sparse_kernel_service_engine #(
         .pe_max_count(topk_pipe_max_count), .pe_result_valid(topk_pipe_result_valid),
         .pe_result_count(topk_pipe_result_count), .pe_result_idx_bus(topk_pipe_result_idx_bus),
         .append_valid(select_append_valid), .append_idx(select_append_idx), .append_path(select_append_path),
-        .stream_ready(), .busy(topk_busy), .done(topk_done)
+        .stream_ready(topk_stream_ready), .busy(topk_busy), .done(topk_done)
     );
 
     always @(posedge clk or negedge rst_n) begin
@@ -246,6 +247,7 @@ module sparse_kernel_service_engine #(
         .factor_pipe_resp_valid(factor_pipe_resp_valid), .factor_pipe_resp_tag(factor_pipe_resp_tag), .factor_pipe_resp_value(factor_pipe_resp_value), .factor_pipe_resp_match_mask(factor_pipe_resp_match_mask),
         .ls_wide_mul_active(ls_wide_mul_active), .ls_wide_vertical_active(ls_wide_vertical_active), .ls_wide_vertical_tag(ls_wide_vertical_tag), .ls_wide_a_bus(ls_wide_a_bus), .ls_wide_b_bus(ls_wide_b_bus), .ls_wide_product_bus(ls_wide_product_bus),
         .corr_stream_valid(ls_corr_stream_valid), .corr_stream_done(ls_corr_stream_done), .corr_stream_base_idx(ls_corr_stream_base_idx), .corr_stream_lane_valid(ls_corr_stream_lane_valid), .corr_stream_data(ls_corr_stream_data),
+        .corr_stream_active(stream_select_pending_q), .corr_stream_ready(topk_stream_ready),
         .support0(support0_w), .support1(support1_w), .support2(support2_w), .support3(support3_w), .support4(support4_w), .support5(support5_w), .support6(support6_w), .support7(support7_w),
         .support8(support8_w), .support9(support9_w), .support10(support10_w), .support11(support11_w), .support12(support12_w), .support13(support13_w), .support14(support14_w), .support15(support15_w),
         .support16(support16_w), .support17(support17_w), .support18(support18_w), .support19(support19_w), .support20(support20_w), .support21(support21_w), .support22(support22_w), .support23(support23_w),
