@@ -4,24 +4,23 @@ Last updated: 2026-08-09 (Asia/Saigon)
 
 ## Active optimization checkpoint
 
-- Current sign-off checkpoint: post-update x streaming for IHT, HTP, and GP,
-  on top of the lossless correlation-to-top-K ready/valid checkpoint.
+- Current sign-off checkpoint: correlation streaming for SP/CoSaMP, on top of
+  post-update x streaming for IHT/HTP/GP and the lossless top-K handshake.
 - Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
-- Independently isolated aggregate cycles: 1581856, down 51268 (3.14%) from
-  the preceding checkpoint. IHT is 138684 cycles (-15.06%) and GP is 138684
-  cycles (-16.13%); HTP remains 242078 cycles.
+- Independently isolated aggregate cycles: 1554673, down 27183 (1.72%) from
+  the preceding checkpoint. CoSaMP is 327268 cycles (-5.41%) and SP is 275875
+  cycles (-2.98%); all other algorithm totals are unchanged.
 - Timing: WNS +0.538 ns, TNS 0, zero failing endpoints at 100 MHz.
 - Resources: 113051 LUT, 51078 FF, 24 RAMB36, 71 DSP48.
 - Detailed report:
-  `reports/releases/POST_UPDATE_X_IHT_GP_SIGNOFF_20260809.md`.
+  `reports/releases/CORR_STREAM_SP_COSAMP_SIGNOFF_20260809.md`.
 - Compact cycle data:
-  `reports/releases/post_update_x_iht_gp_k_sweep_20260809.csv`.
+  `reports/releases/corr_stream_sp_cosamp_k_sweep_20260809.csv`.
 - Architecture: the correlation/update transaction still enters only PE0 and
-  advances through all four registered PE rows. IHT/HTP/GP fill shadow support
-  P1 from PE3's exact committed updated-x stream, then copy it to P0 before
-  prune/residual or refine. Residual now emits one registered PE0 transaction
-  per block; this removes the stale lane-0 token that caused the earlier IHT/GP
-  case-4/case-6 divergence.
+  advances through all four registered PE rows. SP streams K and CoSaMP streams
+  2K correlation candidates into shadow path P1 before merging into P0.
+  IHT/HTP/GP retain their signed-off post-update x streams, and residual retains
+  one registered PE0 transaction per block.
 - Independent algorithms now use full soft reset at the run boundary so SPM
   scratch cannot leak between cycle/correctness measurements. Reset time is
   outside the algorithm cycle counter.
@@ -36,10 +35,10 @@ one column from four row banks.  No trial RTL is retained; details are in
 `reports/releases/LS_READ_CHAIN_TRIALS_20260806.md`.
 
 Do not add more LS completion/address mux fan-in without state-residency data
-showing a material K8/K16 benefit. The IHT/GP divergence is resolved: it came
-from an early/repeated residual mesh token, not top-K support ordering.
-SP/CoSaMP streaming is the next candidate, but must preserve the one-token
-residual boundary and exact 2K support semantics.
+showing a material K8/K16 benefit. The next target is a support-limited
+post-REFINE stream for SP/CoSaMP, replacing repeated `reduce_x_support` scans
+while preserving exact 2K/3K candidate semantics and the one-token residual
+boundary.
 Every large arithmetic transaction must still enter PE0 and advance through
 all four rows.  Full correctness, per-algorithm cycles, resources, positive
 WNS, and a preferred margin of at least +0.2 ns remain release gates.

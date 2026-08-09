@@ -322,10 +322,9 @@ static uint32_t build_program(uint32_t alg, uint32_t iter_count)
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE_SPARSE, 0));
         break;
     case ALG_COSAMP:
-        cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR, 0));
         cgra_write_ctx(pc++, candidate_meta_depth_ctx(1U, 0U, 0));
-        cgra_write_ctx(pc++, candidate_select_path_ctx(1U, 0));
-        emit_reduce_append_loop(&pc, reduce_argmax_ctx(0), candidate_append_path_ctx(1U, 0), (uint8_t)(iter_count << 1), 1U);
+        cgra_write_ctx(pc++, stream_topk_ctx(1U, (uint8_t)(iter_count << 1), 0, 0));
+        cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR, 0));
         cgra_write_ctx(pc++, candidate_select_path_ctx(1U, 0));
         cgra_write_ctx(pc++, candidate_merge_path_ctx(0U, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
@@ -352,10 +351,9 @@ static uint32_t build_program(uint32_t alg, uint32_t iter_count)
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         break;
     case ALG_SP:
-        cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR, 0));
         cgra_write_ctx(pc++, candidate_meta_depth_ctx(1U, 0U, 0));
-        cgra_write_ctx(pc++, candidate_select_path_ctx(1U, 0));
-        emit_reduce_append_loop(&pc, reduce_argmax_ctx(0), candidate_append_path_ctx(1U, 0), (uint8_t)iter_count, 1U);
+        cgra_write_ctx(pc++, stream_topk_ctx(1U, (uint8_t)iter_count, 0, 0));
+        cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR, 0));
         cgra_write_ctx(pc++, candidate_select_path_ctx(1U, 0));
         cgra_write_ctx(pc++, candidate_merge_path_ctx(0U, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
