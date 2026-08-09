@@ -173,6 +173,27 @@ Detailed final results are in
 `reports/releases/REPOSITORY_LAYOUT_SIGNOFF_20260803.md`. No correctness,
 cycle, timing, or resource work remains for the layout refactor.
 
+## Latest optimization checkpoint: support-limited post-REFINE stream
+
+SP and CoSaMP now replace K repeated post-REFINE full-vector reduce/append
+scans with a lossless support-only stream into exact four-row top-K. Candidate
+data enters only PE0; append results are reordered by ascending index to retain
+the legacy LDLT support order.
+
+- Correctness: 348 PASS / 0 FAIL, 62 cycle records, 2 expected K16 skips.
+- Total: 1,554,673 -> 1,536,277 cycles (-18,396; -1.18%).
+- CoSaMP: 327,268 -> 318,322 (-2.73%).
+- SP: 275,875 -> 266,425 (-3.43%).
+- Timing: WNS +0.129 ns, TNS 0, no failing endpoints at 100 MHz.
+- Resources: 115,178 total LUT, 51,312 FF, 24 RAMB36, 71 DSP48.
+- Detailed report:
+  `reports/releases/POST_REFINE_SUPPORT_STREAM_SIGNOFF_20260809.md`.
+- Cycle matrix:
+  `reports/releases/post_refine_support_stream_k_sweep_20260809.csv`.
+
+Next work must preserve strict PE0 ingress and should first protect or improve
+timing margin before adding logic to the LDLT/residual critical cone.
+
 ## Optimization continuation baseline
 
 The consolidated performance data, implemented optimization inventory,

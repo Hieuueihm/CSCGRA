@@ -57,6 +57,7 @@ module sparse_loop_controller #(
     output wire [COLS*DATA_W-1:0] corr_stream_data,
     input wire corr_stream_active,
     input wire corr_stream_post_update_x,
+    input wire corr_stream_post_refine_support,
     input wire corr_stream_ready,
     input wire [IDX_W-1:0] support0,
     input wire [IDX_W-1:0] support1,
@@ -969,6 +970,7 @@ reg corr_stream_done_q;
 reg [IDX_W-1:0] corr_stream_base_idx_q;
 reg [COLS-1:0] corr_stream_lane_valid_q;
 reg [COLS*DATA_W-1:0] corr_stream_data_q;
+reg [5:0] refine_stream_count_q;
 reg [31:0] corr_block_seq;
 reg [31:0] corr_block_state;
 reg [31:0] corr_row_state;
@@ -1206,6 +1208,18 @@ function [DATA_W-1:0] coeff_for_dense_idx;
         end
     end
 endfunction
+function support_cached_has_idx;
+    input [IDX_W-1:0] dense_idx;
+    integer support_rank;
+    begin
+        support_cached_has_idx = 1'b0;
+        for (support_rank = 0; support_rank < MAX_K; support_rank = support_rank + 1) begin
+            if ((support_rank < active_k) &&
+                (dense_idx == support_cache[support_rank]))
+                support_cached_has_idx = 1'b1;
+        end
+    end
+endfunction
 function [7:0] ge_lower_idx;
     input [4:0] row;
     input [4:0] col;
@@ -1440,6 +1454,7 @@ active_op <= OP_REFINE;
         corr_stream_base_idx_q <= {IDX_W{1'b0}};
         corr_stream_lane_valid_q <= {COLS{1'b0}};
         corr_stream_data_q <= {COLS*DATA_W{1'b0}};
+        refine_stream_count_q <= 6'd0;
         iht_x_block <= {COLS*DATA_W{1'b0}};
         load_i <= 5'd0;
         ge_mul_a <= 64'sd0;
@@ -1594,6 +1609,7 @@ case (state)
                     phase_residual <= 1'b0;
                     write_limit <= n_size;
                     write_value <= {DATA_W{1'b0}};
+                    refine_stream_count_q <= 6'd0;
                     state <= (((op_sel == OP_REFINE) ||
                                (op_sel == OP_REFINE_SPARSE)) &&
                               (k_active != 0) && (k_active <= MAX_K)) ?
@@ -1940,6 +1956,29 @@ case (state)
             end
             S_WX_COMMIT: begin
                 write_value <= row3_commit_value_w;
+                if (corr_stream_active && corr_stream_post_refine_support &&
+                    (active_op == OP_REFINE) &&
+                    support_cached_has_idx(wx_target_idx_q) &&
+                    corr_stream_valid_q && !corr_stream_ready) begin
+                    // Keep the current dense commit stable until the previous
+                    // support-only token has been accepted at the PE0 ingress.
+                    state <= S_WX_COMMIT;
+                end else begin
+                    if (corr_stream_active && corr_stream_post_refine_support &&
+                        (active_op == OP_REFINE) &&
+                        support_cached_has_idx(wx_target_idx_q)) begin
+                        corr_stream_valid_q <= busy;
+                        corr_stream_done_q <=
+                            (refine_stream_count_q + 1'b1 >= active_k_count);
+                        corr_stream_base_idx_q <=
+                            {wx_target_idx_q[IDX_W-1:3], 3'b000};
+                        corr_stream_lane_valid_q <=
+                            ({{(COLS-1){1'b0}}, 1'b1} << wx_target_idx_q[2:0]);
+                        corr_stream_data_q <= {COLS*DATA_W{1'b0}};
+                        corr_stream_data_q[wx_target_idx_q[2:0]*DATA_W +: DATA_W] <=
+                            row3_commit_value_w;
+                        refine_stream_count_q <= refine_stream_count_q + 1'b1;
+                    end
                 if (write_idx + 1 >= write_limit) begin
                     write_idx <= {IDX_W{1'b0}};
                     phase_residual <= 1'b1;
@@ -1960,6 +1999,7 @@ case (state)
                         wx_target_idx_q <= write_idx + 1'b1;
                         wx_value_q <= coeff_for_dense_idx(write_idx + 1'b1);
                     end
+                end
                 end
             end
             S_WR_ACC_INIT: begin

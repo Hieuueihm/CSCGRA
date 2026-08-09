@@ -10,6 +10,7 @@ module pe_stream_topk_serial_service #(
     input  wire                         start,
     input  wire [5:0]                   max_count,
     input  wire [2:0]                   append_path_in,
+    input  wire                         sort_append_by_idx,
     input  wire                         exclude_support,
     input  wire                         allow_tiny,
     input  wire                         stream_valid,
@@ -66,7 +67,8 @@ module pe_stream_topk_serial_service #(
     endfunction
 
     localparam [2:0] S_IDLE=3'd0, S_CAPTURE=3'd1, S_ISSUE=3'd2,
-                     S_WAIT_RESULT=3'd3, S_APPEND=3'd4, S_DONE=3'd5;
+                     S_WAIT_RESULT=3'd3, S_APPEND=3'd4, S_DONE=3'd5,
+                     S_SORT_SCAN=3'd6, S_SORT_WAIT=3'd7;
     reg [2:0] state_q;
     reg [COLS-1:0] block_valid_q;
     reg [COLS*DATA_W-1:0] block_data_q;
@@ -77,6 +79,11 @@ module pe_stream_topk_serial_service #(
     reg [MAX_SEL*IDX_W-1:0] result_idx_bus_q;
     reg [5:0] append_pos_q;
     reg append_wait_q;
+    reg sort_append_q;
+    reg [MAX_SEL-1:0] sort_used_q;
+    reg [5:0] sort_scan_pos_q;
+    reg [5:0] sort_best_pos_q;
+    reg [IDX_W-1:0] sort_best_idx_q;
     wire [IDX_W-1:0] issue_idx_w = block_base_q + lane_q;
     wire [DATA_W-1:0] issue_abs_w =
         abs_data(block_data_q[lane_q*DATA_W +: DATA_W]);
@@ -109,6 +116,11 @@ module pe_stream_topk_serial_service #(
             result_idx_bus_q <= {MAX_SEL*IDX_W{1'b0}};
             append_pos_q <= 6'd0;
             append_wait_q <= 1'b0;
+            sort_append_q <= 1'b0;
+            sort_used_q <= {MAX_SEL{1'b0}};
+            sort_scan_pos_q <= 6'd0;
+            sort_best_pos_q <= 6'd0;
+            sort_best_idx_q <= {IDX_W{1'b1}};
         end else begin
             pe_clear <= 1'b0;
             pe_token_valid <= 1'b0;
@@ -127,6 +139,11 @@ module pe_stream_topk_serial_service #(
                         append_path <= append_path_in;
                         append_pos_q <= 6'd0;
                         append_wait_q <= 1'b0;
+                        sort_append_q <= sort_append_by_idx;
+                        sort_used_q <= {MAX_SEL{1'b0}};
+                        sort_scan_pos_q <= 6'd0;
+                        sort_best_pos_q <= 6'd0;
+                        sort_best_idx_q <= {IDX_W{1'b1}};
                         state_q <= S_CAPTURE;
                     end
                 end
@@ -172,7 +189,8 @@ module pe_stream_topk_serial_service #(
                         result_count_q <= pe_result_count;
                         result_idx_bus_q <= pe_result_idx_bus;
                         append_pos_q <= 6'd0;
-                        state_q <= (pe_result_count == 0) ? S_DONE : S_APPEND;
+                        state_q <= (pe_result_count == 0) ? S_DONE :
+                                   (sort_append_q ? S_SORT_SCAN : S_APPEND);
                     end
                 end
                 S_APPEND: begin
@@ -188,6 +206,37 @@ module pe_stream_topk_serial_service #(
                         append_valid <= 1'b1;
                         append_idx <= result_idx_bus_q[append_pos_q*IDX_W +: IDX_W];
                         append_wait_q <= 1'b1;
+                    end
+                end
+                S_SORT_SCAN: begin
+                    busy <= 1'b1;
+                    if (append_pos_q >= result_count_q) begin
+                        state_q <= S_DONE;
+                    end else if (sort_scan_pos_q < result_count_q) begin
+                        if (!sort_used_q[sort_scan_pos_q] &&
+                            (result_idx_bus_q[sort_scan_pos_q*IDX_W +: IDX_W] < sort_best_idx_q)) begin
+                            sort_best_idx_q <=
+                                result_idx_bus_q[sort_scan_pos_q*IDX_W +: IDX_W];
+                            sort_best_pos_q <= sort_scan_pos_q;
+                        end
+                        sort_scan_pos_q <= sort_scan_pos_q + 1'b1;
+                    end else begin
+                        // Reproduce candidate_append_path_ctx's ascending-index
+                        // order without a wide combinational sorting network.
+                        append_valid <= 1'b1;
+                        append_idx <= sort_best_idx_q;
+                        state_q <= S_SORT_WAIT;
+                    end
+                end
+                S_SORT_WAIT: begin
+                    busy <= 1'b1;
+                    if (append_done) begin
+                        sort_used_q[sort_best_pos_q] <= 1'b1;
+                        append_pos_q <= append_pos_q + 1'b1;
+                        sort_scan_pos_q <= 6'd0;
+                        sort_best_pos_q <= 6'd0;
+                        sort_best_idx_q <= {IDX_W{1'b1}};
+                        state_q <= S_SORT_SCAN;
                     end
                 end
                 S_DONE: begin

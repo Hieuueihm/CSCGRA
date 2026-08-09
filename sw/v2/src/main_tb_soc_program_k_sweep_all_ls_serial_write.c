@@ -182,6 +182,14 @@ static uint64_t post_update_x_topk_ctx(uint8_t path, uint8_t count, int is_last)
     return w;
 }
 
+static uint64_t post_refine_support_topk_ctx(uint8_t path, uint8_t count, int is_last)
+{
+    uint64_t w = stream_topk_ctx(path, count, 0, is_last);
+    w |= 1ULL << 30; /* preserve repeated reduce-x handling of tiny values */
+    w |= 1ULL << 28; /* publish only coefficients in REFINE's cached support */
+    return w;
+}
+
 static uint64_t candidate_append_result_ctx(int is_last)
 {
     uint64_t w = 0;
@@ -327,10 +335,9 @@ static uint32_t build_program(uint32_t alg, uint32_t iter_count)
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR, 0));
         cgra_write_ctx(pc++, candidate_select_path_ctx(1U, 0));
         cgra_write_ctx(pc++, candidate_merge_path_ctx(0U, 0));
-        cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         cgra_write_ctx(pc++, candidate_meta_depth_ctx(1U, 0U, 0));
-        cgra_write_ctx(pc++, candidate_select_path_ctx(1U, 0));
-        emit_reduce_append_loop(&pc, reduce_x_support_ctx(0), candidate_append_path_ctx(1U, 0), (uint8_t)iter_count, 1U);
+        cgra_write_ctx(pc++, post_refine_support_topk_ctx(1U, (uint8_t)iter_count, 0));
+        cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         cgra_write_ctx(pc++, candidate_copy_to_p0_ctx(1U, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         break;
@@ -356,10 +363,9 @@ static uint32_t build_program(uint32_t alg, uint32_t iter_count)
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR, 0));
         cgra_write_ctx(pc++, candidate_select_path_ctx(1U, 0));
         cgra_write_ctx(pc++, candidate_merge_path_ctx(0U, 0));
-        cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         cgra_write_ctx(pc++, candidate_meta_depth_ctx(1U, 0U, 0));
-        cgra_write_ctx(pc++, candidate_select_path_ctx(1U, 0));
-        emit_reduce_append_loop(&pc, reduce_x_support_ctx(0), candidate_append_path_ctx(1U, 0), (uint8_t)iter_count, 1U);
+        cgra_write_ctx(pc++, post_refine_support_topk_ctx(1U, (uint8_t)iter_count, 0));
+        cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         cgra_write_ctx(pc++, candidate_copy_to_p0_ctx(1U, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         break;
