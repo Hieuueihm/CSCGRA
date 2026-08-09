@@ -160,6 +160,7 @@ module sparse_kernel_service_engine #(
     assign select_busy = select_busy_q;
     assign select_done = select_done_q;
     reg stream_select_pending_q;
+    reg stream_select_post_update_x_q;
     reg ls_done_deferred_q;
     // Timing-isolated sample used only by the loop controller.  It is aligned
     // with cgra_top's registered sparse_k_active value, so both operands seen
@@ -247,7 +248,7 @@ module sparse_kernel_service_engine #(
         .factor_pipe_resp_valid(factor_pipe_resp_valid), .factor_pipe_resp_tag(factor_pipe_resp_tag), .factor_pipe_resp_value(factor_pipe_resp_value), .factor_pipe_resp_match_mask(factor_pipe_resp_match_mask),
         .ls_wide_mul_active(ls_wide_mul_active), .ls_wide_vertical_active(ls_wide_vertical_active), .ls_wide_vertical_tag(ls_wide_vertical_tag), .ls_wide_a_bus(ls_wide_a_bus), .ls_wide_b_bus(ls_wide_b_bus), .ls_wide_product_bus(ls_wide_product_bus),
         .corr_stream_valid(ls_corr_stream_valid), .corr_stream_done(ls_corr_stream_done), .corr_stream_base_idx(ls_corr_stream_base_idx), .corr_stream_lane_valid(ls_corr_stream_lane_valid), .corr_stream_data(ls_corr_stream_data),
-        .corr_stream_active(stream_select_pending_q), .corr_stream_ready(topk_stream_ready),
+        .corr_stream_active(stream_select_pending_q), .corr_stream_post_update_x(stream_select_post_update_x_q), .corr_stream_ready(topk_stream_ready),
         .support0(support0_w), .support1(support1_w), .support2(support2_w), .support3(support3_w), .support4(support4_w), .support5(support5_w), .support6(support6_w), .support7(support7_w),
         .support8(support8_w), .support9(support9_w), .support10(support10_w), .support11(support11_w), .support12(support12_w), .support13(support13_w), .support14(support14_w), .support15(support15_w),
         .support16(support16_w), .support17(support17_w), .support18(support18_w), .support19(support19_w), .support20(support20_w), .support21(support21_w), .support22(support22_w), .support23(support23_w),
@@ -264,17 +265,25 @@ wire ls_done_deferred_fire = ls_done_deferred_q && !stream_select_pending_q && !
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         stream_select_pending_q <= 1'b0;
+        stream_select_post_update_x_q <= 1'b0;
         ls_done_deferred_q <= 1'b0;
     end else if (clear_error_pulse || (start_pulse && !stream_select_ctx)) begin
         stream_select_pending_q <= 1'b0;
+        stream_select_post_update_x_q <= 1'b0;
         ls_done_deferred_q <= 1'b0;
     end else begin
-        if (stream_select_ctx)
+        if (stream_select_ctx) begin
             stream_select_pending_q <= 1'b1;
+            // Context bit 29 selects the post-update x producer.  Zero keeps
+            // the existing correlation-score stream used by OMP/GOMP.
+            stream_select_post_update_x_q <= ctx_word[29];
+        end
         if (ls_done_raw && stream_select_pending_q && select_busy)
             ls_done_deferred_q <= 1'b1;
-        if (select_done)
+        if (select_done) begin
             stream_select_pending_q <= 1'b0;
+            stream_select_post_update_x_q <= 1'b0;
+        end
         if (ls_done_deferred_fire)
             ls_done_deferred_q <= 1'b0;
     end

@@ -56,6 +56,7 @@ module sparse_loop_controller #(
     output wire [COLS-1:0] corr_stream_lane_valid,
     output wire [COLS*DATA_W-1:0] corr_stream_data,
     input wire corr_stream_active,
+    input wire corr_stream_post_update_x,
     input wire corr_stream_ready,
     input wire [IDX_W-1:0] support0,
     input wire [IDX_W-1:0] support1,
@@ -2907,13 +2908,15 @@ case (state)
                 end
             end
             S_CORR_WRITE: begin
-                corr_stream_valid_q <= busy && corr_stream_active;
-                corr_stream_done_q <= corr_stream_active &&
-                                      (corr_col + COLS[IDX_W-1:0] >= n_size);
-                corr_stream_base_idx_q <= corr_col;
-                for (corr_lane = 0; corr_lane < COLS; corr_lane = corr_lane + 1) begin
-                    corr_stream_lane_valid_q[corr_lane] <= ((corr_col + corr_lane[IDX_W-1:0]) < n_size);
-                    corr_stream_data_q[corr_lane*DATA_W +: DATA_W] <= row3_wr_data[corr_lane*DATA_W +: DATA_W];
+                if (!corr_stream_post_update_x) begin
+                    corr_stream_valid_q <= busy && corr_stream_active;
+                    corr_stream_done_q <= corr_stream_active &&
+                                          (corr_col + COLS[IDX_W-1:0] >= n_size);
+                    corr_stream_base_idx_q <= corr_col;
+                    for (corr_lane = 0; corr_lane < COLS; corr_lane = corr_lane + 1) begin
+                        corr_stream_lane_valid_q[corr_lane] <= ((corr_col + corr_lane[IDX_W-1:0]) < n_size);
+                        corr_stream_data_q[corr_lane*DATA_W +: DATA_W] <= row3_wr_data[corr_lane*DATA_W +: DATA_W];
+                    end
                 end
                 corr_block_seq <= corr_block_seq + 1'b1;
                 if (active_op == OP_CORR_UPDATE) begin
@@ -2946,6 +2949,21 @@ case (state)
                     mesh_ctx_wait_count <= mesh_ctx_wait_count - 1'b1;
             end
             S_IHT_MESH_WRITE: begin
+                if (corr_stream_active && corr_stream_post_update_x) begin
+                    // The updated x block has entered only at PE0 and reached
+                    // PE3 through the registered mesh wavefront.  Publish the
+                    // exact block committed to SPM, not the pre-update score.
+                    corr_stream_valid_q <= busy;
+                    corr_stream_done_q <=
+                        (corr_col + COLS[IDX_W-1:0] >= n_size);
+                    corr_stream_base_idx_q <= corr_col;
+                    for (corr_lane = 0; corr_lane < COLS; corr_lane = corr_lane + 1) begin
+                        corr_stream_lane_valid_q[corr_lane] <=
+                            ((corr_col + corr_lane[IDX_W-1:0]) < n_size);
+                        corr_stream_data_q[corr_lane*DATA_W +: DATA_W] <=
+                            row3_wr_data[corr_lane*DATA_W +: DATA_W];
+                    end
+                end
                 if (corr_col + COLS[IDX_W-1:0] >= n_size) begin
                     state <= S_DONE;
                 end else begin

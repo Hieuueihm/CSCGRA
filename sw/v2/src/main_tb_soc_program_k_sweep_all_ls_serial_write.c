@@ -174,6 +174,14 @@ static uint64_t stream_topk_ctx(uint8_t path, uint8_t count, int exclude_support
     return w;
 }
 
+static uint64_t post_update_x_topk_ctx(uint8_t path, uint8_t count, int is_last)
+{
+    uint64_t w = stream_topk_ctx(path, count, 0, is_last);
+    w |= 1ULL << 30; /* retain the reduce-x behavior for quantized tiny values */
+    w |= 1ULL << 29; /* select the post-update x producer */
+    return w;
+}
+
 static uint64_t candidate_append_result_ctx(int is_last)
 {
     uint64_t w = 0;
@@ -335,9 +343,10 @@ static uint32_t build_program(uint32_t alg, uint32_t iter_count)
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_RESID, 0));
         break;
     case ALG_HTP:
+        cgra_write_ctx(pc++, candidate_meta_depth_ctx(1U, 0U, 0));
+        cgra_write_ctx(pc++, post_update_x_topk_ctx(1U, (uint8_t)iter_count, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR_UPDATE, 0));
-        cgra_write_ctx(pc++, candidate_meta_depth_ctx(0U, 0U, 0));
-        emit_reduce_append_loop(&pc, reduce_x_ctx(0), candidate_append_path_ctx(0U, 0), (uint8_t)iter_count, 1U);
+        cgra_write_ctx(pc++, candidate_copy_to_p0_ctx(1U, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_PRUNE_X, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         break;
@@ -423,7 +432,9 @@ static void init_buffers(uint32_t case_idx)
 
 static void clear_cgra_state(void)
 {
-    cgra_write(REG_CTRL, 4U);
+    /* Independent run boundary: reset SPM scratch and configmem as well as
+     * status.  Buffers and the next program are loaded after this call. */
+    cgra_write(REG_CTRL, 2U);
     for (volatile uint32_t i = 0; i < 1024U; ++i) {
     }
 }

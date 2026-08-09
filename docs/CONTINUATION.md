@@ -1,33 +1,30 @@
 # Repository refactor continuation log
 
-Last updated: 2026-08-07 (Asia/Saigon)
+Last updated: 2026-08-09 (Asia/Saigon)
 
 ## Active optimization checkpoint
 
-- Current sign-off checkpoint: timing-isolated strict-PE0 block-8 prune, on
-  top of the fused correlation-update and stable LS command-chain checkpoints.
+- Current sign-off checkpoint: HTP post-update x streaming, on top of the
+  lossless correlation-to-top-K ready/valid checkpoint.
 - Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
-- Aggregate cycles: 1650508, down 31536 (1.87%) from the fused-program
-  checkpoint.  IHT, HTP, and GP each save 10512 cycles over the full sweep.
-- Timing: WNS +0.325 ns, TNS 0, zero failing endpoints at 100 MHz.  Aggregate
-  and per-algorithm cycles are unchanged by the timing pipeline.
-- Resources: 112516 LUT, 51122 FF, 24 RAMB36, 71 DSP48.
+- Independently isolated aggregate cycles: 1633124. HTP is 242078 cycles,
+  down 22413 (8.47%) from the preceding 264491-cycle checkpoint.
+- Timing: WNS +0.417 ns, TNS 0, zero failing endpoints at 100 MHz.
+- Resources: 112023 LUT, 51159 FF, 24 RAMB36, 71 DSP48.
 - Detailed report:
-  `reports/releases/SUPPORT_MESH_TIMING_ISOLATION_SIGNOFF_20260807.md`.
+  `reports/releases/POST_UPDATE_X_HTP_SIGNOFF_20260809.md`.
 - Compact cycle data:
-  `reports/releases/strict_pe0_prune_block8_k_sweep_20260806.csv`.
-- Architecture: each physical PE row owns one distributed-RAM scoreboard bank.
-  LS reads and RHS writes are chained from the preceding completion pulse with
-  exactly one request in flight.  Registered four-row LDLT results feed WRITE4
-  directly.  Fused correlation-update and prune blocks use the registered
-  four-row wavefront.  Prune presents a one-cycle token only to PE0; PE1 takes
-  abs/threshold, PE2 applies the keep mask, and PE3 range-masks and commits the
-  eight-lane word.  Support depth/active-K are sampled before their high-fanout
-  control cones, and each mesh transaction is registered at the top-level PE0
-  boundary.  The existing drain budget absorbs this stage with zero cycle
-  change.  No second ingress, matrix port, or double buffer was added.
+  `reports/releases/post_update_x_htp_k_sweep_20260809.csv`.
+- Architecture: the correlation/update transaction still enters only PE0 and
+  advances through all four registered PE rows. PE3's exact committed updated-x
+  block can feed the ready/valid exact top-K service. HTP fills shadow support
+  P1 during update, then copies it to P0 before prune/refine. IHT and GP retain
+  legacy reduce-x because their streamed trials failed exact golden cases 4/6.
+- Independent algorithms now use full soft reset at the run boundary so SPM
+  scratch cannot leak between cycle/correctness measurements. Reset time is
+  outside the algorithm cycle counter.
 
-The proposed completion-driven LS read chaining has now been measured and
+The earlier proposed completion-driven LS read chaining was measured and
 rejected.  Diagonal-gather chaining failed timing at WNS -0.299 ns.  Back-solve
 READ4, direct divider initialization, and forward-solve READ2 retained positive
 WNS but reduced the margin to +0.134, +0.152, and +0.176 ns for only 21, 20,
@@ -37,10 +34,10 @@ one column from four row banks.  No trial RTL is retained; details are in
 `reports/releases/LS_READ_CHAIN_TRIALS_20260806.md`.
 
 Do not add more LS completion/address mux fan-in without state-residency data
-showing a material K8/K16 benefit.  Timing isolation removed both support
-`depth_mem` and `write_idx` from the worst path and restored WNS to +0.325 ns.
-The next checkpoint should profile exact factor-check/top-K state residency
-and choose a datapath-local control reduction with measurable K8/K16 benefit.
+showing a material K8/K16 benefit. The next checkpoint should explain the
+IHT/GP support-order divergence between one-pass updated-x top-K and repeated
+reduce-x before enabling those program paths. SP/CoSaMP streaming remains
+blocked on a direct residual lane-0 block-transition equivalence check.
 Every large arithmetic transaction must still enter PE0 and advance through
 all four rows.  Full correctness, per-algorithm cycles, resources, positive
 WNS, and a preferred margin of at least +0.2 ns remain release gates.

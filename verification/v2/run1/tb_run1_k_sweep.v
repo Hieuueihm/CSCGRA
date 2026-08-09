@@ -133,6 +133,12 @@ function [63:0] stream_topk_ctx; input [7:0] count; input [7:0] path; input excl
     stream_topk_ctx[22:20]=path[2:0];
     stream_topk_ctx[15:11]=count[4:0];
 end endfunction
+function [63:0] post_update_x_topk_ctx; input [7:0] count; input [7:0] path; input is_last; begin
+    // Repeated reduce-x always returns a lane, including quantized |x| <= 1.
+    // Preserve that exact support-fill behavior in the one-pass stream.
+    post_update_x_topk_ctx=stream_topk_ctx(count,path,0,1,is_last);
+    post_update_x_topk_ctx[29]=1'b1;
+end endfunction
 function [63:0] candidate_append_result_ctx; input is_last; begin candidate_append_result_ctx=64'd0; candidate_append_result_ctx[63:60]=4'h1; candidate_append_result_ctx[59:56]=4'd6; if(is_last) candidate_append_result_ctx[47:44]=4'd6; candidate_append_result_ctx[19:16]=4'd1; end endfunction
 function [63:0] candidate_append_path_ctx; input [7:0] path; input is_last; begin candidate_append_path_ctx=64'd0; candidate_append_path_ctx[63:60]=4'h1; candidate_append_path_ctx[59:56]=4'd6; if(is_last) candidate_append_path_ctx[47:44]=4'd6; candidate_append_path_ctx[22:20]=path[2:0]; candidate_append_path_ctx[19:16]=4'd9; end endfunction
 function [63:0] candidate_meta_depth_ctx; input [7:0] path; input [7:0] depth; input is_last; begin candidate_meta_depth_ctx=64'd0; candidate_meta_depth_ctx[63:60]=4'h1; candidate_meta_depth_ctx[59:56]=4'd6; if(is_last) candidate_meta_depth_ctx[47:44]=4'd6; candidate_meta_depth_ctx[22:20]=path[2:0]; candidate_meta_depth_ctx[19:16]=4'd4; candidate_meta_depth_ctx[15:11]=depth[4:0]; end endfunction
@@ -157,7 +163,7 @@ task build_program; input integer alg_id; input integer k_param; output integer 
     ALG_OMP: begin emit_select_append(pc); write_ctx(pc,sparse_op_ctx(SOP_REFINE_SPARSE,0)); pc=pc+1; end
     ALG_COSAMP: begin write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,candidate_select_path_ctx(1,0)); pc=pc+1; emit_reduce_append_loop(pc,reduce_argmax_ctx(0),candidate_append_path_ctx(1,0),(k_param<<1),1); write_ctx(pc,candidate_select_path_ctx(1,0)); pc=pc+1; write_ctx(pc,candidate_merge_path_ctx(0,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,candidate_select_path_ctx(1,0)); pc=pc+1; emit_reduce_append_loop(pc,reduce_x_support_ctx(0),candidate_append_path_ctx(1,0),k_param,1); write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
     ALG_IHT: begin write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(0,0,0)); pc=pc+1; emit_reduce_append_loop(pc,reduce_x_ctx(0),candidate_append_path_ctx(0,0),k_param,1); write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_RESID,0)); pc=pc+1; end
-    ALG_HTP: begin write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(0,0,0)); pc=pc+1; emit_reduce_append_loop(pc,reduce_x_ctx(0),candidate_append_path_ctx(0,0),k_param,1); write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
+    ALG_HTP: begin write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,post_update_x_topk_ctx(k_param,1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
     ALG_SP: begin write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,candidate_select_path_ctx(1,0)); pc=pc+1; emit_reduce_append_loop(pc,reduce_argmax_ctx(0),candidate_append_path_ctx(1,0),k_param,1); write_ctx(pc,candidate_select_path_ctx(1,0)); pc=pc+1; write_ctx(pc,candidate_merge_path_ctx(0,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,candidate_select_path_ctx(1,0)); pc=pc+1; emit_reduce_append_loop(pc,reduce_x_support_ctx(0),candidate_append_path_ctx(1,0),k_param,1); write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
     ALG_5: begin write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,reduce_argmax_ctx(0)); pc=pc+1; write_ctx(pc,candidate_append_result_ctx(0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(0,0,0)); pc=pc+1; emit_reduce_append_loop(pc,reduce_x_ctx(0),candidate_append_path_ctx(0,0),k_param,1); write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_RESID,0)); pc=pc+1; end
     ALG_6: begin write_ctx(pc,stream_topk_ctx(2,0,1,0,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
@@ -209,7 +215,10 @@ task run_alg_case_iter; input integer alg_id; input integer m; input integer n; 
     check("irq_done", done_seen && !error_seen);
     check("pc_in_program_or_done", pc_rd < plen);
     check("nonzero_le_n", nz_count <= n);
-    axi_write(REG_CTRL,4);
+    // Each algorithm/case is an independent measurement.  Soft-reset the
+    // core boundary so SPM scratch from a streamed HTP run cannot leak into
+    // the following algorithm.  The next run reloads data and configmem.
+    axi_write(REG_CTRL,2);
     repeat(10) tick();
 end endtask
 
