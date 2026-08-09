@@ -1051,10 +1051,15 @@ wire mesh_ctx_update_issue_w = 1'b0;
 // controller state/address cones into the PE arithmetic timing paths.
 wire mesh_ctx_prune_issue_w = ((state == S_PRUNE_MESH_WAIT) &&
                                (mesh_ctx_wait_count == MESH_CTX_WAIT_CYCLES));
-wire mesh_ctx_resid_issue_w = (row3_resid_write_op_w && (state == S_WR) && residual_block_last_w);
+// The residual payload is captured in S_WR.  Issue it on the following clock,
+// after the block registers are stable, and inject exactly one PE0 token.  The
+// registered south links then carry that token through PE1..PE3.
+wire mesh_ctx_resid_issue_w = (row3_resid_write_op_w &&
+                               (state == S_WR_MESH_WAIT) &&
+                               (mesh_ctx_wait_count == MESH_CTX_WAIT_CYCLES));
 wire mesh_ctx_update_active_w = mesh_ctx_update_issue_w || (state == S_IHT_MESH_WAIT) || (state == S_IHT_MESH_WRITE);
 wire mesh_ctx_prune_active_w = mesh_ctx_prune_issue_w;
-wire mesh_ctx_resid_active_w = mesh_ctx_resid_issue_w || (state == S_WR_MESH_WAIT) || (state == S_WR_MESH_COMMIT);
+wire mesh_ctx_resid_active_w = mesh_ctx_resid_issue_w;
 assign mesh_ctx_valid = mesh_ctx_update_active_w || mesh_ctx_prune_active_w || mesh_ctx_resid_active_w;
 assign mesh_ctx_word = ctx_word;
 assign mesh_ctx_mode = mesh_ctx_update_active_w ? MESH_CTX_UPDATE : (mesh_ctx_prune_active_w ? MESH_CTX_PRUNE : (mesh_ctx_resid_active_w ? MESH_CTX_RESID : MESH_CTX_NONE));

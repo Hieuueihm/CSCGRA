@@ -4,22 +4,24 @@ Last updated: 2026-08-09 (Asia/Saigon)
 
 ## Active optimization checkpoint
 
-- Current sign-off checkpoint: HTP post-update x streaming, on top of the
-  lossless correlation-to-top-K ready/valid checkpoint.
+- Current sign-off checkpoint: post-update x streaming for IHT, HTP, and GP,
+  on top of the lossless correlation-to-top-K ready/valid checkpoint.
 - Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
-- Independently isolated aggregate cycles: 1633124. HTP is 242078 cycles,
-  down 22413 (8.47%) from the preceding 264491-cycle checkpoint.
-- Timing: WNS +0.417 ns, TNS 0, zero failing endpoints at 100 MHz.
-- Resources: 112023 LUT, 51159 FF, 24 RAMB36, 71 DSP48.
+- Independently isolated aggregate cycles: 1581856, down 51268 (3.14%) from
+  the preceding checkpoint. IHT is 138684 cycles (-15.06%) and GP is 138684
+  cycles (-16.13%); HTP remains 242078 cycles.
+- Timing: WNS +0.538 ns, TNS 0, zero failing endpoints at 100 MHz.
+- Resources: 113051 LUT, 51078 FF, 24 RAMB36, 71 DSP48.
 - Detailed report:
-  `reports/releases/POST_UPDATE_X_HTP_SIGNOFF_20260809.md`.
+  `reports/releases/POST_UPDATE_X_IHT_GP_SIGNOFF_20260809.md`.
 - Compact cycle data:
-  `reports/releases/post_update_x_htp_k_sweep_20260809.csv`.
+  `reports/releases/post_update_x_iht_gp_k_sweep_20260809.csv`.
 - Architecture: the correlation/update transaction still enters only PE0 and
-  advances through all four registered PE rows. PE3's exact committed updated-x
-  block can feed the ready/valid exact top-K service. HTP fills shadow support
-  P1 during update, then copies it to P0 before prune/refine. IHT and GP retain
-  legacy reduce-x because their streamed trials failed exact golden cases 4/6.
+  advances through all four registered PE rows. IHT/HTP/GP fill shadow support
+  P1 from PE3's exact committed updated-x stream, then copy it to P0 before
+  prune/residual or refine. Residual now emits one registered PE0 transaction
+  per block; this removes the stale lane-0 token that caused the earlier IHT/GP
+  case-4/case-6 divergence.
 - Independent algorithms now use full soft reset at the run boundary so SPM
   scratch cannot leak between cycle/correctness measurements. Reset time is
   outside the algorithm cycle counter.
@@ -34,10 +36,10 @@ one column from four row banks.  No trial RTL is retained; details are in
 `reports/releases/LS_READ_CHAIN_TRIALS_20260806.md`.
 
 Do not add more LS completion/address mux fan-in without state-residency data
-showing a material K8/K16 benefit. The next checkpoint should explain the
-IHT/GP support-order divergence between one-pass updated-x top-K and repeated
-reduce-x before enabling those program paths. SP/CoSaMP streaming remains
-blocked on a direct residual lane-0 block-transition equivalence check.
+showing a material K8/K16 benefit. The IHT/GP divergence is resolved: it came
+from an early/repeated residual mesh token, not top-K support ordering.
+SP/CoSaMP streaming is the next candidate, but must preserve the one-token
+residual boundary and exact 2K support semantics.
 Every large arithmetic transaction must still enter PE0 and advance through
 all four rows.  Full correctness, per-algorithm cycles, resources, positive
 WNS, and a preferred margin of at least +0.2 ns remain release gates.
