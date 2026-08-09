@@ -194,6 +194,28 @@ the legacy LDLT support order.
 Next work must preserve strict PE0 ingress and should first protect or improve
 timing margin before adding logic to the LDLT/residual critical cone.
 
+## Latest timing checkpoint: registered LS RHS products
+
+The four-row LS multiplier result is captured at the existing second PE wait
+boundary before RHS accumulation.  This breaks the previous PE/DSP-to-RHS
+critical path without adding any controller or algorithm cycle.
+
+- Correctness: 348 PASS / 0 FAIL, 62 cycle records, 2 expected K16 skips.
+- Cycle matrix: identical to the support-limited post-REFINE checkpoint;
+  aggregate remains 1,536,277 cycles.
+- Timing: WNS +0.383 ns, TNS 0, no failing endpoints at 100 MHz.
+- Resources: 115,132 total LUT, 112,984 logic LUT, 51,470 FF, 24 RAMB36,
+  71 DSP48.
+- Strict ingress and row ownership are unchanged: PE0 is the sole ingress and
+  RHS lane `i` is owned by physical row `i mod 4`.
+- Detailed report:
+  `reports/releases/RHS_TIMING_ISOLATION_SIGNOFF_20260810.md`.
+
+The next bounded cycle target is to overlap preparation of a following
+four-column Gram transaction with the final drain cycles of the current
+transaction.  Keep one LS request active at a time and re-run full K-sweep and
+OOC timing before accepting it.
+
 ## Optimization continuation baseline
 
 The consolidated performance data, implemented optimization inventory,

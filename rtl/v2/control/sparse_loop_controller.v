@@ -288,6 +288,10 @@ reg [7:0] active_k;
 // depth register; MAX_FANOUT allows local replicas near the four PE rows.
 (* keep = "true", max_fanout = 16 *) reg [5:0] active_k_count_q;
 reg signed [63:0] rhs [0:MAX_K-1];
+// Timing boundary between the four-row PE multiplier wavefront and the RHS
+// accumulator.  The existing PE wait schedule makes the products valid while
+// leaving S_ACC_PE_WAIT2, so this register does not add a controller cycle.
+reg [COLS*64-1:0] rhs4_product_q;
 reg signed [DATA_W-1:0] coeff_mem [0:MAX_K-1];
 localparam integer GE_MAT_W = 56;
 reg signed [63:0] ge_x [0:MAX_K-1];
@@ -1432,6 +1436,7 @@ active_op <= OP_REFINE;
         residual_ingress_phi_q <= {COLS*DATA_W{1'b0}};
         residual_ingress_coeff_q <= {COLS*DATA_W{1'b0}};
         rhs_block_base <= 6'd0;
+        rhs4_product_q <= {COLS*64{1'b0}};
         gram_drain_wait_q <= 3'd0;
         corr_drain_wait_q <= 2'd0;
         wx_target_idx_q <= {IDX_W{1'b0}};
@@ -1835,13 +1840,14 @@ case (state)
                 state <= S_ACC_PE_WAIT2;
             end
             S_ACC_PE_WAIT2: begin
+                rhs4_product_q <= rhs4_product_bus;
                 state <= S_ACC_RHS;
             end
             S_ACC_RHS: begin
                 for (gi = 0; gi < RHS_BLOCK_STRIDE; gi = gi + 1) begin
                     if ((rhs_block_base + gi) < active_k_count)
                         rhs[rhs_block_base + gi] <= rhs[rhs_block_base + gi] +
-                            $signed(rhs4_product_bus[gi*64 +: 64]);
+                            $signed(rhs4_product_q[gi*64 +: 64]);
                 end
                 if (rhs_block_base + RHS_BLOCK_STRIDE < active_k_count) begin
                     rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
