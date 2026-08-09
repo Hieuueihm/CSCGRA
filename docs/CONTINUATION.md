@@ -216,6 +216,30 @@ four-column Gram transaction with the final drain cycles of the current
 transaction.  Keep one LS request active at a time and re-run full K-sweep and
 OOC timing before accepting it.
 
+## Latest cycle checkpoint: overlapped Gram batches
+
+The next four-column Gram PE transaction is prepared during the final two
+matrix-drain writes.  The registered LS request reaches the service only after
+the previous transaction returns idle, so request ownership and write order
+remain exact.
+
+- Correctness: 348 PASS / 0 FAIL, 62 cycle records, 2 expected K16 skips.
+- Aggregate cycles: 1,536,277 -> 1,514,273 (-22,004; -1.43%).
+- OMP: 195,088 (-2.09%); CoSaMP: 310,482 (-2.46%); HTP: 239,874
+  (-0.91%); SP: 260,713 (-2.14%); GOMP: 109,840 (-1.86%).
+- IHT, GP, and MP are unchanged because they do not use this Gram schedule.
+- Timing/resources remain unchanged: WNS +0.383 ns, TNS 0, 115,132 LUT,
+  51,470 FF, 24 RAMB36, 71 DSP48.
+- Strict PE0 ingress remains intact; physical row `r` owns Gram column
+  `acc_j + r`, so all four rows participate.
+- Detailed report: `reports/releases/GRAM_BATCH_OVERLAP_SIGNOFF_20260810.md`.
+- Cycle matrix: `reports/releases/gram_batch_overlap_k_sweep_20260810.csv`.
+
+The next large measured states are correlation accumulation and direct Phi
+support scan (states 36 and 77, each 16,384 cycles in the representative K=8
+CoSaMP/SP profiles).  Any parallel scan must originate at PE0, propagate
+through all four physical rows, and preserve exact support/factor order.
+
 ## Optimization continuation baseline
 
 The consolidated performance data, implemented optimization inventory,
