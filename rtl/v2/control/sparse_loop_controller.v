@@ -960,6 +960,10 @@ reg phi_support_valid_q;
 reg [IDX_W-1:0] padded_n_q;
 reg [IDX_W-1:0] phi_scan_col_q;
 reg [31:0] phi_scan_state_q;
+// Two fixed 32-step jumps form a 64-column direct-Phi scan window.  Using
+// constant jump matrices avoids a 64-deep serial LFSR path.
+wire [31:0] phi_scan_state32_w = lfsr_jump_padded(phi_scan_state_q, 10'd32);
+wire [31:0] phi_scan_state64_w = lfsr_jump_padded(phi_scan_state_q, 10'd64);
 reg scan_is_last_col;
 reg [IDX_W-1:0] corr_col;
 reg [IDX_W-1:0] corr_row;
@@ -3112,17 +3116,48 @@ case (state)
                 state <= S_SCAN_DIRECT_STEP;
             end
             S_SCAN_DIRECT_STEP: begin
-                for (gi = 0; gi < MAX_K; gi = gi + 1) begin
-                    if ((gi < active_k_count) && (support_cache[gi] >= phi_scan_col_q) && (support_cache[gi] < (phi_scan_col_q + 10'd32))) begin
-                        phi_cache[gi] <= phi_from_lfsr_state(lfsr_advance32(phi_scan_state_q, {1'b0, (support_cache[gi] - phi_scan_col_q[IDX_W-1:0])} + 6'd1));
+                if (padded_n_q <= 10'd64) begin
+                    // Preserve the original two-cycle N=64 schedule.  Several
+                    // callers enter this scan on the same edge that changes a
+                    // synchronous SPM address, so collapsing N=64 to one scan
+                    // clock removes a required memory-settle interval.
+                    for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                        if ((gi < active_k_count) &&
+                            (support_cache[gi] >= phi_scan_col_q) &&
+                            (support_cache[gi] < (phi_scan_col_q + 10'd32)))
+                            phi_cache[gi] <= phi_from_lfsr_state(
+                                lfsr_advance32(phi_scan_state_q,
+                                    (support_cache[gi] - phi_scan_col_q) + 6'd1));
                     end
-                end
-                if (phi_scan_col_q + 10'd32 >= padded_n_q) begin
-                    phi_state_q <= lfsr_advance32(phi_scan_state_q, 6'd32);
-                    state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
+                    if (phi_scan_col_q + 10'd32 >= padded_n_q) begin
+                        phi_state_q <= phi_scan_state32_w;
+                        state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
+                    end else begin
+                        phi_scan_col_q <= phi_scan_col_q + 10'd32;
+                        phi_scan_state_q <= phi_scan_state32_w;
+                    end
                 end else begin
-                    phi_scan_col_q <= phi_scan_col_q + 10'd32;
-                    phi_scan_state_q <= lfsr_advance32(phi_scan_state_q, 6'd32);
+                    for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                        if ((gi < active_k_count) &&
+                            (support_cache[gi] >= phi_scan_col_q) &&
+                            (support_cache[gi] < (phi_scan_col_q + 10'd64))) begin
+                            if (support_cache[gi] < (phi_scan_col_q + 10'd32))
+                                phi_cache[gi] <= phi_from_lfsr_state(
+                                    lfsr_advance32(phi_scan_state_q,
+                                        (support_cache[gi] - phi_scan_col_q) + 6'd1));
+                            else
+                                phi_cache[gi] <= phi_from_lfsr_state(
+                                    lfsr_advance32(phi_scan_state32_w,
+                                        (support_cache[gi] - phi_scan_col_q - 10'd32) + 6'd1));
+                        end
+                    end
+                    if (phi_scan_col_q + 10'd64 >= padded_n_q) begin
+                        phi_state_q <= phi_scan_state64_w;
+                        state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
+                    end else begin
+                        phi_scan_col_q <= phi_scan_col_q + 10'd64;
+                        phi_scan_state_q <= phi_scan_state64_w;
+                    end
                 end
             end
             S_DONE: begin                busy <= 1'b0;

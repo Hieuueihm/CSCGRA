@@ -240,6 +240,31 @@ support scan (states 36 and 77, each 16,384 cycles in the representative K=8
 CoSaMP/SP profiles).  Any parallel scan must originate at PE0, propagate
 through all four physical rows, and preserve exact support/factor order.
 
+## Latest scan checkpoint: two-window direct Phi regeneration
+
+Direct Phi/support regeneration now covers 64 columns per controller clock for
+N=128/256 using fixed LFSR jump matrices.  N<=64 retains the original
+32-column schedule because its second scan clock is also a required
+synchronous-SPM settle interval.
+
+- Correctness: 348 PASS / 0 FAIL in one unified final run, 62 cycle records,
+  2 expected K16 skips.
+- Aggregate cycles: 1,514,273 -> 1,418,017 (-96,256; -6.36%).
+- OMP: 178,960 (-8.27%); CoSaMP: 294,610 (-5.11%); IHT/GP: 130,620
+  each (-5.82%); HTP: 223,746 (-6.72%); SP: 244,841 (-6.09%);
+  GOMP: 101,776 (-7.34%); MP: 112,844 (-6.67%).
+- Timing: WNS +0.681 ns, TNS 0, no failing endpoints at 100 MHz.
+- Resources: 118,494 total LUT (+2.92%), 51,458 FF, 24 RAMB36, 71 DSP48.
+- Strict PE0 ingress and four-row LS/Gram ownership remain unchanged.
+- Detailed report: `reports/releases/PHI_SCAN64_SIGNOFF_20260810.md`.
+- Cycle matrix: `reports/releases/phi_scan64_k_sweep_20260810.csv`.
+
+Correlation state 36 remains at its PE0-limited II=1 and should not be widened
+by injecting directly into lower rows.  The next bounded LS optimization is a
+one-entry `OP_ACC4` request queue in `ls_matrix_service`, allowing the next
+four-row Gram request to be accepted during the final drain without losing the
+registered start pulse.
+
 ## Optimization continuation baseline
 
 The consolidated performance data, implemented optimization inventory,
