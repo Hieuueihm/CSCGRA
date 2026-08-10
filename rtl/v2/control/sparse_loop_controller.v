@@ -2210,7 +2210,17 @@ case (state)
                         ldlt_d_cur_q <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w} + 64'sd1;
                         state <= S_LDL_DIAG_WRITE;
                     end else begin
-                        state <= S_LDL_DIAG_GATHER;
+                        // The diagonal read completion returns the matrix
+                        // service to IDLE.  Launch p=0 immediately so the
+                        // gather does not spend a command-only controller
+                        // clock.  Only this request is active.
+                        ls_start_q <= 1'b1;
+                        ls_op_q <= LS_OP_READ2;
+                        ls_row_a_q <= ldlt_k_q;
+                        ls_col_a_q <= 5'd0;
+                        ls_row_b_q <= ldlt_k_q;
+                        ls_col_b_q <= 5'd0;
+                        state <= S_LDL_DIAG_GATHER_WAIT;
                     end
                 end
             end
@@ -2235,11 +2245,26 @@ case (state)
             S_LDL_DIAG_GATHER_WAIT: begin
                 if (ls_done_w) begin
                     ldlt_l_lane_q[ldlt_lane_q] <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w};
-                    if (ldlt_lane_q == 3) begin
+                    if ((ldlt_lane_q == 3) ||
+                        (ldlt_p_base_q + ldlt_lane_q + 1'b1 >= ldlt_k_q)) begin
+                        // Zero all inactive tail lanes together.  The old FSM
+                        // consumed one S_LDL_DIAG_GATHER clock per tail lane.
+                        for (gi = 0; gi < 4; gi = gi + 1) begin
+                            if (gi > ldlt_lane_q)
+                                ldlt_l_lane_q[gi] <= 64'sd0;
+                        end
                         state <= S_LDL_DIAG_MUL1;
                     end else begin
                         ldlt_lane_q <= ldlt_lane_q + 1'b1;
-                        state <= S_LDL_DIAG_GATHER;
+                        // Chain the next same-row READ2 from the completion
+                        // pulse.  The service has completed the previous read,
+                        // so at most one LS request remains in flight.
+                        ls_start_q <= 1'b1;
+                        ls_op_q <= LS_OP_READ2;
+                        ls_row_a_q <= ldlt_k_q;
+                        ls_col_a_q <= ldlt_p_base_q + ldlt_lane_q + 1'b1;
+                        ls_row_b_q <= ldlt_k_q;
+                        ls_col_b_q <= ldlt_p_base_q + ldlt_lane_q + 1'b1;
                     end
                 end
             end
@@ -2269,7 +2294,16 @@ case (state)
                         ldlt_diag_acc_q <= ldlt_diag_acc_q + ldlt_wide_q32_sum;
                         ldlt_p_base_q <= ldlt_p_base_q + 5'd4;
                         ldlt_lane_q <= 3'd0;
-                        state <= S_LDL_DIAG_GATHER;
+                        // The matrix service is idle throughout the PE multiply
+                        // phase.  Start lane zero of the next four-value gather
+                        // here instead of entering a command-only state.
+                        ls_start_q <= 1'b1;
+                        ls_op_q <= LS_OP_READ2;
+                        ls_row_a_q <= ldlt_k_q;
+                        ls_col_a_q <= ldlt_p_base_q + 5'd4;
+                        ls_row_b_q <= ldlt_k_q;
+                        ls_col_b_q <= ldlt_p_base_q + 5'd4;
+                        state <= S_LDL_DIAG_GATHER_WAIT;
                     end else begin
                         ldlt_d_cur_q <= ldlt_diag_a_q - ldlt_diag_acc_q - ldlt_wide_q32_sum;
                         state <= S_LDL_DIAG_WRITE;

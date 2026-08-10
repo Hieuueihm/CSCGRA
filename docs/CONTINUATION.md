@@ -302,3 +302,32 @@ The next safe target should stay controller-local: profile repeated LDLT
 diagonal/READ4 handshakes or factor-check issue gaps without increasing the
 number of active LS requests.  Do not widen correlation or direct-Phi scan;
 both are already bounded by PE0 ingress or SPM settling.
+
+## Latest LDLT checkpoint: chained diagonal READ2
+
+Profile state 61 was a pure command/padding bubble between diagonal READ2
+transactions.  The accepted change launches each following READ2 from the
+previous completion pulse and zero-fills inactive tail lanes together.  The
+matrix service still has at most one active request.
+
+- Correctness: 348 PASS / 0 FAIL, 62 cycle records, 2 expected K16 skips.
+- Aggregate cycles: 1,344,523 -> 1,336,899 (-7,624; -0.57%).
+- OMP: 166,644 (-268); CoSaMP: 274,962 (-3,616); HTP: 211,740
+  (-824); SP: 228,401 (-2,648); GOMP: 95,404 (-268).
+- IHT, GP, and MP are cycle-identical because they do not use this LDLT
+  diagonal-gather schedule.
+- K8 profile state 61 falls to zero, while diagonal READ2 wait and both PE
+  multiply phases retain identical cycle counts.
+- Timing: WNS +0.678 ns, TNS 0, no failing endpoints at 100 MHz.
+- Resources: 125,666 LUT, 53,417 FF, 24 RAMB36, 71 DSP48.
+- Strict PE0 ingress and fixed four-row arithmetic ownership are unchanged.
+- Detailed report:
+  `reports/releases/LDLT_DIAG_READ2_CHAIN_SIGNOFF_20260811.md`.
+- Cycle matrix:
+  `reports/releases/ldlt_diag_read2_chain_k_sweep_20260811.csv`.
+
+Factor-check remains intentionally unchanged: its measured cost is small, and
+skipping its final state would extend next-value seen-mask/fingerprint logic.
+The next safe cycle target should profile LDLT diagonal command/write-to-divide
+transitions or exact-reuse solve setup, still retaining one active LS request
+and the PE0-only ingress rule.
