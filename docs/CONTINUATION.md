@@ -271,3 +271,34 @@ strict-PE0 architecture gap, rejected trials, and ordered next-work backlog are
 recorded in `reports/releases/OPTIMIZATION_BASELINE_20260803.md`. The complete
 configured v1/v2 cycle matrix is also available as
 `reports/releases/optimization_baseline_k_sweep_20260803.csv`.
+
+## Latest residual checkpoint: guarded first-block preload
+
+Profiling showed that LDLT factor control is comparatively small and exact
+top-K issue is already PE0-limited at II=1, while residual wait state 50 costs
+1,280-5,632 clocks per algorithm in the representative K8 case.  The accepted
+change preloads a full first residual block during accumulator initialization,
+then injects it at PE0 on the first wait clock.
+
+- Correctness: 348 PASS / 0 FAIL, 62 cycle records, 2 expected K16 skips.
+- Aggregate cycles: 1,354,843 -> 1,344,523 (-10,320; -0.76%).
+- OMP: 166,912 (-672); CoSaMP: 278,578 (-1,984); IHT/GP: 125,244
+  each (-1,792); HTP: 212,564 (-1,792); SP: 231,049 (-1,872);
+  GOMP: 95,672 (-416); MP: 109,260 (unchanged).
+- Timing: WNS +0.624 ns, TNS 0, no failing endpoints at 100 MHz.
+- Resources: 123,173 LUT, 53,420 FF, 24 RAMB36, 71 DSP48.
+- Strict PE0 ingress and four-row modulo-4 ownership are unchanged.
+- An all-K preload trial was rejected after 23 K4 mismatches.  The accepted
+  `active_k_count >= 8` guard preserves the required settle clock for partial
+  K2/K4 blocks while still accelerating expanded CoSaMP/SP supports.
+- Direct-Phi scan256 in one clock remains explicitly rejected because it risks
+  removing the synchronous-SPM settle interval and widening the timing cone.
+- Detailed report:
+  `reports/releases/RESIDUAL_FIRST_PRELOAD_SIGNOFF_20260810.md`.
+- Cycle matrix:
+  `reports/releases/residual_first_preload_k_sweep_20260810.csv`.
+
+The next safe target should stay controller-local: profile repeated LDLT
+diagonal/READ4 handshakes or factor-check issue gaps without increasing the
+number of active LS requests.  Do not widen correlation or direct-Phi scan;
+both are already bounded by PE0 ingress or SPM settling.

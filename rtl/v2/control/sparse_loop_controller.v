@@ -2019,11 +2019,33 @@ case (state)
             end
             S_WR_ACC_INIT: begin
                 residual_acc <= 128'sd0;
-                rhs_block_base <= 5'd0;
                 residual_blocks_total_q <= (active_k_count + (RHS_BLOCK_STRIDE-1)) / RHS_BLOCK_STRIDE;
-                residual_blocks_issued_q <= 2'd0;
                 residual_blocks_retired_q <= 2'd0;
-                residual_stream_issue_q <= (active_k_count != 0);
+                if (active_k_count >= RHS_BLOCK_STRIDE) begin
+                    // Full block supports have stable cached operands here,
+                    // so preload block zero while clearing the accumulator.
+                    // PE0 consumes it on the first WAIT clock and later
+                    // blocks retain the existing chained preload.
+                    rhs_block_base <= RHS_BLOCK_STRIDE;
+                    residual_blocks_issued_q <= 2'd1;
+                    residual_stream_issue_q <=
+                        (active_k_count > RHS_BLOCK_STRIDE);
+                    residual_ingress_valid_q <= 1'b1;
+                    for (gi = 0; gi < COLS; gi = gi + 1) begin
+                        residual_ingress_phi_q[gi*DATA_W +: DATA_W] <=
+                            phi_cache[gi];
+                        residual_ingress_coeff_q[gi*DATA_W +: DATA_W] <=
+                            coeff_mem[gi];
+                    end
+                end else begin
+                    // Sub-block K2/K4 update callers require the original
+                    // extra settle clock before the masked residual payload
+                    // is captured.  Preserve that signed-off schedule.
+                    rhs_block_base <= 5'd0;
+                    residual_blocks_issued_q <= 2'd0;
+                    residual_stream_issue_q <= (active_k_count != 0);
+                    residual_ingress_valid_q <= 1'b0;
+                end
                 state <= S_RESID_PE_WAIT;
             end
             S_RESID_PE_WAIT: begin
