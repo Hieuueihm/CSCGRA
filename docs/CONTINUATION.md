@@ -1,47 +1,33 @@
 # Repository refactor continuation log
 
-Last updated: 2026-08-09 (Asia/Saigon)
+Last updated: 2026-08-10 (Asia/Saigon)
 
 ## Active optimization checkpoint
 
-- Current sign-off checkpoint: correlation streaming for SP/CoSaMP, on top of
-  post-update x streaming for IHT/HTP/GP and the lossless top-K handshake.
+- Current sign-off checkpoint: one-entry fall-through `OP_ACC4` queue, on top
+  of direct-Phi scan64 and the earlier four-row Gram batch overlap.
 - Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
-- Independently isolated aggregate cycles: 1554673, down 27183 (1.72%) from
-  the preceding checkpoint. CoSaMP is 327268 cycles (-5.41%) and SP is 275875
-  cycles (-2.98%); all other algorithm totals are unchanged.
-- Timing: WNS +0.538 ns, TNS 0, zero failing endpoints at 100 MHz.
-- Resources: 113051 LUT, 51078 FF, 24 RAMB36, 71 DSP48.
+- Aggregate cycles: 1,395,803, down 22,214 (1.57%) from direct-Phi scan64.
+  OMP is 174,752, CoSaMP 286,706, HTP 221,524, SP 239,065, and GOMP 99,672.
+  IHT, GP, and MP remain unchanged.
+- Timing: WNS +0.664 ns, TNS 0, zero failing endpoints at 100 MHz.
+- Resources: 121,714 LUT, 53,600 FF, 24 RAMB36, 71 DSP48.
 - Detailed report:
-  `reports/releases/CORR_STREAM_SP_COSAMP_SIGNOFF_20260809.md`.
+  `reports/releases/ACC4_QUEUE_SIGNOFF_20260810.md`.
 - Compact cycle data:
-  `reports/releases/corr_stream_sp_cosamp_k_sweep_20260809.csv`.
-- Architecture: the correlation/update transaction still enters only PE0 and
-  advances through all four registered PE rows. SP streams K and CoSaMP streams
-  2K correlation candidates into shadow path P1 before merging into P0.
-  IHT/HTP/GP retain their signed-off post-update x streams, and residual retains
-  one registered PE0 transaction per block.
-- Independent algorithms now use full soft reset at the run boundary so SPM
-  scratch cannot leak between cycle/correctness measurements. Reset time is
-  outside the algorithm cycle counter.
+  `reports/releases/acc4_queue_k_sweep_20260810.csv`.
+- Architecture: only the active ACC4 transaction writes matrix banks; one
+  pending transaction may be buffered.  PE0-only ingress is unchanged and PE
+  row `r` retains ownership of Gram column `acc_j + r`, so all four rows remain
+  active in every full transaction.
 
-The earlier proposed completion-driven LS read chaining was measured and
-rejected.  Diagonal-gather chaining failed timing at WNS -0.299 ns.  Back-solve
-READ4, direct divider initialization, and forward-solve READ2 retained positive
-WNS but reduced the margin to +0.134, +0.152, and +0.176 ns for only 21, 20,
-and 15 K2 cycles respectively.  Forward solve cannot use the existing READ4
-operation because it needs four columns from one row bank, whereas READ4 reads
-one column from four row banks.  No trial RTL is retained; details are in
-`reports/releases/LS_READ_CHAIN_TRIALS_20260806.md`.
-
-Do not add more LS completion/address mux fan-in without state-residency data
-showing a material K8/K16 benefit. The next target is a support-limited
-post-REFINE stream for SP/CoSaMP, replacing repeated `reduce_x_support` scans
-while preserving exact 2K/3K candidate semantics and the one-token residual
-boundary.
-Every large arithmetic transaction must still enter PE0 and advance through
-all four rows.  Full correctness, per-algorithm cycles, resources, positive
-WNS, and a preferred margin of at least +0.2 ns remain release gates.
+The next optimization must keep the same PE0 -> PE1 -> PE2 -> PE3 provenance.
+Profile before changing another wide datapath: correlation is already PE0
+limited at II=1, while the new queue costs 3,220 LUT and 2,142 FF.  Prefer a
+control/scheduling change with measured K8/K16 residency, or compact the queue
+payload without reintroducing a matrix-write bubble.  Full correctness,
+per-algorithm cycles, resources, positive WNS, and a preferred margin of at
+least +0.2 ns remain release gates.
 
 ## Previous optimization checkpoint
 
@@ -260,10 +246,9 @@ synchronous-SPM settle interval.
 - Cycle matrix: `reports/releases/phi_scan64_k_sweep_20260810.csv`.
 
 Correlation state 36 remains at its PE0-limited II=1 and should not be widened
-by injecting directly into lower rows.  The next bounded LS optimization is a
-one-entry `OP_ACC4` request queue in `ls_matrix_service`, allowing the next
-four-row Gram request to be accepted during the final drain without losing the
-registered start pulse.
+by injecting directly into lower rows.  The bounded one-entry `OP_ACC4` request
+queue proposed here is now implemented and signed off in the active checkpoint
+above.
 
 ## Optimization continuation baseline
 

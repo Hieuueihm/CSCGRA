@@ -1910,11 +1910,11 @@ case (state)
                     end
                 end
                 // The row-banked matrix store drains the captured four-column
-                // batch in four clocks.  Two guard clocks let the following
-                // PE block prepare during the final two writes; because
-                // ls_start_q is registered, the service observes the next
-                // request only after the fourth write has completed.
-                gram_drain_wait_q <= 3'd2;
+                // batch in four clocks.  Its one-entry fall-through ACC4 queue
+                // accepts this registered request on the previous batch's
+                // final write, so one guard clock is sufficient to prepare the
+                // next four-row PE transaction without an idle write slot.
+                gram_drain_wait_q <= 3'd1;
                 state <= S_GRAM_ACC_WAIT;
             end
             S_GRAM_ACC_WAIT: begin
