@@ -960,10 +960,13 @@ reg phi_support_valid_q;
 reg [IDX_W-1:0] padded_n_q;
 reg [IDX_W-1:0] phi_scan_col_q;
 reg [31:0] phi_scan_state_q;
-// Two fixed 32-step jumps form a 64-column direct-Phi scan window.  Using
-// constant jump matrices avoids a 64-deep serial LFSR path.
+// Fixed jump matrices form 64- and 128-column direct-Phi scan windows without
+// creating a serial LFSR chain.  The 128-column path is used only at N=256;
+// smaller configurations retain their signed-off SPM-settle schedule.
 wire [31:0] phi_scan_state32_w = lfsr_jump_padded(phi_scan_state_q, 10'd32);
 wire [31:0] phi_scan_state64_w = lfsr_jump_padded(phi_scan_state_q, 10'd64);
+wire [31:0] phi_scan_state96_w = lfsr_jump_padded(phi_scan_state_q, 10'd96);
+wire [31:0] phi_scan_state128_w = lfsr_jump_padded(phi_scan_state_q, 10'd128);
 reg scan_is_last_col;
 reg [IDX_W-1:0] corr_col;
 reg [IDX_W-1:0] corr_row;
@@ -3136,7 +3139,9 @@ case (state)
                         phi_scan_col_q <= phi_scan_col_q + 10'd32;
                         phi_scan_state_q <= phi_scan_state32_w;
                     end
-                end else begin
+                end else if (padded_n_q <= 10'd128) begin
+                    // Keep N=128 at two scan clocks.  As with N=64, callers
+                    // rely on this interval after changing an SPM address.
                     for (gi = 0; gi < MAX_K; gi = gi + 1) begin
                         if ((gi < active_k_count) &&
                             (support_cache[gi] >= phi_scan_col_q) &&
@@ -3157,6 +3162,40 @@ case (state)
                     end else begin
                         phi_scan_col_q <= phi_scan_col_q + 10'd64;
                         phi_scan_state_q <= phi_scan_state64_w;
+                    end
+                end else begin
+                    // N=256 has enough remaining scan latency to cover the
+                    // synchronous SPM settle interval.  Four independent
+                    // 32-column windows therefore complete 128 columns per
+                    // controller clock without a long serial feedback path.
+                    for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                        if ((gi < active_k_count) &&
+                            (support_cache[gi] >= phi_scan_col_q) &&
+                            (support_cache[gi] < (phi_scan_col_q + 10'd128))) begin
+                            if (support_cache[gi] < (phi_scan_col_q + 10'd32))
+                                phi_cache[gi] <= phi_from_lfsr_state(
+                                    lfsr_advance32(phi_scan_state_q,
+                                        (support_cache[gi] - phi_scan_col_q) + 6'd1));
+                            else if (support_cache[gi] < (phi_scan_col_q + 10'd64))
+                                phi_cache[gi] <= phi_from_lfsr_state(
+                                    lfsr_advance32(phi_scan_state32_w,
+                                        (support_cache[gi] - phi_scan_col_q - 10'd32) + 6'd1));
+                            else if (support_cache[gi] < (phi_scan_col_q + 10'd96))
+                                phi_cache[gi] <= phi_from_lfsr_state(
+                                    lfsr_advance32(phi_scan_state64_w,
+                                        (support_cache[gi] - phi_scan_col_q - 10'd64) + 6'd1));
+                            else
+                                phi_cache[gi] <= phi_from_lfsr_state(
+                                    lfsr_advance32(phi_scan_state96_w,
+                                        (support_cache[gi] - phi_scan_col_q - 10'd96) + 6'd1));
+                        end
+                    end
+                    if (phi_scan_col_q + 10'd128 >= padded_n_q) begin
+                        phi_state_q <= phi_scan_state128_w;
+                        state <= phase_residual ? S_WR_ACC_INIT : S_ACC;
+                    end else begin
+                        phi_scan_col_q <= phi_scan_col_q + 10'd128;
+                        phi_scan_state_q <= phi_scan_state128_w;
                     end
                 end
             end

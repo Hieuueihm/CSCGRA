@@ -4,30 +4,30 @@ Last updated: 2026-08-10 (Asia/Saigon)
 
 ## Active optimization checkpoint
 
-- Current sign-off checkpoint: one-entry fall-through `OP_ACC4` queue, on top
-  of direct-Phi scan64 and the earlier four-row Gram batch overlap.
+- Current sign-off checkpoint: direct-Phi scan128 for N=256, on top of the
+  one-entry `OP_ACC4` queue and earlier four-row Gram batch overlap.
 - Correctness: 348 PASS, 0 FAIL over cases 0 through 7 (K=2/4/8/16).
-- Aggregate cycles: 1,395,803, down 22,214 (1.57%) from direct-Phi scan64.
-  OMP is 174,752, CoSaMP 286,706, HTP 221,524, SP 239,065, and GOMP 99,672.
-  IHT, GP, and MP remain unchanged.
-- Timing: WNS +0.664 ns, TNS 0, zero failing endpoints at 100 MHz.
-- Resources: 121,714 LUT, 53,600 FF, 24 RAMB36, 71 DSP48.
+- Aggregate cycles: 1,354,843, down 40,960 (2.93%) from the ACC4 queue
+  checkpoint. OMP is 167,584, CoSaMP 280,562, HTP 214,356, SP 232,921,
+  GOMP 96,088, IHT/GP 127,036 each, and MP 109,260.
+- Timing: WNS +0.726 ns, TNS 0, zero failing endpoints at 100 MHz.
+- Resources: 125,293 LUT, 53,593 FF, 24 RAMB36, 71 DSP48.
 - Detailed report:
-  `reports/releases/ACC4_QUEUE_SIGNOFF_20260810.md`.
+  `reports/releases/PHI_SCAN128_SIGNOFF_20260810.md`.
 - Compact cycle data:
-  `reports/releases/acc4_queue_k_sweep_20260810.csv`.
-- Architecture: only the active ACC4 transaction writes matrix banks; one
-  pending transaction may be buffered.  PE0-only ingress is unchanged and PE
-  row `r` retains ownership of Gram column `acc_j + r`, so all four rows remain
-  active in every full transaction.
+  `reports/releases/phi_scan128_k_sweep_20260810.csv`.
+- Architecture: scan128 only regenerates Phi values for N=256.  PE0-only
+  ingress, the ACC4 pending queue, and fixed four-row Gram ownership are
+  unchanged. N<=128 keeps its previous two-clock SPM-settle schedule.
 
 The next optimization must keep the same PE0 -> PE1 -> PE2 -> PE3 provenance.
 Profile before changing another wide datapath: correlation is already PE0
-limited at II=1, while the new queue costs 3,220 LUT and 2,142 FF.  Prefer a
-control/scheduling change with measured K8/K16 residency, or compact the queue
-payload without reintroducing a matrix-write bubble.  Full correctness,
-per-algorithm cycles, resources, positive WNS, and a preferred margin of at
-least +0.2 ns remain release gates.
+limited at II=1, and direct-Phi scan cannot safely collapse to one clock because
+the synchronous SPM settle interval must remain.  Prefer a measured LDLT,
+top-K, or residual control optimization, or compact the ACC4 queue payload
+without reintroducing a matrix-write bubble.  Full correctness, per-algorithm
+cycles, resources, positive WNS, and a preferred margin of at least +0.2 ns
+remain release gates.
 
 ## Previous optimization checkpoint
 
@@ -247,8 +247,22 @@ synchronous-SPM settle interval.
 
 Correlation state 36 remains at its PE0-limited II=1 and should not be widened
 by injecting directly into lower rows.  The bounded one-entry `OP_ACC4` request
-queue proposed here is now implemented and signed off in the active checkpoint
-above.
+queue proposed here remains implemented under the current scan128 checkpoint.
+
+## Latest scan checkpoint: four-window direct Phi regeneration
+
+N=256 direct Phi/support regeneration now covers 128 columns per controller
+clock using four independent 32-column windows. N=128 remains scan64 and N=64
+remains scan32 to retain two SPM-settle clocks.
+
+- Correctness: 348 PASS / 0 FAIL, 62 cycle records, 2 expected K16 skips.
+- Aggregate cycles: 1,395,803 -> 1,354,843 (-40,960; -2.93%).
+- Timing: WNS +0.726 ns, TNS 0, no failing endpoints at 100 MHz.
+- Resources: 125,293 LUT, 53,593 FF, 24 RAMB36, 71 DSP48.
+- Strict PE0 ingress, four-row arithmetic ownership, LDLT, and ACC4 queue
+  behavior are unchanged.
+- Detailed report: `reports/releases/PHI_SCAN128_SIGNOFF_20260810.md`.
+- Cycle matrix: `reports/releases/phi_scan128_k_sweep_20260810.csv`.
 
 ## Optimization continuation baseline
 
