@@ -331,3 +331,31 @@ skipping its final state would extend next-value seen-mask/fingerprint logic.
 The next safe cycle target should profile LDLT diagonal command/write-to-divide
 transitions or exact-reuse solve setup, still retaining one active LS request
 and the PE0-only ingress rule.
+
+## Latest LDLT checkpoint: WRITE4 completion chaining
+
+LDLT WRITE4 completion now launches the following READ4 row block, prefix
+pivot READ4, or normal-pivot diagonal READ2 directly.  Four-lane setup is folded
+into the same completion edge, while initial entry still uses the original
+setup state.
+
+- Correctness: 348 PASS / 0 FAIL, 62 cycle records, 2 expected K16 skips.
+- Aggregate cycles: 1,336,899 -> 1,334,819 (-2,080; -0.16%).
+- OMP: 166,448 (-196); CoSaMP: 274,058 (-904); HTP: 211,534 (-206);
+  SP: 227,737 (-664); GOMP: 95,294 (-110).
+- IHT, GP, and MP remain cycle-identical.
+- K8 profile confirms that all saved clocks come from state 59/80; READ4,
+  border multiply, final multiply, and WRITE4 wait counts are unchanged.
+- Timing: WNS +0.662 ns, TNS 0, no failing endpoints at 100 MHz.
+- Resources: 127,248 LUT, 53,611 FF, 24 RAMB36, 71 DSP48.
+- Exactly one LS request remains active; PE0-only ingress and fixed four-row
+  arithmetic ownership are unchanged.
+- Detailed report:
+  `reports/releases/LDLT_WRITE4_COMPLETION_CHAIN_SIGNOFF_20260812.md`.
+- Cycle matrix:
+  `reports/releases/ldlt_write4_completion_chain_k_sweep_20260812.csv`.
+
+This checkpoint spends 1,582 additional LUT and 194 FF for a 0.16% cycle
+reduction.  Prefer a resource-neutral optimization next.  Candidate work is a
+carefully registered READ4 service fast-complete path or removal of a narrow
+solve-setup bubble; do not extend another wide next-block control cone.

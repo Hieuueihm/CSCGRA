@@ -2526,17 +2526,56 @@ case (state)
                 if (ls_done_w) begin
                     if (ldlt_i_base_q + 5'd4 < active_k_count) begin
                         ldlt_i_base_q <= ldlt_i_base_q + 5'd4;
-                        state <= S_LDL_ROW_INIT;
+                        // WRITE4 has completed and the matrix service is back
+                        // in IDLE.  Prepare the following four-row block and
+                        // launch its A(i,k) READ4 on this completion pulse.
+                        // This preserves a single active LS request while
+                        // removing the intervening ROW_INIT clock.
+                        for (gi = 0; gi < 4; gi = gi + 1) begin
+                            ldlt_lane_valid_q[gi] <=
+                                ((ldlt_i_base_q + 5'd4 + gi) < active_k_count);
+                            ldlt_a_lane_q[gi] <= 64'sd0;
+                            ldlt_acc_lane_q[gi] <= 128'sd0;
+                        end
+                        ls_start_q <= 1'b1;
+                        ls_op_q <= LS_OP_READ4;
+                        ls_row_a_q <= ldlt_i_base_q + 5'd4;
+                        ls_col_a_q <= ldlt_k_q;
+                        ls_row_b_q <= ldlt_k_q;
+                        ls_col_b_q <= ldlt_k_q;
+                        state <= S_LDL_ROW_A_WAIT;
                     end else if ((factor_reuse_mode_q == FACTOR_REUSE_PREFIX) &&
                                  (ldlt_k_q + 1'b1 < factor_k_q)) begin
                         // Reuse the next cached pivot, again updating only the
-                        // appended border rows.
+                        // appended border rows.  Prepare and launch its first
+                        // READ4 directly from the preceding WRITE4 completion.
                         ldlt_k_q <= ldlt_k_q + 1'b1;
                         ldlt_i_base_q <= factor_k_q[4:0];
-                        state <= S_LDL_ROW_INIT;
+                        for (gi = 0; gi < 4; gi = gi + 1) begin
+                            ldlt_lane_valid_q[gi] <=
+                                ((factor_k_q + gi) < active_k_count);
+                            ldlt_a_lane_q[gi] <= 64'sd0;
+                            ldlt_acc_lane_q[gi] <= 128'sd0;
+                        end
+                        ls_start_q <= 1'b1;
+                        ls_op_q <= LS_OP_READ4;
+                        ls_row_a_q <= factor_k_q[4:0];
+                        ls_col_a_q <= ldlt_k_q + 1'b1;
+                        ls_row_b_q <= ldlt_k_q + 1'b1;
+                        ls_col_b_q <= ldlt_k_q + 1'b1;
+                        state <= S_LDL_ROW_A_WAIT;
                     end else begin
+                        // The final row block for this pivot has committed.
+                        // Chain the next diagonal READ2 immediately; the
+                        // completed WRITE4 is no longer active in the service.
                         ldlt_k_q <= ldlt_k_q + 1'b1;
-                        state <= S_LDL_DIAG_READ;
+                        ls_start_q <= 1'b1;
+                        ls_op_q <= LS_OP_READ2;
+                        ls_row_a_q <= ldlt_k_q + 1'b1;
+                        ls_col_a_q <= ldlt_k_q + 1'b1;
+                        ls_row_b_q <= ldlt_k_q + 1'b1;
+                        ls_col_b_q <= ldlt_k_q + 1'b1;
+                        state <= S_LDL_DIAG_WAIT;
                     end
                 end
             end
