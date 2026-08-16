@@ -359,3 +359,32 @@ This checkpoint spends 1,582 additional LUT and 194 FF for a 0.16% cycle
 reduction.  Prefer a resource-neutral optimization next.  Candidate work is a
 carefully registered READ4 service fast-complete path or removal of a narrow
 solve-setup bubble; do not extend another wide next-block control cone.
+
+## Latest LDLT checkpoint: back-solve READ4 fast-complete
+
+Back-substitution READ4 now uses a narrow service-boundary state decode.  The
+matrix service accepts the command on the existing READ-to-WAIT edge using
+registered row/column sources, cutting one wait clock per READ4 while retaining
+the single launch state.
+
+- Correctness: 348 PASS / 0 FAIL, 62 cycle records, 2 expected K16 skips.
+- Aggregate cycles: 1,334,819 -> 1,331,717 (-3,102; -0.232%).
+- OMP: 166,140 (-308); CoSaMP: 273,045 (-1,013); HTP: 210,758
+  (-776); SP: 226,906 (-831); GOMP: 95,120 (-174).
+- IHT, GP, and MP remain cycle-identical.
+- K8 profile retains 844 READ4 command clocks while READ4 wait falls from
+  2,532 to 1,688 clocks, exactly one saved clock per command.
+- Timing: WNS +0.586 ns, TNS 0, no failing endpoints at 100 MHz.
+- Resources: 122,435 LUT, 53,488 FF, 24 RAMB36, 71 DSP48.
+- A direct launch from BACK_PREP/BACK_UPDATE was rejected despite identical
+  cycle savings because it raised LUT to 131,977.
+- Exactly one LS request remains active; PE0-only ingress and fixed four-row
+  arithmetic ownership are unchanged.
+- Detailed report:
+  `reports/releases/BACKSOLVE_READ4_FAST_COMPLETE_SIGNOFF_20260816.md`.
+- Cycle matrix:
+  `reports/releases/backsolve_read4_fast_complete_k_sweep_20260816.csv`.
+
+The next optimization should remain resource-neutral.  Profile a narrow
+forward/back solve transition or factor-check handshake, and reject any change
+that duplicates command setup across multiple PE/control states.

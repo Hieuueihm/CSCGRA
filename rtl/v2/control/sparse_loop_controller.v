@@ -326,6 +326,17 @@ reg signed [63:0] ls_factor_q;
 reg signed [63:0] ls_rhs_wdata_q;
 wire ls_busy_w;
 wire ls_done_w;
+// Back-solve READ4 uses only controller registers for its address.  Decode the
+// dedicated command state directly at the service boundary so the request is
+// accepted on the READ -> WAIT edge instead of one clock after ls_start_q.
+// Other LS operations retain the registered command path unchanged.
+wire back_read4_fast_start_w = (state == S_BACK_RHS_READ);
+wire ls_start_w = ls_start_q | back_read4_fast_start_w;
+wire [3:0] ls_op_w = back_read4_fast_start_w ? LS_OP_READ4 : ls_op_q;
+wire [4:0] ls_row_a_w = back_read4_fast_start_w ? ldlt_p_base_q : ls_row_a_q;
+wire [4:0] ls_col_a_w = back_read4_fast_start_w ? back_i : ls_col_a_q;
+wire [4:0] ls_row_b_w = back_read4_fast_start_w ? ldlt_p_base_q : ls_row_b_q;
+wire [4:0] ls_col_b_w = back_read4_fast_start_w ? back_i : ls_col_b_q;
 wire signed [GE_MAT_W-1:0] ls_rdata_a_w;
 wire signed [GE_MAT_W-1:0] ls_rdata_b_w;
 wire signed [4*GE_MAT_W-1:0] ls_read4_rdata_w;
@@ -340,12 +351,12 @@ ls_matrix_service #(
 ) u_ls_matrix_service (
     .clk(clk),
     .rst_n(rst_n),
-    .start(ls_start_q),
-    .op(ls_op_q),
-    .row_a(ls_row_a_q),
-    .col_a(ls_col_a_q),
-    .row_b(ls_row_b_q),
-    .col_b(ls_col_b_q),
+    .start(ls_start_w),
+    .op(ls_op_w),
+    .row_a(ls_row_a_w),
+    .col_a(ls_col_a_w),
+    .row_b(ls_row_b_w),
+    .col_b(ls_col_b_w),
     .row_base(ls_row_base_q),
     .lane_valid(ls_lane_valid_q),
     .row_update_block(ls_row_update_block_q),
@@ -2814,13 +2825,8 @@ case (state)
             end
             S_BACK_RHS_READ: begin
                 // L(j+r,i) is a four-row banked column read; each returned
-                // coefficient feeds the matching physical PE row.
-                ls_start_q <= 1'b1;
-                ls_op_q <= LS_OP_READ4;
-                ls_row_a_q <= ldlt_p_base_q;
-                ls_col_a_q <= back_i;
-                ls_row_b_q <= ldlt_p_base_q;
-                ls_col_b_q <= back_i;
+                // coefficient feeds the matching physical PE row.  The
+                // service accepts the decoded command on this transition.
                 state <= S_BACK_RHS_READ_WAIT;
             end
             S_BACK_RHS_READ_WAIT: begin
