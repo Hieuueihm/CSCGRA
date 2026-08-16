@@ -441,3 +441,25 @@ candidate is a strictly state-only factor-check transition; reject it if it
 adds final-response seen-mask/fingerprint logic or materially grows LUT.  The
 current signed-off baseline remains 1328836 full-sweep cycles, +0.605 ns WNS,
 123551 LUT, 53423 FF, 24 RAMB36, and 71 DSP48.
+
+## Latest rejected study: factor-check known-miss DONE bypass
+
+The strictly state-only factor-check candidate has now also been implemented,
+profiled, and synthesized.  It bypassed DONE only for reuse-impossible requests
+identified in INIT; the possible-reuse scan, PE3 response, seen-mask, ordered
+match, and fingerprint logic were untouched.
+
+- K8 correctness: 45 PASS / 0 FAIL.
+- K8 cycles: 379662 -> 379642 (-20, -0.0053%).
+- Savings: OMP -1, CoSaMP -9, HTP -1, SP -8, GOMP -1.
+- Timing: WNS +0.648 ns, TNS 0, no failing endpoints.
+- Resources: 125698 LUT (+2147, +1.74%), 53411 FF, 24 RAMB36, 71 DSP48.
+- Decision: rejected; RTL restored to the `d487050` signed-off behavior.
+- Detailed report:
+  `reports/releases/FACTOR_CHECK_STATE_ONLY_TRIAL_20260816.md`.
+
+Do not revisit factor-check INIT/DONE or the fresh-factor solve-setup boundary.
+Both have now been measured and fail the resource-neutral requirement.  Keep
+the signed-off baseline at 1328836 full-sweep cycles, +0.605 ns WNS, 123551
+LUT, 53423 FF, 24 RAMB36, and 71 DSP48 while selecting a higher-residency
+target outside these control paths.
