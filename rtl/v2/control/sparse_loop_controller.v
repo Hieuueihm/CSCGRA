@@ -914,6 +914,14 @@ reg signed [63:0] div_result;
 reg [5:0] solve_i;
 reg [5:0] solve_j;
 reg [5:0] solve_k;
+wire ldlt_shared_tail_state_w = (state == S_LDL_DIAG_GATHER_WAIT) ||
+                                (state == S_ELIM_ROW_READ);
+wire [5:0] ldlt_shared_tail_limit_w = (state == S_ELIM_ROW_READ) ?
+                                      solve_i : {1'b0, ldlt_k_q};
+wire ldlt_shared_tail_last_w = (ldlt_lane_q == 3) ||
+                               ({1'b0, ldlt_p_base_q} +
+                                {3'b000, ldlt_lane_q} + 1'b1 >=
+                                ldlt_shared_tail_limit_w);
 reg [4:0] acc_i;
 reg [5:0] acc_j;
 reg [5:0] back_i;
@@ -2256,14 +2264,10 @@ case (state)
             S_LDL_DIAG_GATHER_WAIT: begin
                 if (ls_done_w) begin
                     ldlt_l_lane_q[ldlt_lane_q] <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w};
-                    if ((ldlt_lane_q == 3) ||
-                        (ldlt_p_base_q + ldlt_lane_q + 1'b1 >= ldlt_k_q)) begin
-                        // Zero all inactive tail lanes together.  The old FSM
-                        // consumed one S_LDL_DIAG_GATHER clock per tail lane.
-                        for (gi = 0; gi < 4; gi = gi + 1) begin
-                            if (gi > ldlt_lane_q)
-                                ldlt_l_lane_q[gi] <= 64'sd0;
-                        end
+                    if (ldlt_shared_tail_last_w) begin
+                        // Inactive lanes are cleared by the shared tail mask
+                        // below; diagonal gather and forward solve use the
+                        // same physical lane-register write path.
                         state <= S_LDL_DIAG_MUL1;
                     end else begin
                         ldlt_lane_q <= ldlt_lane_q + 1'b1;
@@ -2656,30 +2660,28 @@ case (state)
                 end
             end
             S_ELIM_ROW: begin
-                if ((ldlt_p_base_q + ldlt_lane_q) < solve_i) begin
-                    ls_start_q <= 1'b1;
-                    ls_op_q <= LS_OP_READ2;
-                    ls_row_a_q <= solve_i;
-                    ls_col_a_q <= ldlt_p_base_q + ldlt_lane_q;
-                    ls_row_b_q <= solve_i;
-                    ls_col_b_q <= ldlt_p_base_q + ldlt_lane_q;
-                    state <= S_ELIM_ROW_READ;
-                end else begin
-                    ldlt_l_lane_q[ldlt_lane_q] <= 64'sd0;
-                    ldlt_lkp_lane_q[ldlt_lane_q] <= 64'sd0;
-                    if (ldlt_lane_q == 3)
-                        state <= S_ELIM_PREP;
-                    else
-                        ldlt_lane_q <= ldlt_lane_q + 1'b1;
-                end
+                // Entry is guarded by ELIM_START, the preceding read
+                // completion, or a four-lane block advance, so lane_q always
+                // names a valid j.  Keep the service command registered to
+                // isolate the matrix-memory address path from solve control.
+                ls_start_q <= 1'b1;
+                ls_op_q <= LS_OP_READ2;
+                ls_row_a_q <= solve_i;
+                ls_col_a_q <= ldlt_p_base_q + ldlt_lane_q;
+                ls_row_b_q <= solve_i;
+                ls_col_b_q <= ldlt_p_base_q + ldlt_lane_q;
+                state <= S_ELIM_ROW_READ;
             end
             S_ELIM_ROW_READ: begin
                 if (ls_done_w) begin
                     ldlt_l_lane_q[ldlt_lane_q] <= {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w};
                     ldlt_lkp_lane_q[ldlt_lane_q] <= rhs[ldlt_p_base_q + ldlt_lane_q];
-                    if (ldlt_lane_q == 3)
+                    if (ldlt_shared_tail_last_w) begin
+                        // Complete a partial final block in the same edge as
+                        // its last valid read instead of spending one state
+                        // transition per zero-filled tail lane.
                         state <= S_ELIM_PREP;
-                    else begin
+                    end else begin
                         ldlt_lane_q <= ldlt_lane_q + 1'b1;
                         state <= S_ELIM_ROW;
                     end
@@ -3307,6 +3309,18 @@ case (state)
             end
             default: state <= S_IDLE;
         endcase
+        // Both LDLT diagonal gather and the unit-lower forward solve consume
+        // the same four coefficient-lane registers.  Share one tail-clear
+        // write decode so adding forward-solve completion does not duplicate
+        // a 4x64-bit zero-fill mux.  Only the coefficient side must be zero:
+        // the paired stale RHS value is harmless because 0*x remains zero.
+        if (ls_done_w && ldlt_shared_tail_state_w &&
+            ldlt_shared_tail_last_w) begin
+            for (gi = 0; gi < 4; gi = gi + 1) begin
+                if (gi > ldlt_lane_q)
+                    ldlt_l_lane_q[gi] <= 64'sd0;
+            end
+        end
     end
 end
 endmodule

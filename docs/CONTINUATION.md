@@ -388,3 +388,34 @@ the single launch state.
 The next optimization should remain resource-neutral.  Profile a narrow
 forward/back solve transition or factor-check handshake, and reject any change
 that duplicates command setup across multiple PE/control states.
+
+## Latest LDLT checkpoint: shared forward-solve tail completion
+
+The unit-lower forward solve now completes a partial four-lane block on the
+last valid READ2 response instead of visiting `S_ELIM_ROW` once per inactive
+tail lane.  Diagonal gather and forward solve share one tail-limit comparator
+and coefficient-lane zero-fill decode; READ2 stays on the registered LS command
+path.
+
+- Correctness: 348 PASS / 0 FAIL, 62 cycle records, 2 expected K16 skips.
+- Aggregate cycles: 1,331,717 -> 1,328,836 (-2,881; -0.216%).
+- OMP: 165,788 (-352); CoSaMP: 272,157 (-888); HTP: 210,098
+  (-660); SP: 226,126 (-780); GOMP: 94,919 (-201).
+- IHT, GP, and MP remain cycle-identical.
+- K8 saves 742 inactive tail-write clocks; valid READ2 latency remains three
+  clocks per request.
+- Timing: WNS +0.605 ns, TNS 0, no failing endpoints at 100 MHz.
+- Resources: 123,551 LUT, 53,423 FF, 24 RAMB36, 71 DSP48.
+- Direct READ2 fast-start variants were rejected at 127,270--128,434 LUT.
+- Exactly one LS request remains active; PE0-only ingress and fixed four-row
+  arithmetic ownership are unchanged.
+- Detailed report:
+  `reports/releases/FORWARD_SOLVE_SHARED_TAIL_COMPLETION_SIGNOFF_20260816.md`.
+- Cycle matrix:
+  `reports/releases/forward_solve_shared_tail_completion_k_sweep_20260816.csv`.
+
+The next cycle optimization should not revisit forward READ2 fast-start.  Its
+cycle benefit is measured, but its service-boundary mux cost is too high.  A
+safer next target is a resource-neutral factor-check or solve-setup control
+bubble whose operands are already registered; retain one active LS request and
+the PE0 -> PE1 -> PE2 -> PE3 ingress rule.
