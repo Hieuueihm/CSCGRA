@@ -484,3 +484,20 @@ INIT bypass.  The next candidate must have high measured residency without
 moving LFSR generation or another wide datapath cone onto a completion edge.
 Prefer an existing registered handshake/control bubble in residual, Gram, or
 top-K service; require a cycle gain materially larger than its LUT percentage.
+
+## Latest rejected study: Gram ACC4 zero guard
+
+The final registered Gram guard was changed from one to zero without adding
+logic.  OMP passed and saved 768 K8 clocks, but CoSaMP produced multiple final
+`X_MISM` failures, so the run was stopped and no synthesis was performed.
+
+- The ACC4 pending queue can accept a request early, but its four-row PE
+  producer payload is not stable without the retained guard clock.
+- RTL is restored exactly to checkpoint `417bfa5` behavior.
+- Detailed report: `reports/releases/GRAM_GUARD0_TRIAL_20260817.md`.
+
+Do not retry Gram guard zero without adding a registered wide ACC4 payload.
+Residual INIT/WAIT now represents preload plus real pipeline fill/drain, and
+top-K CAPTURE/ISSUE represents producer wait plus real PE0 tokens.  Neither is
+a remaining resource-neutral handshake bubble.  Avoid moving residual wide
+sums or LFSR generation onto a completion edge merely to collapse a state.
