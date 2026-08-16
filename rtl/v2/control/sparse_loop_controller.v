@@ -1931,12 +1931,14 @@ case (state)
                               ((rhs_block_base + acc4_valid_col) >= factor_k_q)));
                     end
                 end
-                // The row-banked matrix store drains the captured four-column
-                // batch in four clocks.  Its one-entry fall-through ACC4 queue
-                // accepts this registered request on the previous batch's
-                // final write, so one guard clock is sufficient to prepare the
-                // next four-row PE transaction without an idle write slot.
-                gram_drain_wait_q <= 3'd1;
+                // Consecutive ACC4 batches retain one guard clock because the
+                // producer can otherwise outrun the four-clock matrix-store
+                // drain.  The final batch of a measurement row may enqueue on
+                // the previous batch's final write: the following direct-scan
+                // and RHS interval gives the one-entry queue time to drain.
+                gram_drain_wait_q <=
+                    ((rhs_block_base + RHS_BLOCK_STRIDE >= active_k_count) &&
+                     (acc_j + 5'd4 >= active_k_count)) ? 3'd0 : 3'd1;
                 state <= S_GRAM_ACC_WAIT;
             end
             S_GRAM_ACC_WAIT: begin

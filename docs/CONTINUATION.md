@@ -501,3 +501,33 @@ Residual INIT/WAIT now represents preload plus real pipeline fill/drain, and
 top-K CAPTURE/ISSUE represents producer wait plus real PE0 tokens.  Neither is
 a remaining resource-neutral handshake bubble.  Avoid moving residual wide
 sums or LFSR generation onto a completion edge merely to collapse a state.
+
+## Latest signed-off optimization: bounded Gram final-batch overlap
+
+The global Gram guard-zero trial remains rejected, but its root cause enabled a
+safe bounded schedule.  Only the final ACC4 batch of each measurement row now
+uses guard zero; every consecutive batch retains guard one.  The following
+direct-Phi scan and RHS interval drains the one-entry queue before another Gram
+request can arrive.
+
+- Full correctness: 348 PASS / 0 FAIL, 62 cycle records, with the 2 expected
+  K16 SP/CoSaMP capacity skips.
+- Aggregate cycles: 1,328,836 -> 1,319,534 (-9,302; -0.700%).
+- K8 cycles: 379,662 -> 376,764 (-2,898; -0.763%).
+- OMP K8: 34,470 -> 33,966; OMP K16: 84,014 -> 83,006.
+- Timing: WNS +0.658 ns, TNS 0, no failing endpoints at 100 MHz.
+- Resources: 124,019 LUT, 53,506 FF, 24 RAMB36, 71 DSP48.
+- Total LUT rises 0.379%, below the 0.700% full-sweep cycle reduction; FF rises
+  by 83, while BRAM/DSP remain unchanged.
+- Strict PE0 ingress, PE0 -> PE1 -> PE2 -> PE3 propagation, four-row ownership,
+  registered LS commands, and one active LS request remain unchanged.
+- Detailed report:
+  `reports/releases/GRAM_FINAL_BATCH_OVERLAP_SIGNOFF_20260817.md`.
+- Cycle matrix:
+  `reports/releases/gram_final_batch_overlap_k_sweep_20260817.csv`.
+
+Do not convert the remaining consecutive Gram batches to guard zero: the
+producer can issue every three clocks while the matrix service drains in four.
+If further ACC4 overlap is needed, it requires an explicitly sized registered
+payload queue and a measured LUT/FF/WNS tradeoff.  Prefer profiling a different
+high-residency registered boundary before paying that cost.
