@@ -419,3 +419,25 @@ cycle benefit is measured, but its service-boundary mux cost is too high.  A
 safer next target is a resource-neutral factor-check or solve-setup control
 bubble whose operands are already registered; retain one active LS request and
 the PE0 -> PE1 -> PE2 -> PE3 ingress rule.
+
+## Latest rejected study: LS solve-setup bubbles
+
+Three implementations of the fresh-factor `S_LDL_INIT` -> first diagonal
+READ2 boundary were profiled and synthesized.  All passed the eight-algorithm
+K8 smoke test and timing, but all failed the resource-neutral acceptance rule.
+
+- Direct completion-to-READ2 saved 50 K8 clocks but added 6399 LUT.
+- Bypassing `S_LDL_INIT` saved 25 clocks but added 3311 LUT.
+- Reusing `S_LDL_INIT` as the READ2 command state saved 25 clocks but added
+  3354 LUT.
+- Best timing among the trials was +0.654 ns, but the cycle/resource ratio is
+  not acceptable; no RTL trial was retained.
+- Source has been restored exactly to checkpoint `d487050` behavior.
+- Detailed report:
+  `reports/releases/LS_SOLVE_SETUP_TRIALS_20260816.md`.
+
+Do not revisit the fresh-factor first-diagonal setup boundary.  The next safe
+candidate is a strictly state-only factor-check transition; reject it if it
+adds final-response seen-mask/fingerprint logic or materially grows LUT.  The
+current signed-off baseline remains 1328836 full-sweep cycles, +0.605 ns WNS,
+123551 LUT, 53423 FF, 24 RAMB36, and 71 DSP48.
