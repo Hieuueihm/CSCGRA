@@ -463,3 +463,24 @@ Both have now been measured and fail the resource-neutral requirement.  Keep
 the signed-off baseline at 1328836 full-sweep cycles, +0.605 ns WNS, 123551
 LUT, 53423 FF, 24 RAMB36, and 71 DSP48 while selecting a higher-residency
 target outside these control paths.
+
+## Latest rejected study: correlation INIT bypass
+
+The next high-residency candidate, `S_CORR_INIT`, was implemented in both
+direct and shared-control forms.  Both preserved strict PE0 ingress, all four
+PE row roles, and the synchronous-SPM settle state.
+
+- K8 correctness: 45 PASS / 0 FAIL for both implementations.
+- K8 cycles: 379662 -> 377802 (-1860, -0.49%).
+- Direct form: 131176 LUT (+7625, +6.17%), WNS +0.391 ns.
+- Shared form: 133713 LUT (+10162, +8.23%), WNS +0.378 ns.
+- Both retain 24 RAMB36 and 71 DSP48 with zero timing failures.
+- Decision: rejected; RTL restored exactly to checkpoint `9306d2c`.
+- Detailed report:
+  `reports/releases/CORRELATION_INIT_BYPASS_TRIAL_20260816.md`.
+
+Do not revisit factor-check INIT/DONE, fresh-factor solve-setup, or correlation
+INIT bypass.  The next candidate must have high measured residency without
+moving LFSR generation or another wide datapath cone onto a completion edge.
+Prefer an existing registered handshake/control bubble in residual, Gram, or
+top-K service; require a cycle gain materially larger than its LUT percentage.
