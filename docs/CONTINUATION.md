@@ -531,3 +531,31 @@ producer can issue every three clocks while the matrix service drains in four.
 If further ACC4 overlap is needed, it requires an explicitly sized registered
 payload queue and a measured LUT/FF/WNS tradeoff.  Prefer profiling a different
 high-residency registered boundary before paying that cost.
+
+## Latest signed-off optimization: LDLT border phase overlap
+
+The LDLT border scheduler now overlaps MUL1 drain with MUL2 issue using a
+one-bit phase tag and a four-bit modulo-slot ready mask.  This keeps the compact
+four-entry scoreboard while preventing MUL2 tag `p` from overwriting a slot
+still owned by MUL1 tag `p+4`.  All tokens still enter at PE0 and propagate
+through PE1, PE2, and PE3; four target-row roles and the one-active-LS-request
+rule are unchanged.
+
+- Full correctness: 348 PASS / 0 FAIL, with the 2 expected K16 SP/CoSaMP
+  capacity skips.
+- Aggregate cycles: 1,319,534 -> 1,315,336 (-4,198; -0.318%).
+- K8 cycles: 376,764 -> 375,362 (-1,402; -0.372%).
+- OMP K8: 33,966 -> 33,920; OMP K16: 83,006 -> 82,728.
+- Timing: WNS +0.850 ns, TNS 0, no failing endpoints at 100 MHz.
+- Resources: 121,302 LUT, 53,281 FF, 24 RAMB36, 71 DSP48.
+- Detailed report:
+  `reports/releases/LDLT_BORDER_PHASE_OVERLAP_SIGNOFF_20260817.md`.
+- Cycle matrix:
+  `reports/releases/ldlt_border_phase_overlap_k_sweep_20260817.csv`.
+
+Do not use the tested phase-separated doubled scoreboard: it passed K8 but
+added 3,104 LUT for only 0.74% K8 cycle reduction.  The next possible
+architectural study is two-column ACC4 drain with column banking, after first
+profiling its remaining control/dependency stalls.  Keep registered payload
+isolation, strict PE0 ingress, one active LS request, WNS >= +0.2 ns, and reject
+any candidate whose LUT-growth percentage exceeds its cycle reduction.
