@@ -582,3 +582,23 @@ duplicated banks/adders or an explicit true-dual-port memory primitive.  A BRAM
 implementation may be studied only if the no-BRAM-growth criterion is relaxed.
 The next optimization should return to a registered high-residency controller
 or datapath boundary outside the ACC4 storage write port.
+
+## Latest rejected study: bounded LS matrix clear
+
+`S_LS_CLEAR_WAIT` was the next registered boundary studied outside ACC4.  A
+fine active-column bound failed OMP K8 (5 PASS / 6 FAIL) because factor/prefetch
+behavior can observe columns beyond the current active prefix before masking.
+
+A conservative row-page bound kept every column clear and skipped only rows
+8--15 when K<=8.  OMP K8 passed and saved 16 clocks, but OOC grew from 121,302
+to 127,128 LUT (+4.80%) for only about 0.107% projected K8 reduction.  WNS was
++0.472 ns, FF 53,416, RAMB36 24, and DSP48 71.  It was rejected before full
+regression and all RTL was restored to checkpoint `f5cdbe3` behavior.
+
+Detailed report:
+`reports/releases/LS_BOUNDED_CLEAR_TRIALS_20260817.md`.
+
+Do not revisit active-column or row-page-bounded clear.  Also avoid the already
+rejected completion-driven forward READ2 paths.  The next target must have
+materially more registered residency than clear and remain outside the ACC4
+write port.
