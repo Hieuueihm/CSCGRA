@@ -56,6 +56,7 @@ integer profile_ctrl_cycles [0:127];
 integer profile_topk_cycles [0:7];
 integer profile_support_cycles [0:15];
 integer profile_uop_cycles [0:15];
+integer profile_wide_cycles [0:15];
 reg done_seen, error_seen;
 
 `include "k_sweep_golden_mu3.vh"
@@ -72,16 +73,21 @@ task profile_reset; integer p; begin
     for(p=0;p<16;p=p+1) begin
         profile_support_cycles[p]=0;
         profile_uop_cycles[p]=0;
+        profile_wide_cycles[p]=0;
     end
 end endtask
-task profile_dump; input integer alg_id; integer p; integer factor_total; integer topk_total; integer support_total; begin
+task profile_dump; input integer alg_id; integer p; integer factor_total; integer topk_total; integer support_total; integer wide_total; begin
     if(profile_states) begin
         factor_total=profile_ctrl_cycles[125]+profile_ctrl_cycles[126]+profile_ctrl_cycles[127];
         topk_total=0; support_total=0;
         for(p=0;p<8;p=p+1) topk_total=topk_total+profile_topk_cycles[p];
-        for(p=1;p<16;p=p+1) support_total=support_total+profile_support_cycles[p];
-        $display("STATE_PROFILE_SUMMARY case=%0d alg=%0d total=%0d factor=%0d topk=%0d support_nonidle=%0d reduce_uop=%0d",
-                 case_idx,alg_id,profile_total_cycles,factor_total,topk_total,support_total,profile_uop_cycles[4]);
+        wide_total=0;
+        for(p=1;p<16;p=p+1) begin
+            support_total=support_total+profile_support_cycles[p];
+            wide_total=wide_total+profile_wide_cycles[p];
+        end
+        $display("STATE_PROFILE_SUMMARY case=%0d alg=%0d total=%0d factor=%0d topk=%0d support_nonidle=%0d reduce_uop=%0d wide_nonidle=%0d",
+                 case_idx,alg_id,profile_total_cycles,factor_total,topk_total,support_total,profile_uop_cycles[4],wide_total);
         for(p=0;p<128;p=p+1)
             if(profile_ctrl_cycles[p]!=0)
                 $display("STATE_PROFILE case=%0d alg=%0d kind=CTRL state=%0d cycles=%0d",case_idx,alg_id,p,profile_ctrl_cycles[p]);
@@ -94,6 +100,9 @@ task profile_dump; input integer alg_id; integer p; integer factor_total; intege
         for(p=0;p<16;p=p+1)
             if(profile_uop_cycles[p]!=0)
                 $display("STATE_PROFILE case=%0d alg=%0d kind=UOP state=%0d cycles=%0d",case_idx,alg_id,p,profile_uop_cycles[p]);
+        for(p=1;p<16;p=p+1)
+            if(profile_wide_cycles[p]!=0)
+                $display("STATE_PROFILE case=%0d alg=%0d kind=WIDE state=%0d cycles=%0d",case_idx,alg_id,p,profile_wide_cycles[p]);
     end
 end endtask
 function absdiff_le; input [23:0] a,b; input integer tol; begin diff={a[23],a}-{b[23],b}; if(diff<0) diff=-diff; absdiff_le=(diff<=tol); end endfunction
@@ -253,6 +262,8 @@ always @(posedge clk) begin
         profile_ctrl_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state]=
             profile_ctrl_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state]+1;
         profile_uop_cycles[dut.uop_class]=profile_uop_cycles[dut.uop_class]+1;
+        profile_wide_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_state_q]=
+            profile_wide_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_state_q]+1;
         if(dut.u_sparse_kernel_service_engine.u_stream_topk.state_q!=0)
             profile_topk_cycles[dut.u_sparse_kernel_service_engine.u_stream_topk.state_q]=
                 profile_topk_cycles[dut.u_sparse_kernel_service_engine.u_stream_topk.state_q]+1;

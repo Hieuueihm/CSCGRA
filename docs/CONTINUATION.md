@@ -653,3 +653,31 @@ pre-registered. The next candidate should be a registered stage inside the
 wide-multiply or divider controller, not another matrix-memory handshake or
 multi-write path. Preserve strict PE0 ingress, all four PE-row roles, one
 active LS request, and WNS >= +0.2 ns.
+
+## Latest rejected study: wide-multiplier registered stage
+
+Verification now profiles internal wide-multiplier state residency.  Baseline
+K8 passed at 45 PASS / 0 FAIL and exposed 3,096 non-vertical FINAL-stage
+completion opportunities.  The divider's 5,248 divide-step clocks were all
+active arithmetic clocks, so it had no removable registered bubble.
+
+A trial fused non-vertical wide-multiply COMMIT and FINAL.  It preserved the
+existing four simultaneous PE-row products, left the strict vertical
+PE0 -> PE1 -> PE2 -> PE3 path unchanged, and did not alter any memory port.
+K8 passed at 45 PASS / 0 FAIL and fell from 375,362 to 372,266 cycles
+(-3,096; -0.825%), exactly matching the profile.
+
+The trial was rejected after OOC. WNS was only +0.205 ns, while total LUT grew
+from 121,302 to 128,228 (+5.71%) and FF from 53,281 to 53,635. RAMB36 remained
+24 and DSP remained 71. The LUT growth was 6.9 times the cycle-reduction
+percentage. A full K-sweep was not run, and RTL was restored exactly to
+checkpoint `d4a3bfd`. The verification-only profiler is retained.
+
+Detailed report:
+`reports/releases/WIDE_MULTIPLIER_REGISTERED_STAGE_TRIAL_20260817.md`.
+
+Do not retry non-vertical COMMIT/FINAL fusion, increase divider radix, feed
+completion back into READ4, or widen memory ports. The next target must be a
+high-residency boundary with an already narrow local registered payload, while
+preserving strict PE0 ingress, distinct work on all four PE rows, one active LS
+request, and WNS >= +0.2 ns.
