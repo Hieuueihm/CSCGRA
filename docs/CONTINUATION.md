@@ -681,3 +681,33 @@ completion back into READ4, or widen memory ports. The next target must be a
 high-residency boundary with an already narrow local registered payload, while
 preserving strict PE0 ingress, distinct work on all four PE rows, one active LS
 request, and WNS >= +0.2 ns.
+
+## Latest retained optimization: top-K append ACK chaining
+
+The non-sorted top-K result path now presents the next locally registered
+10-bit index and 3-bit support path on the registered `append_done` edge.  This
+removes the empty re-issue clock between support writes without widening a
+memory port.  The final ACK transitions directly to DONE.
+
+The ranking wavefront remains strict PE0 -> PE1 -> PE2 -> PE3.  No LS request,
+READ4 feedback, divider, wide multiplier, DSP, BRAM, or four-row arithmetic
+role changed.
+
+Results:
+
+- K8: 45 PASS / 0 FAIL; 375,362 -> 374,962 cycles (-400; -0.107%).
+- Full sweep: 348 PASS / 0 FAIL with two expected K16 skips;
+  1,315,336 -> 1,313,368 cycles (-1,968; -0.150%).
+- OOC WNS: +0.850 ns, unchanged.
+- LUT: 121,302 -> 121,359 (+57; +0.047%).
+- FF/RAMB36/DSP: unchanged at 53,281/24/71.
+
+Detailed report and complete cycle matrix:
+
+- `reports/releases/TOPK_APPEND_ACK_CHAIN_SIGNOFF_20260817.md`
+- `reports/releases/topk_append_ack_chain_k_sweep_20260817.csv`
+
+The next narrow registered boundary is the sorted append ACK -> first scan
+position transition. K8 `S_SORT_WAIT` residency is 256 clocks. Any trial must
+reuse the existing result-list mux, preserve WNS >= +0.2 ns, and be rejected if
+its LUT growth exceeds the smaller cycle benefit.

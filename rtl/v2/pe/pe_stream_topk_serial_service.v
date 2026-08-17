@@ -199,8 +199,21 @@ module pe_stream_topk_serial_service #(
                         state_q <= S_DONE;
                     end else if (append_wait_q) begin
                         if (append_done) begin
-                            append_wait_q <= 1'b0;
                             append_pos_q <= append_pos_q + 1'b1;
+                            if (append_pos_q + 1'b1 >= result_count_q) begin
+                                append_wait_q <= 1'b0;
+                                state_q <= S_DONE;
+                            end else begin
+                                // support_set_service acknowledges from a
+                                // register and is back in IDLE on this edge.
+                                // Present the next already-registered index
+                                // immediately, avoiding the otherwise empty
+                                // re-issue clock between narrow appends.
+                                append_valid <= 1'b1;
+                                append_idx <= result_idx_bus_q[
+                                    (append_pos_q + 1'b1)*IDX_W +: IDX_W];
+                                append_wait_q <= 1'b1;
+                            end
                         end
                     end else begin
                         append_valid <= 1'b1;
