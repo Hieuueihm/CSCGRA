@@ -602,3 +602,28 @@ Do not revisit active-column or row-page-bounded clear.  Also avoid the already
 rejected completion-driven forward READ2 paths.  The next target must have
 materially more registered residency than clear and remain outside the ACC4
 write port.
+
+## Latest rejected study: RHS_WRITE4
+
+Four serialized RHS writes were combined into one registered `RHS_WRITE4`
+request using the low 256 bits of the existing `rhs4_product_q` hold and the
+existing `lane_add4` interface. OMP K8 passed at 5 PASS / 0 FAIL, and the full
+K8 suite passed at 45 PASS / 0 FAIL. K8 cycle count fell from 375,362 to
+374,258 (-1,104; -0.294%); OMP fell from 33,920 to 33,848.
+
+The implementation kept one active LS request, did not change ACC4, and left
+DSP/BRAM unchanged. OOC WNS was positive at +0.501 ns. It was nevertheless
+rejected because four independently enabled writes expanded total LUT from
+121,302 to 133,109 (+11,807; +9.73%), while FF rose from 53,281 to 53,613.
+This exceeds the cycle benefit by more than 33 times. A full K-sweep was not
+run after the resource gate failed, and all RTL was restored to the signed-off
+baseline.
+
+Detailed report:
+`reports/releases/RHS_WRITE4_TRIAL_20260817.md`.
+
+Do not retry RHS_WRITE4 with ordinary inferred multi-write RTL. The next
+candidate must avoid widening a memory write port and should target a
+high-residency registered controller/datapath boundary while preserving strict
+PE0 ingress, four-row PE participation, one active LS request, and WNS >=
++0.2 ns.
