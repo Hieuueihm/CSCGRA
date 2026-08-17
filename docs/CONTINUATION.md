@@ -627,3 +627,29 @@ candidate must avoid widening a memory write port and should target a
 high-residency registered controller/datapath boundary while preserving strict
 PE0 ingress, four-row PE participation, one active LS request, and WNS >=
 +0.2 ns.
+
+## Latest rejected study: LDLT READ4 completion chaining
+
+The high-residency LDLT row-preload READ4 boundary was evaluated in two forms.
+A direct address fast-start passed K8 at 45 PASS / 0 FAIL and reduced 375,362
+to 372,602 cycles (-0.735%), but expanded total LUT from 121,302 to 127,673
+(+5.25%). WNS remained positive at +0.394 ns.
+
+A narrower form pre-registered p+1 in the existing LS command address hold and
+fed only the completion-qualified start into the service. It also passed K8 at
+45 PASS / 0 FAIL and reduced `S_LDL_ROW_P_WAIT` from 9,126 to 6,661 clocks.
+K8 total became 372,897 (-2,465; -0.657%). OOC WNS was +0.603 ns, but LUT still
+rose to 123,077 (+1.46%), FF to 53,381, and the run emitted one LUTNM shape
+critical warning. RAMB36 remained 24 and DSP remained 71 in both trials.
+
+Both variants failed the resource-versus-cycle gate and were removed before a
+full K-sweep. RTL is restored exactly to checkpoint `3152554`.
+
+Detailed report:
+`reports/releases/LDLT_READ4_CHAIN_TRIALS_20260817.md`.
+
+Do not retry completion-feedback fast-start on LDLT READ4, direct or
+pre-registered. The next candidate should be a registered stage inside the
+wide-multiply or divider controller, not another matrix-memory handshake or
+multi-write path. Preserve strict PE0 ingress, all four PE-row roles, one
+active LS request, and WNS >= +0.2 ns.
