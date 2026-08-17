@@ -559,3 +559,26 @@ architectural study is two-column ACC4 drain with column banking, after first
 profiling its remaining control/dependency stalls.  Keep registered payload
 isolation, strict PE0 ingress, one active LS request, WNS >= +0.2 ns, and reject
 any candidate whose LUT-growth percentage exceeds its cycle reduction.
+
+## Latest rejected study: ACC4 two-column drain
+
+The proposed two-column ACC4 drain was profiled and implemented in two forms.
+The direct column-parity-bank form passed K8 at 45 PASS / 0 FAIL and reduced
+375,362 -> 369,878 cycles (-5,484; -1.461%).  It was nevertheless rejected:
+OOC used 143,154 LUT (+18.01%), 3,680 LUTRAM, and 75 DSP, versus the signed-off
+121,302 LUT, 2,144 LUTRAM, and 71 DSP.  WNS remained positive at +0.621 ns.
+
+A packed 112-bit adjacent-column word also passed OMP K8 at 33,632 cycles, but
+two independently enabled partial writes prevented distributed-RAM inference
+and expanded the LS service into large logic partitions.  Its OOC run was
+stopped before final reporting.  Both RTL trials were removed; checkpoint
+`0ae1557` behavior is restored.
+
+Detailed report:
+`reports/releases/ACC4_TWO_COLUMN_BANKING_TRIAL_20260817.md`.
+
+Do not retry two-column drain with ordinary inferred LUTRAM.  It needs either
+duplicated banks/adders or an explicit true-dual-port memory primitive.  A BRAM
+implementation may be studied only if the no-BRAM-growth criterion is relaxed.
+The next optimization should return to a registered high-residency controller
+or datapath boundary outside the ACC4 storage write port.
