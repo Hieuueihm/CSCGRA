@@ -37,6 +37,23 @@ $scanPaths = @(
     (Join-Path $repoRoot "scripts\synth"),
     (Join-Path $repoRoot "config")
 )
+
+$goldenManifestPath = Join-Path $repoRoot "models\golden\manifest.json"
+if (Test-Path -LiteralPath $goldenManifestPath) {
+    $goldenManifest = Get-Content -LiteralPath $goldenManifestPath -Raw | ConvertFrom-Json
+    foreach ($goldenEntry in $goldenManifest.sha256.PSObject.Properties) {
+        $goldenPath = Join-Path $repoRoot (Join-Path "models\golden" $goldenEntry.Name)
+        if (-not (Test-Path -LiteralPath $goldenPath)) {
+            $errors += "Missing golden file: $($goldenEntry.Name)"
+            continue
+        }
+        $actualHash = (Get-FileHash -LiteralPath $goldenPath -Algorithm SHA256).Hash.ToUpperInvariant()
+        $expectedHash = ([string]$goldenEntry.Value).ToUpperInvariant()
+        if ($actualHash -ne $expectedHash) {
+            $errors += "Golden hash mismatch: $($goldenEntry.Name)"
+        }
+    }
+}
 if ($IncludeLegacy) {
     $scanPaths += Join-Path $repoRoot "scripts\legacy"
 }

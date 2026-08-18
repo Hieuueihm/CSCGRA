@@ -30,7 +30,8 @@ not synthesized.
 ## Other files
 
 - `run1/*golden*.vh`: active and archived run1 golden includes.
-- root `*_golden*.vh`: shared version-matched vectors.
+- root `*_golden*.vh`: historical diagnostic includes used by legacy focused
+  benches; the canonical K-sweep include is under `run1/`.
 - `tb_omp_*`, `tb_mp_*`, and `tb_soc_program_*`: focused historical or
   diagnostic benches; they do not replace the canonical K-sweep sign-off.
 - `*.f`: explicit focused-test file lists.

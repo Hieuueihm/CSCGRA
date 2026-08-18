@@ -1,10 +1,12 @@
 # CSCGRA
 
 This repository keeps source code separate from disposable Vivado/XSim output.
-The RTL is intentionally preserved as two independent, reproducible versions:
+The repository keeps one active architecture line and one frozen historical
+snapshot:
 
-- `rtl/v1`: original optimized architecture snapshot.
 - `rtl/v2`: active strict-PE0, four-row, factor-reuse architecture.
+- `rtl/v1`: frozen provenance baseline; it is not part of the paper's active
+  design or canonical optimization flow.
 
 ## Current signed-off RTL v2
 
@@ -25,7 +27,8 @@ current sign-off evidence.
 
 | Path | Purpose | Tracked by Git |
 | --- | --- | --- |
-| `rtl/v1`, `rtl/v2` | Versioned synthesizable RTL | Yes |
+| `rtl/v2` | Active synthesizable RTL | Yes |
+| `rtl/v1` | Frozen historical RTL baseline | Yes |
 | `verification/` | Testbenches, golden vectors, and file lists | Yes |
 | `sw/` | C applications and generated headers | Yes |
 | `models/` | Golden/reference models | Yes |
@@ -36,13 +39,9 @@ current sign-off evidence.
 | `work/` | Vivado/XSim/Verilator working directories | No |
 | `logs/` | Raw simulation, synthesis, and implementation logs | No |
 
-`CSCGRA_opt_architecture_opt2/` and the other pre-refactor project directories
-may still exist locally, but they are ignored archives. They are not compiled
-by the canonical flow and are not the source of truth.
-
-Pre-refactor local workspaces and generated artifacts are retained under
-`work/legacy_pre_refactor` in this checkout. That archive is ignored and does
-not appear in a fresh clone.
+Pre-refactor local project directories are ignored and are not compiled by the
+canonical flow. They are not the source of truth and are excluded from the
+public checkout.
 
 ## Canonical commands
 

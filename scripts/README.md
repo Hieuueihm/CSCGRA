@@ -8,6 +8,8 @@
 - `synth/run_ooc.ps1` and `synth/run_ooc.tcl`: 100 MHz OOC synthesis,
   utilization, and timing reporting.
 - `maintenance/check_layout.ps1`: repository layout checks.
+- `python models/golden/generate_k_sweep_golden.py --check`: verifies the
+  canonical v2 golden include and its repository-relative generator input.
 - `maintenance/compare_regression.ps1`: compares measured regression records.
 - `maintenance/audit_rtl.py`: RTL/source audit helper.
 

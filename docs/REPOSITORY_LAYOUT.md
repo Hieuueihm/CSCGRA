@@ -2,7 +2,8 @@
 
 ## Source of truth
 
-Synthesizable RTL exists only in `rtl/v1` and `rtl/v2`. Vivado-generated
+Synthesizable RTL exists in the versioned trees `rtl/v1` and `rtl/v2`; only
+`rtl/v2` is active. Vivado-generated
 `*.srcs`, `*.runs`, `*.sim`, `.Xil`, and `xsim.dir` directories are disposable
 work products and must never be used as the source of truth.
 
@@ -35,9 +36,9 @@ a GitHub release together with its commit and manifest.
 
 ## Version policy
 
-- v1 is a reproducible architecture snapshot. Behavioral changes require an
-  explicit v1 change and a new baseline.
-- v2 is the active optimization line.
+- v1 is a reproducible architecture snapshot retained for provenance only.
+- v2 is the only active optimization and paper line.
+- Public examples, new reports, and canonical commands must use v2.
 - Pure layout changes must preserve file contents, algorithm results, cycle
   counts, PE0-to-lower-row data flow, and four-row PE participation.
 - A future v3 must be added as another independent directory; it must not

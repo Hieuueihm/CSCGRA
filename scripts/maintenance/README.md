@@ -1,6 +1,6 @@
 # Maintenance scripts
 
-- `check_layout.ps1`: validates manifests and rejects stale active-project paths.
+- `check_layout.ps1`: validates manifests, golden hashes, and rejects stale active-project paths.
 - `compare_regression.ps1`: compares regression result sets.
 - `audit_rtl.py`: static RTL inventory/audit helper.
 

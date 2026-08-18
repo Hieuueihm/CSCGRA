@@ -1,7 +1,7 @@
 # Verification
 
-- `v1` and `v2` contain the testbenches and golden vectors associated with
-  each RTL version.
+- `v2` contains the active testbenches and golden vectors for the public/paper
+  flow. `v1` is retained only as a historical matching snapshot.
 - `research` contains older diagnostic and per-iteration testbenches.
 
 Canonical K-sweep regression is launched through `scripts/run.ps1`. Compile

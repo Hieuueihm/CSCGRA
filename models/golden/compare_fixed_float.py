@@ -4,9 +4,9 @@ import math
 import re
 from pathlib import Path
 
-ROOT = Path(r"D:\vivado_pj")
-GOLD = ROOT / "golden_model" / "golden_cases.vh"
-OUT = ROOT / "golden_model" / "float_vs_fixed"
+ROOT = Path(__file__).resolve().parents[2]
+GOLD = ROOT / "models" / "golden" / "golden_cases.vh"
+OUT = ROOT / "models" / "golden" / "float_vs_fixed"
 OUT.mkdir(parents=True, exist_ok=True)
 
 ALGS = ["OMP", "gOMP", "CoSaMP", "SP", "IHT", "HTP", "GP", "MP"]

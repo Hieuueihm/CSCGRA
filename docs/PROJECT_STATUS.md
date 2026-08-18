@@ -5,6 +5,10 @@ Updated: 2026-08-17
 This is the top-level handoff document for the repository. It separates what
 is present in the current RTL from experiments that were measured and removed.
 
+Public/paper scope: `rtl/v2` is the only active architecture line. `rtl/v1`
+remains tracked solely as a frozen historical baseline for provenance; no new
+optimization or release result should depend on it.
+
 ## 1. Current signed-off checkpoint
 
 | Item | Current value |
@@ -180,7 +184,7 @@ Detailed rejected-trial reports are indexed in `reports/README.md`.
 | `fpga` | Maintained board/platform source when added; generated projects excluded. |
 | `work` | Disposable tool state; ignored except README. |
 | `logs` | Disposable raw logs/reports; ignored except README. |
-| `CSCGRA_opt_architecture_opt2` | Local pre-refactor archive, ignored, not authoritative. |
+| `CSCGRA_opt_architecture_opt2` | Ignored pre-refactor workspace if present locally; not authoritative or public source. |
 
 ## 6. Canonical verification
 
