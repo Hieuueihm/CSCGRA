@@ -100,3 +100,8 @@ The canonical include may replace the active include only after all gates pass:
 The default GP sign-off now calls GP the **fixed-point canonical RTL path**.
 The dense-gradient implementation is available only as a legacy baseline;
 CoSaMP/SP K16 remain hardware variants and are not part of this migration.
+
+The full `-CanonicalAll` audit confirms that OMP, IHT, HTP, SP, GP, gOMP, and
+MP match the canonical include for all valid configured cases. CoSaMP remains
+non-canonical in case 1 (10 mismatches) and case 3 (16 mismatches); K16
+CoSaMP/SP are skipped by design because of the 16-entry support capacity.

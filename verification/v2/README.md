@@ -51,3 +51,8 @@ complete. `-CanonicalGolden` remains accepted as an explicit spelling. Use
 `-LegacyHardwareGolden` only to reproduce the historical dense-gradient GP
 baseline. CoSaMP/SP K16 remain deferred/skipped because the current 16-entry
 candidate/support capacity is intentionally unchanged.
+
+Use `-CanonicalAll` for an audit-only comparison of every valid algorithm
+against the canonical include. The current audit passes OMP, IHT, HTP, SP,
+GP, gOMP, and MP for every valid case. CoSaMP has 10 mismatches in case 1 and
+16 mismatches in case 3; this remains an explicit hardware variant.

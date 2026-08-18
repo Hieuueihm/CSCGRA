@@ -25,6 +25,14 @@
     "checks_fail": 0,
     "canonical_signoff": false
   },
+  "canonical_all_audit": {
+    "mode": "TB_CANONICAL_ALL",
+    "valid_cases": [0, 1, 2, 3, 4, 5, 6, 7],
+    "matching_algorithms": ["OMP", "IHT", "HTP", "SP", "GP", "gOMP", "MP"],
+    "cosamp_mismatches_by_case": {"1": 10, "3": 16},
+    "cosamp_status": "hardware_variant",
+    "k16_cosamp_sp_status": "skipped_capacity_16"
+  },
   "canonical_gp_rtl": {
     "mode": "TB_CANONICAL_GP",
     "reference_source": "models/golden/canonical_fixed.py",

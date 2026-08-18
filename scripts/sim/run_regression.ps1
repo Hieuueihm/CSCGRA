@@ -5,6 +5,7 @@ param(
     [int[]]$Algorithms = @(),
     [switch]$ProfileStates,
     [switch]$CanonicalGolden,
+    [switch]$CanonicalAll,
     [switch]$LegacyHardwareGolden,
     [string]$RunId = "",
     [string]$VivadoBin = "C:\Xilinx\Vivado\2018.1\bin"
@@ -74,6 +75,7 @@ $metadata = [ordered]@{
     algorithms = @($Algorithms)
     profile_states = $ProfileStates.IsPresent
     canonical_golden = (!$LegacyHardwareGolden.IsPresent)
+    canonical_all = $CanonicalAll.IsPresent
     started_at = (Get-Date).ToString("o")
     work_dir = $workDir
     log_dir = $logDir
@@ -87,8 +89,11 @@ try {
     if ($ProfileStates) {
         $xvlogArgs += @("-d", "TB_STATE_PROFILE")
     }
-    if (!$LegacyHardwareGolden) {
+    if (!$LegacyHardwareGolden -or $CanonicalAll) {
         $xvlogArgs += @("-d", "TB_CANONICAL_GP")
+    }
+    if ($CanonicalAll) {
+        $xvlogArgs += @("-d", "TB_CANONICAL_ALL")
     }
     foreach ($includeDir in $includeDirs) {
         $xvlogArgs += @("-i", $includeDir)

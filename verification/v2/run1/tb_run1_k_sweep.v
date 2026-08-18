@@ -70,7 +70,9 @@ reg done_seen, error_seen;
 function [23:0] expected_x_final;
 input integer case_id; input integer alg_id; input integer elem_id;
 begin
-`ifdef TB_CANONICAL_GP
+`ifdef TB_CANONICAL_ALL
+    expected_x_final = kscanon_x_final(case_id, alg_id, elem_id);
+`elsif TB_CANONICAL_GP
     if (alg_id == ALG_5)
         expected_x_final = kscanon_x_final(case_id, alg_id, elem_id);
     else
