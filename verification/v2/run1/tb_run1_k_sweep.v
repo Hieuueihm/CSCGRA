@@ -22,7 +22,7 @@ localparam REG_CTX_BASE=12'h100;
 localparam DDR_Y_BASE=32'h00001000;
 localparam DDR_X_BASE=32'h00002000;
 localparam SOP_REFINE=8'h80, SOP_CORR=8'h81, SOP_IHT_UPDATE=8'h82, SOP_RESID=8'h83;
-localparam SOP_PRUNE_X=8'h84, SOP_MP_UPDATE=8'h85, SOP_GP_NO_LS_UPDATE=8'h85, SOP_REFINE_SPARSE=8'h86, SOP_GRAD_STEP=8'h87, SOP_CORR_UPDATE=8'h88;
+localparam SOP_PRUNE_X=8'h84, SOP_MP_UPDATE=8'h85, SOP_GP_NO_LS_UPDATE=8'h85, SOP_REFINE_SPARSE=8'h86, SOP_GRAD_STEP=8'h87, SOP_CORR_UPDATE=8'h88, SOP_GP_PROJECT=8'h89, SOP_GP_UPDATE=8'h8a;
 localparam ALG_OMP=0, ALG_COSAMP=1, ALG_IHT=2, ALG_HTP=3, ALG_SP=4, ALG_5=5, ALG_6=6, ALG_MP=7;
 localparam VEC_X=0, VEC_R=1, VEC_Y=2;
 localparam CASE_COUNT=8;
@@ -185,7 +185,20 @@ task build_program; input integer alg_id; input integer k_param; output integer 
     ALG_IHT: begin write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,post_update_x_topk_ctx(k_param,1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_RESID,0)); pc=pc+1; end
     ALG_HTP: begin write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,post_update_x_topk_ctx(k_param,1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
     ALG_SP: begin write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,stream_topk_ctx(k_param,1,0,0,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc,candidate_select_path_ctx(1,0)); pc=pc+1; write_ctx(pc,candidate_merge_path_ctx(0,0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,post_refine_support_topk_ctx(k_param,1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
-    ALG_5: begin write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,post_update_x_topk_ctx(k_param,1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_RESID,0)); pc=pc+1; end
+    ALG_5: begin
+`ifdef TB_CANONICAL_GP
+        // Canonical GP: select a fresh correlation atom, project the
+        // restricted gradient through all four PE rows, then line-search and
+        // update x before rebuilding the residual.
+        write_ctx(pc,stream_topk_ctx(1,0,1,0,0)); pc=pc+1;
+        write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1;
+        write_ctx(pc,sparse_op_ctx(SOP_GP_PROJECT,0)); pc=pc+1;
+        write_ctx(pc,sparse_op_ctx(SOP_GP_UPDATE,0)); pc=pc+1;
+        write_ctx(pc,sparse_op_ctx(SOP_RESID,0)); pc=pc+1;
+`else
+        write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,post_update_x_topk_ctx(k_param,1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_RESID,0)); pc=pc+1;
+`endif
+    end
     ALG_6: begin write_ctx(pc,stream_topk_ctx(2,0,1,0,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
     ALG_MP: begin emit_mp_select_append(pc); write_ctx(pc,sparse_op_ctx(SOP_MP_UPDATE,0)); pc=pc+1; end
     endcase

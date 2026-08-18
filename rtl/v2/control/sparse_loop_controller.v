@@ -129,7 +129,8 @@ S_LDL_ROW_WRITE_WAIT=124;
 localparam [6:0] S_FACTOR_CHECK_INIT=125, S_FACTOR_CHECK_SCAN=126,
                  S_FACTOR_CHECK_DONE=127;
 localparam [6:0] S_FUSED_UPDATE_CAPTURE=7'd2;
-localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GRAD_STEP=4'd7, OP_CORR_UPDATE=4'd8; // OP_CORR_UPDATE: fused Phi^T*r score writeback plus four-row x update
+localparam [6:0] S_GP_DIV_DONE=7'd118;
+localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GRAD_STEP=4'd7, OP_CORR_UPDATE=4'd8, OP_GP_PROJECT=4'd9, OP_GP_UPDATE=4'd10; // 9/10: isolated canonical GP project/update
 localparam [1:0] MESH_CTX_NONE=2'd0, MESH_CTX_UPDATE=2'd1, MESH_CTX_PRUNE=2'd2, MESH_CTX_RESID=2'd3;
 // Mesh tokens bypass the generic core-input register and advance through the
 // registered PE0->PE1->PE2->PE3 south links in three clocks.
@@ -272,6 +273,9 @@ reg signed [63:0] acc_den;
 reg signed [63:0] acc_num1;
 reg signed [63:0] acc_den01;
 reg signed [63:0] acc_den11;
+reg signed [63:0] gp_num_acc_q;
+reg signed [63:0] gp_den_acc_q;
+reg signed [63:0] gp_alpha_q;
 reg signed [DATA_W-1:0] y_cur;
 reg signed [DATA_W-1:0] phi_cur;
 reg signed [DATA_W-1:0] phi1_cur;
@@ -963,6 +967,7 @@ reg div_neg;
 reg div_return_back;
 reg div_return_mp;
 reg div_return_ldlt;
+reg div_return_gp;
 reg [IDX_W-1:0] mp_idx_q;
 reg signed [DATA_W-1:0] mp_score_q;
 reg signed [DATA_W-1:0] mp_x_old_q;
@@ -1126,6 +1131,7 @@ wire row3_update_block_mode_w = (((active_op == OP_IHT_UPDATE) ||
                                   (active_op == OP_GRAD_STEP) ||
                                   (active_op == OP_CORR_UPDATE)) &&
                                  (state == S_IHT_MESH_WRITE));
+wire row3_project_write_op_w = ((active_op == OP_GP_PROJECT) && (state == S_WR));
 wire row3_resid_write_op_w = (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_RESID) || (active_op == OP_MP_UPDATE)) && (k_active <= MAX_K));
 wire row3_resid_mode_w = (row3_resid_write_op_w && (state == S_WR_MESH_COMMIT));
 wire residual_block_last_w = (write_idx[2:0] == (COLS-1)) || (write_idx + 1'b1 >= write_limit);
@@ -1215,7 +1221,7 @@ always @(*) begin
             row3_wr_data[row3_lane*DATA_W +: DATA_W] = row3_block_value_w[row3_lane*DATA_W +: DATA_W];
             row3_wr_en[row3_lane] = busy && row3_scalar_write_en_w &&
                                    (({write_idx[IDX_W-1:3], 3'b000} + row3_lane[IDX_W-1:0]) < write_limit);
-        end else if (row3_target_lane_w == row3_lane[2:0]) begin
+        end else if ((row3_target_lane_w == row3_lane[2:0]) && !row3_project_write_op_w) begin
             row3_wr_data[row3_lane*DATA_W +: DATA_W] = row3_selected_value;
             row3_wr_en[row3_lane] = busy && row3_scalar_write_en_w;
         end
@@ -1364,7 +1370,7 @@ always @(*) begin
     pe_sparse_op = busy ? ((corr_active_op_w && corr_pe_state_w) ? OP_CORR :
                            (phase_residual ? OP_RESID : active_op)) :
                           (corr_request_op_w ? OP_CORR : op_sel);
-    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE) || (active_op == OP_RESID)) &&
+    pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE) || (active_op == OP_RESID) || (active_op == OP_GP_PROJECT)) &&
                       ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) ||
                        (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) ||
                        (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM))) ||
@@ -1410,7 +1416,7 @@ always @(*) begin
         base_addr = 10'h180 + write_idx[IDX_W-1:3];
     else if (wx_commit_mode_w)
         base_addr = 10'h000 + wx_target_idx_q[IDX_W-1:3];
-    else if ((active_op == OP_IHT_UPDATE) || (active_op == OP_GRAD_STEP))
+    else if ((active_op == OP_IHT_UPDATE) || (active_op == OP_GRAD_STEP) || (active_op == OP_GP_UPDATE))
         base_addr = 10'h000 + write_idx[IDX_W-1:3];
     else
         base_addr = 10'h000 + write_idx[IDX_W-1:3];
@@ -1469,6 +1475,14 @@ always @(*) begin
         write_value_now = sat_s24($signed(iht_x_value) + ($signed(rd_data[write_idx[2:0]*DATA_W +: DATA_W]) >>> mu_shift_eff));
     end else if ((active_op == OP_GRAD_STEP) && (state == S_IHT_SCORE_READ)) begin
         write_value_now = sat_s24($signed(iht_x_value) + ($signed(rd_data[write_idx[2:0]*DATA_W +: DATA_W]) >>> mu_shift_eff));
+    end else if ((active_op == OP_GP_UPDATE) && (state == S_IHT_SCORE_READ)) begin
+        if (support_cached_has_idx(write_idx))
+            write_value_now = sat_s24($signed(iht_x_value) +
+                                      ($signed(mul_s24_s24(
+                                          rd_data[write_idx[2:0]*DATA_W +: DATA_W],
+                                          gp_alpha_q[DATA_W-1:0])) >>> 16));
+        else
+            write_value_now = iht_x_value;
     end else if ((active_op == OP_PRUNE_X) && (state == S_PRUNE_X_WAIT)) begin
         write_value_now = keep_x ? rd_data[write_idx[2:0]*DATA_W +: DATA_W] : {DATA_W{1'b0}};
     end else if ((active_op == OP_MP_UPDATE) && (state == S_MP_X_WRITE)) begin
@@ -1579,12 +1593,16 @@ active_op <= OP_REFINE;
         div_return_back <= 1'b0;
         div_return_mp <= 1'b0;
         div_return_ldlt <= 1'b0;
+        div_return_gp <= 1'b0;
         div_result <= 64'sd0;
         mp_idx_q <= {IDX_W{1'b0}};
         mp_score_q <= {DATA_W{1'b0}};
         mp_x_old_q <= {DATA_W{1'b0}};
         mp_x_new_q <= {DATA_W{1'b0}};
         mp_den_q <= 64'sd0;
+        gp_num_acc_q <= 64'sd0;
+        gp_den_acc_q <= 64'sd0;
+        gp_alpha_q <= 64'sd0;
         mesh_ctx_x_block <= {COLS*DATA_W{1'b0}};
         mesh_ctx_delta_block <= {COLS*DATA_W{1'b0}};
         mesh_ctx_keep_block <= {COLS{1'b0}};
@@ -1882,6 +1900,23 @@ case (state)
                     rd_addr <= 10'h100;
                     residual_acc <= 128'sd0;
                     state <= S_WR;
+                end else if ((active_op == OP_GP_PROJECT) && (support_depth0 != 0) && (n_size != 0) && (m_size != 0)) begin
+                    active_k <= (support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active;
+                    active_k_count_q <= (support_depth0 < k_active[5:0]) ?
+                                        support_depth0 : k_active[5:0];
+                    load_i <= 5'd0;
+                    load_support_q <= support0;
+                    // The restricted gradient is read from the correlation
+                    // vector produced by the preceding OP_CORR command.
+                    rd_addr <= 10'h180 + (support0 >> 3);
+                    gp_num_acc_q <= 64'sd0;
+                    gp_den_acc_q <= 64'sd0;
+                    state <= S_LOAD_COEFF_READ;
+                end else if ((active_op == OP_GP_UPDATE) && (n_size != 0)) begin
+                    write_idx <= {IDX_W{1'b0}};
+                    write_limit <= n_size;
+                    rd_addr <= 10'h000;
+                    state <= S_IHT_X_READ;
                 end else if ((active_op == OP_MP_UPDATE) && (support_depth0 != 0) && (n_size != 0) && (m_size != 0)) begin
                     active_k <= 8'd1;
                     active_k_count_q <= 6'd1;
@@ -2152,7 +2187,37 @@ case (state)
                 phi_cur <= phi_cache[0];
                 phi1_cur <= phi_cache[1];
                 write_value <= row3_commit_value_w;
-                if (row3_resid_write_op_w) begin
+                if (active_op == OP_GP_PROJECT) begin
+                    // The four-row residual wavefront has reduced c=A*d for
+                    // this measurement row.  Accumulate both line-search
+                    // products at the registered controller boundary; no
+                    // completion feedback is placed on the PE datapath.
+                    gp_num_acc_q <= gp_num_acc_q +
+                                    mul_s24_s24(rd_data[write_idx[2:0]*DATA_W +: DATA_W],
+                                                row3_residual_delta[DATA_W-1:0]);
+                    gp_den_acc_q <= gp_den_acc_q +
+                                    mul_s24_s24(row3_residual_delta[DATA_W-1:0],
+                                                row3_residual_delta[DATA_W-1:0]);
+                    if (write_idx + 1 >= write_limit) begin
+                        ge_div_num <= (gp_num_acc_q +
+                                       mul_s24_s24(rd_data[write_idx[2:0]*DATA_W +: DATA_W],
+                                                   row3_residual_delta[DATA_W-1:0])) <<< 16;
+                        ge_div_den <= gp_den_acc_q +
+                                      mul_s24_s24(row3_residual_delta[DATA_W-1:0],
+                                                  row3_residual_delta[DATA_W-1:0]);
+                        div_return_gp <= 1'b1;
+                        state <= S_DIV_INIT;
+                    end else begin
+                        write_idx <= write_idx + 1'b1;
+                        if ((write_idx[2:0] == 3'd7) && ((write_idx + 1'b1) < write_limit))
+                            rd_addr <= 10'h080 + ((write_idx + 1'b1) >> 3);
+                        for (gi = 0; gi < MAX_K; gi = gi + 1)
+                            phi_cache[gi] <= {DATA_W{1'b0}};
+                        phi_scan_col_q <= {IDX_W{1'b0}};
+                        phi_scan_state_q <= phi_state_q;
+                        state <= S_SCAN_DIRECT_STEP;
+                    end
+                end else if (row3_resid_write_op_w) begin
                     residual_delta_block_q[write_idx[2:0]*DATA_W +: DATA_W] <= row3_residual_delta[DATA_W-1:0];
                     if (residual_block_last_w) begin
                         // One complete eight-lane residual word enters row 0;
@@ -2946,7 +3011,9 @@ case (state)
                 if (div_abs_den == 0) begin
                                 div_result <= 64'sd0;
                     state <= div_return_ldlt ? S_LDL_INV_DONE :
-                             (div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE));
+                             (div_return_back ? S_BACK_DIV_DONE :
+                              (div_return_mp ? S_MP_DIV_DONE :
+                               (div_return_gp ? S_GP_DIV_DONE : S_ELIM_DIV_DONE)));
                 end else begin
                     div_trial_rem = div_rem;
                     div_trial_quot = div_quot;
@@ -2988,7 +3055,9 @@ case (state)
                         div_rem <= div_trial_rem;
                         div_quot <= div_trial_quot;
                         state <= div_return_ldlt ? S_LDL_INV_DONE :
-                                 (div_return_back ? S_BACK_DIV_DONE : (div_return_mp ? S_MP_DIV_DONE : S_ELIM_DIV_DONE));
+                                 (div_return_back ? S_BACK_DIV_DONE :
+                                  (div_return_mp ? S_MP_DIV_DONE :
+                                   (div_return_gp ? S_GP_DIV_DONE : S_ELIM_DIV_DONE)));
                     end else begin
                         div_rem <= div_trial_rem;
                         div_quot <= div_trial_quot;
@@ -3044,6 +3113,13 @@ case (state)
                 mp_x_new_q <= sat_s24($signed(mp_x_old_q) + $signed(div_result));
                 write_idx <= mp_idx_q;
                 state <= S_MP_X_WRITE;
+            end
+            S_GP_DIV_DONE: begin
+                div_return_gp <= 1'b0;
+                // ge_div_num is numerator<<16, so the divider result is a
+                // Q16 line-search alpha consumed by OP_GP_UPDATE.
+                gp_alpha_q <= div_result;
+                state <= S_DONE;
             end
             S_MP_X_WRITE: begin
                 active_k <= 8'd1;
@@ -3253,7 +3329,7 @@ case (state)
                     write_idx <= {IDX_W{1'b0}};
                     write_limit <= m_size;
                     phase_residual <= 1'b1;
-                    rd_addr <= 10'h100;
+                    rd_addr <= (active_op == OP_GP_PROJECT) ? 10'h080 : 10'h100;
                     phi_state_q <= (|seed) ? seed : DEFAULT_SEED;
                                 padded_n_q <= ((n_size + 7) >> 3) << 3;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
@@ -3264,7 +3340,7 @@ case (state)
                 end else begin
                     load_i <= load_i + 5'd1;
                     load_support_q <= load_support_next_q;
-                    rd_addr <= 10'h000 + (load_support_next_q >> 3);
+                    rd_addr <= ((active_op == OP_GP_PROJECT) ? 10'h180 : 10'h000) + (load_support_next_q >> 3);
                     state <= S_LOAD_COEFF_READ;
                 end
             end

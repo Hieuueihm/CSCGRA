@@ -88,6 +88,7 @@ try {
     }
     if ($CanonicalGolden) {
         $xvlogArgs += @("-d", "TB_USE_CANONICAL_GOLDEN")
+        $xvlogArgs += @("-d", "TB_CANONICAL_GP")
     }
     foreach ($includeDir in $includeDirs) {
         $xvlogArgs += @("-i", $includeDir)

@@ -17,6 +17,39 @@
     "checks_fail": 0,
     "canonical_signoff": false
   },
+  "canonical_gp_rtl": {
+    "mode": "TB_CANONICAL_GP",
+    "status": "implemented_opt_in",
+    "checks_pass": 48,
+    "checks_fail": 0,
+    "x_mismatches": 0,
+    "cycles_by_case": {
+      "0": 75297,
+      "1": 38369,
+      "2": 20129,
+      "3": 15489,
+      "4": 8209,
+      "5": 4561,
+      "6": 3785,
+      "7": 2125
+    },
+    "synthesis": {
+      "run_id": "canonical_gp_synth1",
+      "wns_ns": 0.454,
+      "lut_total": 129816,
+      "ff_total": 53610,
+      "bram36": 24,
+      "dsp48": 77,
+      "tradeoff_vs_post_update_x_iht_gp_signoff": {
+        "lut_delta": 16765,
+        "ff_delta": 2532,
+        "bram36_delta": 0,
+        "dsp48_delta": 6
+      }
+    },
+    "canonical_signoff": false,
+    "note": "Awaiting WNS/resource review before replacing the default hardware-compatible golden."
+  },
   "cosamp_k16": {
     "status": "skipped",
     "reason": "candidate/support capacity is 16; canonical union can reach 3K=48"

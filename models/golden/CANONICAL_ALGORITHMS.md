@@ -16,17 +16,20 @@ the independent algorithmic references used for the audit.
 | GP | [Blumensath & Davies, 2008](https://www.compressed-sensing.eng.ed.ac.uk/sites/compressed-sensing.eng.ed.ac.uk/files/publications/BDGP07.pdf) | Expand the support, use the restricted gradient as the direction, and choose a residual line-search step. This is not the same as IHT. |
 
 `canonical_algorithms.py` implements these equations without RTL capacity
-limits, Q-format shifts, or PE scheduling. It is an audit reference, not a
-replacement for the v2 testbench golden yet. The staged RTL migration,
-baseline measurements, and conditions for switching sign-off are recorded in
+limits, Q-format shifts, or PE scheduling. The canonical GP equation now has
+an isolated RTL implementation selected by `TB_CANONICAL_GP`; the default
+hardware-compatible GP path remains unchanged until timing/resource sign-off.
+The staged migration, baseline measurements, and conditions for switching
+sign-off are recorded in
 [`CANONICAL_MIGRATION.md`](CANONICAL_MIGRATION.md).
 
 ## Current v2 deviations that must stay explicit
 
 - The K-sweep generator uses a 16-entry merge cap for CoSaMP/SP. The canonical
   algorithms do not have this cap; it is a hardware capacity constraint.
-- The current `GP` path is a full-vector gradient update followed by pruning,
-  which is IHT-like. It is not the support-expanding line-search GP above.
+- The default `GP` path is a full-vector gradient update followed by pruning,
+  which is IHT-like. The opt-in `OP_GP_PROJECT`/`OP_GP_UPDATE` path implements
+  support expansion, restricted gradient, and residual line search.
 - The current LS helper forms Gram/RHS in Python floating point, quantizes the
   coefficients, and then computes a fixed-point residual. It is not a cycle- or
   bit-accurate LDLT model.

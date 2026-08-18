@@ -31,7 +31,7 @@ not synthesized.
 
 - `run1/k_sweep_golden_mu3.vh`: active hardware-compatible sign-off golden.
 - `run1/k_sweep_golden_canonical.vh`: capacity-unlimited textbook reference;
-  it is not included by the current RTL regression.
+  it is selected only by the opt-in canonical differential mode.
 - Other `run1/*golden*.vh`: archived run1 golden includes.
 - root `*_golden*.vh`: historical diagnostic includes used by legacy focused
   benches; the canonical K-sweep include is under `run1/`.
@@ -43,7 +43,7 @@ Never change golden values merely to match a failing RTL candidate. Determine
 whether RTL, scheduling, or the test configuration is wrong first.
 
 To run an explicit differential check against the canonical textbook include,
-use `scripts/sim/run_regression.ps1 -CanonicalGolden`. This switch is opt-in;
-it is expected to fail for the current GP path and for CoSaMP/SP K16 until the
-RTL capacity and datapath changes described in
-`models/golden/CANONICAL_MIGRATION.md` are implemented.
+use `scripts/sim/run_regression.ps1 -CanonicalGolden`. In this mode GP selects
+the isolated canonical line-search implementation and passes all eight
+configured cases. CoSaMP/SP K16 remain deferred/skipped because the current
+16-entry candidate/support capacity is intentionally unchanged.
