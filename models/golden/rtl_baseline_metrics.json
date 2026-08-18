@@ -1,0 +1,28 @@
+{
+  "rtl_version": "v2",
+  "testbench": "verification/v2/run1/tb_run1_k_sweep.v",
+  "vivado": "2018.1",
+  "source_commit": "391fc07",
+  "case": {
+    "index": 0,
+    "m": 64,
+    "n": 256,
+    "k": 16
+  },
+  "gp": {
+    "active_operation": "OP_CORR_UPDATE",
+    "semantics": "dense_gradient_fixed_shift_then_topk_prune",
+    "cycles": 56977,
+    "checks_pass": 6,
+    "checks_fail": 0,
+    "canonical_signoff": false
+  },
+  "cosamp_k16": {
+    "status": "skipped",
+    "reason": "candidate/support capacity is 16; canonical union can reach 3K=48"
+  },
+  "sp_k16": {
+    "status": "skipped",
+    "reason": "candidate/support capacity is 16; canonical union can reach 2K=32"
+  }
+}

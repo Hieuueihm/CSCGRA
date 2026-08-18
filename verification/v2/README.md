@@ -41,3 +41,9 @@ not synthesized.
 
 Never change golden values merely to match a failing RTL candidate. Determine
 whether RTL, scheduling, or the test configuration is wrong first.
+
+To run an explicit differential check against the canonical textbook include,
+use `scripts/sim/run_regression.ps1 -CanonicalGolden`. This switch is opt-in;
+it is expected to fail for the current GP path and for CoSaMP/SP K16 until the
+RTL capacity and datapath changes described in
+`models/golden/CANONICAL_MIGRATION.md` are implemented.

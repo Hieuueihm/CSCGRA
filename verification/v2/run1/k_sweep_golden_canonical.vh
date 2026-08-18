@@ -549,3 +549,17 @@ input integer case_idx; input integer alg_idx; input integer elem_idx; begin cas
   16169: kscanon_x_final = 24'hFD4A00;
   16177: kscanon_x_final = 24'h03D000;
   default: kscanon_x_final = 24'h000000; endcase end endfunction
+
+// Compatibility API used by tb_run1_k_sweep.v when this include is selected.
+localparam integer KSWEEP_GOLD_CASES = KSCANON_GOLD_CASES;
+localparam integer KSWEEP_GOLD_ALGS = KSCANON_GOLD_ALGS;
+localparam integer KSWEEP_GOLD_MAX_N = KSCANON_GOLD_MAX_N;
+localparam integer KSWEEP_GOLD_TOL = KSCANON_GOLD_TOL;
+function integer ksgold_case_m; input integer case_idx; begin ksgold_case_m = kscanon_case_m(case_idx); end endfunction
+function integer ksgold_case_n; input integer case_idx; begin ksgold_case_n = kscanon_case_n(case_idx); end endfunction
+function integer ksgold_case_k; input integer case_idx; begin ksgold_case_k = kscanon_case_k(case_idx); end endfunction
+function integer ksgold_case_seed; input integer case_idx; begin ksgold_case_seed = kscanon_case_seed(case_idx); end endfunction
+function [23:0] ksgold_case_scale; input integer case_idx; begin ksgold_case_scale = kscanon_case_scale(case_idx); end endfunction
+function integer ksgold_case_phi_kind; input integer case_idx; begin ksgold_case_phi_kind = kscanon_case_phi_kind(case_idx); end endfunction
+function [23:0] ksgold_y; input integer elem_idx; begin ksgold_y = kscanon_y(elem_idx); end endfunction
+function [23:0] ksgold_x_final; input integer case_idx; input integer alg_idx; input integer elem_idx; begin ksgold_x_final = kscanon_x_final(case_idx, alg_idx, elem_idx); end endfunction

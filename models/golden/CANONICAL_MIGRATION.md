@@ -1,0 +1,84 @@
+# Canonical RTL migration plan
+
+This note is the gate between the current RTL-compatible sign-off and a
+textbook/canonical sign-off.  The active regression must continue to use
+`verification/v2/run1/k_sweep_golden_mu3.vh` until every item below has an RTL
+implementation and a differential simulation result.
+
+## Baseline captured before changing RTL
+
+Vivado 2018.1, `rtl/v2`, `tb_run1_k_sweep`, case 0 `(M,N,K)=(64,256,16)`:
+
+| Algorithm | RTL operation sequence | Result |
+| --- | --- | --- |
+| GP | `OP_CORR_UPDATE` (dense `x += A^T r >> mu_shift`), then top-K/prune and residual | 56,977 cycles, 6 PASS / 0 FAIL checks |
+| CoSaMP | 2K proxy/merge through the candidate service, capped at 16 entries, LS dimension 16 | K16 is intentionally skipped |
+| SP | K proxy/merge through the same 16-entry service, LS dimension 16 | K16 is intentionally skipped |
+
+The baseline run is recorded in `logs/sim/v2/canonical_gp_baseline/` and must
+not be interpreted as a canonical GP result.  The positive-WNS sign-off
+checkpoint remains unchanged.
+
+The opt-in canonical differential run (`-CanonicalGolden`) on the same case
+completed in 56,977 cycles but produced `6 PASS / 17 FAIL` checks, with the
+first mismatches at dense indices 38, 42, 74, 82, 84, 87, 91, and 107.  This
+is the expected proof that the current RTL path cannot be relabeled as
+canonical GP.
+
+## Required GP change
+
+The canonical reference in `canonical_algorithms.py` performs, per iteration:
+
+1. correlation `g = A^T r`;
+2. append the best new atom to the support;
+3. restrict the direction to the active support, `d_S = g_S`;
+4. stream `c = A d` through the four PE rows, with every token entering PE0;
+5. accumulate `alpha = (r^T c)/(c^T c)` in registered scalar stages;
+6. stream `x <- x + alpha*d` and update `r`.
+
+The current `OP_GRAD_STEP`/`OP_CORR_UPDATE` path does not provide steps 3--5:
+it updates the full vector with a fixed right shift and prunes afterwards.
+Changing only the opcode name or the golden values would therefore be
+incorrect.  The implementation must be a separate canonical-GP operation or
+controller mode so the existing hardware path remains reproducible.
+
+The design must preserve:
+
+- PE0-only ingress and registered PE0 -> PE1 -> PE2 -> PE3 propagation;
+- participation of all four PE rows for `A*d`, `r^T c`, and `c^T c`;
+- one active LS request (the GP mode does not use LS, but must not overlap an
+  existing LS transaction);
+- a registered boundary before scalar completion feedback; and
+- no new wide arithmetic on the completion edge.
+
+## Required CoSaMP/SP K16 change
+
+The canonical algorithms do not impose the current 16-entry merge limit.
+For K16, CoSaMP can require a union of up to `3K = 48` atoms and SP can
+require up to `2K = 32` atoms before pruning.  The current RTL has both:
+
+- a 16-entry candidate/support capacity in `support_set_service.vh`; and
+- `MAX_K=16` RHS/Gram/factor memories and LS dimensions in
+  `sparse_loop_controller.v` and `ls_matrix_service.v`.
+
+Therefore, changing only the candidate RAM depth cannot make K16 canonical.
+The capacity extension must be an explicitly measured architecture variant
+(support RAM, candidate metadata, LS matrix/factor storage, address widths,
+and controller counters).  It must be evaluated separately for resource,
+cycle, and WNS impact before it can replace the current sign-off.
+
+## Sign-off gates for switching to canonical golden
+
+The canonical include may replace the active include only after all gates pass:
+
+1. dedicated canonical-GP RTL testbench passes all eight cases and K values;
+2. CoSaMP/SP capacity variant passes K16 without a skip;
+3. fixed-point tolerance and support checks are documented against the
+   canonical reference;
+4. full regression has zero functional failures;
+5. WNS remains at least `+0.2 ns` and no DSP/BRAM increase is accepted without
+   an explicit trade-off; and
+6. the active golden manifest/hash is regenerated and reviewed.
+
+Until then, reports and papers must call GP, CoSaMP, and SP K16 the
+**RTL-compatible hardware variants**, not textbook implementations.

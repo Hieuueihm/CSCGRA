@@ -17,7 +17,9 @@ the independent algorithmic references used for the audit.
 
 `canonical_algorithms.py` implements these equations without RTL capacity
 limits, Q-format shifts, or PE scheduling. It is an audit reference, not a
-replacement for the v2 testbench golden yet.
+replacement for the v2 testbench golden yet. The staged RTL migration,
+baseline measurements, and conditions for switching sign-off are recorded in
+[`CANONICAL_MIGRATION.md`](CANONICAL_MIGRATION.md).
 
 ## Current v2 deviations that must stay explicit
 
