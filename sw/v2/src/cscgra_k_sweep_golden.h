@@ -1,6 +1,9 @@
 #ifndef CSCGRA_K_SWEEP_GOLDEN_H
 #define CSCGRA_K_SWEEP_GOLDEN_H
 
+/* Hardware-compatible v2 sign-off mirror. The canonical textbook reference
+ * is verification/v2/run1/k_sweep_golden_canonical.vh. */
+
 #include <stdint.h>
 
 #define KSGOLD_MAX_M 64U

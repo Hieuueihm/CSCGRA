@@ -53,6 +53,18 @@ if (Test-Path -LiteralPath $goldenManifestPath) {
             $errors += "Golden hash mismatch: $($goldenEntry.Name)"
         }
     }
+    foreach ($generatedEntry in $goldenManifest.generated_sha256.PSObject.Properties) {
+        $generatedPath = Join-Path $repoRoot ($generatedEntry.Name -replace "/", "\")
+        if (-not (Test-Path -LiteralPath $generatedPath)) {
+            $errors += "Missing generated golden: $($generatedEntry.Name)"
+            continue
+        }
+        $actualHash = (Get-FileHash -LiteralPath $generatedPath -Algorithm SHA256).Hash.ToUpperInvariant()
+        $expectedHash = ([string]$generatedEntry.Value).ToUpperInvariant()
+        if ($actualHash -ne $expectedHash) {
+            $errors += "Generated golden hash mismatch: $($generatedEntry.Name)"
+        }
+    }
 }
 if ($IncludeLegacy) {
     $scanPaths += Join-Path $repoRoot "scripts\legacy"

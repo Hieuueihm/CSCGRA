@@ -29,7 +29,10 @@ not synthesized.
 
 ## Other files
 
-- `run1/*golden*.vh`: active and archived run1 golden includes.
+- `run1/k_sweep_golden_mu3.vh`: active hardware-compatible sign-off golden.
+- `run1/k_sweep_golden_canonical.vh`: capacity-unlimited textbook reference;
+  it is not included by the current RTL regression.
+- Other `run1/*golden*.vh`: archived run1 golden includes.
 - root `*_golden*.vh`: historical diagnostic includes used by legacy focused
   benches; the canonical K-sweep include is under `run1/`.
 - `tb_omp_*`, `tb_mp_*`, and `tb_soc_program_*`: focused historical or

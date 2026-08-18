@@ -9,7 +9,9 @@
   utilization, and timing reporting.
 - `maintenance/check_layout.ps1`: repository layout checks.
 - `python models/golden/generate_k_sweep_golden.py --check`: verifies the
-  canonical v2 golden include and its repository-relative generator input.
+  v2 hardware-compatible sign-off golden and its repository-relative input.
+- `python models/golden/generate_canonical_k_sweep.py --check`: verifies the
+  independent capacity-unlimited textbook reference.
 - `maintenance/compare_regression.ps1`: compares measured regression records.
 - `maintenance/audit_rtl.py`: RTL/source audit helper.
 
