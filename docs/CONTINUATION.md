@@ -81,12 +81,15 @@ RTL.  The study and entry criteria are in
 
 ## Completed
 
-- Split synthesizable RTL into independent `rtl/v1` and `rtl/v2` trees.
+- Split synthesizable RTL into active `rtl/v2` and archived `archive/v1/rtl`
+  trees.
 - Organized RTL by control, datapath, interconnect, memory, PE, solver, and top.
 - Compared every moved RTL file against the baseline Git blob: zero byte
   mismatches.
-- Moved testbenches/golden vectors to `verification/v1` and `verification/v2`.
-- Moved bare-metal C sources to `sw/v1` and `sw/v2`.
+- Moved active testbenches/golden vectors to `verification/v2`; the v1 set is
+  archived under `archive/v1/verification`.
+- Moved active bare-metal C sources to `sw/v2`; the v1 set is archived under
+  `archive/v1/sw`.
 - Moved golden models to `models/golden`.
 - Moved reviewed project results to `reports/v1` and `reports/v2`.
 - Moved historical experiments to `research`.

@@ -15,6 +15,7 @@ $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $configPath = Join-Path $repoRoot "config\rtl-$RtlVersion.json"
 $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
 $rtlFileList = Join-Path $repoRoot ($config.rtl_filelist -replace "/", "\")
+$rtlRoot = Split-Path -Parent $rtlFileList
 $verificationRoot = Join-Path $repoRoot ($config.verification_root -replace "/", "\")
 $testbench = Join-Path $repoRoot ($config.default_testbench -replace "/", "\")
 
@@ -54,8 +55,8 @@ $includeDirs = @(
     $repoRoot,
     $verificationRoot,
     (Join-Path $verificationRoot "run1"),
-    (Join-Path $repoRoot "rtl\$RtlVersion\control"),
-    (Join-Path $repoRoot "rtl\$RtlVersion\solver")
+    (Join-Path $rtlRoot "control"),
+    (Join-Path $rtlRoot "solver")
 )
 $snapshot = "tb_${RtlVersion}_regression"
 $failurePattern = "X_MISM|FAIL irq|FAIL golden|FAIL pc|FAIL nonzero|FAIL ctx|FAIL cf_loop|FAIL done|TIMEOUT|FATAL|ERROR:"

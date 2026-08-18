@@ -11,7 +11,7 @@
 #define KSGOLD_TOL 512U
 #define KSGOLD_ALG_COUNT 8U
 #define KSGOLD_CASE_COUNT 8U
-#define KSGOLD_SOURCE_TAG "verification/v1/run1/k_sweep_golden_mu3.vh"
+#define KSGOLD_SOURCE_TAG "archive/v1/verification/run1/k_sweep_golden_mu3.vh"
 #define KSGOLD_MU_SHIFT 3U
 
 static const char * const ksgold_alg_names[KSGOLD_ALG_COUNT] = {

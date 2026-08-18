@@ -10,8 +10,8 @@ version-specific design notes. Raw Vivado/XSim output does not belong here.
 - `REPOSITORY_LAYOUT.md`: source/generated-data separation and version policy.
 - `CONTINUATION.md`: chronological engineering handoff log and next candidate.
 - `architecture/`: focused audits that apply across checkpoints.
-- `v1/`: documentation for the frozen RTL v1 line.
 - `v2/`: documentation for the active RTL v2 line.
+- `../archive/`: frozen v1 source, research, and old platform material.
 
 Release-quality measurements and cycle matrices live in `reports/releases`.
 When a historical document conflicts with `PROJECT_STATUS.md` or the latest

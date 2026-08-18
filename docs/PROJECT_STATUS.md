@@ -5,9 +5,9 @@ Updated: 2026-08-17
 This is the top-level handoff document for the repository. It separates what
 is present in the current RTL from experiments that were measured and removed.
 
-Public/paper scope: `rtl/v2` is the only active architecture line. `rtl/v1`
-remains tracked solely as a frozen historical baseline for provenance; no new
-optimization or release result should depend on it.
+Public/paper scope: `rtl/v2` is the only active architecture line. The frozen
+v1 source is archived under `archive/v1`; no new optimization or release
+result should depend on it.
 
 ## 1. Current signed-off checkpoint
 
@@ -63,8 +63,8 @@ Four-row ownership:
 
 ### Repository and reproducibility
 
-- Refactored the mixed Vivado project into independent `rtl/v1` and `rtl/v2`
-  source trees.
+- Refactored the mixed Vivado project into active `rtl/v2` and archived
+  `archive/v1` source trees.
 - Added versioned manifests and JSON configuration; canonical flows no longer
   glob generated Vivado directories.
 - Separated tracked source/reports from ignored `work/` and `logs/` products.
@@ -171,17 +171,17 @@ Detailed rejected-trial reports are indexed in `reports/README.md`.
 
 | Folder | Contents and authority |
 |---|---|
-| `rtl/v1` | Frozen v1 RTL snapshot. |
 | `rtl/v2` | Current synthesizable source of truth. |
-| `verification/v1`, `verification/v2` | Version-matched testbenches and compiled golden vectors. |
-| `sw/v1`, `sw/v2` | Version-matched bare-metal C and generated headers. |
+| `archive/v1` | Frozen v1 RTL, verification, and software snapshot. |
+| `verification/v2` | Active testbenches and compiled golden vectors. |
+| `sw/v2` | Active bare-metal C and generated headers. |
 | `models` | Reference/golden model source; not synthesizable RTL. |
-| `scripts` | Canonical sim/synth/maintenance entrypoints plus legacy archive. |
+| `scripts` | Canonical sim/synth/maintenance entrypoints. |
 | `config` | Version-to-manifest/testbench/top/part mapping. |
 | `reports/releases` | Reviewed sign-offs, rejected-trial reports, and cycle CSVs. |
 | `docs` | Architecture, status, layout rules, and continuation notes. |
-| `research` | Reproducible experiments and paper-analysis assets; not release RTL. |
-| `fpga` | Maintained board/platform source when added; generated projects excluded. |
+| `archive/research` | Reproducible experiments and paper-analysis assets; not release RTL. |
+| `archive/fpga` | Historical board/platform notes; generated projects excluded. |
 | `work` | Disposable tool state; ignored except README. |
 | `logs` | Disposable raw logs/reports; ignored except README. |
 | `CSCGRA_opt_architecture_opt2` | Ignored pre-refactor workspace if present locally; not authoritative or public source. |

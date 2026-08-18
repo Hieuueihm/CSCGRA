@@ -5,8 +5,8 @@ The repository keeps one active architecture line and one frozen historical
 snapshot:
 
 - `rtl/v2`: active strict-PE0, four-row, factor-reuse architecture.
-- `rtl/v1`: frozen provenance baseline; it is not part of the paper's active
-  design or canonical optimization flow.
+- `archive/v1/rtl`: frozen provenance baseline; it is not part of the paper's
+  active design or canonical optimization flow.
 
 ## Current signed-off RTL v2
 
@@ -28,14 +28,13 @@ current sign-off evidence.
 | Path | Purpose | Tracked by Git |
 | --- | --- | --- |
 | `rtl/v2` | Active synthesizable RTL | Yes |
-| `rtl/v1` | Frozen historical RTL baseline | Yes |
-| `verification/` | Testbenches, golden vectors, and file lists | Yes |
-| `sw/` | C applications and generated headers | Yes |
+| `verification/v2` | Active testbenches, golden vectors, and file lists | Yes |
+| `sw/v2` | Active C applications and generated headers | Yes |
 | `models/` | Golden/reference models | Yes |
-| `scripts/` | Canonical flows and archived legacy scripts | Yes |
+| `scripts/` | Canonical flows and maintenance scripts | Yes |
 | `docs/` | Architecture and historical documentation | Yes |
 | `reports/` | Reviewed baseline/release summaries | Yes |
-| `research/` | Reproducible experiments and analysis source | Yes |
+| `archive/` | Frozen v1, research, and old platform material | Yes |
 | `work/` | Vivado/XSim/Verilator working directories | No |
 | `logs/` | Raw simulation, synthesis, and implementation logs | No |
 

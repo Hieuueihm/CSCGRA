@@ -2,14 +2,13 @@
 
 ## Source of truth
 
-Synthesizable RTL exists in the versioned trees `rtl/v1` and `rtl/v2`; only
-`rtl/v2` is active. Vivado-generated
+Active synthesizable RTL exists only in `rtl/v2`. The frozen v1 snapshot is
+under `archive/v1/rtl`. Vivado-generated
 `*.srcs`, `*.runs`, `*.sim`, `.Xil`, and `xsim.dir` directories are disposable
 work products and must never be used as the source of truth.
 
-The two RTL versions are deliberately independent. Files that currently have
-identical contents are still duplicated so that a future v2 change cannot
-silently alter the reproducibility of v1.
+The active v2 tree is independent from the archived v1 snapshot. Archived
+files are not canonical compile inputs.
 
 ## RTL areas
 
@@ -36,7 +35,8 @@ a GitHub release together with its commit and manifest.
 
 ## Version policy
 
-- v1 is a reproducible architecture snapshot retained for provenance only.
+- v1 is a reproducible architecture snapshot under `archive/v1`, retained for
+  provenance only.
 - v2 is the only active optimization and paper line.
 - Public examples, new reports, and canonical commands must use v2.
 - Pure layout changes must preserve file contents, algorithm results, cycle
@@ -46,6 +46,7 @@ a GitHub release together with its commit and manifest.
 
 ## Legacy material
 
-One-off historical scripts are retained under `scripts/legacy`. They are kept
-for provenance and are not canonical entrypoints. New work must use
-`scripts/run.ps1` or a documented script in the active `scripts` subfolders.
+One-off historical scripts are retained under `scripts/legacy`. Research and
+v1 source are under `archive/`. They are kept for provenance and are not
+canonical entrypoints. New work must use `scripts/run.ps1` or a documented
+script in the active `scripts` subfolders.

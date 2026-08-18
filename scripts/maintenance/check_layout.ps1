@@ -29,7 +29,7 @@ foreach ($version in @("v1", "v2")) {
 
 $scanPaths = @(
     (Join-Path $repoRoot "rtl"),
-    (Join-Path $repoRoot "verification\v1"),
+    (Join-Path $repoRoot "archive\v1\verification"),
     (Join-Path $repoRoot "verification\v2"),
     (Join-Path $repoRoot "sw"),
     (Join-Path $repoRoot "scripts\run.ps1"),

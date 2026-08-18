@@ -1,13 +1,15 @@
 # RTL source
 
-This is the only authoritative synthesizable RTL tree.
+This is the active authoritative synthesizable RTL tree.
 
-- `v1/`: frozen original optimized snapshot for reproducibility.
-- `v2/`: active strict-PE0, four-row, factor-reuse implementation.
+- `v2/`: strict-PE0, four-row, factor-reuse implementation.
 
-Each version is self-contained and has its own `files.f`. Do not compile RTL
-from local `CSCGRA_opt_architecture*` directories or generated Vivado `*.srcs`
-trees. Behavioral work goes to v2 unless a task explicitly targets v1.
+The frozen v1 tree is archived under `archive/v1/rtl` and is not a canonical
+optimization target.
+
+Use `rtl/v2/files.f`. Do not compile RTL from local
+`CSCGRA_opt_architecture*` directories or generated Vivado `*.srcs` trees.
+Behavioral work goes to v2.
 
 Current v2 metrics and retained optimizations are summarized in
 `docs/PROJECT_STATUS.md`.

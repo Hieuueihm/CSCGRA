@@ -1,9 +1,9 @@
 {
   "version": "v1",
   "description": "Preserved original optimized architecture",
-  "rtl_filelist": "rtl/v1/files.f",
-  "verification_root": "verification/v1",
-  "default_testbench": "verification/v1/run1/tb_run1_k_sweep.v",
+  "rtl_filelist": "archive/v1/rtl/files.f",
+  "verification_root": "archive/v1/verification",
+  "default_testbench": "archive/v1/verification/run1/tb_run1_k_sweep.v",
   "default_top": "cgra_top",
   "part": "xczu7ev-ffvc1156-2-e",
   "clock_period_ns": 10.0,

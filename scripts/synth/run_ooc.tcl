@@ -11,7 +11,11 @@ if {$rtl_version ni {v1 v2}} {
 
 set script_dir [file dirname [file normalize [info script]]]
 set repo_root [file normalize [file join $script_dir .. ..]]
-set rtl_root [file join $repo_root rtl $rtl_version]
+if {$rtl_version eq "v1"} {
+    set rtl_root [file join $repo_root archive v1 rtl]
+} else {
+    set rtl_root [file join $repo_root rtl v2]
+}
 set filelist_path [file join $rtl_root files.f]
 set part_name "xczu7ev-ffvc1156-2-e"
 set clock_period_ns 10.000
