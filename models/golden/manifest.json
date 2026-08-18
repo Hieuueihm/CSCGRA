@@ -6,12 +6,12 @@
   "K": 16,
   "algorithms": [
     {"name":"OMP", "alg_idx":0},
-    {"name":"gOMP", "alg_idx":1},
-    {"name":"CoSaMP", "alg_idx":2},
-    {"name":"SP", "alg_idx":3},
-    {"name":"IHT", "alg_idx":4},
-    {"name":"HTP", "alg_idx":5},
-    {"name":"GP", "alg_idx":6},
+    {"name":"CoSaMP", "alg_idx":1},
+    {"name":"IHT", "alg_idx":2},
+    {"name":"HTP", "alg_idx":3},
+    {"name":"SP", "alg_idx":4},
+    {"name":"GP", "alg_idx":5},
+    {"name":"gOMP", "alg_idx":6},
     {"name":"MP", "alg_idx":7}
   ],
   "sha256": {
@@ -20,6 +20,6 @@
   },
   "generated_sha256": {
     "verification/v2/run1/k_sweep_golden_mu3.vh": "E2B29FD81814AB175B2C7E815C557DEB72A03F571B85A9BA058F3E7EB74E6AF8",
-    "verification/v2/run1/k_sweep_golden_canonical.vh": "0561120D2C9E4954424E306B001E8E1E251397E6231DE6B87B1166D291BB7047"
+    "verification/v2/run1/k_sweep_golden_canonical.vh": "A60F130EBDE76057116C75EF9011C7DE77F745E83F69D44F59A3FD816C20565E"
   }
 }

@@ -59,14 +59,27 @@ integer profile_uop_cycles [0:15];
 integer profile_wide_cycles [0:15];
 reg done_seen, error_seen;
 
-// The canonical include is an opt-in differential reference.  The default
-// remains the frozen RTL-compatible sign-off golden so a normal regression
-// cannot silently change semantics.
-`ifdef TB_USE_CANONICAL_GOLDEN
-`include "k_sweep_golden_canonical.vh"
-`else
+// The legacy fixed-point golden remains available for algorithms that have
+// not migrated.  GP uses the independent canonical fixed-point reference by
+// default; define TB_LEGACY_GP to reproduce the historical GP baseline.
 `include "k_sweep_golden_mu3.vh"
+`ifdef TB_CANONICAL_GP
+`include "k_sweep_golden_canonical.vh"
 `endif
+
+function [23:0] expected_x_final;
+input integer case_id; input integer alg_id; input integer elem_id;
+begin
+`ifdef TB_CANONICAL_GP
+    if (alg_id == ALG_5)
+        expected_x_final = kscanon_x_final(case_id, alg_id, elem_id);
+    else
+        expected_x_final = ksgold_x_final(case_id, alg_id, elem_id);
+`else
+    expected_x_final = ksgold_x_final(case_id, alg_id, elem_id);
+`endif
+end
+endfunction
 
 cgra_top dut(.clk(clk),.rst_n(rst_n),.s_axi_awaddr(s_axi_awaddr),.s_axi_awvalid(s_axi_awvalid),.s_axi_awready(s_axi_awready),.s_axi_wdata(s_axi_wdata),.s_axi_wstrb(s_axi_wstrb),.s_axi_wvalid(s_axi_wvalid),.s_axi_wready(s_axi_wready),.s_axi_bresp(s_axi_bresp),.s_axi_bvalid(s_axi_bvalid),.s_axi_bready(s_axi_bready),.s_axi_araddr(s_axi_araddr),.s_axi_arvalid(s_axi_arvalid),.s_axi_arready(s_axi_arready),.s_axi_rdata(s_axi_rdata),.s_axi_rresp(s_axi_rresp),.s_axi_rvalid(s_axi_rvalid),.s_axi_rready(s_axi_rready),.m_axi_araddr(m_axi_araddr),.m_axi_arlen(m_axi_arlen),.m_axi_arsize(m_axi_arsize),.m_axi_arburst(m_axi_arburst),.m_axi_arvalid(m_axi_arvalid),.m_axi_arready(m_axi_arready),.m_axi_rdata(m_axi_rdata),.m_axi_rvalid(m_axi_rvalid),.m_axi_rlast(m_axi_rlast),.m_axi_rready(m_axi_rready),.m_axi_awaddr(m_axi_awaddr),.m_axi_awlen(m_axi_awlen),.m_axi_awsize(m_axi_awsize),.m_axi_awburst(m_axi_awburst),.m_axi_awvalid(m_axi_awvalid),.m_axi_awready(m_axi_awready),.m_axi_wdata(m_axi_wdata),.m_axi_wstrb(m_axi_wstrb),.m_axi_wlast(m_axi_wlast),.m_axi_wvalid(m_axi_wvalid),.m_axi_wready(m_axi_wready),.m_axi_bresp(m_axi_bresp),.m_axi_bvalid(m_axi_bvalid),.m_axi_bready(m_axi_bready),.irq_done(irq_done),.irq_error(irq_error));
 
@@ -235,9 +248,9 @@ task run_alg_case_iter; input integer alg_id; input integer m; input integer n; 
     for(i=0;i<n;i=i+1) begin
         got=ddr_x[i][23:0];
         if(got != 24'd0) nz_count=nz_count+1;
-        if(!absdiff_le(got,ksgold_x_final(case_idx,alg_id,i),KSWEEP_GOLD_TOL)) begin
+        if(!absdiff_le(got,expected_x_final(case_idx,alg_id,i),KSWEEP_GOLD_TOL)) begin
             if(mismatch_prints < 8) begin
-                $display("X_MISM case=%0d alg=%0d iter=%0d i=%0d got=%h exp=%h", case_idx, alg_id, iter_count, i, got, ksgold_x_final(case_idx,alg_id,i));
+                $display("X_MISM case=%0d alg=%0d iter=%0d i=%0d got=%h exp=%h", case_idx, alg_id, iter_count, i, got, expected_x_final(case_idx,alg_id,i));
                 mismatch_prints=mismatch_prints+1;
             end
             fail_cnt=fail_cnt+1;

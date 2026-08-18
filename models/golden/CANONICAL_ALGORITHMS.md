@@ -1,8 +1,9 @@
 # Canonical algorithm reference
 
-The active RTL golden is a hardware-compatible fixed-point model. It must not
-be presented as the textbook definition of every algorithm. This file records
-the independent algorithmic references used for the audit.
+GP now uses the independent fixed-point canonical reference in the default RTL
+regression. The remaining algorithms still use the legacy hardware-compatible
+baseline until their own migrations are complete. This file records the
+independent algorithmic references used for the audit.
 
 | Name | Canonical reference | Required steps |
 | --- | --- | --- |
@@ -15,12 +16,15 @@ the independent algorithmic references used for the audit.
 | MP | [Mallat & Zhang, 1993](https://doi.org/10.1109/78.258082) | Pick the largest normalized residual correlation, update that coefficient by the one-dimensional projection, and continue. Re-selection is allowed. |
 | GP | [Blumensath & Davies, 2008](https://www.compressed-sensing.eng.ed.ac.uk/sites/compressed-sensing.eng.ed.ac.uk/files/publications/BDGP07.pdf) | Expand the support, use the restricted gradient as the direction, and choose a residual line-search step. This is not the same as IHT. |
 
-`canonical_algorithms.py` implements these equations without RTL capacity
-limits, Q-format shifts, or PE scheduling. The canonical GP equation now has
-an isolated RTL implementation selected by `TB_CANONICAL_GP`; the default
-hardware-compatible GP path remains unchanged until timing/resource sign-off.
-The staged migration, baseline measurements, and conditions for switching
-sign-off are recorded in
+`canonical_algorithms.py` is the floating-point mathematical reference. The
+fixed-point contract is implemented independently in
+`canonical_fixed.py`; it defines signed-24-bit Q16 arithmetic for canonical
+GP and is the source used to generate the canonical GP golden. Neither
+reference imports RTL state or the RTL-compatible golden generator. The
+canonical GP equation now has an isolated RTL implementation selected by
+`TB_CANONICAL_GP`; the default hardware-compatible GP path remains unchanged
+until timing/resource sign-off. The staged migration and conditions for
+switching sign-off are recorded in
 [`CANONICAL_MIGRATION.md`](CANONICAL_MIGRATION.md).
 
 ## Current v2 deviations that must stay explicit

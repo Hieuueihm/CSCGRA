@@ -29,9 +29,11 @@ not synthesized.
 
 ## Other files
 
-- `run1/k_sweep_golden_mu3.vh`: active hardware-compatible sign-off golden.
+- `run1/k_sweep_golden_mu3.vh`: legacy hardware-compatible baseline golden;
+  it is not the canonical algorithm source.
 - `run1/k_sweep_golden_canonical.vh`: capacity-unlimited textbook reference;
-  it is selected only by the opt-in canonical differential mode.
+  generated from the independent canonical fixed-point model. GP selects its
+  entries by default.
 - Other `run1/*golden*.vh`: archived run1 golden includes.
 - root `*_golden*.vh`: historical diagnostic includes used by legacy focused
   benches; the canonical K-sweep include is under `run1/`.
@@ -42,8 +44,10 @@ not synthesized.
 Never change golden values merely to match a failing RTL candidate. Determine
 whether RTL, scheduling, or the test configuration is wrong first.
 
-To run an explicit differential check against the canonical textbook include,
-use `scripts/sim/run_regression.ps1 -CanonicalGolden`. In this mode GP selects
-the isolated canonical line-search implementation and passes all eight
-configured cases. CoSaMP/SP K16 remain deferred/skipped because the current
-16-entry candidate/support capacity is intentionally unchanged.
+The default `run_regression.ps1` now selects canonical fixed-point GP and
+compares algorithm 5 against `k_sweep_golden_canonical.vh`; the other
+algorithms continue to use the legacy golden until their RTL migrations are
+complete. `-CanonicalGolden` remains accepted as an explicit spelling. Use
+`-LegacyHardwareGolden` only to reproduce the historical dense-gradient GP
+baseline. CoSaMP/SP K16 remain deferred/skipped because the current 16-entry
+candidate/support capacity is intentionally unchanged.

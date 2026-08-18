@@ -22,8 +22,10 @@ Configuration:
 Files:
 - golden_cases.vh: frozen function-based fixed-point golden for per-iter support/x/residual checks.
 - golden_cases_array.vh: frozen array-form companion include.
-- canonical_algorithms.py: independent textbook reference used for semantic audits.
-- generate_canonical_k_sweep.py: generates the capacity-unlimited canonical include.
+- canonical_algorithms.py: independent floating-point textbook reference.
+- canonical_fixed.py: independent signed-24-bit Q16 contract used by canonical GP.
+- generate_canonical_k_sweep.py: generates the canonical include without importing
+  the RTL-compatible golden generator.
 - canonical_audit.md: latest non-mutating comparison against the RTL-compatible flow.
 
 Hashes:
@@ -54,10 +56,10 @@ second regenerates it intentionally.
 
 Rules:
 - Treat these files as read-only golden references.
-- RTL/TB must follow this golden; do not regenerate/modify to fit RTL failures.
+- Canonical GP flow is algorithm → `canonical_fixed.py` → generated golden → RTL.
+  Do not regenerate/modify the golden to fit RTL failures.
 - OMP regression uses slow/reference context flow unless explicitly testing fast mode separately.
-- The canonical audit is diagnostic. A mismatch must be resolved as an explicit
-  hardware variant or a corrected algorithm before replacing the active golden.
-- `verification/v2/run1/k_sweep_golden_canonical.vh` is the canonical reference;
-  `k_sweep_golden_mu3.vh` remains the v2 hardware-compatible sign-off golden
-  until the RTL is changed to implement the canonical variants.
+- The canonical audit is diagnostic for algorithms not yet migrated.
+- `verification/v2/run1/k_sweep_golden_canonical.vh` is the canonical reference
+  for GP. `k_sweep_golden_mu3.vh` is retained only as a legacy baseline for the
+  remaining un-migrated algorithms.

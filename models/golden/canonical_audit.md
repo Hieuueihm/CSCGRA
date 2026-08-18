@@ -2,7 +2,8 @@
 
 Inputs: seed=17, phi_scale_q=0x004000, Q=16, GP/LS variants explicit.
 
-This report compares final nonzero support only; it does not rewrite the active golden.
+This historical report compares final nonzero support only; it does not
+rewrite the canonical GP golden or the legacy baselines.
 
 | case | algorithm | RTL nnz | canonical nnz | overlap | Jaccard |
 |---:|---|---:|---:|---:|---:|

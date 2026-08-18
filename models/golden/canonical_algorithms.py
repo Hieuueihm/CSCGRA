@@ -1,10 +1,9 @@
-"""Canonical sparse-recovery references used to audit the RTL-compatible goldens.
+"""Floating-point canonical sparse-recovery references.
 
 This module intentionally contains no RTL-specific limits, Q-format shifts, or
-PE scheduling.  It implements the textbook algorithmic steps for the same
-matrix/vector supplied by the caller.  The active hardware golden remains in
-``generate_k_sweep_golden.py`` until a differential audit proves that changing
-it will not silently change the algorithm under test.
+PE scheduling. It implements the mathematical algorithmic steps for the same
+matrix/vector supplied by the caller. ``canonical_fixed.py`` is the separate
+fixed-point numerical contract used when those equations are moved into RTL.
 """
 
 from __future__ import annotations
