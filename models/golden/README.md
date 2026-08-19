@@ -56,6 +56,10 @@ python models/golden/generate_canonical_k_sweep.py
 python models/golden/audit_algorithm_semantics.py --output models/golden/canonical_audit.md
 ```
 
+For RTL phase bring-up, add `-PhaseTrace` to `scripts/sim/run_regression.ps1`.
+It emits controller/PE `PHASE_TOPK` and `PHASE_LS_DONE` records without
+changing the normal regression or golden data.
+
 The first command verifies the checked-in v2 include without changing it. The
 second regenerates it intentionally.
 

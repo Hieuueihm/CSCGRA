@@ -3138,6 +3138,18 @@ case (state)
                 state <= S_SCAN_DIRECT_STEP;
             end
             S_SOLVE_DONE: begin
+`ifdef TB_PHASE_TRACE
+                $display("PHASE_LS_DONE op=%0d k=%0d s0=%0d s1=%0d s2=%0d s3=%0d s4=%0d s5=%0d s6=%0d s7=%0d s8=%0d s9=%0d s10=%0d s11=%0d s12=%0d s13=%0d s14=%0d s15=%0d c0=%0d c1=%0d c2=%0d c3=%0d c4=%0d c5=%0d c6=%0d c7=%0d c8=%0d c9=%0d c10=%0d c11=%0d c12=%0d c13=%0d c14=%0d c15=%0d",
+                    active_op, active_k_count,
+                    support_cache[0], support_cache[1], support_cache[2], support_cache[3],
+                    support_cache[4], support_cache[5], support_cache[6], support_cache[7],
+                    support_cache[8], support_cache[9], support_cache[10], support_cache[11],
+                    support_cache[12], support_cache[13], support_cache[14], support_cache[15],
+                    coeff_mem[0], coeff_mem[1], coeff_mem[2], coeff_mem[3],
+                    coeff_mem[4], coeff_mem[5], coeff_mem[6], coeff_mem[7],
+                    coeff_mem[8], coeff_mem[9], coeff_mem[10], coeff_mem[11],
+                    coeff_mem[12], coeff_mem[13], coeff_mem[14], coeff_mem[15]);
+`endif
                 write_idx <= {IDX_W{1'b0}};
                 write_limit <= (active_op == OP_REFINE_SPARSE) ? active_k : n_size;
                 phase_residual <= 1'b0;

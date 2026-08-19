@@ -4,6 +4,7 @@ param(
     [int[]]$Cases = @(0, 1, 2, 3, 4, 5, 6, 7),
     [int[]]$Algorithms = @(),
     [switch]$ProfileStates,
+    [switch]$PhaseTrace,
     [switch]$CanonicalGolden,
     [switch]$CanonicalAll,
     [switch]$LegacyHardwareGolden,
@@ -74,6 +75,7 @@ $metadata = [ordered]@{
     cases = @($Cases)
     algorithms = @($Algorithms)
     profile_states = $ProfileStates.IsPresent
+    phase_trace = $PhaseTrace.IsPresent
     canonical_golden = (!$LegacyHardwareGolden.IsPresent)
     canonical_all = $CanonicalAll.IsPresent
     started_at = (Get-Date).ToString("o")
@@ -88,6 +90,9 @@ try {
     $xvlogArgs = @("-sv")
     if ($ProfileStates) {
         $xvlogArgs += @("-d", "TB_STATE_PROFILE")
+    }
+    if ($PhaseTrace) {
+        $xvlogArgs += @("-d", "TB_PHASE_TRACE")
     }
     if (!$LegacyHardwareGolden -or $CanonicalAll) {
         $xvlogArgs += @("-d", "TB_CANONICAL_GP")

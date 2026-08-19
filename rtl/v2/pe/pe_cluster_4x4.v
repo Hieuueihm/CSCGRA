@@ -414,8 +414,17 @@ module pe_cluster_4x4 #(
                     topk_global_count_q <= topk_global_count_q + 1'b1;
             end
 
-            if (topk_done_r3_q)
+            if (topk_done_r3_q) begin
                 topk_result_valid_q <= 1'b1;
+`ifdef TB_PHASE_TRACE
+                $display("PHASE_TOPK count=%0d idx0=%0d idx1=%0d idx2=%0d idx3=%0d idx4=%0d idx5=%0d idx6=%0d idx7=%0d idx8=%0d idx9=%0d idx10=%0d idx11=%0d idx12=%0d idx13=%0d idx14=%0d idx15=%0d",
+                    topk_global_count_q,
+                    topk_global_idx_q[0], topk_global_idx_q[1], topk_global_idx_q[2], topk_global_idx_q[3],
+                    topk_global_idx_q[4], topk_global_idx_q[5], topk_global_idx_q[6], topk_global_idx_q[7],
+                    topk_global_idx_q[8], topk_global_idx_q[9], topk_global_idx_q[10], topk_global_idx_q[11],
+                    topk_global_idx_q[12], topk_global_idx_q[13], topk_global_idx_q[14], topk_global_idx_q[15]);
+`endif
+            end
         end
     end
 

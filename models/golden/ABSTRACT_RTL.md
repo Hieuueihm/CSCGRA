@@ -36,3 +36,8 @@ Current status:
 - Real RTL has only the canonical GP path migrated so far. CoSaMP remains a
   known hardware-capacity variant; its RTL must be changed phase by phase before
   it can claim canonical sign-off.
+
+The current CoSaMP checkpoint confirms that correlation/top-K/support merge are
+aligned for case 1 K8. The first divergent phase is `LS_SOLVE`: RTL still uses
+its LDLT implementation while the fixed canonical model uses deterministic
+Gauss-Jordan arithmetic. This is an RTL migration item, not a golden issue.

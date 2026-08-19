@@ -116,3 +116,19 @@ The full `-CanonicalAll` audit confirms that OMP, IHT, HTP, SP, GP, gOMP, and
 MP match the canonical include for all valid configured cases. CoSaMP remains
 non-canonical in case 1 (10 mismatches) and case 3 (16 mismatches); K16
 CoSaMP/SP are skipped by design because of the 16-entry support capacity.
+
+## CoSaMP phase migration checkpoint
+
+The optional `-PhaseTrace` regression define emits `PHASE_TOPK` and
+`PHASE_LS_DONE` records from the PE/controller boundary. On the case-1 K8
+bring-up trace, `PHASE_TOPK` exactly matches the abstract canonical first
+`SUPPORT_MERGE` candidate order:
+`74,231,168,174,108,147,91,107,38,151,8,87,67,59,173,30`.
+This isolates the first real mismatch after the merge: the current RTL
+`OP_REFINE` path uses the hardware LDLT/quantization solve, whereas the frozen
+canonical contract uses deterministic fixed-point Gauss-Jordan elimination.
+The final hardware support consequently follows the legacy LDLT variant
+(`38,73,74,87,91,107,149,168`) instead of canonical support
+(`38,74,87,91,107,168,174,231`). No golden change is made. The next RTL
+change must replace or isolate the LS phase with canonical fixed arithmetic,
+then compare `PHASE_LS_DONE` before enabling canonical CoSaMP sign-off.
