@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 
-from canonical_algorithms import run_all
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "reference"))
+from canonical import run_all
 import generate_k_sweep_golden as hw
 
 

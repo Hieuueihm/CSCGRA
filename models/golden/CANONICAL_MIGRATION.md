@@ -4,8 +4,8 @@ This note is the gate between the current RTL-compatible sign-off and a
 textbook/canonical sign-off. The active algorithmic regression uses the
 independent fixed-point canonical reference. `verification/v2/run1/k_sweep_golden_mu3.vh`
 remains a legacy baseline for hardware variants. The hardware-aware LDLT/Q16
-trace is recorded separately in `HARDWARE_CONTRACT.md`; it does not replace
-the canonical golden.
+implementation is recorded in the single source
+`models/reference/hardware.py`; it does not replace the canonical golden.
 
 ## Baseline captured before changing RTL
 
@@ -130,6 +130,6 @@ canonical contract uses deterministic fixed-point Gauss-Jordan elimination.
 The final hardware support consequently follows the legacy LDLT variant
 (`38,73,74,87,91,107,149,168`) instead of canonical support
 (`38,74,87,91,107,168,174,231`). This difference is expected and is captured
-by `hardware_abstract.py`. The next RTL change must compare the LS phase
-against that hardware-aware trace while preserving the independent canonical
-check; neither golden should be rewritten to hide the difference.
+by `models/reference/hardware.py`. The next RTL change must compare the LS
+phase against that hardware-aware model while preserving the independent
+canonical check; neither golden should be rewritten to hide the difference.

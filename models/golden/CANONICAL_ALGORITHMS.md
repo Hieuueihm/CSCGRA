@@ -16,7 +16,7 @@ references used for the audit.
 | MP | [Mallat & Zhang, 1993](https://doi.org/10.1109/78.258082) | Pick the largest normalized residual correlation, update that coefficient by the one-dimensional projection, and continue. Re-selection is allowed. |
 | GP | [Blumensath & Davies, 2008](https://www.compressed-sensing.eng.ed.ac.uk/sites/compressed-sensing.eng.ed.ac.uk/files/publications/BDGP07.pdf) | Expand the support, use the restricted gradient as the direction, and choose a residual line-search step. This is not the same as IHT. |
 
-`canonical_algorithms.py` is the floating-point mathematical reference. The
+`models/reference/canonical.py` is the floating-point mathematical reference. The
 fixed-point contract is implemented independently for all algorithms in
 `canonical_fixed.py`; it defines signed-24-bit Q16 arithmetic and is the
 source used to generate the canonical golden. Neither reference imports RTL

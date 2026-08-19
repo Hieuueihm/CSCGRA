@@ -1,20 +1,23 @@
-"""Independent hardware-aware fixed-point contract for the RTL trace.
+"""Hardware Python reference derived from the canonical algorithms.
 
-This is deliberately separate from :mod:`canonical_fixed`: the latter is the
-algorithmic fixed reference, while this module models the implementation
-choices that are part of the RTL contract (Q16 normal equations, diagonal
-regularisation, LDLT factorisation, reciprocal-D scaling and signed-24-bit
-coefficient quantisation).  It never imports RTL or a RTL-generated golden.
+This is the second and only hardware reference source beside
+``reference/canonical.py``. It models the implementation choices that are
+part of the RTL contract (Q16 normal equations, diagonal regularisation, LDLT
+factorisation, reciprocal-D scaling and signed-24-bit coefficient
+quantisation). It never imports RTL or a RTL-generated golden.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
+import sys
 from typing import Sequence
 
 try:
-    from . import canonical_fixed as fixed
-except ImportError:  # direct ``python models/golden/*.py`` execution
+    from models.golden import canonical_fixed as fixed
+except ImportError:  # direct ``python models/reference/hardware.py`` execution
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "golden"))
     import canonical_fixed as fixed
 
 

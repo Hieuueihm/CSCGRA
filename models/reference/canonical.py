@@ -2,8 +2,9 @@
 
 This module intentionally contains no RTL-specific limits, Q-format shifts, or
 PE scheduling. It implements the mathematical algorithmic steps for the same
-matrix/vector supplied by the caller. ``canonical_fixed.py`` is the separate
-fixed-point numerical contract used when those equations are moved into RTL.
+matrix/vector supplied by the caller. The companion ``hardware.py`` is the
+separate fixed-point implementation contract used when these equations are
+moved into RTL.
 """
 
 from __future__ import annotations

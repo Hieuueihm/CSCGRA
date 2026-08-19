@@ -28,11 +28,10 @@ model calls `canonical_fixed.run_all` at completion and asserts exact equality
 of `x`, residual, and support. A mismatch is therefore a real RTL migration
 issue; the fixed canonical golden must not be regenerated to make it disappear.
 
-For implementation-level behavior, use the separate
-`hardware_abstract.py`/`hardware_fixed.py` pair. That trace includes the
-hardware-legal LDLT and quantisation boundaries, rather than pretending that
-the RTL has to execute the canonical Gauss-Jordan schedule. See
-`HARDWARE_CONTRACT.md`.
+For implementation-level behavior, use the single source
+`models/reference/hardware.py`. It includes the hardware-legal LDLT and
+quantisation boundaries, rather than pretending that the RTL has to execute
+the canonical Gauss-Jordan schedule.
 
 Current status:
 
@@ -45,6 +44,6 @@ Current status:
 
 The current CoSaMP checkpoint confirms that correlation/top-K/support merge are
 aligned for case 1 K8. The RTL LS phase is intentionally compared against the
-hardware-aware LDLT trace, while the algorithmic trace remains a separate
+hardware-aware model, while the algorithmic trace remains a separate
 reference. This is an implementation-contract comparison, not a request to
 replace LDLT with Gauss-Jordan.
