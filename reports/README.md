@@ -11,6 +11,10 @@ not tracked.
 
 ## Current authoritative release
 
+- `v2/hardware_golden_signoff.md` — latest hardware-golden verification and
+  routed implementation baseline. RTL simulation is 348 PASS / 0 FAIL; synthesis
+  is +0.454 ns WNS; routed implementation is fully routed but −1.987 ns WNS and
+  remains a timing-fail baseline for the next optimization pass.
 - `releases/TOPK_APPEND_ACK_CHAIN_SIGNOFF_20260817.md`
 - `releases/topk_append_ack_chain_k_sweep_20260817.csv`
 

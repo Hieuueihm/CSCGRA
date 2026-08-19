@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("sim", "synth")]
+    [ValidateSet("sim", "synth", "impl")]
     [string]$Flow,
 
     [ValidateSet("v1", "v2")]
@@ -29,6 +29,13 @@ switch ($Flow) {
     }
     "synth" {
         & (Join-Path $PSScriptRoot "synth\run_ooc.ps1") `
+            -RtlVersion $RtlVersion `
+            -Top $Top `
+            -RunId $RunId `
+            -VivadoBin $VivadoBin
+    }
+    "impl" {
+        & (Join-Path $PSScriptRoot "impl\run_ooc.ps1") `
             -RtlVersion $RtlVersion `
             -Top $Top `
             -RunId $RunId `

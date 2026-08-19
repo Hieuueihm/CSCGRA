@@ -10,6 +10,8 @@
 - `maintenance/check_layout.ps1`: repository layout checks.
 - `python models/reference/hardware.py --check`: recomputes and verifies the
   active bit-exact v2 hardware sign-off golden.
+- `python models/reference/hardware.py --check --c-output sw/v2/src/cscgra_k_sweep_golden.h`:
+  verifies the matching SoC C header.
 - `python models/golden/generate_canonical_k_sweep.py --check`: verifies the
   independent capacity-unlimited textbook reference.
 - `maintenance/compare_regression.ps1`: compares measured regression records.

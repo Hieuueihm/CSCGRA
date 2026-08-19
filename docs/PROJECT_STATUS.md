@@ -1,6 +1,6 @@
 # CSCGRA project status and optimization inventory
 
-Updated: 2026-08-17
+Updated: 2026-08-20
 
 This is the top-level handoff document for the repository. It separates what
 is present in the current RTL from experiments that were measured and removed.
@@ -28,6 +28,23 @@ result should depend on it.
 
 The current complete matrix is
 `reports/releases/topk_append_ack_chain_k_sweep_20260817.csv`.
+
+### Hardware-golden verification and routed baseline (2026-08-20)
+
+`models/reference/hardware.py` is now the single generator/checker for both
+the active Verilog golden and `sw/v2/src/cscgra_k_sweep_golden.h`. The static
+SDK/TB contract check passes, and the corrected factor-cache model has a full
+valid regression result of **348 PASS / 0 FAIL** (the two K16 CoSaMP/SP skips
+remain intentional).
+
+The new implementation run is fully routed with zero routing errors and a
+reproducible checkpoint at
+`logs/impl/v2/hardware_golden_impl_v2/cgra_top_impl_routed.dcp`. Synthesis
+remains **+0.454 ns WNS**, but post-route timing is **−1.987 ns WNS** with
+13,915 setup-failing endpoints. Therefore the routed checkpoint is a clean
+physical baseline, not a 100-MHz timing sign-off; the next optimization pass
+must target the post-route critical paths (LDLT border/PE wide arithmetic and
+fanout) while preserving the golden/TB contract.
 
 Evolution of the configured full sweep:
 
