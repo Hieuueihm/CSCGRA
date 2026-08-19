@@ -31,6 +31,8 @@ Files:
   per-phase digests and exact final-state checks for all cases/algorithms.
 - hardware_fixed.py: independent hardware-aware fixed contract for LDLT,
   Q16/Q32 boundaries, regularisation and signed-24 quantisation.
+- hardware_blackbox.py: public bridge that feeds one quantised input to both
+  canonical and hardware models and returns both results for RTL comparison.
 - hardware_abstract.py and run_hardware_abstract.py: CoSaMP phase trace for
   the hardware LDLT contract; K16 entries are architectural traces, not RTL
   sign-off.
