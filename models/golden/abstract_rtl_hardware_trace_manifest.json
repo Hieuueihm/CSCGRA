@@ -1,0 +1,2178 @@
+{
+  "canonical_golden_unchanged": true,
+  "contract": {
+    "active_ls_requests": 1,
+    "data_width": 24,
+    "diagonal_regularization": 1,
+    "fractional_bits": 16,
+    "ingress": "PE0-to-PE1-to-PE2-to-PE3",
+    "inverse_d_fractional_bits": 32,
+    "saturation": "signed-24",
+    "solver": "LDLT"
+  },
+  "entries": [
+    {
+      "algorithm": "CoSaMP",
+      "case": 0,
+      "contract": "hardware-ldlt-q16-s24",
+      "final_residual_digest": "80f1bbade1852e59e642893c399dcbd5ec8e830e074b5de856e9be4aee22ab9a",
+      "final_support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+      "final_x_digest": "5be270f2169c9dd6ca932432d212ee2538e05f5815b1f2d2956f372d09f649e5",
+      "phase_count": 96,
+      "phase_records": [
+        {
+          "digest": "c1ae3f32a99ba7e28ccd8e391f2ec5d7b017f7bb4c190f294a9ab93fd7401be4",
+          "iteration": 0,
+          "phase": "CORRELATION",
+          "support_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "values_digest": "1b4d88ce2d711f81291b5be7d4855335a8fc5398f689d133ef8d9dc190ff0a55"
+        },
+        {
+          "digest": "4549b0927c90b66e7c90d5d7fa4fb3dd0be9797b41cd1799d6224c2669d27952",
+          "iteration": 0,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "320b3216822674ed5bdad88de5fa07a2618339672e036b7bfafae426acea3d09",
+          "values_digest": "f57874db3b0838da6bc14aa3031eb6dddb7c254eabbc3fc96b27fe4c9a7c47a3"
+        },
+        {
+          "digest": "1c9a86dee27aa0be4ed6e071d2fa92abdbc91621c58ac2f6e8c30191853d926b",
+          "iteration": 0,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "320b3216822674ed5bdad88de5fa07a2618339672e036b7bfafae426acea3d09",
+          "values_digest": "a13fbdc3a4dcf77e7f244c33f8b54ba979e8f33fc599d6bd9d30b9c4d15f357f"
+        },
+        {
+          "digest": "cbc02a3e2059b1e56c193630f6b164cbe569649efaccfb209a6c79615bedfe05",
+          "iteration": 0,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "320b3216822674ed5bdad88de5fa07a2618339672e036b7bfafae426acea3d09",
+          "values_digest": "d56c4e8d6188d2ecaaf61e43bf418c47897d77557a229f66caf38c0d6df6afda"
+        },
+        {
+          "digest": "7e7ff4d3b3506d81ed7b373901ba03ce95f92cdcd178387e0939599d610ea1fd",
+          "iteration": 0,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "320b3216822674ed5bdad88de5fa07a2618339672e036b7bfafae426acea3d09",
+          "values_digest": "a13fbdc3a4dcf77e7f244c33f8b54ba979e8f33fc599d6bd9d30b9c4d15f357f"
+        },
+        {
+          "digest": "2fc402ee0c39d3e433c7204f05cb831384b2320b18b46ebda457d6890d1f850e",
+          "iteration": 0,
+          "phase": "RESIDUAL",
+          "support_digest": "320b3216822674ed5bdad88de5fa07a2618339672e036b7bfafae426acea3d09",
+          "values_digest": "b774f00cb53f460849cde97d3dff732d6b883cedf2713a27f420f47244ba4f80"
+        },
+        {
+          "digest": "ca4207e91694e62c4e0e0588e5cce34fe1fa46e1771b73670aa340ef313ac948",
+          "iteration": 1,
+          "phase": "CORRELATION",
+          "support_digest": "320b3216822674ed5bdad88de5fa07a2618339672e036b7bfafae426acea3d09",
+          "values_digest": "77784351574ac95ea51fa818c348dced8844aaa73736ac3a9902226eaa421308"
+        },
+        {
+          "digest": "2bea99a3e777500e164ea78f4a8f7e73e11e02689f63c7cc864f377bb848523d",
+          "iteration": 1,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "45e3912804815e940aacbf74bb03a4190307acb8184ca24c11b6ba15650f73b0",
+          "values_digest": "4d303d95acc815fc2f39e876e810261535b319bbb37769e5a1260448c2737259"
+        },
+        {
+          "digest": "59cc2bd2cc14424d646935190ae1bc1941b28b8319e6f82e015eb07684206a1e",
+          "iteration": 1,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "45e3912804815e940aacbf74bb03a4190307acb8184ca24c11b6ba15650f73b0",
+          "values_digest": "205b11e47da1c6b34a92de51bc4be9d5316747e7722996d576aca39add56aed9"
+        },
+        {
+          "digest": "d18ca979d02a2f145095ed6bb9ccd9e4ae84e658bc4664edbc0a8669f355e7b0",
+          "iteration": 1,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "45e3912804815e940aacbf74bb03a4190307acb8184ca24c11b6ba15650f73b0",
+          "values_digest": "20a76e22566ea0753c600866ff352f93dd99fdd4e45b9c8236cbef5c4c6e711a"
+        },
+        {
+          "digest": "afdf4c61eab84e001975afe7295de6e97057393d7e4b5dd769cfd29ef2ba5047",
+          "iteration": 1,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "45e3912804815e940aacbf74bb03a4190307acb8184ca24c11b6ba15650f73b0",
+          "values_digest": "205b11e47da1c6b34a92de51bc4be9d5316747e7722996d576aca39add56aed9"
+        },
+        {
+          "digest": "bf6a33123dc4edd65c07a024ba2b5061f194a94181523cce513991c3acf90346",
+          "iteration": 1,
+          "phase": "RESIDUAL",
+          "support_digest": "45e3912804815e940aacbf74bb03a4190307acb8184ca24c11b6ba15650f73b0",
+          "values_digest": "8c78e5c4db77dca18cb93c4db7b016cf798a986ec3c4a8e135f49848eccdded0"
+        },
+        {
+          "digest": "5acb4916c9fe5daf736f4d2d0b9419ef7487aabbae2c87c3ae873a871e24e768",
+          "iteration": 2,
+          "phase": "CORRELATION",
+          "support_digest": "45e3912804815e940aacbf74bb03a4190307acb8184ca24c11b6ba15650f73b0",
+          "values_digest": "bf25e36cca23b068c0625303788f9c54de359690bc5694c13377836553cbea7d"
+        },
+        {
+          "digest": "26cab629268971eb69f3c296e67cc8376eeebdbe02556e16295017b8b37e1676",
+          "iteration": 2,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "f80a3689be6ee8db59d6fcd2d5bc592189e28de7d2460e9755f62a09d22a3b79",
+          "values_digest": "2ee095dd07cf7970b95cfea1c419d09cace34579b1c883113ac48b83b32b67d3"
+        },
+        {
+          "digest": "f0eb844d3bfd6a1d6c5643637022009bd90a7ef577053abf7a6a42929071cf9b",
+          "iteration": 2,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "f80a3689be6ee8db59d6fcd2d5bc592189e28de7d2460e9755f62a09d22a3b79",
+          "values_digest": "f7eb5f14458c2e3a8fabe13aec2f0e94f2ff823312954d137e269a34516f0452"
+        },
+        {
+          "digest": "410ed4e85a781b004190439fc51018be7254a2099818d1234021976815ab2b19",
+          "iteration": 2,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "f80a3689be6ee8db59d6fcd2d5bc592189e28de7d2460e9755f62a09d22a3b79",
+          "values_digest": "338b3346927893f82eb6785cec7b0e33fd591104e13289cd961c7d531fff0d6f"
+        },
+        {
+          "digest": "fc930b0f1a9bc4a570f3ac983507907f782e741e65333b666845d77006ec5ef5",
+          "iteration": 2,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "f80a3689be6ee8db59d6fcd2d5bc592189e28de7d2460e9755f62a09d22a3b79",
+          "values_digest": "f7eb5f14458c2e3a8fabe13aec2f0e94f2ff823312954d137e269a34516f0452"
+        },
+        {
+          "digest": "b95e7a28960d413ad634dd6b24ec73503d65751e9aa32c2275dc3f19fcf21d5e",
+          "iteration": 2,
+          "phase": "RESIDUAL",
+          "support_digest": "f80a3689be6ee8db59d6fcd2d5bc592189e28de7d2460e9755f62a09d22a3b79",
+          "values_digest": "d1dc5b35b78f79e75ed0343a7c17cd960f610ad8ccf8a8e58f00ca9e5fef00dc"
+        },
+        {
+          "digest": "332c37596f6bbec2a383efa01b4643abfb2148faec6457e262955eefdf334498",
+          "iteration": 3,
+          "phase": "CORRELATION",
+          "support_digest": "f80a3689be6ee8db59d6fcd2d5bc592189e28de7d2460e9755f62a09d22a3b79",
+          "values_digest": "ff186ee22db34a92adad0795e8806f3be26b330bf9b44d434b2ecc3e336cb355"
+        },
+        {
+          "digest": "0efb3e2762382339c253515efea4ab9afd125284a34da8f4a3e849c3a39daa7e",
+          "iteration": 3,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "e4a056800e9e09ed3469cfda766ddb68f1dab6066148d90b5818226e0700708c",
+          "values_digest": "8f8d491f0f9f77fc576d89a762d76f2218713d215c0ecbd448b231d5e51c448b"
+        },
+        {
+          "digest": "574e00cce7c70995aadb142c3ac8737afe3298c9492b5f96d5fbf6ae7c46de0a",
+          "iteration": 3,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "e4a056800e9e09ed3469cfda766ddb68f1dab6066148d90b5818226e0700708c",
+          "values_digest": "a62f7e6809363840abca84c7fa7b057c1bc624d96b92dd8653791794e2e1a498"
+        },
+        {
+          "digest": "d01bd1f70d184566341a2c462e583bb9fac40cc3288340d93412cf8185c18239",
+          "iteration": 3,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "e4a056800e9e09ed3469cfda766ddb68f1dab6066148d90b5818226e0700708c",
+          "values_digest": "549e280b0c0a22abfe535d843274f90d9597b1542709dc2007cfb7e1c9e44b17"
+        },
+        {
+          "digest": "ad4dfef4bfd61d7bb40aa32abe27e745405b165d3b38c642e03d891426b1aaa7",
+          "iteration": 3,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "e4a056800e9e09ed3469cfda766ddb68f1dab6066148d90b5818226e0700708c",
+          "values_digest": "a62f7e6809363840abca84c7fa7b057c1bc624d96b92dd8653791794e2e1a498"
+        },
+        {
+          "digest": "0e23eb1382b7b788105ad3a088f3c749624e53a79b0fc796e5310f8f4f8f43ae",
+          "iteration": 3,
+          "phase": "RESIDUAL",
+          "support_digest": "e4a056800e9e09ed3469cfda766ddb68f1dab6066148d90b5818226e0700708c",
+          "values_digest": "de7054f1a812ff7595e8333cfe2d0e5bcde5cc17d12bbdffa81d968748088d07"
+        },
+        {
+          "digest": "f5b5e17b50d5319020b9338755a52c13b39c2d1b3c57101edbd8818a3a25af45",
+          "iteration": 4,
+          "phase": "CORRELATION",
+          "support_digest": "e4a056800e9e09ed3469cfda766ddb68f1dab6066148d90b5818226e0700708c",
+          "values_digest": "4a014fee3e1972bcc46d7f918c95d2b0c9c52c3df1aa43ecbffa2d8b73a96ed8"
+        },
+        {
+          "digest": "a0f8858ecfd8fd730dc66b792b576c0daa1ccf42f3b41729bf09d2ebee7c487f",
+          "iteration": 4,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a8481719542b679fd35969a9fcaef025afa289d9ae63df3146a702c4fd496804"
+        },
+        {
+          "digest": "64c3481a2f6870cd1f136c45a0e9e44c6529f97b80ea67d53e6174bafecb7c3e",
+          "iteration": 4,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "549968ccce3d69caa282599c2e3abb1b7cc9d44e483a83bb7bbd9b6cfbb6e0bf",
+          "iteration": 4,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "22ab6254b157e36c2fe9d0cb5379d488708239adc3a87b69ffeabc50d57a7012",
+          "iteration": 4,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "68a951624e31a511187cb594c820ff9429a42271677ef400f4b8158f39fe8119",
+          "iteration": 4,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        },
+        {
+          "digest": "73ce510c730aa4b1f7142bfbe80515930f1351cd836e0e142091061c0b0893f2",
+          "iteration": 5,
+          "phase": "CORRELATION",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "f181e100b6f2b4492838fb6443f7152870684d64dbc49cc06dc030f59aa15015"
+        },
+        {
+          "digest": "f1c48bd6b70150eedd692e592ec7ba974be2fb7357349c220a6c46efeba7a6bb",
+          "iteration": 5,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "0f5d0e29bda05b595d160f4fa8b609e87308a577cb20d35aaec58028209a5b38"
+        },
+        {
+          "digest": "01bf31aafcc971c7a32faea740de7a96045df51602a4ba4d9b91dc0577d01bd2",
+          "iteration": 5,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "3a2e996d5018c05d0de8f70ca24455b142a2c5ed1d68fc34fd1a083253b760dc",
+          "iteration": 5,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "bb03979b8e72da73c7fbc992df5f96fc5491652557cbb1bb10aa0299b0a11162",
+          "iteration": 5,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "584bd3eee877d9297e82200464dfda7ccd3f20b52c01ac7ac8fedd54a79be25b",
+          "iteration": 5,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        },
+        {
+          "digest": "ad8bbf2dfa5c32bed2ca9dad326a829a7fde7f7681aa79c816aede533b4af384",
+          "iteration": 6,
+          "phase": "CORRELATION",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "f181e100b6f2b4492838fb6443f7152870684d64dbc49cc06dc030f59aa15015"
+        },
+        {
+          "digest": "1b91c8f7595ad672b57a15cd1c76ce9aa6f86cd036bcdb10d39b86fa86397836",
+          "iteration": 6,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "0f5d0e29bda05b595d160f4fa8b609e87308a577cb20d35aaec58028209a5b38"
+        },
+        {
+          "digest": "5b5186775c3463d5c082c174de9ead238c1935e78e5064ce345fb535c3759dac",
+          "iteration": 6,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "2a96ff38ff8cdbfdeb9ca7989067911e6149cb8803ec08f98593d7310eeed939",
+          "iteration": 6,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "4be465ee4bc5ec0138a906749d58e5772cdfec88153a101723381e35a0f77443",
+          "iteration": 6,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "dc4f930a94db125e9b486e9499c6c476f6179baa1008db6f2633fbd5e75d7781",
+          "iteration": 6,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        },
+        {
+          "digest": "c0ad14c8ad3ac5efec449a77223d25c11f8af26d6f2fb3439c50aaeb90c186f5",
+          "iteration": 7,
+          "phase": "CORRELATION",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "f181e100b6f2b4492838fb6443f7152870684d64dbc49cc06dc030f59aa15015"
+        },
+        {
+          "digest": "101101f3a1d7d705365c7288e9c7b67d60a05b3b1f25a696bf604d8d96fc9a4c",
+          "iteration": 7,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "0f5d0e29bda05b595d160f4fa8b609e87308a577cb20d35aaec58028209a5b38"
+        },
+        {
+          "digest": "1be7d17fb3ea190b19a6a10fd986cab157c400fd993d1c9193259dd45ff472f5",
+          "iteration": 7,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "546e815b54189d5e70e491ee580f91b80f5099398326a73adda344127ebb8d75",
+          "iteration": 7,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "b69178f7b7b4977b04c4760e05539528d68173c1216124ff55c22ac2157c73d0",
+          "iteration": 7,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "82918e55be4e1ac80689660facafe0b65bf2c5d4364d231bae59036f262d5002",
+          "iteration": 7,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        },
+        {
+          "digest": "c3534726932cb970039b18a8da8d6034ee38f06cb86fc0751a9000129ec82037",
+          "iteration": 8,
+          "phase": "CORRELATION",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "f181e100b6f2b4492838fb6443f7152870684d64dbc49cc06dc030f59aa15015"
+        },
+        {
+          "digest": "2bc6f14be400c7c85e077a03d432e063f1f926c12b997933ae0d0302a212ee75",
+          "iteration": 8,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "0f5d0e29bda05b595d160f4fa8b609e87308a577cb20d35aaec58028209a5b38"
+        },
+        {
+          "digest": "c8dcd16b95882d960833f4b36aeef4de7b6e0aa4a4548d9e08eb09393d015a64",
+          "iteration": 8,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "c906848f87808a6c93bfd56afb67b753c81ea8af041c78b837fb283f91635556",
+          "iteration": 8,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "9129b79977f6e18abb84ba8a0ed9c2089b99cfe13197a582cb0fecce2c2b6b99",
+          "iteration": 8,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "793b060cbadef281138099a40f913ae442c0d082423edec2c0eaefe1e1689fdd",
+          "iteration": 8,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        },
+        {
+          "digest": "fabc0b040862ded4fee562c55f22230d0703079f4bb8564a520fb81842fc517d",
+          "iteration": 9,
+          "phase": "CORRELATION",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "f181e100b6f2b4492838fb6443f7152870684d64dbc49cc06dc030f59aa15015"
+        },
+        {
+          "digest": "b96d51e03622a41aae7e345b97586e3c76a36089bdbbcacf4a3633d430bc4590",
+          "iteration": 9,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "0f5d0e29bda05b595d160f4fa8b609e87308a577cb20d35aaec58028209a5b38"
+        },
+        {
+          "digest": "992a2dc8411c3be6afcf2db42467156b7d4617b6985dc6ed7977b94fb4702ed3",
+          "iteration": 9,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "43076785265d084fd1b6a3f5e5fe2fc4d4609fe067fb558ba36f2a0c9c769ee1",
+          "iteration": 9,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "e1b973782e7e61eabf16653d7fed8d73b41e57a40e1f6ecc3e4195d96e321b6d",
+          "iteration": 9,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "9eb8701def8fb22aa84b87a4969475e04a528e8b6d6ef7e5e690f967286ac80d",
+          "iteration": 9,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        },
+        {
+          "digest": "cd1caec5be8bab9cd51a4668a2365e119e787cea38a8148fe819cb6741297771",
+          "iteration": 10,
+          "phase": "CORRELATION",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "f181e100b6f2b4492838fb6443f7152870684d64dbc49cc06dc030f59aa15015"
+        },
+        {
+          "digest": "435569e3aee9ffd845c7306dc2afa3c3fe5bf2e2ea2a1eb9745c83066b18e768",
+          "iteration": 10,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "0f5d0e29bda05b595d160f4fa8b609e87308a577cb20d35aaec58028209a5b38"
+        },
+        {
+          "digest": "0da1444376aee8bbe2610df923c4e25b30aade8e3f4d8ee328e64ac0ece6b318",
+          "iteration": 10,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "b1341cb7e292a915594e1dbe262fe64d9e5fad49df236e7b220703717ed68c3e",
+          "iteration": 10,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "583b1e104fa740a5e718550c2b361308ccfa58259e1e3376afc0e119c2a02d1f",
+          "iteration": 10,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "50e1ae46eff08ad6ff7c49eaff6b066badf440431b2160244e54671f05c7ca80",
+          "iteration": 10,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        },
+        {
+          "digest": "ca27997eb5e1a42bbf71f1d68e52fd2ea8fd3ec4ae587b6b77f19483d4dd6e8d",
+          "iteration": 11,
+          "phase": "CORRELATION",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "f181e100b6f2b4492838fb6443f7152870684d64dbc49cc06dc030f59aa15015"
+        },
+        {
+          "digest": "0ce63c32837dad21852d4b4bdffd71ee569f5c873ec456a91c4723540268a2a9",
+          "iteration": 11,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "0f5d0e29bda05b595d160f4fa8b609e87308a577cb20d35aaec58028209a5b38"
+        },
+        {
+          "digest": "9505b334e20f6b837f239aa257654e90a45c7d0dc9ade7e64bffc18222e3ce5b",
+          "iteration": 11,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "bec5b7e5e58ba953efb25b1f65aea8eaccb708423d51db22880cba72fb3c4a66",
+          "iteration": 11,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "39beaaf2210fd9e87b2399dff6a6d81e606d3d92342d0bcc7edda6e4bd99c79d",
+          "iteration": 11,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "5814101725dc3851ae4ded8dca369eba10542a1d7f05eb63402686876c6b4b47",
+          "iteration": 11,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        },
+        {
+          "digest": "ce1c3b78929aefc47124db724e260fee5a9948109e56bda1414933d4e0598e65",
+          "iteration": 12,
+          "phase": "CORRELATION",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "f181e100b6f2b4492838fb6443f7152870684d64dbc49cc06dc030f59aa15015"
+        },
+        {
+          "digest": "63627816342642984d8737c4db6d048f96c8672e6a6cd782b0f0561b6916bcae",
+          "iteration": 12,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "0f5d0e29bda05b595d160f4fa8b609e87308a577cb20d35aaec58028209a5b38"
+        },
+        {
+          "digest": "3764175b1cfa3a34f169e77e0637d0b6c2ea3a22d028264ddcdfa2c3c8e10c2d",
+          "iteration": 12,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "170fa6b5c4200e13b66ff9c50788f11797c61dfffa27cedf1f4b852cde8e44f1",
+          "iteration": 12,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "16b72a9cac0887057bdca2cf9e49343da5495fa246ef0d556f8d7d0eb28b6d96",
+          "iteration": 12,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "f90dc391be6eb85e24bf2806ee4b404453fb76ed1de2d923cfb356beda5216f1",
+          "iteration": 12,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        },
+        {
+          "digest": "4bed8782be73401028cf154823795df3ce5e4c2078ca53bc6013125d3f8a070e",
+          "iteration": 13,
+          "phase": "CORRELATION",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "f181e100b6f2b4492838fb6443f7152870684d64dbc49cc06dc030f59aa15015"
+        },
+        {
+          "digest": "948405c0ac7351e1e78c71651a7dfbc961eaba196850c0b324a707ed4db54c72",
+          "iteration": 13,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "0f5d0e29bda05b595d160f4fa8b609e87308a577cb20d35aaec58028209a5b38"
+        },
+        {
+          "digest": "d14484c25bcda5348ae816a9cd3cc971af20931d4874964e546212795f546962",
+          "iteration": 13,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "26d289b8211d42a28dacca3988d80aa7af0befa4b9291480c3045fd7ea238e3c",
+          "iteration": 13,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "81aded5b161a935033529955f12bf62b93a8594c61522eed407221cbaefefe0d",
+          "iteration": 13,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "657b9f1d8d44e1b1c4bcb8553548439f7e732b69dd52681074aaa8e9733363b3",
+          "iteration": 13,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        },
+        {
+          "digest": "d73e9ec18b41ce3024701f251a6ebb28851c4e393bab0307c4c2b790b10c299a",
+          "iteration": 14,
+          "phase": "CORRELATION",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "f181e100b6f2b4492838fb6443f7152870684d64dbc49cc06dc030f59aa15015"
+        },
+        {
+          "digest": "8da4ee5c547affea42bc37969f53acc5c6fda257790a6db57fd49b54883fc9c5",
+          "iteration": 14,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "0f5d0e29bda05b595d160f4fa8b609e87308a577cb20d35aaec58028209a5b38"
+        },
+        {
+          "digest": "b71f5d7bebe238b94973d9d32affe4241d481e372ec329afe0e26a3f87927f28",
+          "iteration": 14,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "4767cc15e4424b7cbd75e500fbda9673b408b279b7d01fd824302907f0c13761",
+          "iteration": 14,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "cb30096572b95137108f0d43cf2e0adfd1f9c9361121e6fcd8b0be6cc5a9c98b",
+          "iteration": 14,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "8ec5f843d505a2147f6e42ece5aa1542c4da8d93a156ff063fd31ab9bb568772",
+          "iteration": 14,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        },
+        {
+          "digest": "2af53b03a87a95b4957a446ef9faeee087c9d6b6a7eb8ec4ecc7ffc1341129bd",
+          "iteration": 15,
+          "phase": "CORRELATION",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "f181e100b6f2b4492838fb6443f7152870684d64dbc49cc06dc030f59aa15015"
+        },
+        {
+          "digest": "9d2000cc75a8301c5af537ddf88400f95e757493e0c63d3d4f9f875a89b7d791",
+          "iteration": 15,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "0f5d0e29bda05b595d160f4fa8b609e87308a577cb20d35aaec58028209a5b38"
+        },
+        {
+          "digest": "f2d2e0c1dfd57bcc2d812c8dc8a5ddf50d22e7b58fccfd0f1540993abf01489e",
+          "iteration": 15,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "60de61ee663501f0d33ad992bc78423b62f7aa65822c9d7dba629d17496b3762",
+          "iteration": 15,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "2cf7d727c1e1ad563ccae979af6a75dccb4b2c748bb2a20886be3a259aef0b7f"
+        },
+        {
+          "digest": "59599fb4da926c2a7e0c85b401412f486849890381299c23aa4497e5202f16f9",
+          "iteration": 15,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "4697ad5563f24c89cd0d8835c39000fa7627544f88f46cd4cd2b7901ef14f497"
+        },
+        {
+          "digest": "cd02fd9b236c06c808875f271164cb59524ca4800eb43730d508f4a11e5e5bf8",
+          "iteration": 15,
+          "phase": "RESIDUAL",
+          "support_digest": "85b96c1a2bb099d1d439c062c85c14729f506687971acf7332b859cb04422847",
+          "values_digest": "a813cf10e89f654c58323f80fdb480def9bfb48d0d882194a4423b174e43e1ae"
+        }
+      ],
+      "rtl_capacity_supported": false,
+      "shape": {
+        "K": 16,
+        "M": 64,
+        "N": 256
+      },
+      "trace_digest": "716efe84434284d6b0087c6f8a4aaa3756778f4a2dc2cd54b365378c2413cefd"
+    },
+    {
+      "algorithm": "CoSaMP",
+      "case": 1,
+      "contract": "hardware-ldlt-q16-s24",
+      "final_residual_digest": "3842df5d175efdc56d913ead8b0ad5ead8c01e36f0ef997853384a4d61961a15",
+      "final_support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+      "final_x_digest": "f9887da6c42cec074a0e177058c30a61aae24065fc7b27aa969bbebc666ef577",
+      "phase_count": 48,
+      "phase_records": [
+        {
+          "digest": "c1ae3f32a99ba7e28ccd8e391f2ec5d7b017f7bb4c190f294a9ab93fd7401be4",
+          "iteration": 0,
+          "phase": "CORRELATION",
+          "support_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "values_digest": "1b4d88ce2d711f81291b5be7d4855335a8fc5398f689d133ef8d9dc190ff0a55"
+        },
+        {
+          "digest": "7efe0de80f3e7e29c05346ee1f5bf0395a78582a249c6d46cc9d845f4ed34020",
+          "iteration": 0,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "4aa37bdceb2c7ef774f9ac61d3066699f520e75343db3f078dd295ac6e0a866e",
+          "values_digest": "344f95b52ecb450e1e891b17c589dc662e2261e952cc062c6af3a1a377542fe8"
+        },
+        {
+          "digest": "e50e1c63a612e868d75e4940395cfdda9c87c89dcde21775698d1859c079d54e",
+          "iteration": 0,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "4aa37bdceb2c7ef774f9ac61d3066699f520e75343db3f078dd295ac6e0a866e",
+          "values_digest": "8b709c607124cc9c6f7724423c73ccbec8e8a91498522d503801616c166e4b24"
+        },
+        {
+          "digest": "8b4e72f4dbdd7c67ee11f7fabf3e98ceccbaa6d2ba92ed6d117b35fab87e23ef",
+          "iteration": 0,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "bf89362a50f4334203d5bac0c9a24a4e539572cac80deae49d7ed0fe06e9ec4c",
+          "values_digest": "d12af6f2a75ece0492a58dc64816413cc7a528f762fe5048d7b47303e33bba5a"
+        },
+        {
+          "digest": "d440a67c354fa5c14cf836ad8b69ebb0a5f2a1a8de6e7f469618807e43c6661b",
+          "iteration": 0,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "bf89362a50f4334203d5bac0c9a24a4e539572cac80deae49d7ed0fe06e9ec4c",
+          "values_digest": "a98d9bf83c9f7441e6054339ea902e364f07980f60aafb6c30e99807a0a2bbeb"
+        },
+        {
+          "digest": "f72d3707972f469815a4ea194b69a289f1229dbd8ece9096959b8843a20fbca7",
+          "iteration": 0,
+          "phase": "RESIDUAL",
+          "support_digest": "bf89362a50f4334203d5bac0c9a24a4e539572cac80deae49d7ed0fe06e9ec4c",
+          "values_digest": "672ef97253464d6a3d74b7410807f5073db41547dfc504f428f82aa698d4535a"
+        },
+        {
+          "digest": "b924c209e5e9483d8010c6638d0526740cef8f309fa3a82cd89a3315f32e673d",
+          "iteration": 1,
+          "phase": "CORRELATION",
+          "support_digest": "bf89362a50f4334203d5bac0c9a24a4e539572cac80deae49d7ed0fe06e9ec4c",
+          "values_digest": "0cdf4e8e6a83bf7fee88f12e24c92a358b44159f641ee44efde8f75dcc04459d"
+        },
+        {
+          "digest": "2582a50030695c1de9c6238638f113a1976d8d32f49e6b31e02dc4f22446088d",
+          "iteration": 1,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "64bae588007901a1e5567da27db1eb29e7b2099a93bc7011f8685c65adf5f345",
+          "values_digest": "ab5f0080b39def7cd1d33b0dad9cea42f87cc349d09c1097c6164d3992f7d07d"
+        },
+        {
+          "digest": "8683733c62b3ac269bcd9700d89f6dfa398ea34b9d552138289e87d146fd8ae9",
+          "iteration": 1,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "64bae588007901a1e5567da27db1eb29e7b2099a93bc7011f8685c65adf5f345",
+          "values_digest": "4703a43d8c8a5692b31d1a3e7f7ee2b40fedf532b3341d89fbfda6040ab338c6"
+        },
+        {
+          "digest": "331cce236fabaf1add03ffacd8657471a319a889247e8fdb3ac7bd9ebcd66718",
+          "iteration": 1,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "1772a3d34499b3a7158523e5feb6884a917860905046b85ff36496968de41140",
+          "values_digest": "c3c3f02b670187abc84ac7ba255a84c5a30f5e8bd25a05ffe3ea8c91e366114f"
+        },
+        {
+          "digest": "7444febf9b631c26d7f5363a96a8b0a336d0429522f8f21660e6a956db277fea",
+          "iteration": 1,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "1772a3d34499b3a7158523e5feb6884a917860905046b85ff36496968de41140",
+          "values_digest": "59469df7dff756ccebb156cf0f03f8067bee65b89ade226416836407f71b9fc0"
+        },
+        {
+          "digest": "9b8351b69c5c618bcf29c259126ae462353d97e6c0716ace5be72d0b5b49594a",
+          "iteration": 1,
+          "phase": "RESIDUAL",
+          "support_digest": "1772a3d34499b3a7158523e5feb6884a917860905046b85ff36496968de41140",
+          "values_digest": "bfe0ac1ebb43b45c711bba052964c12517dc12eec63730a2596565c08094fde3"
+        },
+        {
+          "digest": "801749db09f11421d90c077442cb08b2b09e84aad1360a22360e1e88d7ebd0fb",
+          "iteration": 2,
+          "phase": "CORRELATION",
+          "support_digest": "1772a3d34499b3a7158523e5feb6884a917860905046b85ff36496968de41140",
+          "values_digest": "d74dde990153bd2c3dd8f38d413065c4db793374b5b257f74e6e01e4aae84bbf"
+        },
+        {
+          "digest": "e751a1b2818293456f9db400ad9ff651156888073bf85f4397e065eb6c84f2cc",
+          "iteration": 2,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "ccb460f33e3414b69e85933dccca17b15ab1c067d162042a1cad09ac524b6389",
+          "values_digest": "9fae7cc98978eb1fae731e087404a24486c7a9d9ed4c71eb020af71d8b989d74"
+        },
+        {
+          "digest": "b8875833830a1c87bdfcece30351faae86b6e16de70e24e114b5cd6f841693ab",
+          "iteration": 2,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "ccb460f33e3414b69e85933dccca17b15ab1c067d162042a1cad09ac524b6389",
+          "values_digest": "e472574b75400008347a2c4249f9ef08d96136737a64a03417c5de31cc38dada"
+        },
+        {
+          "digest": "4556d5b6864c3045ff52a8f4e60818c568695db3f2e3d3455fa7a3664e49d0c3",
+          "iteration": 2,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "8a86249b221f73ed167104fcc01ff8d64286ff3ebe623192e5f583dc64e93600",
+          "values_digest": "5c2a26deeceeb65e2acd6ce0db9c4d8602e29cdfae0baf500710c5ac6f9b1427"
+        },
+        {
+          "digest": "46092a5b8701771ff5519f9338965b36670ec7ee51d2e17bb1df592923532392",
+          "iteration": 2,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "8a86249b221f73ed167104fcc01ff8d64286ff3ebe623192e5f583dc64e93600",
+          "values_digest": "0e516b39b0545a2d9896619de0f64ec48e09abe0c7565e5cd1ee77f36e462ea4"
+        },
+        {
+          "digest": "005b6a18617618a381749a39eac26d9bf2cfbf7d0163e30b322cba2ad7bb6b44",
+          "iteration": 2,
+          "phase": "RESIDUAL",
+          "support_digest": "8a86249b221f73ed167104fcc01ff8d64286ff3ebe623192e5f583dc64e93600",
+          "values_digest": "d318423089de4eb8e72cc75dd9d03886dced1f3380a85e5acd569fd7b9582820"
+        },
+        {
+          "digest": "94325ae62e7499e65844e560aec01eeb01f3c028508be35064ead5be1a2cc86d",
+          "iteration": 3,
+          "phase": "CORRELATION",
+          "support_digest": "8a86249b221f73ed167104fcc01ff8d64286ff3ebe623192e5f583dc64e93600",
+          "values_digest": "37c9c1807fd008bfa5cf03d44308075f8d2db58744406c4cd547e21aa1ee5367"
+        },
+        {
+          "digest": "d23536be1df1c31df4108accc12afd8325498eedaf76cc1ff05bebfd12f3e5c0",
+          "iteration": 3,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "7922e4159d5eb0dd458f7edb2a16eca9890179a0764256783bd2a8ee02f207ea",
+          "values_digest": "83d68dfb15883d47b223002e826c922189d6abd180c1edba362cf3313b467849"
+        },
+        {
+          "digest": "cd039941d11c0b94d0d5330c8e72cc50d404eb14992443c9eafbf638e7a324aa",
+          "iteration": 3,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "7922e4159d5eb0dd458f7edb2a16eca9890179a0764256783bd2a8ee02f207ea",
+          "values_digest": "b9f8bf57589f5bf78e7486a90ea8c0519988cb01395988250997868b410ca673"
+        },
+        {
+          "digest": "6feddc91d5225adfd5c1a8d4c324c21b3f9b2f4cc78ab4108174a948972b1a72",
+          "iteration": 3,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "deee78935c1bbd7a9b9394846364be21bd7630a47627278e6718b22fa61e0a05",
+          "values_digest": "fd56ccdc96e7820d2df4ebab7fc47c96444c09c442460f0463f1611ba3450692"
+        },
+        {
+          "digest": "ca5c9a29abe456e4baf5bb5743a4dcde5967421103d1f1b4a747433ac8f6fa04",
+          "iteration": 3,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "deee78935c1bbd7a9b9394846364be21bd7630a47627278e6718b22fa61e0a05",
+          "values_digest": "ab58615da12dab3b68f42bba9bbed218a8190acb37508a4c5d2c4bdd2e426c1b"
+        },
+        {
+          "digest": "e09c997566b6d2d82e9c332f468de2b65c3f23330a277ae27637bf650d94457b",
+          "iteration": 3,
+          "phase": "RESIDUAL",
+          "support_digest": "deee78935c1bbd7a9b9394846364be21bd7630a47627278e6718b22fa61e0a05",
+          "values_digest": "aa1c7f8f8878ac848e5f13e368508516eb554466f9c78a866e97b2648d916549"
+        },
+        {
+          "digest": "9385f099ebac66c2fd17606153f3626dcdea07e37a123c4de27bed33e014e550",
+          "iteration": 4,
+          "phase": "CORRELATION",
+          "support_digest": "deee78935c1bbd7a9b9394846364be21bd7630a47627278e6718b22fa61e0a05",
+          "values_digest": "1a56811272e8c0bb69355d853dd7a361117a1f3a704b6b1bd6009668d315b4a6"
+        },
+        {
+          "digest": "bccf3593adc768ea9946681316190d3f3103dbb8db95513f11135c82ae1c025e",
+          "iteration": 4,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "90a276801c12d16de40b99634c449052245238f9ac91a476c616a0abfdd58111",
+          "values_digest": "7ab94470d9deb3976809d67ae089cb80e9e822c7c1c04ab7bd60925b18ce8e24"
+        },
+        {
+          "digest": "0e339ae02d252abbd8fcc600229df1b620b847668d45e22f24742784e5acbeb5",
+          "iteration": 4,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "90a276801c12d16de40b99634c449052245238f9ac91a476c616a0abfdd58111",
+          "values_digest": "e28a6a23db3ad040e30095771c4e56b822946ac426c2e5912dc012ea5de63190"
+        },
+        {
+          "digest": "289223f5db07d25c9e9b1becc66122456caf7a04274116eb664e6c6342c1e51e",
+          "iteration": 4,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "56734ab51b82bab159afd218faefb2ae4f66d877f6f5d87723ddce65aaece3ab",
+          "values_digest": "aa17249300fee6687ce4686614dbb2a4f7aebf4f2d38cf4c0c44267295adb29f"
+        },
+        {
+          "digest": "b70f2f7a58df08859d1313d4ecdd7e26061478cc9e6583a5f973115189dab298",
+          "iteration": 4,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "56734ab51b82bab159afd218faefb2ae4f66d877f6f5d87723ddce65aaece3ab",
+          "values_digest": "2bc77d38efeac85c9ec01ac843637bf1845d3c164003b4751eb73057da64cc6a"
+        },
+        {
+          "digest": "233bd568b0682e35abe28962f5c2a39f8dea9e3213db42d0d501c1aeb2157d89",
+          "iteration": 4,
+          "phase": "RESIDUAL",
+          "support_digest": "56734ab51b82bab159afd218faefb2ae4f66d877f6f5d87723ddce65aaece3ab",
+          "values_digest": "d297106dd81c5e0eca2179ea66f69dd2d673cd6a4bab8fadb1852ce04ad04d88"
+        },
+        {
+          "digest": "33a93f50f4aea1ba9455330a089a018cc3807541a2b7c79e1f8fec9510cf6308",
+          "iteration": 5,
+          "phase": "CORRELATION",
+          "support_digest": "56734ab51b82bab159afd218faefb2ae4f66d877f6f5d87723ddce65aaece3ab",
+          "values_digest": "a4fff50e1643a78e2a8751e0c69087a26ec1678fa854f03644fb0a98eaff02a9"
+        },
+        {
+          "digest": "67600b5b1cd1589bb744646025cf4648121dc3697abbe7c26e1101b0c2d2af63",
+          "iteration": 5,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "823b435f72349adef67b16e507d070c931cf623c8b7f37a590d7bf69ee361381",
+          "values_digest": "61aac7acaaf0cd53ad1a7b8611b9f39a7cefeb4926f1d41794ca4d3cc6a1d711"
+        },
+        {
+          "digest": "bee49f00f526bc26b41ccc041fd915e23472abf95f218e4fffc7b9fd8c3b53ca",
+          "iteration": 5,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "823b435f72349adef67b16e507d070c931cf623c8b7f37a590d7bf69ee361381",
+          "values_digest": "9280fc1c6ce1068fd80d615b99f43e477b786a18ea020a77a1e4bfc6f54af743"
+        },
+        {
+          "digest": "2cde8ad07b4a0f0d9d4dd811924a207974e21d8b768204a8935a40a28dbe1e34",
+          "iteration": 5,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+          "values_digest": "d690dc404151925b17f8b24a70a1b25ab7a21a142be40faa062dd54c1183f2cd"
+        },
+        {
+          "digest": "5c08284b01981b679baa37b29b34bec7cf535633eda288fa92feb7af7e51751a",
+          "iteration": 5,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+          "values_digest": "7e7942a5f9633723696b41dd60648ba2312976fda87898f9873766a772ace8b7"
+        },
+        {
+          "digest": "2b51ca7de478b6df78c68758f46852b82c15388288c9347e21a50a382306dc71",
+          "iteration": 5,
+          "phase": "RESIDUAL",
+          "support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+          "values_digest": "1301adc46d08e36d6ec4d93a9896036ef82daeae5b97d27c6c6bd6d8995939e7"
+        },
+        {
+          "digest": "e30cfe61ac5d23daea075407e611f8ffa299ef14f62e6d636b56734452f91da2",
+          "iteration": 6,
+          "phase": "CORRELATION",
+          "support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+          "values_digest": "ac37708d7841650ab18f1bf20811bf54a10a15c08d2114b71d8c880bb3c38d33"
+        },
+        {
+          "digest": "c1c755c572cdf035c0f430e9a24bffae54dea82be14855ee60f1aa744dc855bf",
+          "iteration": 6,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "11a255c81f073882fdd966a944fbc5a295d5028279ee0a94ca483fe83faf8704",
+          "values_digest": "99c0cd0168166e0ffc7347deccd6d8db711e5b6037a060ae7934d0fde4246bf9"
+        },
+        {
+          "digest": "a5fb16b15bd43d6c7d61f5be117ba67bd3737294fb8cc7711b58bb1a4f78b9c7",
+          "iteration": 6,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "11a255c81f073882fdd966a944fbc5a295d5028279ee0a94ca483fe83faf8704",
+          "values_digest": "e08a96c93ba227a648af48525fd83ea0d86274365bd165cfdd98ed2f82c205de"
+        },
+        {
+          "digest": "344ff8b6f1732d004d56063824358b8198e22ba789c55075d494355c529b2a04",
+          "iteration": 6,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+          "values_digest": "78513c4a3c2887c5d9b5d25ad3d8885a26e191790393a05e487d9f67d9c95633"
+        },
+        {
+          "digest": "02f51ec22af0d275981fc340cf67829704f56a6b2404c279661999317232ec1c",
+          "iteration": 6,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+          "values_digest": "7e7942a5f9633723696b41dd60648ba2312976fda87898f9873766a772ace8b7"
+        },
+        {
+          "digest": "b58e2b71735b68be3047c16c1e2e354e2303c66ff5244242bda4939bd4e2b086",
+          "iteration": 6,
+          "phase": "RESIDUAL",
+          "support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+          "values_digest": "1301adc46d08e36d6ec4d93a9896036ef82daeae5b97d27c6c6bd6d8995939e7"
+        },
+        {
+          "digest": "b324f0cc6fb415a9dbb25832c1156620ba8087389ab64b55c0eaf099ca83bed0",
+          "iteration": 7,
+          "phase": "CORRELATION",
+          "support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+          "values_digest": "ac37708d7841650ab18f1bf20811bf54a10a15c08d2114b71d8c880bb3c38d33"
+        },
+        {
+          "digest": "b92ae0d1ab00742732e6b4902d4c16ed6a8559c35ae0c01dc632452c7b6a7647",
+          "iteration": 7,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "11a255c81f073882fdd966a944fbc5a295d5028279ee0a94ca483fe83faf8704",
+          "values_digest": "99c0cd0168166e0ffc7347deccd6d8db711e5b6037a060ae7934d0fde4246bf9"
+        },
+        {
+          "digest": "3727e05712664b82533b8c29f375ca3e870315ffd67f322ef2d1451347b6e8b8",
+          "iteration": 7,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "11a255c81f073882fdd966a944fbc5a295d5028279ee0a94ca483fe83faf8704",
+          "values_digest": "e08a96c93ba227a648af48525fd83ea0d86274365bd165cfdd98ed2f82c205de"
+        },
+        {
+          "digest": "f88bb21bb38a44b6d26dfce82f947477d8cddf3e733e36aa29292f408682280c",
+          "iteration": 7,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+          "values_digest": "78513c4a3c2887c5d9b5d25ad3d8885a26e191790393a05e487d9f67d9c95633"
+        },
+        {
+          "digest": "ab97d343030e055f37c02092569d1747ef2b1f24c8d5cc41a96f1d13e98bd467",
+          "iteration": 7,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+          "values_digest": "7e7942a5f9633723696b41dd60648ba2312976fda87898f9873766a772ace8b7"
+        },
+        {
+          "digest": "6b8d01dabac65e8752db6467689b5524f2b6c7bc58c9dff7ffccfa7aeccc17cd",
+          "iteration": 7,
+          "phase": "RESIDUAL",
+          "support_digest": "f08b7e870ee22bd840b0e646e5358e78130b07afd9e848eea95aba2167bea774",
+          "values_digest": "1301adc46d08e36d6ec4d93a9896036ef82daeae5b97d27c6c6bd6d8995939e7"
+        }
+      ],
+      "rtl_capacity_supported": true,
+      "shape": {
+        "K": 8,
+        "M": 64,
+        "N": 256
+      },
+      "trace_digest": "07f4ad70d14307bbc0246a36f037470225a0b3e7626f77cdeef828af826894dd"
+    },
+    {
+      "algorithm": "CoSaMP",
+      "case": 2,
+      "contract": "hardware-ldlt-q16-s24",
+      "final_residual_digest": "0ae4a70bcf326aca0f1ad61a5975b962081ac163b843a7b86d7ec6193eab0215",
+      "final_support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+      "final_x_digest": "7f8c9e3fd3e1c99d1eda67620cbf369fa888ebb5c2a51ef5ed16688c179f68ff",
+      "phase_count": 24,
+      "phase_records": [
+        {
+          "digest": "c1ae3f32a99ba7e28ccd8e391f2ec5d7b017f7bb4c190f294a9ab93fd7401be4",
+          "iteration": 0,
+          "phase": "CORRELATION",
+          "support_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "values_digest": "1b4d88ce2d711f81291b5be7d4855335a8fc5398f689d133ef8d9dc190ff0a55"
+        },
+        {
+          "digest": "0909e2b10bfdc88205629540529d4541ecb805fe36d30fa09eaf939c3bed45c3",
+          "iteration": 0,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "9a88bfb8a201971dc7a537e8323d7ea865a7bd517be30ffc0eed090e62196a46",
+          "values_digest": "87a81ed46487d0d0a66bb843afdc83cee170fee6e158296b8dfb31e8d1942809"
+        },
+        {
+          "digest": "dca18d17dca586fc51e4c4a2b02e33e771f94849cfa8ecdc219018ffe52ea421",
+          "iteration": 0,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "9a88bfb8a201971dc7a537e8323d7ea865a7bd517be30ffc0eed090e62196a46",
+          "values_digest": "be59efe62da64e0ea466b0b7a21085e02334d909376f1ddcd9bba0f00a58703b"
+        },
+        {
+          "digest": "7df007ea5316045d0f40cf1f5e77f1a5cf5c5f12d4ec4bec8f56a1e0b3f7620d",
+          "iteration": 0,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "f3a6e96a37e56eca019e2c7ce21a51667b27c54dc0d2192ab84dd30e688088ce"
+        },
+        {
+          "digest": "bff5de9a1609d00cd571db07a00691b465870db595074428f78328aa910be2e2",
+          "iteration": 0,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "c88c316ff8532db9de3b3537eb13563810b5b6972da97cbb042d03c2183a4c25"
+        },
+        {
+          "digest": "3a56fa2811279ab73439dfe2ce38dab9d477788453fca75bf4d12cbe333df1a9",
+          "iteration": 0,
+          "phase": "RESIDUAL",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "6c7765f7a7497b9363a857a27e0c2c356c4d936ea93a60ad6fa1145465102230"
+        },
+        {
+          "digest": "799efe868020c5b3401fc4ef0de5dbe07f7a8f376a9e1e822e813fc63d498eba",
+          "iteration": 1,
+          "phase": "CORRELATION",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "a2097b6509f17d84edfa3cedf956905b7fe7ec3f21ad5c917318ec808ddbb261"
+        },
+        {
+          "digest": "1911f2bfdac8b97b480dddc9a531f24932c74301f73aa98ea1a66e1801844a29",
+          "iteration": 1,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "407265c78ad1bfba1e6efedfa217cebbf11635338153a66795a46e68be075208",
+          "values_digest": "90f439df2b23a98ae5ce945173dc9e5a2f14706678f62a74c62e6a2bceb47bda"
+        },
+        {
+          "digest": "4557df49d788396b45ccbb1cbd88680f00891d66072def3fad8d779d62c8a589",
+          "iteration": 1,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "407265c78ad1bfba1e6efedfa217cebbf11635338153a66795a46e68be075208",
+          "values_digest": "3b8e1a7eb6601cb14013351379dfe0fd9876d403d14d2e0a1a70816369028819"
+        },
+        {
+          "digest": "9814dc8c1d4aa04ddde761dfdedf2f5d7dbf09c42c65f4029f07457115a69a6e",
+          "iteration": 1,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "43fd954cc44de38f9e74d879a87e258d08214b8fb6e8aae7a4d960c04bb07768"
+        },
+        {
+          "digest": "b168fbc53a9d12f699465a20734cd54b7f132e11db78e3c25831bf1ab5e298cd",
+          "iteration": 1,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "c88c316ff8532db9de3b3537eb13563810b5b6972da97cbb042d03c2183a4c25"
+        },
+        {
+          "digest": "ab83b0b2cfc931334300de1a41ba33a0dec6cbee99421ae8c3537f6adb6df5a2",
+          "iteration": 1,
+          "phase": "RESIDUAL",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "6c7765f7a7497b9363a857a27e0c2c356c4d936ea93a60ad6fa1145465102230"
+        },
+        {
+          "digest": "a79c84d08e2466d4a16fc5b1638141c4848527e9a71f2839261940f567c4beef",
+          "iteration": 2,
+          "phase": "CORRELATION",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "a2097b6509f17d84edfa3cedf956905b7fe7ec3f21ad5c917318ec808ddbb261"
+        },
+        {
+          "digest": "235c39c4ee7441834765455fe531aa40b8c5106426b1b867785897d513aed77f",
+          "iteration": 2,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "407265c78ad1bfba1e6efedfa217cebbf11635338153a66795a46e68be075208",
+          "values_digest": "90f439df2b23a98ae5ce945173dc9e5a2f14706678f62a74c62e6a2bceb47bda"
+        },
+        {
+          "digest": "419fb70698ec827e7b3acc4763cb91b1120c8fb04eb6559b19fbc754d3130a36",
+          "iteration": 2,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "407265c78ad1bfba1e6efedfa217cebbf11635338153a66795a46e68be075208",
+          "values_digest": "3b8e1a7eb6601cb14013351379dfe0fd9876d403d14d2e0a1a70816369028819"
+        },
+        {
+          "digest": "e06754e99603fae26259072d566a92ae29a548386577976a447d60a8a8853fdb",
+          "iteration": 2,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "43fd954cc44de38f9e74d879a87e258d08214b8fb6e8aae7a4d960c04bb07768"
+        },
+        {
+          "digest": "b96242fdc6f363aa634e26b3de21728dda0bc53892aba3d4a21ff5539eb15381",
+          "iteration": 2,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "c88c316ff8532db9de3b3537eb13563810b5b6972da97cbb042d03c2183a4c25"
+        },
+        {
+          "digest": "80375c5a6a28873a8ee823caa37530fd7c8fbf3babe80c6d48e86460c6436c4b",
+          "iteration": 2,
+          "phase": "RESIDUAL",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "6c7765f7a7497b9363a857a27e0c2c356c4d936ea93a60ad6fa1145465102230"
+        },
+        {
+          "digest": "ca906514fc4470023e42ccdd70f4990a36dec59f793ee7153fca960d55a94d6c",
+          "iteration": 3,
+          "phase": "CORRELATION",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "a2097b6509f17d84edfa3cedf956905b7fe7ec3f21ad5c917318ec808ddbb261"
+        },
+        {
+          "digest": "f50e969f869fee58882b8039bbd979239996a9db86771353dad108e05cf9ac6c",
+          "iteration": 3,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "407265c78ad1bfba1e6efedfa217cebbf11635338153a66795a46e68be075208",
+          "values_digest": "90f439df2b23a98ae5ce945173dc9e5a2f14706678f62a74c62e6a2bceb47bda"
+        },
+        {
+          "digest": "c8ec3441a97f7c0d1c29638e0328cd7ffcd88fdef2f05fd6eff8dc2791ef2179",
+          "iteration": 3,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "407265c78ad1bfba1e6efedfa217cebbf11635338153a66795a46e68be075208",
+          "values_digest": "3b8e1a7eb6601cb14013351379dfe0fd9876d403d14d2e0a1a70816369028819"
+        },
+        {
+          "digest": "baad9939f68c1c8c31b68b70b5cce34713ea7f65b9088f816c7f2380fb5a43d0",
+          "iteration": 3,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "43fd954cc44de38f9e74d879a87e258d08214b8fb6e8aae7a4d960c04bb07768"
+        },
+        {
+          "digest": "f8b14b42de6ed80bf9b9864f9b282c19f376c81e5cb5398b6a608b1828829bf3",
+          "iteration": 3,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "c88c316ff8532db9de3b3537eb13563810b5b6972da97cbb042d03c2183a4c25"
+        },
+        {
+          "digest": "5e909afa7714602f83b8de711623b2ccfb8777579e2f5adb1718abfe699ae4db",
+          "iteration": 3,
+          "phase": "RESIDUAL",
+          "support_digest": "e677d5ff46831bd349a072bd2bc0a38b57f401773bb090718f57d29deee46e40",
+          "values_digest": "6c7765f7a7497b9363a857a27e0c2c356c4d936ea93a60ad6fa1145465102230"
+        }
+      ],
+      "rtl_capacity_supported": true,
+      "shape": {
+        "K": 4,
+        "M": 64,
+        "N": 256
+      },
+      "trace_digest": "391a2278fd62ae2d53d8db7ab3f80bcd796baaa7c0458e009f44cfc47c76fee7"
+    },
+    {
+      "algorithm": "CoSaMP",
+      "case": 3,
+      "contract": "hardware-ldlt-q16-s24",
+      "final_residual_digest": "c21b7b131fc1f0e3fcf7b1829e834856a5a2cd704f03cac0766ccff04e6c4c59",
+      "final_support_digest": "dff74d190759474c1c8491ca332fa14e13b2fcf21420f590971eeca012c7e5c6",
+      "final_x_digest": "4ea09b4b2e9bd6a9aac91f08190ec09f6c6d183bd88a94035e29dcd33fcc8b9b",
+      "phase_count": 48,
+      "phase_records": [
+        {
+          "digest": "7d46b180cb9ff924e86e577b9315b79167abdf5118e94ae884d3e3ef1498f107",
+          "iteration": 0,
+          "phase": "CORRELATION",
+          "support_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "values_digest": "69fbfe0190a92812e4a245e835a79a523ce4bd0ea441b39eea950f26be0505bc"
+        },
+        {
+          "digest": "02dc38348f618cfbc08585a23bbdc41ee4332ded10fc8e22a3c6a41d3fc37630",
+          "iteration": 0,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "5f27425ee35cf8d1474445f8b59b2a3415f80d387920996ecf589b4301c3cb98",
+          "values_digest": "054a4518ab3d6ea4c73c28b69ed8226d8e9c14081460d628fb016a12d4b18d05"
+        },
+        {
+          "digest": "2177a54d6e4ffc0346eb983871129d69803a712d604c1e727bd97a678251bbff",
+          "iteration": 0,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "5f27425ee35cf8d1474445f8b59b2a3415f80d387920996ecf589b4301c3cb98",
+          "values_digest": "9b87dbefdeb94fd31dd36d2fe95d23e95419d6fc56770cf7db00d42fd2f82da4"
+        },
+        {
+          "digest": "44c4650579b50a3bb8e417dbdf743c9306e930f09ab15ab2ead5f2be1cf56950",
+          "iteration": 0,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "bb908ad9a29c1a29471e8f4ea1bedc6648d614a1d3d5dd0201ed323931996683",
+          "values_digest": "7f4780c243169621ccf93fffda1befacbf16d4ab35744ef3cd15d5178dbbef8c"
+        },
+        {
+          "digest": "0f3003b2fd391786d1045377c73994a1257acbbce198d1ed44aafcf35657e9ed",
+          "iteration": 0,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "bb908ad9a29c1a29471e8f4ea1bedc6648d614a1d3d5dd0201ed323931996683",
+          "values_digest": "082edad8459031fbe6f529d4fd2de74bae213705e13efe3ded56955630bd498e"
+        },
+        {
+          "digest": "3d81fc03c113a3b7f0fad5a7b20d43cd5c9baa9abb30e6d89ebd4139ceee5089",
+          "iteration": 0,
+          "phase": "RESIDUAL",
+          "support_digest": "bb908ad9a29c1a29471e8f4ea1bedc6648d614a1d3d5dd0201ed323931996683",
+          "values_digest": "a6ef940bd8a9d8c3df9926ae487192fd23d3ef19e64f6959a0e818b89db53487"
+        },
+        {
+          "digest": "a9b57af143e1dbd6ccb312117a0253402a62812c900d6f6c62934687c0d0b271",
+          "iteration": 1,
+          "phase": "CORRELATION",
+          "support_digest": "bb908ad9a29c1a29471e8f4ea1bedc6648d614a1d3d5dd0201ed323931996683",
+          "values_digest": "86894c220264c1e0ea54d9c072439db0dd6bcf0e1eb7d21955afe477f368a108"
+        },
+        {
+          "digest": "e890871652d7991c922177522d7341b79baf6368a3c876de66baa91d08e02f13",
+          "iteration": 1,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "dc1cc21c606c727ab7e1005ef2b99d27fd38250e271f60f9115540634afe291f",
+          "values_digest": "ef09447b47564484969663e0e5c840294ba98e930030a0cbcc6da4a5272846d4"
+        },
+        {
+          "digest": "1cb31eee354e0a814c53dd979709c68637262d22b7c5e0a7ee3053fe54e9a469",
+          "iteration": 1,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "dc1cc21c606c727ab7e1005ef2b99d27fd38250e271f60f9115540634afe291f",
+          "values_digest": "3c50f05d752861ca65bf4aab54d2ce28721642c0c82c953494bbec0f79c7bf68"
+        },
+        {
+          "digest": "6d9bacd571005a2b84404c75f1fcef01bfd22e0d056d772ac331d2b6866e5f12",
+          "iteration": 1,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "c540fe64d5de8b76954f5fe83acbcd1416558c7f64df3a6d0362b724ed8a9185",
+          "values_digest": "7702e1d7c4a73c6c9e0765d365781c575fdbf341dafb34019a0680e443f205f0"
+        },
+        {
+          "digest": "de96892502fd88b462e51bdd629b24a9cc00dcc76042c8b86b5d4b51f88afb2f",
+          "iteration": 1,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "c540fe64d5de8b76954f5fe83acbcd1416558c7f64df3a6d0362b724ed8a9185",
+          "values_digest": "34bc32b5a839e241b441785936a1af2fca18232d1a67b476564a7617c74cb350"
+        },
+        {
+          "digest": "5f60bd80378fe251a9ffa8ff8fc5947af4da0a2fecb2111eda6612be333dd94b",
+          "iteration": 1,
+          "phase": "RESIDUAL",
+          "support_digest": "c540fe64d5de8b76954f5fe83acbcd1416558c7f64df3a6d0362b724ed8a9185",
+          "values_digest": "cc666e9f51d9ef623c77a54f0c127f1ceb049dbfb0ad824e374669f55a69cef5"
+        },
+        {
+          "digest": "7a327716529cb406eef0987783c99a1f5018d5d4d44606563fc4ead94bcfa03e",
+          "iteration": 2,
+          "phase": "CORRELATION",
+          "support_digest": "c540fe64d5de8b76954f5fe83acbcd1416558c7f64df3a6d0362b724ed8a9185",
+          "values_digest": "c8bdca9fd6ce2e3064ec988d7f26059a3ba4f1cb639919fb705dcf0f76c07a0a"
+        },
+        {
+          "digest": "efcfacc8d453fa90806dced08fc629cee49cb90a6771d6fb15fdc1ced263f7f0",
+          "iteration": 2,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "41ac9e7224b6eea318948527a3ea0222d3df38ed40eb3e5d0d5eae575f2bf864",
+          "values_digest": "3840664291bfd88f4deb5a256fcd71acc682172dcfb25fccf2905aa9fb56bb2f"
+        },
+        {
+          "digest": "ea96be28de48d3c1c3f7ea23949df4a877faeb3579ede9f18e786f2df83850a3",
+          "iteration": 2,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "41ac9e7224b6eea318948527a3ea0222d3df38ed40eb3e5d0d5eae575f2bf864",
+          "values_digest": "c6bfe515f9654c47fdbc67fd0e2f4a1723c34dfb3b63ffa75c0a9945b3082080"
+        },
+        {
+          "digest": "fe1dd0258db02d6a61ed78b9c166dfb93dff5790e1eef579f389d9abc1317884",
+          "iteration": 2,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "f7444b37b82010a990981762e1f182c39ba4ece8c4513c2962cf79bf4b2dad08",
+          "values_digest": "0b6a9373ca04a7215aa23011b9a66e7ee11d6470ea310722426342f316f09d0b"
+        },
+        {
+          "digest": "2f8badc215c09b2dfbf318a4af40b3c37943540ad3caf8d18869be383116d419",
+          "iteration": 2,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "f7444b37b82010a990981762e1f182c39ba4ece8c4513c2962cf79bf4b2dad08",
+          "values_digest": "321e3edf569326fba01b6ef5e78c70c797c7c282ed97838f1af75c4e1590fe2d"
+        },
+        {
+          "digest": "6ec4db14075f05637a7aa24cd937adbf4944625ec1cbd49f027d934beb9f6d34",
+          "iteration": 2,
+          "phase": "RESIDUAL",
+          "support_digest": "f7444b37b82010a990981762e1f182c39ba4ece8c4513c2962cf79bf4b2dad08",
+          "values_digest": "4695e2441b84e8905fa2087bc794b587ec7cc73e257d795fe218708e994b96d5"
+        },
+        {
+          "digest": "f6dca5fa4c57f04d4fda83d17d9a30f2bbafa11fc4f0b72ff711c5f6b16a41c1",
+          "iteration": 3,
+          "phase": "CORRELATION",
+          "support_digest": "f7444b37b82010a990981762e1f182c39ba4ece8c4513c2962cf79bf4b2dad08",
+          "values_digest": "7495e486390f57c966c606e0fa039a1b34c414b20abfdb502f5825d4aed285c1"
+        },
+        {
+          "digest": "390ef56077b116aee070fe1ebf77255c413028713023b022325e3d3f82a907fb",
+          "iteration": 3,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "d56b119c8316a97ac4dcddc4e5f4c1d4468e0fc03f1a564e59fb0af2de0f43db",
+          "values_digest": "c87b00e9fbca32c2f55260d4bb1f2660d65f84729d6d5a0fc4c66b72f3a0a0cb"
+        },
+        {
+          "digest": "6c19980f9c3e8fc90b860765e202df44a881789fcd85a54de9c85c951d7d2031",
+          "iteration": 3,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "d56b119c8316a97ac4dcddc4e5f4c1d4468e0fc03f1a564e59fb0af2de0f43db",
+          "values_digest": "3369900733b567d5eee861bf359b3fe6783161e9a15889a16804f3fb811b261d"
+        },
+        {
+          "digest": "db95b36201fce49388ad3f8c260292974ceff5305645854674b9da3bda147598",
+          "iteration": 3,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "161f6e5b644188c75c7bc36501ce6495b02bb06ba28b80f4af38f4951dc9281b",
+          "values_digest": "ca627ecda980d05939006c56c15564d98d510aee67d7939f3b36e306888d22aa"
+        },
+        {
+          "digest": "456342c3b875eb4eea1520ba935b5cf76eb3b26fc6ad0bdbffb1da6987559427",
+          "iteration": 3,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "161f6e5b644188c75c7bc36501ce6495b02bb06ba28b80f4af38f4951dc9281b",
+          "values_digest": "4f933b2fa3944194e7bc96df5aa67038988af73aa40e29d75de896132194821d"
+        },
+        {
+          "digest": "a183df03126cd982b562bc8f75daca9fcadeb9bc7c4e2d0e376b5f898bbcc145",
+          "iteration": 3,
+          "phase": "RESIDUAL",
+          "support_digest": "161f6e5b644188c75c7bc36501ce6495b02bb06ba28b80f4af38f4951dc9281b",
+          "values_digest": "ffbeff06dde8f1d0dbc0cd1e92039e7c0d9eb7789a61a36dac02396989c19e43"
+        },
+        {
+          "digest": "9a90a05e2e5cd1be416a5ea7fe72d048fea244b8a625534ea5c84633492af655",
+          "iteration": 4,
+          "phase": "CORRELATION",
+          "support_digest": "161f6e5b644188c75c7bc36501ce6495b02bb06ba28b80f4af38f4951dc9281b",
+          "values_digest": "4e852b7125622e3ef3c7cac045594074255bc62d3c7ede854675013fa10631c2"
+        },
+        {
+          "digest": "31b33e7839b6b3d46848f0682352daec6cdc8145b9b6a11dd71c851c5aa9567d",
+          "iteration": 4,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "de34cf1fdc8b39effc51a2d802ea05e72f702012263be6d759d19661240b9e6b",
+          "values_digest": "fa4fc16cf29d77490500b25f9b703118fd43cbcee11bcdc7ffde566622ca174f"
+        },
+        {
+          "digest": "0eca6a4084f8b94a442aab608048bf188e701a0cc7b4f38b9bbbeb8af0af755a",
+          "iteration": 4,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "de34cf1fdc8b39effc51a2d802ea05e72f702012263be6d759d19661240b9e6b",
+          "values_digest": "117dd0af6b192f269617b81e92a82cb66d6e6e3b9e87c99e440d9e10ed531275"
+        },
+        {
+          "digest": "2328ceddabc8f152bc96cacd1a02711ecc6f2568f3f25ff34094d65ac2b77e74",
+          "iteration": 4,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "df20c6b504ee65215103047c473d25f0f9a0a10acbcdbae09e8dff511a5d599e",
+          "values_digest": "6e8a43df2885ab36954ecfb4b22b68213f7fd57d23f5a45812ef680afab38315"
+        },
+        {
+          "digest": "daff850ccf193fd439b4b1372bb91e269be797b5deacae9f7b5c32edd3bef5e9",
+          "iteration": 4,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "df20c6b504ee65215103047c473d25f0f9a0a10acbcdbae09e8dff511a5d599e",
+          "values_digest": "df7bd7a48aeddbe07471a1ff1f7ae19b759476fbe9afed9faa8ddc8cc3b4fdef"
+        },
+        {
+          "digest": "2f4960fa83b691b8ff3d186802caa30ca63ea70da7edd5f95338d5c9d63cedae",
+          "iteration": 4,
+          "phase": "RESIDUAL",
+          "support_digest": "df20c6b504ee65215103047c473d25f0f9a0a10acbcdbae09e8dff511a5d599e",
+          "values_digest": "68f7aeae231a2c4a41163833a83c8d76f42712154bf6b25c8f58f23be9d44150"
+        },
+        {
+          "digest": "c1976a003cb57bc4a3997aa1c082582a8b7740bc4d36dcc2b12bfd56c13b4a98",
+          "iteration": 5,
+          "phase": "CORRELATION",
+          "support_digest": "df20c6b504ee65215103047c473d25f0f9a0a10acbcdbae09e8dff511a5d599e",
+          "values_digest": "57dc7b9f3c3c0411194f3ac6a501b5c8c9d3d6cde554e2cda37dad530ffa8d97"
+        },
+        {
+          "digest": "151335e21d4dec9c2d7eec43979c6e329f6ff9ba704a9310f8d0a844d98a676c",
+          "iteration": 5,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "44cafd68d84f90e196a9c5a04be406339e5d7f9d617050741284264a1af7a4df",
+          "values_digest": "9e8a56075827bc1c10330f111f34d08d7e8533084b39a1c6359750107de563f3"
+        },
+        {
+          "digest": "0a116d4d0932aaa7e54ec0f798b2cdf9a0e501b67eaa73f72addf78cce04dc08",
+          "iteration": 5,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "44cafd68d84f90e196a9c5a04be406339e5d7f9d617050741284264a1af7a4df",
+          "values_digest": "fc8d3896a933a52868a7b55da0a8b9fb9349726ca04ae65b34ae89655c6e8ea2"
+        },
+        {
+          "digest": "ed008e765733382648c622b0201b87cfe0fd50720ece7c7c3a93d1543336be5a",
+          "iteration": 5,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "10c539d8e765ffe1e2607277a3468888615aa58b261a687de8d4d1f7d68c4008",
+          "values_digest": "a083a9ed2042fcacf0049ad030ad7e09fc0a2b5a89e6579f9804394a96613cd7"
+        },
+        {
+          "digest": "0cbd2856ed06afce16ad032e653ac34d2fac85b0a9c641f4071c60832e143003",
+          "iteration": 5,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "10c539d8e765ffe1e2607277a3468888615aa58b261a687de8d4d1f7d68c4008",
+          "values_digest": "de12eefce36cfa15c9d6057da8275c7cd715aabfeaf00f0449a2aaf80fc1c09d"
+        },
+        {
+          "digest": "6a1a479fde18bc305923b9bc517c2fc422fb0222dad60edf439883e5bb420f4c",
+          "iteration": 5,
+          "phase": "RESIDUAL",
+          "support_digest": "10c539d8e765ffe1e2607277a3468888615aa58b261a687de8d4d1f7d68c4008",
+          "values_digest": "1eb46614964e118bd1ac6c884bd891f828af87aaf49c471289336b9965777dcf"
+        },
+        {
+          "digest": "d8ac233330cee399ed38c552fcc1b967d6d70b661a0ed5a368eea51ab3a56b56",
+          "iteration": 6,
+          "phase": "CORRELATION",
+          "support_digest": "10c539d8e765ffe1e2607277a3468888615aa58b261a687de8d4d1f7d68c4008",
+          "values_digest": "491e5bf395c8a71e64634d543ce1aaf40d5b1fd40731df0f2b34be0543d4d538"
+        },
+        {
+          "digest": "16b0b63f44c2cb4a778f7d0dd8f763f4aeb060191d48a63c7be2c8681dae7278",
+          "iteration": 6,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "baa5c0c1f20ac3134bb1ce34662c095b4e6dc5bed4feed1ae203d0a163c6b04d",
+          "values_digest": "c360001c41e6164d59edd74270365affb687f2fed4375b694c738c45715163cb"
+        },
+        {
+          "digest": "88a55048f35d5767fbae763696110592421fb7575a6d612235c211a80a76aceb",
+          "iteration": 6,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "baa5c0c1f20ac3134bb1ce34662c095b4e6dc5bed4feed1ae203d0a163c6b04d",
+          "values_digest": "f8ececa72459f660d76ab154bae07427e1ffe367123e5e3fc8b92028d934b389"
+        },
+        {
+          "digest": "3ec47a3612c4080cff8125424238741f3e26694fa1b063c68dcab39767646ffa",
+          "iteration": 6,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "dff74d190759474c1c8491ca332fa14e13b2fcf21420f590971eeca012c7e5c6",
+          "values_digest": "a472f6b814fc16f31ff9d0b9a9146b592738fa08c9cfab366ec76e492b462a96"
+        },
+        {
+          "digest": "4d1e42c75a4b943444423d9dce2338c52c43fd27a8e168d73ec563140a35b40e",
+          "iteration": 6,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "dff74d190759474c1c8491ca332fa14e13b2fcf21420f590971eeca012c7e5c6",
+          "values_digest": "6d347e53f0af1389b563c5330682ba89a6c5e15cefd6732aae2269aa071917d8"
+        },
+        {
+          "digest": "496fc901b3f1d8b078428e2634e81f667dc909e8fe2929d52d90292780bdc588",
+          "iteration": 6,
+          "phase": "RESIDUAL",
+          "support_digest": "dff74d190759474c1c8491ca332fa14e13b2fcf21420f590971eeca012c7e5c6",
+          "values_digest": "b7f0995ce89ca715f6ea6bfd3f66e0b5d5e96f243905b94e615667f7a83059ff"
+        },
+        {
+          "digest": "6d20a6116f691abbe6f0274cfb6de7fe5ec36a7ef45c07f2f31206b9e5e4bfd8",
+          "iteration": 7,
+          "phase": "CORRELATION",
+          "support_digest": "dff74d190759474c1c8491ca332fa14e13b2fcf21420f590971eeca012c7e5c6",
+          "values_digest": "4cd6ee87371eb564eb02a80484c8e632dd1f6deb0096f8019905b142427f6aaa"
+        },
+        {
+          "digest": "9d9b2b6e0972f35554e19dd07dab9701f808eaa1842419133986d0b8b9bafab1",
+          "iteration": 7,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "c4c24e1b00030465cda3b9393dd90f69d215591fc7e5710d9e44ade900f3a8b8",
+          "values_digest": "0767b371f210adf0d53328296694275dcde0cd29ecbd1bc4ab58f7c5d5c4e9a2"
+        },
+        {
+          "digest": "144eefc312935e238954bbe64fe0b8967890f85723359eaf7fb0466767fbd9ef",
+          "iteration": 7,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "c4c24e1b00030465cda3b9393dd90f69d215591fc7e5710d9e44ade900f3a8b8",
+          "values_digest": "3c0ebe2ba7ea87b8236b6c8243e64a3b874282f2ff8632a8530a1eabbf9427b2"
+        },
+        {
+          "digest": "89f930b325c14a71f0b24aec712aa7406729d4222c84f6b28e87a61b55aa3818",
+          "iteration": 7,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "dff74d190759474c1c8491ca332fa14e13b2fcf21420f590971eeca012c7e5c6",
+          "values_digest": "2d94f90a29347858c82ba94fe8e3fca7b6f2abfc988474d029f19b1006b58c07"
+        },
+        {
+          "digest": "2fca66f556d1e1ec3155c129e89b2093432ea2daabb1ffc9ecd448955fad9b2c",
+          "iteration": 7,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "dff74d190759474c1c8491ca332fa14e13b2fcf21420f590971eeca012c7e5c6",
+          "values_digest": "6d347e53f0af1389b563c5330682ba89a6c5e15cefd6732aae2269aa071917d8"
+        },
+        {
+          "digest": "d815a5ae4f11c7f38a488b61520ff0dd8434d571e135c57b86c92d5332ff0983",
+          "iteration": 7,
+          "phase": "RESIDUAL",
+          "support_digest": "dff74d190759474c1c8491ca332fa14e13b2fcf21420f590971eeca012c7e5c6",
+          "values_digest": "b7f0995ce89ca715f6ea6bfd3f66e0b5d5e96f243905b94e615667f7a83059ff"
+        }
+      ],
+      "rtl_capacity_supported": true,
+      "shape": {
+        "K": 8,
+        "M": 32,
+        "N": 128
+      },
+      "trace_digest": "bd09b7c504a0366664681a240c948382329472f2bf23921139aa5a075601b2e3"
+    },
+    {
+      "algorithm": "CoSaMP",
+      "case": 4,
+      "contract": "hardware-ldlt-q16-s24",
+      "final_residual_digest": "283579eea6d1de7e7804621f2c5525ffb74ec14e62f5d76a838c158085db0528",
+      "final_support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+      "final_x_digest": "26d1b574957645fed370122e8d94aa18e68dd500e9b2b816d508d15b4f8d61d9",
+      "phase_count": 24,
+      "phase_records": [
+        {
+          "digest": "7d46b180cb9ff924e86e577b9315b79167abdf5118e94ae884d3e3ef1498f107",
+          "iteration": 0,
+          "phase": "CORRELATION",
+          "support_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "values_digest": "69fbfe0190a92812e4a245e835a79a523ce4bd0ea441b39eea950f26be0505bc"
+        },
+        {
+          "digest": "9e4fc2b546ff1d8147c6675abe6f6d6619ae7d26b85f618de9b253de2e4f7dbf",
+          "iteration": 0,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "23f42404a7ae548edb03a42c5ffb77f6a079b0322dd6afa021a0d1b534b6885a",
+          "values_digest": "fcc1f65acd47d9026d356ac7e4614372b1b71f5f0b8af0b8ef42a1636faef08b"
+        },
+        {
+          "digest": "0acf36d176a74f1c033a6c3794bda932fd967b8a347cc1e88ecae297b81e4f26",
+          "iteration": 0,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "23f42404a7ae548edb03a42c5ffb77f6a079b0322dd6afa021a0d1b534b6885a",
+          "values_digest": "a205e6afc607c4a592747901f234e2f780db0294f48dc57eb5f9716e017848c3"
+        },
+        {
+          "digest": "0d26d55f8d71621d0f818ebca6d8397de7a4a85617a5c326bf232e30271ea813",
+          "iteration": 0,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "8385a40ede53d55ba5c359f111ef64338df89ac52c5a16858172022205141932",
+          "values_digest": "55288722feb48742a2fb83bca6c5a46659719d9a7e98c905375502f59b0e8dfc"
+        },
+        {
+          "digest": "1cd0b5b6af373be59f42bafb49dc2e61ab41c676e7b9066f7713881519d4a6a5",
+          "iteration": 0,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "8385a40ede53d55ba5c359f111ef64338df89ac52c5a16858172022205141932",
+          "values_digest": "9510fb2754ae9a991f8ac4526103e43ef3cbf1594eda6810c9eeb2bce4dd8619"
+        },
+        {
+          "digest": "e4f7da870e81245882054825cbd7f3db4ad19c7b7e58bc227128a4ed4ee8d0f2",
+          "iteration": 0,
+          "phase": "RESIDUAL",
+          "support_digest": "8385a40ede53d55ba5c359f111ef64338df89ac52c5a16858172022205141932",
+          "values_digest": "840417957efe03b842ec9a118bae5321b82c4d5d42e54ede59a280fca681c567"
+        },
+        {
+          "digest": "5afe36bd66095e55c5a0cf81e012823974b5f44c4af7abd5c098337e85e53f24",
+          "iteration": 1,
+          "phase": "CORRELATION",
+          "support_digest": "8385a40ede53d55ba5c359f111ef64338df89ac52c5a16858172022205141932",
+          "values_digest": "11a48dd2e8f38089094e4168a073f6505c250a10c26c4e7b726dfda8797b36d6"
+        },
+        {
+          "digest": "db7d30418bd8efb19cd09c77a94dfcd78bbc626e9c65bbdc6adbf5e5876cb8c7",
+          "iteration": 1,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "94db2b5d2f0bb51445293217e5d11cf386fe0049982040a73782552772c39671",
+          "values_digest": "bfb0d5f38f55715510a0e06979ba46b4422a705c28951d4aa1fb89e306cf2ee0"
+        },
+        {
+          "digest": "bf1e515308d99b7ca0781790e7a0bb7f61351bdcb6d3cd96bffaf503f221085b",
+          "iteration": 1,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "94db2b5d2f0bb51445293217e5d11cf386fe0049982040a73782552772c39671",
+          "values_digest": "3caced0275dc01573fe00561f9417586d47718ff255a310dfa57266a1164ceac"
+        },
+        {
+          "digest": "0c7d0ce1ea07e0f24417adf105b202bdd3e131cb93e65002da410366231291e0",
+          "iteration": 1,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+          "values_digest": "63399238c7791a7cc3d1d3e1a5ea82a8e28f55de734192f82997bc86f7aafbd5"
+        },
+        {
+          "digest": "cecfb6e0a4180bc5f2eb65705f3add1be039c235a4c8056aa24e70dc488e38e8",
+          "iteration": 1,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+          "values_digest": "048f8338a90c42de98516dcc85afc70cec8c59cc1e5360897a7dddc157849280"
+        },
+        {
+          "digest": "7f65f053bdb7e08f47eae08d19c441d17d8dedb55c8558b03c03ad3bfabe5561",
+          "iteration": 1,
+          "phase": "RESIDUAL",
+          "support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+          "values_digest": "e2d9447b573396573ce4ea536ff263f9474d29b7151ad71202e2ecbcb310d8f8"
+        },
+        {
+          "digest": "678c31b20c1f4e0aeb8170a4e1e44a678163c8d37a212835f45f92707551af77",
+          "iteration": 2,
+          "phase": "CORRELATION",
+          "support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+          "values_digest": "989dddcd2ed826e0a32f2aea9098e5a3b418d1179b7a0fa5ba5216cc00492f3f"
+        },
+        {
+          "digest": "69eddd1597f937a242711797c5bb7edba02c17cc9ec170e687773659c8dcaa9d",
+          "iteration": 2,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "fa63c66a89435dcde6ea7342a5ffa68886dfb1596407bb2bae8ae3f6e521614f",
+          "values_digest": "c6089e3aeacc6b23fc8720fba688c2f7e284f5d92f43ac53d8f5e2727b9e3304"
+        },
+        {
+          "digest": "7bc85ae2043379b0c304c7b23d40138c77ef10255d93e403ca1308991988dbe1",
+          "iteration": 2,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "fa63c66a89435dcde6ea7342a5ffa68886dfb1596407bb2bae8ae3f6e521614f",
+          "values_digest": "594aa4716c38cf7de53ce6cb89102946ecf1729b610617af8d39ef13a9642124"
+        },
+        {
+          "digest": "85dc11257fb864a271b70d186085b749695129554d401dc8b36f44886ec89254",
+          "iteration": 2,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+          "values_digest": "abc09f91d9f540282ad1e8db4dfcb607d4a2cc979ecc3645fe752ca3d0ab3874"
+        },
+        {
+          "digest": "62fd8c3e41116f563eed8c8e3c5a5ce7c9774b42a966f2f42eb3ab41f8981fab",
+          "iteration": 2,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+          "values_digest": "048f8338a90c42de98516dcc85afc70cec8c59cc1e5360897a7dddc157849280"
+        },
+        {
+          "digest": "f9f36998246d6f0b7480a4f08e8f323d9ad86e3ffb525a9a99f354e7239a4a5c",
+          "iteration": 2,
+          "phase": "RESIDUAL",
+          "support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+          "values_digest": "e2d9447b573396573ce4ea536ff263f9474d29b7151ad71202e2ecbcb310d8f8"
+        },
+        {
+          "digest": "afa9487dacb8a7dc68b4da58951a2033f8932d2f7c0939441aa38450db977a7d",
+          "iteration": 3,
+          "phase": "CORRELATION",
+          "support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+          "values_digest": "989dddcd2ed826e0a32f2aea9098e5a3b418d1179b7a0fa5ba5216cc00492f3f"
+        },
+        {
+          "digest": "5a82273717966fcbb761fdc9b9a2f51c5c7a8b8378dde49a4fac3a941dd5879e",
+          "iteration": 3,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "fa63c66a89435dcde6ea7342a5ffa68886dfb1596407bb2bae8ae3f6e521614f",
+          "values_digest": "c6089e3aeacc6b23fc8720fba688c2f7e284f5d92f43ac53d8f5e2727b9e3304"
+        },
+        {
+          "digest": "c149d70514cc448adffaa7ba545e4726a6823fc3525f7464c83958530c1c8eec",
+          "iteration": 3,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "fa63c66a89435dcde6ea7342a5ffa68886dfb1596407bb2bae8ae3f6e521614f",
+          "values_digest": "594aa4716c38cf7de53ce6cb89102946ecf1729b610617af8d39ef13a9642124"
+        },
+        {
+          "digest": "e784585447670c70133c521ee054a6d3141dca2e1caab2dd6d93ba74f0b4af49",
+          "iteration": 3,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+          "values_digest": "abc09f91d9f540282ad1e8db4dfcb607d4a2cc979ecc3645fe752ca3d0ab3874"
+        },
+        {
+          "digest": "c513afd4609b21b8acb2421a2513cfe4321596e02b609c98196daaa15d540334",
+          "iteration": 3,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+          "values_digest": "048f8338a90c42de98516dcc85afc70cec8c59cc1e5360897a7dddc157849280"
+        },
+        {
+          "digest": "d4b39baf11d7147be2cd42950210ff6a0ab7c865aad033a2103d9dac3a0107d5",
+          "iteration": 3,
+          "phase": "RESIDUAL",
+          "support_digest": "a2c93b81f50d1d6d90b18308d4c1ede7b9758d49d13784306dcc0cf89213e563",
+          "values_digest": "e2d9447b573396573ce4ea536ff263f9474d29b7151ad71202e2ecbcb310d8f8"
+        }
+      ],
+      "rtl_capacity_supported": true,
+      "shape": {
+        "K": 4,
+        "M": 32,
+        "N": 128
+      },
+      "trace_digest": "6166d8ef95e70066390d74fd4524c2f1ca7bb51a519bdaf419935d94d00c6421"
+    },
+    {
+      "algorithm": "CoSaMP",
+      "case": 5,
+      "contract": "hardware-ldlt-q16-s24",
+      "final_residual_digest": "ceb6f0d8a838c68e52d0fd02e1853cd3fd319c83edcc4aa70cae5fa7ad047668",
+      "final_support_digest": "764e1a0d2878c7e1a643cefde6ad8eaf0f83c89e819621b53db91e395d993178",
+      "final_x_digest": "4a4a61227df1e95b2de0dbac43373c7de1accb71561738895e4f53ab3a9fc111",
+      "phase_count": 12,
+      "phase_records": [
+        {
+          "digest": "7d46b180cb9ff924e86e577b9315b79167abdf5118e94ae884d3e3ef1498f107",
+          "iteration": 0,
+          "phase": "CORRELATION",
+          "support_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "values_digest": "69fbfe0190a92812e4a245e835a79a523ce4bd0ea441b39eea950f26be0505bc"
+        },
+        {
+          "digest": "bd4dcec5ea9321ac2aaf85c86273be548acd67cc162d8109e82fecded79dd4bc",
+          "iteration": 0,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "0446d7d794f196a7a7c9f67fcc606cd416e89c95af2ee549de84d5f9ec1c75d1",
+          "values_digest": "cae496105caee02748a1284f198e0441c640b6f87c95b90e77a31b94f2405dc9"
+        },
+        {
+          "digest": "987599ed42acc5bbe26e9d139e0740f151c8c4fb24bb987901e8fad0844fb92d",
+          "iteration": 0,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "0446d7d794f196a7a7c9f67fcc606cd416e89c95af2ee549de84d5f9ec1c75d1",
+          "values_digest": "b781a35695a1812d84e8f6bf6e3a189000cd7182dc05d2a41aa618daa4c56d3b"
+        },
+        {
+          "digest": "c2f67eb12c9d592209d7ba2a3dbc8da1d1c0461fa4b8691e2cd5978dab74a175",
+          "iteration": 0,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "764e1a0d2878c7e1a643cefde6ad8eaf0f83c89e819621b53db91e395d993178",
+          "values_digest": "a75589b118a1bb59369889a17c865107ecc2883b2568722aa1fcf4f69456a05a"
+        },
+        {
+          "digest": "238b668425991ad7f163abd32b323c537fa6e5eafb4ce52f76738142897f6cae",
+          "iteration": 0,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "764e1a0d2878c7e1a643cefde6ad8eaf0f83c89e819621b53db91e395d993178",
+          "values_digest": "80dd30a67d2bb5d867731ccdfa879f3b2bf23fd1f0e1200a2b9f28c72a79edcf"
+        },
+        {
+          "digest": "671466f1368e93bf3751156e108ae269bc80deea64d68591189c2bc517b1e7f3",
+          "iteration": 0,
+          "phase": "RESIDUAL",
+          "support_digest": "764e1a0d2878c7e1a643cefde6ad8eaf0f83c89e819621b53db91e395d993178",
+          "values_digest": "3ead6a9dba7e07d77bc0419f9f875ca9e85b7d517b4e3bf23f6ded1a0633a3e6"
+        },
+        {
+          "digest": "1103c637fde35ee6c9a35e9ceb8c69e0ec2329e7e8d169880191b0b0d4fc703a",
+          "iteration": 1,
+          "phase": "CORRELATION",
+          "support_digest": "764e1a0d2878c7e1a643cefde6ad8eaf0f83c89e819621b53db91e395d993178",
+          "values_digest": "fe0cf532eea4f509b97f74af46821c81bcd55851dbdef33862a3aa09814734cf"
+        },
+        {
+          "digest": "e7b18c928154a2f8c5558e5d81b92944f9ec74518c63eee3d8d23559faf319b7",
+          "iteration": 1,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "f16dbc2d510bf606865e69b52343860952a4bdd1decbafcb6b41b6bc3cc20d64",
+          "values_digest": "48d77e4a01c579f44fa398833f2f100c3c7fdf5aaaf7b50b6d8e2a8ca0f57222"
+        },
+        {
+          "digest": "4348ec00896ec296da532f01df74692e76229fd6a144b92090bacbc301820dd7",
+          "iteration": 1,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "f16dbc2d510bf606865e69b52343860952a4bdd1decbafcb6b41b6bc3cc20d64",
+          "values_digest": "3b2a65f0964968e4266c02ae03846bb8567cfd1910e0dcea0f54e5b9857facf8"
+        },
+        {
+          "digest": "78f97693247e994fc88043feccbfb4c3866eaf4f1a4b2bb070c5369c9ba5b8f1",
+          "iteration": 1,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "764e1a0d2878c7e1a643cefde6ad8eaf0f83c89e819621b53db91e395d993178",
+          "values_digest": "6f7120aa96627aa104f0dc362bdb41a4f4727c3111fbbaa081f6b28a20271c14"
+        },
+        {
+          "digest": "bf1c9605f660418092919a0d6c8cf7f57ef08b6bb5b90a9b1c12008385c1eb34",
+          "iteration": 1,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "764e1a0d2878c7e1a643cefde6ad8eaf0f83c89e819621b53db91e395d993178",
+          "values_digest": "80dd30a67d2bb5d867731ccdfa879f3b2bf23fd1f0e1200a2b9f28c72a79edcf"
+        },
+        {
+          "digest": "744ae5954cceb92e36420e04504525d9c69e525c4848f2883f85fecb214c13a4",
+          "iteration": 1,
+          "phase": "RESIDUAL",
+          "support_digest": "764e1a0d2878c7e1a643cefde6ad8eaf0f83c89e819621b53db91e395d993178",
+          "values_digest": "3ead6a9dba7e07d77bc0419f9f875ca9e85b7d517b4e3bf23f6ded1a0633a3e6"
+        }
+      ],
+      "rtl_capacity_supported": true,
+      "shape": {
+        "K": 2,
+        "M": 32,
+        "N": 128
+      },
+      "trace_digest": "596797558071523e571ef25ea5a3235c9b955a3850ff95c3c1bc3c3f53d40e52"
+    },
+    {
+      "algorithm": "CoSaMP",
+      "case": 6,
+      "contract": "hardware-ldlt-q16-s24",
+      "final_residual_digest": "cf984a6eac456c35d6e466b95254af46a68fd4e0f0688639371beacba4af8b1c",
+      "final_support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+      "final_x_digest": "1424228868bfb6e7361d9db17270171dcaa90bfb47e9fb3234c6246a93d22c4f",
+      "phase_count": 24,
+      "phase_records": [
+        {
+          "digest": "0a4b2cce0be0d75d5ef29aa374b8c4e1f96a9cbbdfb6fd59369fa1e849275685",
+          "iteration": 0,
+          "phase": "CORRELATION",
+          "support_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "values_digest": "65b2697f9d6ae7d673726feae15f070131e1d85350c4c642fbcce505f0fef4d4"
+        },
+        {
+          "digest": "161046dbbdb2923443947829a6ed3598d37e00131a29e60d59c8c0cc8c1b1f4e",
+          "iteration": 0,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "dbab963026d86e231117ec47f9f07da277c2287e2fbde134047d84c91b2b407f",
+          "values_digest": "b4e9e470e8c53d70226a4ee42e7983e250f831bb74373277835e326e3ad2a030"
+        },
+        {
+          "digest": "610079040a75d3397fe7115649f143e3d7ef13f08203cf9ffe67dc18fa7c0453",
+          "iteration": 0,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "dbab963026d86e231117ec47f9f07da277c2287e2fbde134047d84c91b2b407f",
+          "values_digest": "6e3769f4e854442df2382297291330bfc2f80acc4fcf8ee554fe222db02deab5"
+        },
+        {
+          "digest": "099b8682499494b4d4fcb3edfa8d1ea908043ab3257287d05f96714ffb8bca20",
+          "iteration": 0,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "8e182cfeef269b9e1b00c7826fc59cd46d6bb1158d6ebfac2d0026e4bb579769",
+          "values_digest": "9f121f94eda6475afc36184bb0160fd542d5d95fc49b4ffae7c4ef68269b1d4c"
+        },
+        {
+          "digest": "2cd4c21444537c52f99abf6b8d42292cf7c5a5422b0d920a10b604b7dd6b11a0",
+          "iteration": 0,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "8e182cfeef269b9e1b00c7826fc59cd46d6bb1158d6ebfac2d0026e4bb579769",
+          "values_digest": "ad3d713b09a9cd98c8df217954b86533103a5ebcb09e5df25f803c36f340b033"
+        },
+        {
+          "digest": "99f69af57e7cead235d05a2fd6efa9501895f107cb32d9d9b9ec8a73cf4b4fb5",
+          "iteration": 0,
+          "phase": "RESIDUAL",
+          "support_digest": "8e182cfeef269b9e1b00c7826fc59cd46d6bb1158d6ebfac2d0026e4bb579769",
+          "values_digest": "5eab1a60895bf134713928bf3c67172654a4a4078e60aa8df0994907fc91b38b"
+        },
+        {
+          "digest": "1b0d2b4060e248cd9b09143b465e5af6a611920ca1cfde784a352053e242a9a8",
+          "iteration": 1,
+          "phase": "CORRELATION",
+          "support_digest": "8e182cfeef269b9e1b00c7826fc59cd46d6bb1158d6ebfac2d0026e4bb579769",
+          "values_digest": "4a80c188efe0a816a0dbb20e05e47b3919a9e0f6ab3a29f97ff759e1a04a50b9"
+        },
+        {
+          "digest": "e68807de57ff512820bbb58d7efd0a140d5d1022c8183b4da7f3e9043f345e0a",
+          "iteration": 1,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "f09976f278edea77ac8b5f6114aeefd63da6f72e33bc62c339aa224bf0baeeda",
+          "values_digest": "8996acaa5ff20ab4bb3ab77a8cbfb9e437e7b5bc2ac4b0fde29fda5a2749322e"
+        },
+        {
+          "digest": "13b9859255d6f89a9026899f95744dc24bbfbd1ce244a323332db5dd80757012",
+          "iteration": 1,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "f09976f278edea77ac8b5f6114aeefd63da6f72e33bc62c339aa224bf0baeeda",
+          "values_digest": "b2106af06982f68ede5d66920ce367d8fc667b5aa8ce9b553d5ac50bfad6fa49"
+        },
+        {
+          "digest": "ac1c212fe0556e9be5daf0e27b7bdf26b31413700d906076d33e0eeec51c1cf9",
+          "iteration": 1,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+          "values_digest": "115d3f85da71c129b5bbe8ed40964010c1674103ffdc256326392695dbbf4106"
+        },
+        {
+          "digest": "13ceb0bbcdf861db0e7cb115ea0e129d48d713dfccf6239da3f151ee7ab09716",
+          "iteration": 1,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+          "values_digest": "200a6155a56f673a7938d89bcc4a031b270ba3d00d32b0d2c6e26d7eb0a45153"
+        },
+        {
+          "digest": "9b45721286826368cc609c8abda815df47366db6ee49b52d6befcb8c8621aabc",
+          "iteration": 1,
+          "phase": "RESIDUAL",
+          "support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+          "values_digest": "64270abf348342833383714cd3b986dde7615a8c2301cc92e4f4dbda8200f2db"
+        },
+        {
+          "digest": "84783d87b3b990f40c4fe890efcf5770f2b5e96079d38a307f98d2b12a90862d",
+          "iteration": 2,
+          "phase": "CORRELATION",
+          "support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+          "values_digest": "3aa3a7093e6a81978701fe4e077679406217a8a2da45f39185763f5f21d6d38a"
+        },
+        {
+          "digest": "03506c62d545747fbf5c8a8d87d5aaf064cf51afddc6929791c3b253d39b7a87",
+          "iteration": 2,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "788150641d6d38d32560a6fc6b76f1e397fb3ee834a9d25744ea53a67356d5e3",
+          "values_digest": "99392945a3ebde87786d37757f0ebefc8d22c8d057f5ecb520a5d24fe98eb95c"
+        },
+        {
+          "digest": "8656d35c2937f3c2f093fb6f8809adc96761e059b2d9e1f98693f056bbeaa38e",
+          "iteration": 2,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "788150641d6d38d32560a6fc6b76f1e397fb3ee834a9d25744ea53a67356d5e3",
+          "values_digest": "8d2e3b45d5c8ef40174c28b985649159270e1d1ab04906fba63e5723b4ae48d6"
+        },
+        {
+          "digest": "d8d9b6afaff7cc332ff4d68fcfed2b90268026183fd3561ddc1528f00952528c",
+          "iteration": 2,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+          "values_digest": "87bd21487dd5ef44a4fe0905287e1151ad4ef36356f7d7b2a07b84908a4f8a76"
+        },
+        {
+          "digest": "d555b919f0712fbf01544531d8073e51dc7b6e6cd16625bd079056906127cac7",
+          "iteration": 2,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+          "values_digest": "200a6155a56f673a7938d89bcc4a031b270ba3d00d32b0d2c6e26d7eb0a45153"
+        },
+        {
+          "digest": "d2a59b31da74dab1ccbeeb5ad620d798550734491258a922497870a574ed00a5",
+          "iteration": 2,
+          "phase": "RESIDUAL",
+          "support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+          "values_digest": "64270abf348342833383714cd3b986dde7615a8c2301cc92e4f4dbda8200f2db"
+        },
+        {
+          "digest": "190c7ba67e0453f04e41d4a9118f5cebe6624534775d05c9b0aa58497925fba6",
+          "iteration": 3,
+          "phase": "CORRELATION",
+          "support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+          "values_digest": "3aa3a7093e6a81978701fe4e077679406217a8a2da45f39185763f5f21d6d38a"
+        },
+        {
+          "digest": "2c5159fa58e583b5b0973860dea52a69b546464bd0a6c89b535fa056a2135877",
+          "iteration": 3,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "788150641d6d38d32560a6fc6b76f1e397fb3ee834a9d25744ea53a67356d5e3",
+          "values_digest": "99392945a3ebde87786d37757f0ebefc8d22c8d057f5ecb520a5d24fe98eb95c"
+        },
+        {
+          "digest": "944b4305e34f3f8c12896beceb6df2667aaee8dfec59b0fb2616e5a350612240",
+          "iteration": 3,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "788150641d6d38d32560a6fc6b76f1e397fb3ee834a9d25744ea53a67356d5e3",
+          "values_digest": "8d2e3b45d5c8ef40174c28b985649159270e1d1ab04906fba63e5723b4ae48d6"
+        },
+        {
+          "digest": "481c3ac8b3e62015a0d958c3ed97c4a6fdc3c3e1a4d5f1ac6275c8de4ba91aaa",
+          "iteration": 3,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+          "values_digest": "87bd21487dd5ef44a4fe0905287e1151ad4ef36356f7d7b2a07b84908a4f8a76"
+        },
+        {
+          "digest": "2f3173d69154f61a3d902b3e235daa8336f911e0731c87427ca66c62a04520a8",
+          "iteration": 3,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+          "values_digest": "200a6155a56f673a7938d89bcc4a031b270ba3d00d32b0d2c6e26d7eb0a45153"
+        },
+        {
+          "digest": "c3a50b13299d470530af8dc2d4029f21516592aa29174c9efcc7e61ddb09c06b",
+          "iteration": 3,
+          "phase": "RESIDUAL",
+          "support_digest": "73d8118d816e84de5b85469bfa1c0f2565f2b93da7bdb1ed549a9ab23860e287",
+          "values_digest": "64270abf348342833383714cd3b986dde7615a8c2301cc92e4f4dbda8200f2db"
+        }
+      ],
+      "rtl_capacity_supported": true,
+      "shape": {
+        "K": 4,
+        "M": 16,
+        "N": 64
+      },
+      "trace_digest": "55030d9cfc904daff46edce60b34cd8c84bfde5270f169622054651412c15592"
+    },
+    {
+      "algorithm": "CoSaMP",
+      "case": 7,
+      "contract": "hardware-ldlt-q16-s24",
+      "final_residual_digest": "e293e19029d117af62e5d9cd93c28df06bbf789a4f22520a7f7c4265d44476da",
+      "final_support_digest": "5924cb737ba72d212e137c687d645e9a018b412047938b30c55d57ccfd6ec129",
+      "final_x_digest": "65c042cfdc8e977d97f7e75d029e74af2a3b784061847471ce66cb4b1ad58438",
+      "phase_count": 12,
+      "phase_records": [
+        {
+          "digest": "0a4b2cce0be0d75d5ef29aa374b8c4e1f96a9cbbdfb6fd59369fa1e849275685",
+          "iteration": 0,
+          "phase": "CORRELATION",
+          "support_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "values_digest": "65b2697f9d6ae7d673726feae15f070131e1d85350c4c642fbcce505f0fef4d4"
+        },
+        {
+          "digest": "8380a9e1d7d85e89801d7813f48d23a2664525ca164c90a8913cbf33e3f68be3",
+          "iteration": 0,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "10035a2d51d0bec64093421a74ad3b71ba5aa7d70df6b63f581559b24c5b07d0",
+          "values_digest": "324449a8b604e1b00a64837a37c42d1e1b66215fc275eea0011d69af33b3e70c"
+        },
+        {
+          "digest": "398f0da754107df0125e26dde0790563ff925319ceba737f1e80922d4bf48df9",
+          "iteration": 0,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "10035a2d51d0bec64093421a74ad3b71ba5aa7d70df6b63f581559b24c5b07d0",
+          "values_digest": "6a918a7d6dae8a4da9c380bb9ef11840d11bc2520572a05d3c583493eff16ab0"
+        },
+        {
+          "digest": "2c2eebe178d4cbb4afe1e4728cfe4b1c14be13a9bffb738819f5fd8cbae99891",
+          "iteration": 0,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "5924cb737ba72d212e137c687d645e9a018b412047938b30c55d57ccfd6ec129",
+          "values_digest": "b9996d3129ace0746acbd4575a5da8aa007ab4023e92390085c343c32e24efdc"
+        },
+        {
+          "digest": "6048127b8581774c3513c05b0f02780fa0484a57a0b3bc7c6ec084c2d39b3f94",
+          "iteration": 0,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "5924cb737ba72d212e137c687d645e9a018b412047938b30c55d57ccfd6ec129",
+          "values_digest": "9521121af0ab53ae888d0e4ddbc9c16f8d5ac04489a8ba2672f1980525c1c7a7"
+        },
+        {
+          "digest": "40fbb89f16847fdba33aad5d90b35ca471582e5001cd19bb53d61dc89c98d4d4",
+          "iteration": 0,
+          "phase": "RESIDUAL",
+          "support_digest": "5924cb737ba72d212e137c687d645e9a018b412047938b30c55d57ccfd6ec129",
+          "values_digest": "ae4eb1d97c576349675a505f5ce091fe475489889aa374f83aa6a25117c4e1f1"
+        },
+        {
+          "digest": "e8fc3c03f53eccf1092256441c2e4e4a4c5c31252a25eb600365e3edcbe4cfb9",
+          "iteration": 1,
+          "phase": "CORRELATION",
+          "support_digest": "5924cb737ba72d212e137c687d645e9a018b412047938b30c55d57ccfd6ec129",
+          "values_digest": "9936562b32c93244c0eed67691b25cc47354a33f5bced8256357749281be81c3"
+        },
+        {
+          "digest": "ca30b136fe97d5233125bb40a3a0154a83bd23567452f5e016b56f38eab180ec",
+          "iteration": 1,
+          "phase": "SUPPORT_MERGE",
+          "support_digest": "62bfa41603dbb81066301b42b7a3dae016c77a60be42b860121de5f6ae6bc582",
+          "values_digest": "37e2cbf6cab8fd7cb734401e550216d570347578a766e80f9a8490f415b3114e"
+        },
+        {
+          "digest": "94ec7350db74a5670326dab317b801de5c4fcb06c09e360cc981ba52a79134ce",
+          "iteration": 1,
+          "phase": "LS_SOLVE_TEMP",
+          "support_digest": "62bfa41603dbb81066301b42b7a3dae016c77a60be42b860121de5f6ae6bc582",
+          "values_digest": "1d114c948b36ef0e4930a1561ad76187a5465886395ee3e9319919f0f9633dd1"
+        },
+        {
+          "digest": "f32550169ec8f9832483fe794404904c71cb04a875975a963bfac417575d2624",
+          "iteration": 1,
+          "phase": "SUPPORT_PRUNE",
+          "support_digest": "5924cb737ba72d212e137c687d645e9a018b412047938b30c55d57ccfd6ec129",
+          "values_digest": "2239e55d434276021a256383cb6966f1e7e68d4f65656101074228cc74a4275e"
+        },
+        {
+          "digest": "0eb9d0f5b5f0eb33dd2444da442e3bfa669ca436efed0eecf0d36871d69d7f27",
+          "iteration": 1,
+          "phase": "LS_SOLVE_FINAL",
+          "support_digest": "5924cb737ba72d212e137c687d645e9a018b412047938b30c55d57ccfd6ec129",
+          "values_digest": "9521121af0ab53ae888d0e4ddbc9c16f8d5ac04489a8ba2672f1980525c1c7a7"
+        },
+        {
+          "digest": "f4cc8633fa6b2582081c4a02d64088ae5bcf20ecabf1cd210c151ecba94cf990",
+          "iteration": 1,
+          "phase": "RESIDUAL",
+          "support_digest": "5924cb737ba72d212e137c687d645e9a018b412047938b30c55d57ccfd6ec129",
+          "values_digest": "ae4eb1d97c576349675a505f5ce091fe475489889aa374f83aa6a25117c4e1f1"
+        }
+      ],
+      "rtl_capacity_supported": true,
+      "shape": {
+        "K": 2,
+        "M": 16,
+        "N": 64
+      },
+      "trace_digest": "ed6275f43f19eecebe7a89d0dda09a63b2d9d749285642e2c7e64b7eb4403a50"
+    }
+  ],
+  "model": "models/golden/hardware_abstract.py",
+  "schema": "abstract-rtl-hardware-phase-trace-v1",
+  "source": "models/golden/hardware_fixed.py"
+}

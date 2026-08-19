@@ -1,7 +1,7 @@
 # Phase-level abstract RTL model
 
-`abstract_rtl.py` is the intermediate executable specification between the
-frozen fixed-point canonical reference and the real Verilog RTL:
+`abstract_rtl.py` is the algorithmic intermediate executable specification
+between the frozen fixed-point canonical reference and the real Verilog RTL:
 
 ```text
 canonical_fixed.py  ->  abstract_rtl.py  ->  phase trace manifest  ->  RTL
@@ -28,6 +28,12 @@ model calls `canonical_fixed.run_all` at completion and asserts exact equality
 of `x`, residual, and support. A mismatch is therefore a real RTL migration
 issue; the fixed canonical golden must not be regenerated to make it disappear.
 
+For implementation-level behavior, use the separate
+`hardware_abstract.py`/`hardware_fixed.py` pair. That trace includes the
+hardware-legal LDLT and quantisation boundaries, rather than pretending that
+the RTL has to execute the canonical Gauss-Jordan schedule. See
+`HARDWARE_CONTRACT.md`.
+
 Current status:
 
 - The abstract model covers all eight algorithms and all eight configured
@@ -38,6 +44,7 @@ Current status:
   it can claim canonical sign-off.
 
 The current CoSaMP checkpoint confirms that correlation/top-K/support merge are
-aligned for case 1 K8. The first divergent phase is `LS_SOLVE`: RTL still uses
-its LDLT implementation while the fixed canonical model uses deterministic
-Gauss-Jordan arithmetic. This is an RTL migration item, not a golden issue.
+aligned for case 1 K8. The RTL LS phase is intentionally compared against the
+hardware-aware LDLT trace, while the algorithmic trace remains a separate
+reference. This is an implementation-contract comparison, not a request to
+replace LDLT with Gauss-Jordan.

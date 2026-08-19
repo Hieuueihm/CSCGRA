@@ -29,6 +29,13 @@ Files:
   frozen fixed contract; it is the migration intermediate, not a new golden.
 - run_abstract_rtl.py and abstract_rtl_trace_manifest.json: reproducible
   per-phase digests and exact final-state checks for all cases/algorithms.
+- hardware_fixed.py: independent hardware-aware fixed contract for LDLT,
+  Q16/Q32 boundaries, regularisation and signed-24 quantisation.
+- hardware_abstract.py and run_hardware_abstract.py: CoSaMP phase trace for
+  the hardware LDLT contract; K16 entries are architectural traces, not RTL
+  sign-off.
+- HARDWARE_CONTRACT.md: boundary between algorithmic canonical and
+  hardware-aware RTL contracts.
 - generate_canonical_k_sweep.py: generates the canonical include without importing
   the RTL-compatible golden generator.
 - canonical_audit.md: latest non-mutating comparison against the RTL-compatible flow.
@@ -69,6 +76,9 @@ Rules:
   Do not regenerate/modify the golden to fit RTL failures.
 - Migration flow is canonical → `abstract_rtl.py` → phase trace comparison →
   real RTL. The abstract model must remain exact before RTL changes begin.
+- Hardware-aware migration is canonical phase intent → `hardware_fixed.py` →
+  `hardware_abstract.py` → RTL phase trace. LDLT and quantisation are explicit
+  here; they are not hidden by changing the canonical golden.
 - OMP regression uses slow/reference context flow unless explicitly testing fast mode separately.
 - The canonical audit is diagnostic for algorithms not yet migrated.
 - `verification/v2/run1/k_sweep_golden_canonical.vh` is the canonical reference
