@@ -237,6 +237,7 @@ def run(algorithm: str, phi: list[list[int]], y: Sequence[int], k: int) -> Hardw
         "HTP": _htp,
         "SP": _sp,
         "gOMP": _gomp,
+        "GOMP": _gomp,
     }
     if algorithm in runners:
         return runners[algorithm](phi, y, k)
