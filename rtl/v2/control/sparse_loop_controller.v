@@ -3049,7 +3049,13 @@ case (state)
                         end
                     end
                     if (div_iter <= 4) begin
-                        if ({div_trial_rem[63:0], 1'b0} >= {1'b0, div_abs_den})
+                        // Canonical fixed-point GP defines alpha with signed
+                        // division truncated toward zero.  The shared LS/MP
+                        // divider retains its historical round-to-nearest
+                        // behavior; suppress only that final increment for
+                        // the isolated GP line-search transaction.
+                        if (!div_return_gp &&
+                            ({div_trial_rem[63:0], 1'b0} >= {1'b0, div_abs_den}))
                             div_trial_quot = div_trial_quot + 1'b1;
                         div_result <= div_neg ? -$signed(div_trial_quot[63:0]) : $signed(div_trial_quot[63:0]);
                         div_rem <= div_trial_rem;
