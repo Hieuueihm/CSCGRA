@@ -100,3 +100,25 @@ The implementation result establishes a clean routed checkpoint and a precise
 timing baseline. The next optimization target is the post-route critical path
 cluster (LDLT border/PE wide arithmetic and associated fanout), not the golden
 generator or testbench contract.
+
+## Incremental timing trial: registered LDLT border operands
+
+After the baseline run, the LDLT border cache-to-PE0 boundary was isolated with
+a narrow local register containing the four signed-64-bit operand pairs and
+their phase/tag metadata.  The change keeps PE0 as the only ingress and does
+not add a multiplier, DSP, BRAM, or a second LS request.
+
+- Full sweep: **348 PASS / 0 FAIL** (same intentional K16 CoSaMP/SP skips).
+- Case 1 K8: **45 PASS / 0 FAIL**; cycles remain functionally equivalent to the
+  registered-boundary schedule (OMP 33,954; CoSaMP 105,952; IHT/GP 28,569;
+  HTP 39,421; SP 94,667; GOMP 19,311; MP 25,673).
+- OOC synthesis trial: WNS **+0.611 ns**, no setup failures.
+- Routed trial: WNS **−0.529 ns**, TNS **−464.798 ns**, 2,586 setup failures;
+  hold WNS **+0.030 ns**, no hold failures.
+- Routed utilization: 117,590 LUTs (115,890 logic LUTs, 1,696 LUTRAM,
+  4 SRLs), 53,686 FFs, 24 RAMB36, 77 DSP48.
+
+The routed critical path moved from the LDLT cache fanout to the synchronous
+SPM read → sparse scalar pipeline → PE accumulator path.  This is an
+incremental improvement over the baseline but is **not** a 100-MHz sign-off;
+the trial is retained as the next timing baseline for further optimization.

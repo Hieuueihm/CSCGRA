@@ -159,6 +159,9 @@ Primary RTL: `rtl/v2/pe/pe_stream_topk_serial_service.v`,
   and shared forward-solve tail transitions where timing and resource gates
   pass.
 - Pipelines the four-row RHS product boundary for WNS margin.
+- Registers the narrow LDLT border operand/phase boundary at PE0; the full
+  K-sweep remains 348 PASS / 0 FAIL and routed WNS improves to −0.529 ns,
+  but the result is still a timing trial rather than a 100-MHz sign-off.
 - Overlaps Gram production/drain, retains a one-entry ACC4 queue, removes the
   final safe guard interval, and preloads the first residual block.
 

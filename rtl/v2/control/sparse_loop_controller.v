@@ -470,6 +470,15 @@ reg signed [63:0] border_operand_b [0:3];
 reg [63:0] border_operand_abs_a [0:3];
 reg [63:0] border_operand_abs_b [0:3];
 reg [3:0] border_ingress_neg;
+// Narrow registered boundary for border operands.  The cache read and sign
+// decode terminate here; the PE0 limb fanout starts from these local values.
+reg [63:0] border_operand_abs_a_q [0:3];
+reg [63:0] border_operand_abs_b_q [0:3];
+reg border_operand_boundary_active_q;
+reg [4:0] border_operand_boundary_tag_q;
+reg border_operand_boundary_part_q;
+reg border_operand_boundary_phase_q;
+reg [3:0] border_operand_boundary_neg_q;
 reg [127:0] border_partial_sum [0:3];
 integer wide_row;
 integer wide_col;
@@ -493,9 +502,9 @@ wire ldlt_border_issue_active_w = ldlt_border_stream_state_w &&
 wire legacy_wide_vertical_active_w =
     (wide_mul_state_q != WIDE_MUL_IDLE) && wide_mul_vertical_q;
 assign ls_wide_vertical_active = legacy_wide_vertical_active_w ||
-                                 ldlt_border_issue_active_w;
-assign ls_wide_vertical_tag = ldlt_border_issue_active_w ?
-                              ldlt_border_issue_p_q : ldlt_i_base_q;
+                                 border_operand_boundary_active_q;
+assign ls_wide_vertical_tag = border_operand_boundary_active_q ?
+                              border_operand_boundary_tag_q : ldlt_i_base_q;
 wire signed [127:0] ldlt_wide_q32_sum =
     ($signed(wide_mul_result_q[0]) >>> 32) +
     ($signed(wide_mul_result_q[1]) >>> 32) +
@@ -539,16 +548,16 @@ always @(*) begin
         wide_row_product_part1[wide_row] = 1'b0;
     end
 
-    if (ldlt_border_issue_active_w) begin
+    if (border_operand_boundary_active_q) begin
         for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
             for (wide_col = 0; wide_col < COLS; wide_col = wide_col + 1) begin
-                wide_part = (ldlt_border_issue_part_q ? COLS : 0) + wide_col;
+                wide_part = (border_operand_boundary_part_q ? COLS : 0) + wide_col;
                 wide_a_limb = wide_part >> 2;
                 wide_b_limb = wide_part & 3;
                 ls_wide_a_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
-                    {{(DATA_W-16){1'b0}}, border_operand_abs_a[wide_row][wide_a_limb*16 +: 16]};
+                    {{(DATA_W-16){1'b0}}, border_operand_abs_a_q[wide_row][wide_a_limb*16 +: 16]};
                 ls_wide_b_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
-                    {{(DATA_W-16){1'b0}}, border_operand_abs_b[wide_row][wide_b_limb*16 +: 16]};
+                    {{(DATA_W-16){1'b0}}, border_operand_abs_b_q[wide_row][wide_b_limb*16 +: 16]};
             end
         end
     end else if (ls_batch4_active && (wide_mul_state_q == WIDE_MUL_IDLE)) begin
@@ -797,6 +806,15 @@ end
 // multiplier is never on the same timing path as the 128-bit adder tree.
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
+        border_operand_boundary_active_q <= 1'b0;
+        border_operand_boundary_tag_q <= 5'd0;
+        border_operand_boundary_part_q <= 1'b0;
+        border_operand_boundary_phase_q <= 1'b0;
+        border_operand_boundary_neg_q <= 4'd0;
+        for (border_row = 0; border_row < 4; border_row = border_row + 1) begin
+            border_operand_abs_a_q[border_row] <= 64'd0;
+            border_operand_abs_b_q[border_row] <= 64'd0;
+        end
         border_done_pending_q <= 1'b0;
         border_done_pending_tag_q <= 5'd0;
         border_done_pending_phase_q <= 1'b0;
@@ -817,6 +835,15 @@ always @(posedge clk or negedge rst_n) begin
             border_product_q[border_row] <= {(COLS*64){1'b0}};
         end
     end else begin
+        border_operand_boundary_active_q <= ldlt_border_issue_active_w;
+        border_operand_boundary_tag_q <= ldlt_border_issue_p_q;
+        border_operand_boundary_part_q <= ldlt_border_issue_part_q;
+        border_operand_boundary_phase_q <= ldlt_border_issue_phase_q;
+        border_operand_boundary_neg_q <= border_ingress_neg;
+        for (border_row = 0; border_row < 4; border_row = border_row + 1) begin
+            border_operand_abs_a_q[border_row] <= border_operand_abs_a[border_row];
+            border_operand_abs_b_q[border_row] <= border_operand_abs_b[border_row];
+        end
         border_done_q <= border_done_pending_q;
         if (border_done_pending_q) begin
             border_done_tag_q <= border_done_pending_tag_q;
@@ -824,11 +851,11 @@ always @(posedge clk or negedge rst_n) begin
         end
         border_done_pending_q <= 1'b0;
 
-        border_token_valid_q[0] <= ldlt_border_issue_active_w;
-        border_token_tag_q[0] <= ldlt_border_issue_p_q;
-        border_token_part_q[0] <= ldlt_border_issue_part_q;
-        border_token_phase_q[0] <= ldlt_border_issue_phase_q;
-        border_token_neg_q[0] <= border_ingress_neg;
+        border_token_valid_q[0] <= border_operand_boundary_active_q;
+        border_token_tag_q[0] <= border_operand_boundary_tag_q;
+        border_token_part_q[0] <= border_operand_boundary_part_q;
+        border_token_phase_q[0] <= border_operand_boundary_phase_q;
+        border_token_neg_q[0] <= border_operand_boundary_neg_q;
         for (border_row = 1; border_row < 4; border_row = border_row + 1) begin
             border_token_valid_q[border_row] <= border_token_valid_q[border_row-1];
             border_token_tag_q[border_row] <= border_token_tag_q[border_row-1];
