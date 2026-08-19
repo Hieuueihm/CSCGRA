@@ -27,6 +27,7 @@
   },
   "canonical_all_audit": {
     "mode": "TB_CANONICAL_ALL",
+    "reference_source": "models/golden/canonical_fixed.py",
     "valid_cases": [0, 1, 2, 3, 4, 5, 6, 7],
     "matching_algorithms": ["OMP", "IHT", "HTP", "SP", "GP", "gOMP", "MP"],
     "cosamp_mismatches_by_case": {"1": 10, "3": 16},

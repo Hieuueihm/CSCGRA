@@ -1,9 +1,9 @@
 # Canonical algorithm reference
 
-GP now uses the independent fixed-point canonical reference in the default RTL
-regression. The remaining algorithms still use the legacy hardware-compatible
-baseline until their own migrations are complete. This file records the
-independent algorithmic references used for the audit.
+All algorithms now have an independent fixed-point canonical reference. GP is
+the first RTL migration using it; the remaining RTL migrations are tracked as
+explicit hardware deltas. This file records the independent algorithmic
+references used for the audit.
 
 | Name | Canonical reference | Required steps |
 | --- | --- | --- |
@@ -17,14 +17,13 @@ independent algorithmic references used for the audit.
 | GP | [Blumensath & Davies, 2008](https://www.compressed-sensing.eng.ed.ac.uk/sites/compressed-sensing.eng.ed.ac.uk/files/publications/BDGP07.pdf) | Expand the support, use the restricted gradient as the direction, and choose a residual line-search step. This is not the same as IHT. |
 
 `canonical_algorithms.py` is the floating-point mathematical reference. The
-fixed-point contract is implemented independently in
-`canonical_fixed.py`; it defines signed-24-bit Q16 arithmetic for canonical
-GP and is the source used to generate the canonical GP golden. Neither
-reference imports RTL state or the RTL-compatible golden generator. The
-canonical GP equation now has an isolated RTL implementation selected by
-`TB_CANONICAL_GP`; the default hardware-compatible GP path remains unchanged
-until timing/resource sign-off. The staged migration and conditions for
-switching sign-off are recorded in
+fixed-point contract is implemented independently for all algorithms in
+`canonical_fixed.py`; it defines signed-24-bit Q16 arithmetic and is the
+source used to generate the canonical golden. Neither reference imports RTL
+state or the RTL-compatible golden generator. GP has an RTL implementation
+selected by `TB_CANONICAL_GP`; the remaining RTL migrations are tracked
+separately. The staged migration and conditions for switching sign-off are
+recorded in
 [`CANONICAL_MIGRATION.md`](CANONICAL_MIGRATION.md).
 
 ## Current v2 deviations that must stay explicit
@@ -34,9 +33,9 @@ switching sign-off are recorded in
 - The default `GP` path is a full-vector gradient update followed by pruning,
   which is IHT-like. The opt-in `OP_GP_PROJECT`/`OP_GP_UPDATE` path implements
   support expansion, restricted gradient, and residual line search.
-- The current LS helper forms Gram/RHS in Python floating point, quantizes the
-  coefficients, and then computes a fixed-point residual. It is not a cycle- or
-  bit-accurate LDLT model.
+- The fixed canonical LS helper uses a deterministic fixed-point normal-equation
+  solve with a wider mathematical workspace; it is not a cycle- or bit-accurate
+  model of the RTL LDLT service.
 - The active K-sweep algorithm index order is `OMP, CoSaMP, IHT, HTP, SP, GP,
   GOMP, MP`; the frozen per-iteration include uses a different historical
   order and must be mapped explicitly.

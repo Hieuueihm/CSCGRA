@@ -11,19 +11,20 @@ Configuration:
 - GOLD_ALGS = 8
 - Algorithms / alg_idx:
   - 0: OMP
-  - 1: gOMP
-  - 2: CoSaMP
-  - 3: SP
-  - 4: IHT
-  - 5: HTP
-  - 6: GP
+  - 1: CoSaMP
+  - 2: IHT
+  - 3: HTP
+  - 4: SP
+  - 5: GP
+  - 6: gOMP
   - 7: MP
 
 Files:
 - golden_cases.vh: frozen function-based fixed-point golden for per-iter support/x/residual checks.
 - golden_cases_array.vh: frozen array-form companion include.
 - canonical_algorithms.py: independent floating-point textbook reference.
-- canonical_fixed.py: independent signed-24-bit Q16 contract used by canonical GP.
+- canonical_fixed.py: independent signed-24-bit Q16 contract used by all
+  canonical algorithms.
 - generate_canonical_k_sweep.py: generates the canonical include without importing
   the RTL-compatible golden generator.
 - canonical_audit.md: latest non-mutating comparison against the RTL-compatible flow.
@@ -56,7 +57,7 @@ second regenerates it intentionally.
 
 Rules:
 - Treat these files as read-only golden references.
-- Canonical GP flow is algorithm → `canonical_fixed.py` → generated golden → RTL.
+- Canonical flow is algorithm → `canonical_fixed.py` → generated golden → RTL.
   Do not regenerate/modify the golden to fit RTL failures.
 - OMP regression uses slow/reference context flow unless explicitly testing fast mode separately.
 - The canonical audit is diagnostic for algorithms not yet migrated.
