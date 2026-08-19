@@ -12,6 +12,9 @@ Clock constraint: 100 MHz (`10.000 ns`)
   `models/reference/hardware.py`.
 - Generator check: **PASS**.
 - SDK/TB contract check: **PASS** (`scripts/maintenance/check_sdk_tb_sync.py`).
+- Both SoC C runners pass host-side `gcc -std=c11 -Wall -Wextra -Werror`
+  syntax checking with a minimal SDK-header shim. Native Vitis/ARM linking was
+  not available in this environment (`arm-none-eabi-gcc` and Vitis are absent).
 - Layout validation, Python compilation, and `git diff --check`: **PASS**.
 - Regression sign-off: **348 PASS / 0 FAIL**, with the two intentional K16
   CoSaMP/SP capacity skips preserved in both TB and C runner.
@@ -54,12 +57,12 @@ The full active regression was re-run after the GP divider fix and remains
 
 ## Synthesis
 
-Run: `logs/synth/v2/hardware_golden_signoff`
+Run: `logs/synth/v2/hardware_golden_post_gp_fix_synth`
 
 - Synthesis: **PASS** (0 errors, 0 critical warnings).
-- WNS: **+0.454 ns**; TNS: `0.000 ns`; failing endpoints: `0`.
-- Total LUTs: `129,816` (logic LUTs `127,667`, LUTRAM `2,144`, SRLs `5`).
-- FFs: `53,610`.
+- WNS: **+0.526 ns**; TNS: `0.000 ns`; failing endpoints: `0`.
+- Total LUTs: `131,344` (logic LUTs `129,186`, LUTRAM `2,152`, SRLs `6`).
+- FFs: `53,615`.
 - BRAM: `24 RAMB36`, `0 RAMB18`, `0 URAM`.
 - DSP48: `77`.
 
@@ -86,7 +89,7 @@ Run: `logs/impl/v2/hardware_golden_impl_v2`
 ```powershell
 python models/reference/hardware.py --check --c-output sw/v2/src/cscgra_k_sweep_golden.h
 python scripts/maintenance/check_sdk_tb_sync.py
-& .\scripts\run.ps1 -Flow synth -RtlVersion v2 -Top cgra_top -RunId hardware_golden_signoff
+& .\scripts\run.ps1 -Flow synth -RtlVersion v2 -Top cgra_top -RunId hardware_golden_post_gp_fix_synth
 & .\scripts\run.ps1 -Flow impl -RtlVersion v2 -Top cgra_top -RunId hardware_golden_impl_v2
 ```
 

@@ -46,10 +46,12 @@ continues to sign off the implemented hardware GP variant, while
 The new implementation run is fully routed with zero routing errors and a
 reproducible checkpoint at
 `logs/impl/v2/hardware_golden_impl_v2/cgra_top_impl_routed.dcp`. Synthesis
-remains **+0.454 ns WNS**, but post-route timing is **−1.987 ns WNS** with
+on the post-GP-fix RTL is **+0.526 ns WNS**, but post-route timing from the
+previous routed checkpoint is **−1.987 ns WNS** with
 13,915 setup-failing endpoints. Therefore the routed checkpoint is a clean
-physical baseline, not a 100-MHz timing sign-off; the next optimization pass
-must target the post-route critical paths (LDLT border/PE wide arithmetic and
+physical baseline for the pre-GP-fix netlist, not a 100-MHz timing sign-off;
+the next optimization pass must rerun implementation on the current RTL and
+target the post-route critical paths (LDLT border/PE wide arithmetic and
 fanout) while preserving the golden/TB contract.
 
 Evolution of the configured full sweep:
