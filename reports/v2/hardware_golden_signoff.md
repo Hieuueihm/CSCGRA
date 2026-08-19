@@ -12,9 +12,10 @@ Clock constraint: 100 MHz (`10.000 ns`)
   `models/reference/hardware.py`.
 - Generator check: **PASS**.
 - SDK/TB contract check: **PASS** (`scripts/maintenance/check_sdk_tb_sync.py`).
-- Both SoC C runners pass host-side `gcc -std=c11 -Wall -Wextra -Werror`
-  syntax checking with a minimal SDK-header shim. Native Vitis/ARM linking was
-  not available in this environment (`arm-none-eabi-gcc` and Vitis are absent).
+- Both SoC C runners pass `python scripts/maintenance/check_soc_c_syntax.py`,
+  which invokes host GCC with a temporary minimal SDK-header shim. Native
+  Vitis/ARM linking was not available in this environment
+  (`arm-none-eabi-gcc` and Vitis are absent).
 - Layout validation, Python compilation, and `git diff --check`: **PASS**.
 - Regression sign-off: **348 PASS / 0 FAIL**, with the two intentional K16
   CoSaMP/SP capacity skips preserved in both TB and C runner.
@@ -89,6 +90,7 @@ Run: `logs/impl/v2/hardware_golden_impl_v2`
 ```powershell
 python models/reference/hardware.py --check --c-output sw/v2/src/cscgra_k_sweep_golden.h
 python scripts/maintenance/check_sdk_tb_sync.py
+python scripts/maintenance/check_soc_c_syntax.py
 & .\scripts\run.ps1 -Flow synth -RtlVersion v2 -Top cgra_top -RunId hardware_golden_post_gp_fix_synth
 & .\scripts\run.ps1 -Flow impl -RtlVersion v2 -Top cgra_top -RunId hardware_golden_impl_v2
 ```

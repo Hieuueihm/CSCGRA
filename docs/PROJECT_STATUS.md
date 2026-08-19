@@ -43,6 +43,10 @@ trace is retained in `logs/sim/v2/canonical_gp_audit_trunc`. The normal sweep
 continues to sign off the implemented hardware GP variant, while
 `TB_CANONICAL_GP` is the explicit canonical audit mode.
 
+The two V2 SoC C runners now have a reproducible host syntax checker at
+`scripts/maintenance/check_soc_c_syntax.py`; it uses temporary SDK stubs and
+does not claim a native Vitis/ARM link.
+
 The new implementation run is fully routed with zero routing errors and a
 reproducible checkpoint at
 `logs/impl/v2/hardware_golden_impl_v2/cgra_top_impl_routed.dcp`. Synthesis
