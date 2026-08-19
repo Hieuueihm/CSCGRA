@@ -63,6 +63,17 @@ all eight configured cases and reports 48/48 checks PASS with zero `X_MISM`
 records. Cases 0--7 complete in 75,297;
 38,369; 20,129; 15,489; 8,209; 4,561; 3,785; and 2,125 cycles.
 
+## Abstract RTL checkpoint
+
+Before changing additional RTL, `models/golden/abstract_rtl.py` provides a
+phase-level controller model driven only by the frozen fixed canonical source.
+`run_abstract_rtl.py --check` verifies all eight algorithms across all eight
+configured cases and records phase payload digests in
+`abstract_rtl_trace_manifest.json`. The intended migration order is canonical
+fixed state → abstract phase state → real PE/controller state. A real RTL
+mismatch is fixed in RTL (or explicitly documented as a hardware variant); it
+is never hidden by changing the canonical golden.
+
 OOC synthesis `canonical_gp_synth1` reports WNS `+0.454 ns`, 129,816 LUTs,
 53,610 FFs, 24 BRAM36, and 77 DSP48.  Relative to the latest post-update-X
 GP checkpoint this is +16,765 LUT, +2,532 FF, no BRAM delta, and +6 DSP48.
