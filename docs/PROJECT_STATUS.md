@@ -47,16 +47,17 @@ The two V2 SoC C runners now have a reproducible host syntax checker at
 `scripts/maintenance/check_soc_c_syntax.py`; it uses temporary SDK stubs and
 does not claim a native Vitis/ARM link.
 
-The new implementation run is fully routed with zero routing errors and a
+The current implementation run is fully routed with zero routing errors and a
 reproducible checkpoint at
-`logs/impl/v2/hardware_golden_impl_v2/cgra_top_impl_routed.dcp`. Synthesis
-on the post-GP-fix RTL is **+0.526 ns WNS**, but post-route timing from the
-previous routed checkpoint is **−1.987 ns WNS** with
-13,915 setup-failing endpoints. Therefore the routed checkpoint is a clean
-physical baseline for the pre-GP-fix netlist, not a 100-MHz timing sign-off;
-the next optimization pass must rerun implementation on the current RTL and
-target the post-route critical paths (LDLT border/PE wide arithmetic and
-fanout) while preserving the golden/TB contract.
+`logs/impl/v2/hardware_golden_post_gp_fix_impl/cgra_top_impl_routed.dcp`.
+Synthesis on the post-GP-fix RTL is **+0.526 ns WNS**, while post-route timing
+is **−2.205 ns WNS**, **−14,685.635 ns TNS**, and 13,548 setup-failing
+endpoints (hold WNS +0.032 ns, no hold failures). Thus the design is
+functionally/regression-clean but is not a 100-MHz timing sign-off. The
+previous `hardware_golden_impl_v2` result (−1.987 ns) is retained only as a
+historical baseline. The next optimization pass must target the post-route
+critical path (LDLT border/PE wide arithmetic and fanout) while preserving the
+golden/TB contract.
 
 Evolution of the configured full sweep:
 

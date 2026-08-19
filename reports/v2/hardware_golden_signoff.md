@@ -69,21 +69,22 @@ Run: `logs/synth/v2/hardware_golden_post_gp_fix_synth`
 
 ## Routed implementation
 
-Run: `logs/impl/v2/hardware_golden_impl_v2`
+Current run: `logs/impl/v2/hardware_golden_post_gp_fix_impl`
 
 - `route_design`: **completed successfully**.
-- Fully routed nets: `166,038`; routing errors: `0`; unrouted/partial nets: `0`.
+- Fully routed nets: `167,743`; routing errors: `0`; unrouted/partial nets: `0`.
 - Routed DCP: `cgra_top_impl_routed.dcp`.
-- Post-route WNS: **−1.987 ns**; TNS: **−13,467.581 ns**.
-- Setup failing endpoints: `13,915 / 162,749`.
-- Hold WNS: `+0.030 ns`; hold failing endpoints: `0`.
+- Post-route WNS: **−2.205 ns**; TNS: **−14,685.635 ns**.
+- Setup failing endpoints: `13,548`.
+- Hold WNS: `+0.032 ns`; hold failing endpoints: `0`.
 - Implementation timing therefore **does not meet 100 MHz** despite successful
   placement and routing. This is a timing-fail result, not a correctness fail.
-- Routed utilization report: `122,858` total LUTs (`121,157` logic LUTs,
-  `1,696` LUTRAM, `5` SRLs), `53,498` FFs, `24` RAMB36, `77` DSP48.
-- DRC: `0` errors; `1,919` warnings (mostly DSP pipelining and asynchronous
-  load checks: DPIP/DPOP/DPOR). These warnings are recorded for the next timing
-  optimization pass.
+- Routed utilization report: `124,657` total LUTs (`122,951` logic LUTs,
+  `1,700` LUTRAM, `6` SRLs), `53,495` FFs, `24` RAMB36, `77` DSP48.
+- DRC: `0` errors; implementation warnings are retained in the raw report.
+
+The previous `hardware_golden_impl_v2` run is retained as a historical
+pre-GP-fix baseline (WNS −1.987 ns), not the current result.
 
 ## Reproduction
 
@@ -92,7 +93,7 @@ python models/reference/hardware.py --check --c-output sw/v2/src/cscgra_k_sweep_
 python scripts/maintenance/check_sdk_tb_sync.py
 python scripts/maintenance/check_soc_c_syntax.py
 & .\scripts\run.ps1 -Flow synth -RtlVersion v2 -Top cgra_top -RunId hardware_golden_post_gp_fix_synth
-& .\scripts\run.ps1 -Flow impl -RtlVersion v2 -Top cgra_top -RunId hardware_golden_impl_v2
+& .\scripts\run.ps1 -Flow impl -RtlVersion v2 -Top cgra_top -RunId hardware_golden_post_gp_fix_impl
 ```
 
 The implementation result establishes a clean routed checkpoint and a precise
