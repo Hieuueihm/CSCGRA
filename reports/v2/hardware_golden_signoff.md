@@ -15,14 +15,19 @@ Clock constraint: 100 MHz (`10.000 ns`)
 - Layout validation, Python compilation, and `git diff --check`: **PASS**.
 - Regression sign-off: **348 PASS / 0 FAIL**, with the two intentional K16
   CoSaMP/SP capacity skips preserved in both TB and C runner.
+- Isolated canonical-GP audit: **8 PASS / 0 FAIL** after the GP line-search
+  divider was changed to signed Q16 truncation toward zero. The audit is
+  recorded in `logs/sim/v2/canonical_gp_audit_trunc`.
 - RTL is checked against the fixed-point hardware reference bit-for-bit. The
   independent canonical model remains an audit reference; it is not replaced
   by RTL-derived values.
 
 Known, documented hardware-vs-canonical deltas:
 
-- GP uses the implemented full-vector gradient/IHT-like hardware path rather
-  than textbook restricted-gradient line-search GP.
+- The default sign-off sweep uses the implemented full-vector gradient/IHT-like
+  GP path. A separate `TB_CANONICAL_GP` build selects the restricted-gradient
+  line-search GP path and now matches the fixed canonical GP exactly for all
+  eight audit cases.
 - K16 CoSaMP/SP use the implemented 16-entry hardware support capacity, so the
   canonical 2K support can be capped.
 - Fixed-point ordering and LDLT/factor-cache behavior can change HTP/GP support
@@ -32,6 +37,9 @@ Known, documented hardware-vs-canonical deltas:
 
 These are RTL simulation counts for the active hardware golden contract, not
 textbook algorithm runtime. K16 CoSaMP/SP are intentionally skipped.
+
+The full active regression was re-run after the GP divider fix and remains
+**348 PASS / 0 FAIL** in `logs/sim/v2/hwgold_post_gp_fix_full`.
 
 | Case | OMP | CoSaMP | IHT | HTP | SP | GP | GOMP | MP |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|

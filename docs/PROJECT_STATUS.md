@@ -37,6 +37,12 @@ SDK/TB contract check passes, and the corrected factor-cache model has a full
 valid regression result of **348 PASS / 0 FAIL** (the two K16 CoSaMP/SP skips
 remain intentional).
 
+The isolated canonical-GP build also passes **8/8** cases after the RTL GP
+line-search divider was aligned to signed Q16 truncation toward zero; the
+trace is retained in `logs/sim/v2/canonical_gp_audit_trunc`. The normal sweep
+continues to sign off the implemented hardware GP variant, while
+`TB_CANONICAL_GP` is the explicit canonical audit mode.
+
 The new implementation run is fully routed with zero routing errors and a
 reproducible checkpoint at
 `logs/impl/v2/hardware_golden_impl_v2/cgra_top_impl_routed.dcp`. Synthesis
