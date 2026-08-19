@@ -29,6 +29,8 @@ not synthesized.
 
 ## Other files
 
+- `run1/k_sweep_golden_hardware.vh`: active bit-exact RTL sign-off golden,
+  generated and checked by `models/reference/hardware.py`.
 - `run1/k_sweep_golden_mu3.vh`: legacy hardware-compatible baseline golden;
   it is not the canonical algorithm source.
 - `run1/k_sweep_golden_canonical.vh`: capacity-unlimited textbook reference;
@@ -44,13 +46,12 @@ not synthesized.
 Never change golden values merely to match a failing RTL candidate. Determine
 whether RTL, scheduling, or the test configuration is wrong first.
 
-The default `run_regression.ps1` now selects canonical fixed-point GP and
-compares algorithm 5 against `k_sweep_golden_canonical.vh`; the other
-algorithms continue to use the legacy golden until their RTL migrations are
-complete. `-CanonicalGolden` remains accepted as an explicit spelling. Use
-`-LegacyHardwareGolden` only to reproduce the historical dense-gradient GP
-baseline. CoSaMP/SP K16 remain deferred/skipped because the current 16-entry
-candidate/support capacity is intentionally unchanged.
+The default `run_regression.ps1` compares every valid algorithm against
+`k_sweep_golden_hardware.vh` with zero tolerance. `-CanonicalGolden` selects
+the canonical GP audit and `-CanonicalAll` selects the all-algorithm canonical
+audit. `-LegacyHardwareGolden` remains accepted only for command-line
+compatibility. CoSaMP/SP K16 remain deferred/skipped because the current
+16-entry candidate/support capacity is intentionally unchanged.
 
 Use `-CanonicalAll` for an audit-only comparison of every valid algorithm
 against the canonical include. The current audit passes OMP, IHT, HTP, SP,

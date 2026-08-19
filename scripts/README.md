@@ -8,8 +8,8 @@
 - `synth/run_ooc.ps1` and `synth/run_ooc.tcl`: 100 MHz OOC synthesis,
   utilization, and timing reporting.
 - `maintenance/check_layout.ps1`: repository layout checks.
-- `python models/golden/generate_k_sweep_golden.py --check`: verifies the
-  v2 hardware-compatible sign-off golden and its repository-relative input.
+- `python models/reference/hardware.py --check`: recomputes and verifies the
+  active bit-exact v2 hardware sign-off golden.
 - `python models/golden/generate_canonical_k_sweep.py --check`: verifies the
   independent capacity-unlimited textbook reference.
 - `maintenance/compare_regression.ps1`: compares measured regression records.

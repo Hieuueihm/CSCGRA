@@ -59,10 +59,9 @@ integer profile_uop_cycles [0:15];
 integer profile_wide_cycles [0:15];
 reg done_seen, error_seen;
 
-// The legacy fixed-point golden remains available for algorithms that have
-// not migrated.  GP uses the independent canonical fixed-point reference by
-// default; define TB_LEGACY_GP to reproduce the historical GP baseline.
-`include "k_sweep_golden_mu3.vh"
+// The default sign-off golden is generated only by
+// models/reference/hardware.py. Canonical mode remains an explicit audit.
+`include "k_sweep_golden_hardware.vh"
 `ifdef TB_CANONICAL_GP
 `include "k_sweep_golden_canonical.vh"
 `endif
@@ -76,9 +75,9 @@ begin
     if (alg_id == ALG_5)
         expected_x_final = kscanon_x_final(case_id, alg_id, elem_id);
     else
-        expected_x_final = ksgold_x_final(case_id, alg_id, elem_id);
+        expected_x_final = hwgold_x_final(case_id, alg_id, elem_id);
 `else
-    expected_x_final = ksgold_x_final(case_id, alg_id, elem_id);
+    expected_x_final = hwgold_x_final(case_id, alg_id, elem_id);
 `endif
 end
 endfunction
@@ -226,7 +225,7 @@ task reset_dut; begin rst_n=0; s_axi_awaddr=0; s_axi_awvalid=0; s_axi_wdata=0; s
 
 task init_ddr; input integer m; input integer n; begin
     for(i=0;i<256;i=i+1) begin
-        ddr_y[i]=(i<m) ? ksgold_y(i) : 0;
+        ddr_y[i]=(i<m) ? hwgold_y(i) : 0;
         ddr_x[i]=0;
     end
 end endtask
@@ -238,8 +237,8 @@ task run_alg_case_iter; input integer alg_id; input integer m; input integer n; 
     check("program_len_fits_ctx", plen < CTX_LIMIT);
     if((alg_id==ALG_COSAMP)||(alg_id==ALG_SP)||(alg_id==ALG_IHT)||(alg_id==ALG_HTP)||(alg_id==ALG_5)) check("cf_loop_present", ctx_loop_count > 0);
     axi_write(REG_M_SIZE,m); axi_write(REG_N_SIZE,n); axi_write(REG_K_PARAM,k);
-    axi_write(REG_Y_DDR,DDR_Y_BASE); axi_write(REG_X_DDR,DDR_X_BASE); axi_write(REG_SEED,ksgold_case_seed(case_idx)); axi_write(REG_PHI_SCALE,ksgold_case_scale(case_idx));
-    axi_write(REG_FLAGS,{28'd0,ksgold_case_phi_kind(case_idx),1'b0,1'b0}); axi_write(REG_MU_SHIFT,32'd3); axi_write(REG_MAX_ITER,iter_count); axi_write(REG_PROG_BASE,0); axi_write(REG_PROG_LEN,plen);
+    axi_write(REG_Y_DDR,DDR_Y_BASE); axi_write(REG_X_DDR,DDR_X_BASE); axi_write(REG_SEED,hwgold_case_seed(case_idx)); axi_write(REG_PHI_SCALE,hwgold_case_scale(case_idx));
+    axi_write(REG_FLAGS,{28'd0,hwgold_case_phi_kind(case_idx),1'b0,1'b0}); axi_write(REG_MU_SHIFT,32'd3); axi_write(REG_MAX_ITER,iter_count); axi_write(REG_PROG_BASE,0); axi_write(REG_PROG_LEN,plen);
     profile_reset();
     axi_write(REG_CTRL,1);
     done_seen=0; error_seen=0; timeout=0; while(!done_seen && !error_seen && timeout<50000000) begin timeout=timeout+1; tick(); if(irq_done) done_seen=1; if(irq_error) error_seen=1; end
@@ -401,9 +400,9 @@ initial begin
     reset_dut();
     $display("tb_soc_program_k_sweep CASES: 0=(64,256,16) 1=(64,256,8) 2=(64,256,4) 3=(32,128,8) 4=(32,128,4) 5=(32,128,2) 6=(16,64,4) 7=(16,64,2)");
     for(case_idx=start_case; case_idx<=end_case; case_idx=case_idx+1) begin
-        case_m = ksgold_case_m(case_idx);
-        case_n = ksgold_case_n(case_idx);
-        case_k = ksgold_case_k(case_idx);
+        case_m = hwgold_case_m(case_idx);
+        case_n = hwgold_case_n(case_idx);
+        case_k = hwgold_case_k(case_idx);
         $display("RUN_CASE case=%0d m=%0d n=%0d k=%0d", case_idx, case_m, case_n, case_k);
         for(alg=start_alg; alg<=end_alg; alg=alg+1) run_alg_case(alg, case_m, case_n, case_k);
     end

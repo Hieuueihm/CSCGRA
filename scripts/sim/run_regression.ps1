@@ -76,7 +76,8 @@ $metadata = [ordered]@{
     algorithms = @($Algorithms)
     profile_states = $ProfileStates.IsPresent
     phase_trace = $PhaseTrace.IsPresent
-    canonical_golden = (!$LegacyHardwareGolden.IsPresent)
+    hardware_golden = (!$CanonicalGolden.IsPresent -and !$CanonicalAll.IsPresent)
+    canonical_golden = ($CanonicalGolden.IsPresent -or $CanonicalAll.IsPresent)
     canonical_all = $CanonicalAll.IsPresent
     started_at = (Get-Date).ToString("o")
     work_dir = $workDir
@@ -94,7 +95,7 @@ try {
     if ($PhaseTrace) {
         $xvlogArgs += @("-d", "TB_PHASE_TRACE")
     }
-    if (!$LegacyHardwareGolden -or $CanonicalAll) {
+    if ($CanonicalGolden -or $CanonicalAll) {
         $xvlogArgs += @("-d", "TB_CANONICAL_GP")
     }
     if ($CanonicalAll) {

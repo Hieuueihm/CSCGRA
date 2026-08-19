@@ -45,19 +45,21 @@ Hashes:
 - golden_cases_array.vh SHA256: `CFBC7E19246752487B7F9F701211EE6D55CD45969F3F93D34A3BBE6FD5B97FC5`
 - generated include hashes are recorded under `generated_sha256` in `manifest.json`.
 
-## Canonical K-sweep generator
+## Active hardware K-sweep generator
 
-`generate_k_sweep_golden.py` is the reproducible generator for
-`verification/v2/run1/k_sweep_golden_mu3.vh`. It reads the frozen reference
-from this directory and has no dependency on Vivado workspaces.
+`models/reference/hardware.py` is the sole generator for the active RTL
+sign-off include, `verification/v2/run1/k_sweep_golden_hardware.vh`. It reads
+only the frozen input data from `golden_cases.vh`; all algorithm, fixed-point,
+LDLT, quantisation, factor-reuse, generation, and consistency-check behavior
+is implemented in that one Python source.
 
 The `float_vs_fixed` report is a checked-in numerical analysis of the frozen
 reference. Older per-iteration simulator runners and their summaries are kept
 under `scripts/legacy/v2/legacy_cross_project` as provenance only.
 
 ```powershell
-python models/golden/generate_k_sweep_golden.py --check
-python models/golden/generate_k_sweep_golden.py
+python models/reference/hardware.py --check
+python models/reference/hardware.py
 python models/golden/generate_canonical_k_sweep.py --check
 python models/golden/generate_canonical_k_sweep.py
 python models/golden/audit_algorithm_semantics.py --output models/golden/canonical_audit.md
@@ -67,20 +69,20 @@ For RTL phase bring-up, add `-PhaseTrace` to `scripts/sim/run_regression.ps1`.
 It emits controller/PE `PHASE_TOPK` and `PHASE_LS_DONE` records without
 changing the normal regression or golden data.
 
-The first command verifies the checked-in v2 include without changing it. The
-second regenerates it intentionally.
+The first command recomputes and verifies the checked-in hardware include
+without changing it. The second regenerates it intentionally. The active
+hardware golden uses zero tolerance, so every checked coefficient must match
+the Python hardware contract bit-for-bit.
 
 Rules:
 - Treat these files as read-only golden references.
-- Canonical flow is algorithm → `canonical_fixed.py` → generated golden → RTL.
-  Do not regenerate/modify the golden to fit RTL failures.
-- Migration flow is canonical → `abstract_rtl.py` → phase trace comparison →
-  real RTL. The abstract model must remain exact before RTL changes begin.
-- Hardware-aware migration is canonical phase intent →
-  `models/reference/hardware.py` → RTL phase trace. LDLT and quantisation are
-  explicit in that one hardware source; there is no separate bridge model.
+- Reference flow is `models/reference/canonical.py` →
+  `models/reference/hardware.py` → generated hardware golden → RTL. Do not
+  modify the hardware model merely to hide an RTL failure.
+- LDLT, quantisation, fixed-width arithmetic, and hardware factor-cache
+  behavior are explicit in `hardware.py`; there is no separate bridge model.
 - OMP regression uses slow/reference context flow unless explicitly testing fast mode separately.
 - The canonical audit is diagnostic for algorithms not yet migrated.
-- `verification/v2/run1/k_sweep_golden_canonical.vh` is the canonical reference
-  for GP. `k_sweep_golden_mu3.vh` is retained only as a legacy baseline for the
-  remaining un-migrated algorithms.
+- `verification/v2/run1/k_sweep_golden_hardware.vh` is the default RTL sign-off
+  include. `k_sweep_golden_canonical.vh` is an optional algorithm audit, and
+  `k_sweep_golden_mu3.vh` is retained only as a legacy baseline.
