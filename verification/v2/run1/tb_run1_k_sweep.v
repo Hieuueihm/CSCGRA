@@ -66,6 +66,16 @@ reg done_seen, error_seen;
 `include "k_sweep_golden_canonical.vh"
 `endif
 
+// Canonical references intentionally allow the fixed-point tolerance emitted
+// by the canonical generator.  The hardware sign-off contract remains exact.
+`ifdef TB_CANONICAL_ALL
+localparam integer ACTIVE_GOLD_TOL = KSCANON_GOLD_TOL;
+`elsif TB_CANONICAL_GP
+localparam integer ACTIVE_GOLD_TOL = KSCANON_GOLD_TOL;
+`else
+localparam integer ACTIVE_GOLD_TOL = KSWEEP_GOLD_TOL;
+`endif
+
 function [23:0] expected_x_final;
 input integer case_id; input integer alg_id; input integer elem_id;
 begin
@@ -249,7 +259,7 @@ task run_alg_case_iter; input integer alg_id; input integer m; input integer n; 
     for(i=0;i<n;i=i+1) begin
         got=ddr_x[i][23:0];
         if(got != 24'd0) nz_count=nz_count+1;
-        if(!absdiff_le(got,expected_x_final(case_idx,alg_id,i),KSWEEP_GOLD_TOL)) begin
+        if(!absdiff_le(got,expected_x_final(case_idx,alg_id,i),ACTIVE_GOLD_TOL)) begin
             if(mismatch_prints < 8) begin
                 $display("X_MISM case=%0d alg=%0d iter=%0d i=%0d got=%h exp=%h", case_idx, alg_id, iter_count, i, got, expected_x_final(case_idx,alg_id,i));
                 mismatch_prints=mismatch_prints+1;

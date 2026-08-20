@@ -9,22 +9,23 @@ Public/paper scope: `rtl/v2` is the only active architecture line. The frozen
 v1 source is archived under `archive/v1`; no new optimization or release
 result should depend on it.
 
-## 1. Current signed-off checkpoint
+## 1. Current functional/timing checkpoint
 
 | Item | Current value |
 |---|---:|
 | RTL branch | `codex/strict-pe0-timing` |
-| RTL sign-off commit | `88f9411` |
+| RTL functional checkpoint | `8f007e8` |
 | Target | `xczu7ev-ffvc1156-2-e`, 100 MHz |
 | Full K-sweep | 348 PASS / 0 FAIL |
 | Measured rows | 62 |
 | Expected skips | CoSaMP and SP at K16 |
-| Full-sweep cycles | 1,313,368 |
-| K8 cycles | 374,962 |
-| WNS / TNS | +0.850 ns / 0 ns |
-| LUT / FF | 121,359 / 53,281 |
-| LUTRAM / SRL | 2,144 / 6 |
-| RAMB36 / DSP | 24 / 71 |
+| Full-sweep cycles | 1,316,892 |
+| K8 cycles | 376,116 |
+| OOC WNS | +0.611 ns |
+| Routed WNS / TNS | −0.529 ns / −464.798 ns |
+| Routed LUT / FF | 117,590 / 53,686 |
+| Routed LUTRAM / SRL | 1,696 / 4 |
+| RAMB36 / DSP | 24 / 77 |
 
 The current complete matrix is
 `reports/releases/topk_append_ack_chain_k_sweep_20260817.csv`.

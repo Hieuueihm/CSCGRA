@@ -2,8 +2,9 @@
 
 Inputs: seed=17, phi_scale_q=0x004000, Q=16, GP/LS variants explicit.
 
-This historical report compares final nonzero support only; it does not
-rewrite the canonical GP golden or the legacy baselines.
+This report compares final nonzero support only; it does not rewrite the active
+golden.  Direct RTL canonical checks use the tolerance emitted by the canonical
+include; the active hardware sign-off remains exact.
 
 | case | algorithm | RTL nnz | canonical nnz | overlap | Jaccard |
 |---:|---|---:|---:|---:|---:|
