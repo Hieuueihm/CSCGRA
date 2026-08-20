@@ -35,8 +35,21 @@ require("KSGOLD_CASE_COUNT 8U" in h and "KSGOLD_ALG_COUNT 8U" in h, "C header di
 
 case_text = "m64n256k16, m64n256k8, m64n256k4, m32n128k8, m32n128k4, m32n128k2, m16n64k4, m16n64k2"
 require(case_text in c, "C runner case list is stale")
-for token in ("SOP_REFINE_SPARSE", "SOP_CORR_UPDATE", "SOP_PRUNE_X", "SOP_RESID", "SOP_MP_UPDATE"):
+for token in (
+    "SOP_REFINE_SPARSE", "SOP_CORR_UPDATE", "SOP_PRUNE_X", "SOP_RESID",
+    "SOP_MP_UPDATE", "SOP_GP_PROJECT", "SOP_GP_UPDATE",
+):
     require(token in c, f"C runner missing {token}")
+require(
+    "case ALG_GP:" in c and "sparse_op_ctx(SOP_GP_PROJECT" in c
+    and "sparse_op_ctx(SOP_GP_UPDATE" in c,
+    "C runner GP is not the canonical-derived hardware program",
+)
+require(
+    "ALG_5: begin" in tb and "sparse_op_ctx(SOP_GP_PROJECT" in tb
+    and "sparse_op_ctx(SOP_GP_UPDATE" in tb,
+    "TB GP is not the canonical-derived hardware program",
+)
 
 sv_alg = re.search(r"ALG_OMP=0, ALG_COSAMP=1, ALG_IHT=2, ALG_HTP=3, ALG_SP=4, ALG_5=5, ALG_6=6, ALG_MP=7", tb)
 require(sv_alg is not None, "TB algorithm map changed")

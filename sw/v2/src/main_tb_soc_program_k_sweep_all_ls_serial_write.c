@@ -54,6 +54,8 @@
 #define SOP_REFINE_SPARSE   0x86U
 #define SOP_GRAD_STEP       0x87U
 #define SOP_CORR_UPDATE     0x88U
+#define SOP_GP_PROJECT      0x89U
+#define SOP_GP_UPDATE       0x8AU
 
 #define ALG_OMP     0U
 #define ALG_COSAMP  1U
@@ -370,11 +372,9 @@ static uint32_t build_program(uint32_t alg, uint32_t iter_count)
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_REFINE, 0));
         break;
     case ALG_GP:
-        cgra_write_ctx(pc++, candidate_meta_depth_ctx(1U, 0U, 0));
-        cgra_write_ctx(pc++, post_update_x_topk_ctx(1U, (uint8_t)iter_count, 0));
-        cgra_write_ctx(pc++, sparse_op_ctx(SOP_CORR_UPDATE, 0));
-        cgra_write_ctx(pc++, candidate_copy_to_p0_ctx(1U, 0));
-        cgra_write_ctx(pc++, sparse_op_ctx(SOP_PRUNE_X, 0));
+        emit_select_append(&pc);
+        cgra_write_ctx(pc++, sparse_op_ctx(SOP_GP_PROJECT, 0));
+        cgra_write_ctx(pc++, sparse_op_ctx(SOP_GP_UPDATE, 0));
         cgra_write_ctx(pc++, sparse_op_ctx(SOP_RESID, 0));
         break;
     case ALG_GOMP:

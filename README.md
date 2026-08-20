@@ -8,16 +8,20 @@ snapshot:
 - `archive/v1/rtl`: frozen provenance baseline; it is not part of the paper's
   active design or canonical optimization flow.
 
-## Current signed-off RTL v2
+## Current RTL v2 validation state
 
-The current RTL checkpoint is `88f9411` on
-`codex/strict-pe0-timing`:
+The active correctness contract is:
 
-- full K-sweep: 348 PASS / 0 FAIL, with two expected K16 capacity skips;
-- 62 measured algorithm/case rows and 1,313,368 total cycles;
-- K8 total: 374,962 cycles;
-- 100 MHz OOC: WNS +0.850 ns, TNS 0;
-- 121,359 LUT, 53,281 FF, 24 RAMB36, and 71 DSP.
+```text
+canonical Python -> hardware Python (Q16/LDLT) -> exact RTL golden -> RTL v2
+```
+
+The current working checkpoint passes 348 checks with 0 failures; CoSaMP and
+SP at K16 are explicit capacity exclusions. OOC synthesis passes at +0.374 ns,
+but routed WNS is -0.356 ns, so it is not yet the 100 MHz timing sign-off.
+See [docs/REFERENCE_FLOW.md](docs/REFERENCE_FLOW.md) for the ownership rules and
+[reports/v2/reference_contract_signoff_20260820.md](reports/v2/reference_contract_signoff_20260820.md)
+for exact correctness, cycle, resource, and routed-timing evidence.
 
 Start with [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for the complete
 implemented-optimization inventory, rejected-trial list, ownership map, and

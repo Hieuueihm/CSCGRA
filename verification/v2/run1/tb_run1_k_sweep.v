@@ -210,18 +210,14 @@ task build_program; input integer alg_id; input integer k_param; output integer 
     ALG_HTP: begin write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,post_update_x_topk_ctx(k_param,1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
     ALG_SP: begin write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,stream_topk_ctx(k_param,1,0,0,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc,candidate_select_path_ctx(1,0)); pc=pc+1; write_ctx(pc,candidate_merge_path_ctx(0,0)); pc=pc+1; write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,post_refine_support_topk_ctx(k_param,1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
     ALG_5: begin
-`ifdef TB_CANONICAL_GP
-        // Canonical GP: select a fresh correlation atom, project the
-        // restricted gradient through all four PE rows, then line-search and
-        // update x before rebuilding the residual.
+        // GP is always the canonical-derived hardware path: select a fresh
+        // atom, project the restricted gradient through all four PE rows,
+        // line-search, update x, then rebuild the residual.
         write_ctx(pc,stream_topk_ctx(1,0,1,0,0)); pc=pc+1;
         write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1;
         write_ctx(pc,sparse_op_ctx(SOP_GP_PROJECT,0)); pc=pc+1;
         write_ctx(pc,sparse_op_ctx(SOP_GP_UPDATE,0)); pc=pc+1;
         write_ctx(pc,sparse_op_ctx(SOP_RESID,0)); pc=pc+1;
-`else
-        write_ctx(pc,candidate_meta_depth_ctx(1,0,0)); pc=pc+1; write_ctx(pc,post_update_x_topk_ctx(k_param,1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR_UPDATE,0)); pc=pc+1; write_ctx(pc,candidate_copy_to_p0_ctx(1,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_PRUNE_X,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_RESID,0)); pc=pc+1;
-`endif
     end
     ALG_6: begin write_ctx(pc,stream_topk_ctx(2,0,1,0,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_CORR,0)); pc=pc+1; write_ctx(pc,sparse_op_ctx(SOP_REFINE,0)); pc=pc+1; end
     ALG_MP: begin emit_mp_select_append(pc); write_ctx(pc,sparse_op_ctx(SOP_MP_UPDATE,0)); pc=pc+1; end

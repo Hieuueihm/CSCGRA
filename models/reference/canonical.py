@@ -221,8 +221,8 @@ def gradient_pursuit(a: Matrix, y: Vector, k: int) -> Trace:
 
     This is deliberately distinct from IHT/HTP: the update direction is the
     restricted gradient on the active support and the step is chosen by a
-    residual line search.  It follows the Gradient Pursuits family rather than
-    the RTL's current full-vector ``x += (A^T r >>> mu_shift)`` shortcut.
+    residual line search. It is deliberately independent of the fixed-point
+    realization and RTL schedule.
     """
 
     x = [0.0] * len(a[0])

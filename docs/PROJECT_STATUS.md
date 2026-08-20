@@ -14,51 +14,55 @@ result should depend on it.
 | Item | Current value |
 |---|---:|
 | RTL branch | `codex/strict-pe0-timing` |
-| RTL functional checkpoint | `8f007e8` |
+| Validation base commit | `5734bda` plus reviewed working-tree candidate |
 | Target | `xczu7ev-ffvc1156-2-e`, 100 MHz |
 | Full K-sweep | 348 PASS / 0 FAIL |
 | Measured rows | 62 |
 | Expected skips | CoSaMP and SP at K16 |
-| Full-sweep cycles | 1,316,892 |
-| K8 cycles | 376,116 |
-| OOC WNS | +0.611 ns |
-| Routed WNS / TNS | −0.529 ns / −464.798 ns |
-| Routed LUT / FF | 117,590 / 53,686 |
-| Routed LUTRAM / SRL | 1,696 / 4 |
+| Full-sweep cycles | 1,360,052 |
+| K8 cycles (case 1 + case 3) | 602,382 |
+| OOC WNS | +0.374 ns |
+| Routed WNS / TNS | −0.356 ns / −210.368 ns |
+| Routed setup failing endpoints | 1,768 |
+| Routed hold WNS | +0.034 ns |
+| Routed LUT / FF | 122,321 / 53,641 |
+| Routed LUTRAM / SRL | 1,696 / 7 |
 | RAMB36 / DSP | 24 / 77 |
 
-The current complete matrix is
-`reports/releases/topk_append_ack_chain_k_sweep_20260817.csv`.
+The current reviewed evidence is
+`reports/v2/reference_contract_signoff_20260820.md`. The older release matrix
+remains historical because GP now follows canonical restricted-gradient
+projection rather than the previous IHT-like substitute.
+
+The normative source-ownership and validation gates are defined in
+`docs/REFERENCE_FLOW.md`.
 
 ### Hardware-golden verification and routed baseline (2026-08-20)
 
-`models/reference/hardware.py` is now the single generator/checker for both
+`models/reference/canonical.py` is the independent mathematical source and
+`models/reference/hardware.py` is the single generator/checker for both
 the active Verilog golden and `sw/v2/src/cscgra_k_sweep_golden.h`. The static
 SDK/TB contract check passes, and the corrected factor-cache model has a full
 valid regression result of **348 PASS / 0 FAIL** (the two K16 CoSaMP/SP skips
 remain intentional).
 
-The isolated canonical-GP build also passes **8/8** cases after the RTL GP
-line-search divider was aligned to signed Q16 truncation toward zero; the
-trace is retained in `logs/sim/v2/canonical_gp_audit_trunc`. The normal sweep
-continues to sign off the implemented hardware GP variant, while
-`TB_CANONICAL_GP` is the explicit canonical audit mode.
+GP now uses the canonical restricted-gradient/projected-line-search sequence
+in the hardware model, default Verilog test program, C test program and RTL.
+The fixed-Q16 conversion matches its canonical conversion in all 8 cases, and
+the default exact RTL sweep passes all 8 GP cases.
 
 The two V2 SoC C runners now have a reproducible host syntax checker at
 `scripts/maintenance/check_soc_c_syntax.py`; it uses temporary SDK stubs and
 does not claim a native Vitis/ARM link.
 
-The current implementation run is fully routed with zero routing errors and a
-reproducible checkpoint at
-`logs/impl/v2/hardware_golden_post_gp_fix_impl/cgra_top_impl_routed.dcp`.
-Synthesis on the post-GP-fix RTL is **+0.526 ns WNS**, while post-route timing
-is **−2.205 ns WNS**, **−14,685.635 ns TNS**, and 13,548 setup-failing
-endpoints (hold WNS +0.032 ns, no hold failures). Thus the design is
-functionally/regression-clean but is not a 100-MHz timing sign-off. The
-previous `hardware_golden_impl_v2` result (−1.987 ns) is retained only as a
-historical baseline. The next optimization pass must target the post-route
-critical path (LDLT border/PE wide arithmetic and fanout) while preserving the
-golden/TB contract.
+The current implementation run is fully routed with zero routing errors at
+`logs/impl/v2/ref_contract_impl`. OOC synthesis is **+0.374 ns WNS**; routed
+timing is **−0.356 ns WNS**, **−210.368 ns TNS**, 1,768 setup-failing
+endpoints, and +0.034 ns hold WNS. The RHS input isolation improved the prior
+routed baseline but did not reach the +0.2 ns project gate. The new worst path
+is controller state -> residual stage-2, with related endpoints in PE
+accumulators. The next pass must isolate that boundary and reduce fanout and
+route congestion without modifying canonical or hardware-golden semantics.
 
 Evolution of the configured full sweep:
 

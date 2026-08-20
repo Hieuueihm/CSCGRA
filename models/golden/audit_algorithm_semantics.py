@@ -1,4 +1,4 @@
-"""Compare the RTL-compatible K-sweep reference with canonical algorithms.
+"""Compare the hardware Python reference with canonical algorithms.
 
 This is intentionally an audit tool. It does not rewrite any golden file and
 it does not declare a mismatch to be an RTL failure: fixed-point arithmetic,
@@ -13,23 +13,19 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "reference"))
-from canonical import run_all
-import generate_k_sweep_golden as hw
+import canonical
+import hardware
 
 
-Q = 16
+Q = hardware.Q
 
 
 def active_cases() -> list[tuple[int, int, int]]:
-    return list(hw.CASES)
+    return list(hardware.CASES)
 
 
 def load_y() -> tuple[int, int, list[int]]:
-    text = hw.IMMUTABLE.read_text(errors="ignore")
-    y_map = hw.parse_hex_func(text, "gold_y")
-    seed = hw.parse_int_func(text, "gold_case_seed").get(0, 17)
-    scale_q = hw.parse_hex_func(text, "gold_case_scale").get(0, 0x4000)
-    y = [hw.s24(y_map.get(idx, 0)) for idx in range(64)]
+    seed, scale_q, _phi_kind, y = hardware.load_frozen_inputs()
     return seed, scale_q, y
 
 
@@ -38,7 +34,7 @@ def support_of(x: list[float], eps: float = 1.0e-12) -> set[int]:
 
 
 def q_to_float(values: list[int]) -> list[float]:
-    return [hw.s24(value) / float(1 << Q) for value in values]
+    return [hardware.s24(value) / float(1 << Q) for value in values]
 
 
 def matrix_to_float(phi: list[list[int]]) -> list[list[float]]:
@@ -57,24 +53,26 @@ def row(case_idx: int, name: str, hw_x: list[int], canonical_x: list[float]) -> 
 def audit() -> str:
     seed, scale_q, y64 = load_y()
     lines = [
-        "# Canonical versus RTL-compatible golden audit",
+        "# Canonical versus hardware-Python audit",
         "",
         f"Inputs: seed={seed}, phi_scale_q=0x{scale_q:06X}, Q={Q}, GP/LS variants explicit.",
         "",
         "This report compares final nonzero support only; it does not rewrite the active golden.",
         "",
-        "| case | algorithm | RTL nnz | canonical nnz | overlap | Jaccard |",
+        "| case | algorithm | hardware nnz | canonical nnz | overlap | Jaccard |",
         "|---:|---|---:|---:|---:|---:|",
     ]
     for case_idx, (m_size, n_size, k_size) in enumerate(active_cases()):
-        phi_q = hw.make_phi(m_size, n_size, seed, scale_q)
+        phi_q = hardware.make_phi(m_size, n_size, seed, scale_q)
         y_q = y64[:m_size]
         phi = matrix_to_float(phi_q)
         y = q_to_float(y_q)
-        canonical = run_all(phi, y, k_size, iht_step=1.0 / (1 << hw.MU_SHIFT))
-        for alg_idx, name in enumerate(hw.TB_ALG_NAMES):
-            fixed_x = hw.run_reference_alg(alg_idx, phi_q, y_q, n_size, k_size, scale_q)
-            lines.append(row(case_idx, name, fixed_x, canonical[name].x))
+        canonical_results = canonical.run_all(
+            phi, y, k_size, iht_step=1.0 / (1 << hardware.MU_SHIFT)
+        )
+        for name in hardware.ALGORITHM_NAMES:
+            fixed_x = hardware.run(name, phi_q, y_q, k_size).x
+            lines.append(row(case_idx, name, fixed_x, canonical_results[name].x))
     return "\n".join(lines) + "\n"
 
 
@@ -84,7 +82,7 @@ def main() -> None:
     args = parser.parse_args()
     report = audit()
     if args.output:
-        output = args.output if args.output.is_absolute() else hw.ROOT / args.output
+        output = args.output if args.output.is_absolute() else hardware.ROOT / args.output
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(report, newline="\n")
         print(output)

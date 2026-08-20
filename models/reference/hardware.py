@@ -16,6 +16,7 @@ import re
 from typing import Sequence
 
 Q = 16
+MU_SHIFT = 3
 DATA_W = 24
 DATA_MASK = (1 << DATA_W) - 1
 MIN_S24 = -(1 << (DATA_W - 1))
@@ -38,6 +39,20 @@ CASES = [
     (16, 64, 2),
 ]
 ALGORITHM_NAMES = ["OMP", "CoSaMP", "IHT", "HTP", "SP", "GP", "GOMP", "MP"]
+
+# This table is reviewed from canonical.py toward hardware.py.  It is not
+# inferred from RTL behavior.  A semantic variant must remain visible here
+# until it is either migrated or renamed.
+HARDWARE_TRANSFORM = {
+    "OMP": "Q16 arithmetic; normal equations solved by regularized LDLT",
+    "CoSaMP": "Q16/LDLT; merged support capped at MAX_SUPPORT",
+    "IHT": "Q16 arithmetic; mu implemented as arithmetic shift by MU_SHIFT",
+    "HTP": "Q16 shifted proxy; regularized LDLT on selected support",
+    "SP": "Q16/LDLT; merged support capped at MAX_SUPPORT",
+    "GP": "restricted Q16 gradient with projected residual line search",
+    "GOMP": "two atoms per iteration; Q16/LDLT",
+    "MP": "Q16 normalized rank-one projection with incremental residual",
+}
 
 
 def s24(value: int) -> int:
@@ -81,6 +96,15 @@ def _div_round(num: int, den: int) -> int:
     quotient, remainder = divmod(abs(num), abs(den))
     if (remainder << 1) >= abs(den):
         quotient += 1
+    return -quotient if (num < 0) ^ (den < 0) else quotient
+
+
+def _div_trunc(num: int, den: int) -> int:
+    """Signed division truncated toward zero for the GP line search."""
+
+    if den == 0:
+        return 0
+    quotient = abs(num) // abs(den)
     return -quotient if (num < 0) ^ (den < 0) else quotient
 
 
@@ -316,7 +340,7 @@ def _gomp(phi: list[list[int]], y: Sequence[int], k: int) -> HardwareTrace:
 
 
 def _gradient_update(phi: list[list[int]], y: Sequence[int], k: int) -> HardwareTrace:
-    """Hardware gradient path: Q16 correlation followed by ``>>>3`` update."""
+    """Hardware IHT path: Q16 correlation followed by ``>>>3`` update."""
 
     x = [0] * len(phi[0]); residual = [s24(value) for value in y]
     support: list[int] = []; history: list[tuple[list[int], list[int], list[int]]] = []
@@ -326,6 +350,36 @@ def _gradient_update(phi: list[list[int]], y: Sequence[int], k: int) -> Hardware
         support = _threshold(x, k)
         keep = set(support)
         x = [x[i] if i in keep else 0 for i in range(len(x))]
+        residual = _residual(phi, y, x)
+        history.append((list(support), list(x), list(residual)))
+    return HardwareTrace(x, residual, support, history)
+
+
+def _gradient_pursuit(phi: list[list[int]], y: Sequence[int], k: int) -> HardwareTrace:
+    """Canonical GP converted to the fixed Q16 hardware arithmetic contract."""
+
+    n_size = len(phi[0])
+    x = [0] * n_size
+    residual = [s24(value) for value in y]
+    support: list[int] = []
+    history: list[tuple[list[int], list[int], list[int]]] = []
+    for _ in range(k):
+        gradient = _corr(phi, residual)
+        support.append(_argmax_abs(gradient, set(support)))
+        support_set = set(support)
+        direction = [gradient[idx] if idx in support_set else 0 for idx in range(n_size)]
+        projected = _matvec(phi, direction)
+        numerator = sum(
+            s24(residual[row]) * s24(projected[row]) for row in range(len(phi))
+        )
+        denominator = sum(
+            s24(projected[row]) * s24(projected[row]) for row in range(len(phi))
+        )
+        alpha_q = _div_trunc(numerator << Q, denominator)
+        x = [
+            sat_s24(x[idx] + ((direction[idx] * alpha_q) >> Q))
+            for idx in range(n_size)
+        ]
         residual = _residual(phi, y, x)
         history.append((list(support), list(x), list(residual)))
     return HardwareTrace(x, residual, support, history)
@@ -368,8 +422,10 @@ def run(algorithm: str, phi: list[list[int]], y: Sequence[int], k: int) -> Hardw
     }
     if algorithm in runners:
         return runners[algorithm](phi, y, k)
-    if algorithm in {"IHT", "GP"}:
+    if algorithm == "IHT":
         return _gradient_update(phi, y, k)
+    if algorithm == "GP":
+        return _gradient_pursuit(phi, y, k)
     if algorithm == "MP":
         return _mp(phi, y, k)
     raise ValueError(f"unsupported hardware algorithm: {algorithm}")
@@ -405,6 +461,18 @@ def _hex24(value: int) -> str:
     return f"24'h{value & DATA_MASK:06X}"
 
 
+def load_frozen_inputs() -> tuple[int, int, int, list[int]]:
+    """Load input data only; no algorithm result is read from the frozen file."""
+
+    frozen = IMMUTABLE_INPUT.read_text(errors="ignore")
+    y_function = _parse_hex_function(frozen, "gold_y")
+    seed = _parse_int_function(frozen, "gold_case_seed").get(0, 17)
+    scale_q = _parse_hex_function(frozen, "gold_case_scale").get(0, 0x4000)
+    phi_kind = _parse_hex_function(frozen, "gold_case_phi_kind").get(0, 0)
+    y64 = [s24(y_function.get(index, 0)) for index in range(64)]
+    return seed, scale_q, phi_kind, y64
+
+
 def _emit_int_function(lines: list[str], name: str, values: Sequence[int], default: int = 0) -> None:
     lines.append(f"function integer {name};")
     lines.append("input integer case_idx; begin case(case_idx)")
@@ -416,12 +484,7 @@ def _emit_int_function(lines: list[str], name: str, values: Sequence[int], defau
 def generate_golden(output_path: Path = DEFAULT_GOLDEN) -> str:
     """Generate the sole hardware RTL golden from this implementation."""
 
-    frozen = IMMUTABLE_INPUT.read_text(errors="ignore")
-    y_function = _parse_hex_function(frozen, "gold_y")
-    seed = _parse_int_function(frozen, "gold_case_seed").get(0, 17)
-    scale_q = _parse_hex_function(frozen, "gold_case_scale").get(0, 0x4000)
-    phi_kind = _parse_hex_function(frozen, "gold_case_phi_kind").get(0, 0)
-    y64 = [s24(y_function.get(index, 0)) for index in range(64)]
+    seed, scale_q, phi_kind, y64 = load_frozen_inputs()
 
     lines = [
         "// Auto-generated only by models/reference/hardware.py",
@@ -478,12 +541,8 @@ def generate_golden(output_path: Path = DEFAULT_GOLDEN) -> str:
 def generate_c_header(output_path: Path = DEFAULT_C_GOLDEN) -> str:
     """Generate the SoC C runner's constants from the same hardware model."""
 
-    frozen = IMMUTABLE_INPUT.read_text(errors="ignore")
-    y_function = _parse_hex_function(frozen, "gold_y")
-    seed = _parse_int_function(frozen, "gold_case_seed").get(0, 17)
-    scale_q = _parse_hex_function(frozen, "gold_case_scale").get(0, 0x4000)
-    phi_kind = _parse_hex_function(frozen, "gold_case_phi_kind").get(0, 0)
-    y64 = [s24(y_function.get(index, 0)) & DATA_MASK for index in range(64)]
+    seed, scale_q, phi_kind, y_signed = load_frozen_inputs()
+    y64 = [value & DATA_MASK for value in y_signed]
 
     def c_values(values: Sequence[int], per_line: int = 8) -> list[str]:
         rows = []

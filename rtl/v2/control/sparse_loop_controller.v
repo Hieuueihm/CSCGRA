@@ -292,6 +292,10 @@ reg [7:0] active_k;
 // depth register; MAX_FANOUT allows local replicas near the four PE rows.
 (* keep = "true", max_fanout = 16 *) reg [5:0] active_k_count_q;
 reg signed [63:0] rhs [0:MAX_K-1];
+// One measurement sample is reused across every four-row RHS block.  Capture
+// it in S_ACC, the existing setup cycle, so the following PE issue states do
+// not carry a direct BRAM-output path into the MAC/accumulator cone.
+reg signed [DATA_W-1:0] rhs_y_sample_q;
 // Timing boundary between the four-row PE multiplier wavefront and the RHS
 // accumulator.  The existing PE wait schedule makes the products valid while
 // leaving S_ACC_PE_WAIT2, so this register does not add a controller cycle.
@@ -568,7 +572,7 @@ always @(*) begin
                         ls_wide_a_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
                             phi_cache[rhs_block_base + wide_col];
                         ls_wide_b_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
-                            rd_data[write_idx[2:0]*DATA_W +: DATA_W];
+                            rhs_y_sample_q;
                     end else if (ls_gram4_active && ((acc_j + wide_row) < active_k_count)) begin
                         // Physical row r owns Gram column acc_j+r.
                         ls_wide_a_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
@@ -1419,7 +1423,7 @@ always @(*) begin
                 residual_ingress_coeff_q[rhs_lane*DATA_W +: DATA_W] :
               (corr_active_op_w ?
                 corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] :
-                rd_data[write_idx[2:0]*DATA_W +: DATA_W])));
+                rhs_y_sample_q)));
     end
 end
 
@@ -1537,6 +1541,7 @@ active_op <= OP_REFINE;
         phase_residual <= 1'b0;
         active_k <= 8'd0;
         active_k_count_q <= 6'd0;
+        rhs_y_sample_q <= {DATA_W{1'b0}};
         phi_state_q <= DEFAULT_SEED;
         phi_load_i <= 5'd0;
         back_j <= 6'd0;
@@ -1983,6 +1988,7 @@ case (state)
             S_ACC: begin
                 acc_i <= 5'd0;
                 rhs_block_base <= 5'd0;
+                rhs_y_sample_q <= rd_data[write_idx[2:0]*DATA_W +: DATA_W];
                 state <= S_ACC_PE_WAIT;
             end
             S_ACC_PE_WAIT: begin

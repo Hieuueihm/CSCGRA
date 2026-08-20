@@ -1,19 +1,17 @@
-# Canonical versus RTL-compatible golden audit
+# Canonical versus hardware-Python audit
 
 Inputs: seed=17, phi_scale_q=0x004000, Q=16, GP/LS variants explicit.
 
-This report compares final nonzero support only; it does not rewrite the active
-golden.  Direct RTL canonical checks use the tolerance emitted by the canonical
-include; the active hardware sign-off remains exact.
+This report compares final nonzero support only; it does not rewrite the active golden.
 
-| case | algorithm | RTL nnz | canonical nnz | overlap | Jaccard |
+| case | algorithm | hardware nnz | canonical nnz | overlap | Jaccard |
 |---:|---|---:|---:|---:|---:|
 | 0 | OMP | 16 | 16 | 16 | 1.0000 |
 | 0 | CoSaMP | 16 | 16 | 1 | 0.0323 |
 | 0 | IHT | 16 | 16 | 16 | 1.0000 |
 | 0 | HTP | 16 | 16 | 16 | 1.0000 |
 | 0 | SP | 16 | 16 | 4 | 0.1429 |
-| 0 | GP | 16 | 16 | 15 | 0.8824 |
+| 0 | GP | 16 | 16 | 16 | 1.0000 |
 | 0 | GOMP | 16 | 16 | 16 | 1.0000 |
 | 0 | MP | 15 | 15 | 15 | 1.0000 |
 | 1 | OMP | 8 | 8 | 8 | 1.0000 |
@@ -21,7 +19,7 @@ include; the active hardware sign-off remains exact.
 | 1 | IHT | 8 | 8 | 8 | 1.0000 |
 | 1 | HTP | 8 | 8 | 8 | 1.0000 |
 | 1 | SP | 8 | 8 | 8 | 1.0000 |
-| 1 | GP | 8 | 8 | 6 | 0.6000 |
+| 1 | GP | 8 | 8 | 8 | 1.0000 |
 | 1 | GOMP | 8 | 8 | 8 | 1.0000 |
 | 1 | MP | 8 | 8 | 8 | 1.0000 |
 | 2 | OMP | 4 | 4 | 4 | 1.0000 |
@@ -29,7 +27,7 @@ include; the active hardware sign-off remains exact.
 | 2 | IHT | 4 | 4 | 4 | 1.0000 |
 | 2 | HTP | 4 | 4 | 4 | 1.0000 |
 | 2 | SP | 4 | 4 | 4 | 1.0000 |
-| 2 | GP | 4 | 4 | 2 | 0.3333 |
+| 2 | GP | 4 | 4 | 4 | 1.0000 |
 | 2 | GOMP | 4 | 4 | 4 | 1.0000 |
 | 2 | MP | 4 | 4 | 4 | 1.0000 |
 | 3 | OMP | 8 | 8 | 8 | 1.0000 |
@@ -37,7 +35,7 @@ include; the active hardware sign-off remains exact.
 | 3 | IHT | 8 | 8 | 8 | 1.0000 |
 | 3 | HTP | 8 | 8 | 8 | 1.0000 |
 | 3 | SP | 8 | 8 | 8 | 1.0000 |
-| 3 | GP | 8 | 8 | 3 | 0.2308 |
+| 3 | GP | 8 | 8 | 8 | 1.0000 |
 | 3 | GOMP | 8 | 8 | 8 | 1.0000 |
 | 3 | MP | 8 | 8 | 8 | 1.0000 |
 | 4 | OMP | 4 | 4 | 4 | 1.0000 |
@@ -45,7 +43,7 @@ include; the active hardware sign-off remains exact.
 | 4 | IHT | 4 | 4 | 4 | 1.0000 |
 | 4 | HTP | 4 | 4 | 4 | 1.0000 |
 | 4 | SP | 4 | 4 | 4 | 1.0000 |
-| 4 | GP | 4 | 4 | 1 | 0.1429 |
+| 4 | GP | 4 | 4 | 4 | 1.0000 |
 | 4 | GOMP | 4 | 4 | 4 | 1.0000 |
 | 4 | MP | 4 | 4 | 4 | 1.0000 |
 | 5 | OMP | 2 | 2 | 2 | 1.0000 |
@@ -53,7 +51,7 @@ include; the active hardware sign-off remains exact.
 | 5 | IHT | 2 | 2 | 2 | 1.0000 |
 | 5 | HTP | 2 | 2 | 2 | 1.0000 |
 | 5 | SP | 2 | 2 | 2 | 1.0000 |
-| 5 | GP | 2 | 2 | 1 | 0.3333 |
+| 5 | GP | 2 | 2 | 2 | 1.0000 |
 | 5 | GOMP | 2 | 2 | 2 | 1.0000 |
 | 5 | MP | 2 | 2 | 2 | 1.0000 |
 | 6 | OMP | 4 | 4 | 4 | 1.0000 |
@@ -61,7 +59,7 @@ include; the active hardware sign-off remains exact.
 | 6 | IHT | 4 | 4 | 4 | 1.0000 |
 | 6 | HTP | 4 | 4 | 4 | 1.0000 |
 | 6 | SP | 4 | 4 | 4 | 1.0000 |
-| 6 | GP | 4 | 4 | 3 | 0.6000 |
+| 6 | GP | 4 | 4 | 4 | 1.0000 |
 | 6 | GOMP | 4 | 4 | 4 | 1.0000 |
 | 6 | MP | 4 | 4 | 4 | 1.0000 |
 | 7 | OMP | 2 | 2 | 2 | 1.0000 |
@@ -69,6 +67,6 @@ include; the active hardware sign-off remains exact.
 | 7 | IHT | 2 | 2 | 2 | 1.0000 |
 | 7 | HTP | 2 | 2 | 2 | 1.0000 |
 | 7 | SP | 2 | 2 | 2 | 1.0000 |
-| 7 | GP | 2 | 2 | 1 | 0.3333 |
+| 7 | GP | 2 | 2 | 2 | 1.0000 |
 | 7 | GOMP | 2 | 2 | 2 | 1.0000 |
 | 7 | MP | 2 | 2 | 2 | 1.0000 |
