@@ -842,3 +842,27 @@ timing checkpoint, not final timing sign-off. The next RTL timing step should
 register/isolate the state/operand boundary feeding the PE MAC while keeping
 the strict PE0 ingress and one-request LS contract; top-K mesh mode and Phi
 column-stream extraction remain deferred until that margin is recovered.
+
+## Wide-multiplier phase-token timing checkpoint
+
+The first direct wide-payload register experiment was rejected: it changed the
+LDLT PE0-to-PE3 wavefront and produced K16 `x` mismatches. It was reverted
+without a commit. The retained timing change is narrower: the controller now
+exports registered `active`, `vertical`, `issue` and limb-phase tokens for the
+existing wide-multiplier state machine. Operand data and all arithmetic state
+remain on their original cycle schedule; the PE array still receives every
+wide transaction from PE0 and drains through all four rows.
+
+Verification of the retained token change:
+
+- K2 OMP: 45 PASS / 0 FAIL, 2,142 cycles;
+- K4 OMP: 45 PASS / 0 FAIL, 4,102 cycles;
+- full sweep: **348 PASS / 0 FAIL** with the existing two K16 2K-capacity
+  skips;
+- OOC synthesis: WNS +1.831 ns, 127,604 LUTs, 52,466 FFs, 24 RAMB36 and
+  77 DSP48.
+
+The implementation route must still be rerun for final WNS. The intended
+benefit is a shorter controller-state fanout cone at the wide PE boundary,
+without adding a multiplier, changing the LS request protocol, or changing
+cycle counts.

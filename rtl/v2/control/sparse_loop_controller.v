@@ -423,6 +423,13 @@ reg wide_mul_done_q;
 reg wide_mul_vertical_done_q;
 reg wide_mul_vertical_request_q;
 reg wide_mul_vertical_q;
+// Registered phase tokens mirror the WIDE_MUL state transitions without
+// changing their latency.  The PE array consumes these tokens at its wide
+// operand boundary instead of decoding the controller FSM state directly.
+(* dont_touch = "true" *) reg wide_mul_active_token_q;
+(* dont_touch = "true" *) reg wide_mul_vertical_token_q;
+(* dont_touch = "true" *) reg wide_mul_issue_token_q;
+(* dont_touch = "true" *) reg wide_mul_issue_part1_token_q;
 reg signed [4*64-1:0] wide_mul_a_q;
 reg signed [4*64-1:0] wide_mul_b_q;
 reg [63:0] wide_mul_abs_a_q [0:3];
@@ -532,7 +539,7 @@ wire ldlt_border_issue_active_w = ldlt_border_stream_state_w &&
                                   (!ldlt_border_issue_phase_q ||
                                    ldlt_border_mul1_slot_ready_q[ldlt_border_issue_p_q[1:0]]);
 wire legacy_wide_vertical_active_w =
-    (wide_mul_state_q != WIDE_MUL_IDLE) && wide_mul_vertical_q;
+    wide_mul_active_token_q && wide_mul_vertical_token_q;
 assign ls_wide_vertical_active = legacy_wide_vertical_active_w ||
                                  border_operand_boundary_active_q;
 assign ls_wide_vertical_tag = border_operand_boundary_active_q ?
@@ -572,7 +579,7 @@ generate
 endgenerate
 
 always @(*) begin
-    ls_wide_mul_active = (wide_mul_state_q != WIDE_MUL_IDLE) ||
+    ls_wide_mul_active = wide_mul_active_token_q ||
                          ls_batch4_active || ldlt_border_issue_active_w;
     ls_wide_a_bus = {4*COLS*DATA_W{1'b0}};
     ls_wide_b_bus = {4*COLS*DATA_W{1'b0}};
@@ -625,11 +632,10 @@ always @(*) begin
                 end
             end
         end
-    end else if ((wide_mul_state_q == WIDE_MUL_ISSUE0) ||
-        (wide_mul_state_q == WIDE_MUL_ISSUE1)) begin
+    end else if (wide_mul_issue_token_q) begin
         for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
             for (wide_col = 0; wide_col < COLS; wide_col = wide_col + 1) begin
-                wide_part = ((wide_mul_state_q == WIDE_MUL_ISSUE1) ? COLS : 0) + wide_col;
+                wide_part = (wide_mul_issue_part1_token_q ? COLS : 0) + wide_col;
                 wide_a_limb = wide_part >> 2;
                 wide_b_limb = wide_part & 3;
                 ls_wide_a_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
@@ -699,6 +705,10 @@ always @(posedge clk or negedge rst_n) begin
         wide_mul_done_q <= 1'b0;
         wide_mul_vertical_done_q <= 1'b0;
         wide_mul_vertical_q <= 1'b0;
+        wide_mul_active_token_q <= 1'b0;
+        wide_mul_vertical_token_q <= 1'b0;
+        wide_mul_issue_token_q <= 1'b0;
+        wide_mul_issue_part1_token_q <= 1'b0;
         for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
             wide_mul_abs_a_q[wide_row] <= 64'd0;
             wide_mul_abs_b_q[wide_row] <= 64'd0;
@@ -721,9 +731,15 @@ always @(posedge clk or negedge rst_n) begin
                 wide_product_part1_q[wide_row] <= wide_row_product_part1[wide_row];
             end
         end
-        case (wide_mul_state_q)
+            case (wide_mul_state_q)
             WIDE_MUL_IDLE: begin
+                wide_mul_issue_token_q <= 1'b0;
+                wide_mul_issue_part1_token_q <= 1'b0;
                 if (wide_mul_start_q) begin
+                    wide_mul_active_token_q <= 1'b1;
+                    wide_mul_vertical_token_q <= wide_mul_vertical_request_q;
+                    wide_mul_issue_token_q <= 1'b1;
+                    wide_mul_issue_part1_token_q <= 1'b0;
                     wide_mul_vertical_q <= wide_mul_vertical_request_q;
                     for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
                         wide_mul_abs_a_q[wide_row] <= wide_mul_a_q[wide_row*64+63] ?
@@ -735,8 +751,16 @@ always @(posedge clk or negedge rst_n) begin
                     wide_mul_state_q <= WIDE_MUL_ISSUE0;
                 end
             end
-            WIDE_MUL_ISSUE0: wide_mul_state_q <= WIDE_MUL_ISSUE1;
-            WIDE_MUL_ISSUE1: wide_mul_state_q <= WIDE_MUL_DRAIN;
+            WIDE_MUL_ISSUE0: begin
+                wide_mul_issue_token_q <= 1'b1;
+                wide_mul_issue_part1_token_q <= 1'b1;
+                wide_mul_state_q <= WIDE_MUL_ISSUE1;
+            end
+            WIDE_MUL_ISSUE1: begin
+                wide_mul_issue_token_q <= 1'b0;
+                wide_mul_issue_part1_token_q <= 1'b0;
+                wide_mul_state_q <= WIDE_MUL_DRAIN;
+            end
             WIDE_MUL_DRAIN: begin
                 if (wide_mul_vertical_q)
                     wide_mul_state_q <= WIDE_MUL_VDRAIN1;
@@ -810,6 +834,10 @@ always @(posedge clk or negedge rst_n) begin
                 wide_mul_done_q <= 1'b1;
                 wide_mul_state_q <= WIDE_MUL_IDLE;
                 wide_mul_vertical_q <= 1'b0;
+                wide_mul_active_token_q <= 1'b0;
+                wide_mul_vertical_token_q <= 1'b0;
+                wide_mul_issue_token_q <= 1'b0;
+                wide_mul_issue_part1_token_q <= 1'b0;
             end
         endcase
     end
