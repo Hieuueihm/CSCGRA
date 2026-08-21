@@ -27,7 +27,13 @@ module phase_token_scheduler #(
     output reg  [VERSION_W-1:0] vector_version,
     output reg  [VERSION_W-1:0] matrix_version,
     output reg  [3:0]           phase_opcode,
-    output reg                  phase_token_valid
+    output reg                  phase_token_valid,
+    output reg  [31:0]          phase_cycle_corr,
+    output reg  [31:0]          phase_cycle_topk,
+    output reg  [31:0]          phase_cycle_support,
+    output reg  [31:0]          phase_cycle_solve,
+    output reg  [31:0]          phase_cycle_residual,
+    output reg  [31:0]          phase_cycle_vector
 );
     localparam [3:0] UOP_SELECT    = 4'd5;
     localparam [3:0] UOP_CANDIDATE = 4'd6;
@@ -55,6 +61,19 @@ module phase_token_scheduler #(
          (sparse_op == 4'd6) || (sparse_op == 4'd7) ||
          (sparse_op == 4'd8) || (sparse_op == 4'd10));
 
+    // Narrow metadata packet for the PE0 -> PE1 -> PE2 -> PE3 control path.
+    // Wide arithmetic data stays on its existing registered buses.
+    wire [3:0] packet_mode_now = sparse_ctx ? sparse_op : ext_ctrl;
+    wire [3:0] packet_owner_now = uop_class;
+    wire [7:0] packet_version_now = sparse_writes_vector ? vector_version : support_version;
+    wire [9:0] packet_idx_now = ctx_word[39:30];
+    wire [23:0] packet_data_now = ctx_word[23:0];
+    wire packet_valid_w;
+    wire [3:0] packet_phase_w, packet_mode_w, packet_owner_w;
+    wire [7:0] packet_version_w;
+    wire [9:0] packet_idx_w;
+    wire [23:0] packet_data_w;
+
     reg ls_done_deferred_q;
     wire ls_done_deferred_fire = ls_done_deferred_q &&
                                  !corr_stream_pending && !select_busy;
@@ -80,6 +99,18 @@ module phase_token_scheduler #(
         end
     end
 
+    phase_packet_pipe #(.VERSION_W(VERSION_W), .IDX_W(10), .DATA_W(24), .STAGES(4))
+    u_phase_packet_pipe (
+        .clk(clk), .rst_n(rst_n), .flush(flush),
+        .in_valid(ctx_valid), .in_phase(phase_opcode),
+        .in_mode(packet_mode_now), .in_owner(packet_owner_now),
+        .in_version(packet_version_now), .in_idx(packet_idx_now),
+        .in_data(packet_data_now), .out_valid(packet_valid_w),
+        .out_phase(packet_phase_w), .out_mode(packet_mode_w),
+        .out_owner(packet_owner_w), .out_version(packet_version_w),
+        .out_idx(packet_idx_w), .out_data(packet_data_w)
+    );
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             corr_stream_pending <= 1'b0;
@@ -90,6 +121,12 @@ module phase_token_scheduler #(
             vector_version <= {VERSION_W{1'b0}};
             matrix_version <= {VERSION_W{1'b0}};
             phase_token_valid <= 1'b0;
+            phase_cycle_corr <= 32'd0;
+            phase_cycle_topk <= 32'd0;
+            phase_cycle_support <= 32'd0;
+            phase_cycle_solve <= 32'd0;
+            phase_cycle_residual <= 32'd0;
+            phase_cycle_vector <= 32'd0;
         end else if (flush) begin
             corr_stream_pending <= 1'b0;
             corr_stream_post_update_x <= 1'b0;
@@ -101,8 +138,25 @@ module phase_token_scheduler #(
             vector_version <= {VERSION_W{1'b0}};
             matrix_version <= matrix_version + 1'b1;
             phase_token_valid <= 1'b0;
+            phase_cycle_corr <= 32'd0;
+            phase_cycle_topk <= 32'd0;
+            phase_cycle_support <= 32'd0;
+            phase_cycle_solve <= 32'd0;
+            phase_cycle_residual <= 32'd0;
+            phase_cycle_vector <= 32'd0;
         end else begin
-            phase_token_valid <= ctx_valid;
+            phase_token_valid <= packet_valid_w;
+            if (ctx_valid) begin
+                case (phase_opcode)
+                    PH_CORRELATE: phase_cycle_corr <= phase_cycle_corr + 1'b1;
+                    PH_SELECT_TOPK: phase_cycle_topk <= phase_cycle_topk + 1'b1;
+                    PH_SUPPORT_EDIT: phase_cycle_support <= phase_cycle_support + 1'b1;
+                    PH_SOLVE: phase_cycle_solve <= phase_cycle_solve + 1'b1;
+                    PH_RESIDUAL: phase_cycle_residual <= phase_cycle_residual + 1'b1;
+                    PH_VECTOR: phase_cycle_vector <= phase_cycle_vector + 1'b1;
+                    default: begin end
+                endcase
+            end
             if (support_mutation_ctx)
                 support_version <= support_version + 1'b1;
             if (sparse_writes_vector)

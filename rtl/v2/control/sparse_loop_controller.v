@@ -1437,6 +1437,21 @@ wire factor_swap_last_hit_w = factor_config_match_w &&
     (factor_check_unmatched_count_q == 1) &&
     ({1'b0, factor_check_unmatched_tag_q} + 1'b1 == request_k_eff_w);
 
+wire [2:0] support_relation_opcode_w;
+wire [1:0] support_relation_reuse_mode_w;
+wire support_relation_border_clear_w;
+wire support_relation_reuse_enable_w;
+support_relation_unit u_support_relation_unit (
+    .exact_hit(factor_exact_hit_w),
+    .prefix_hit(factor_prefix_hit_w),
+    .truncate_hit(factor_truncate_hit_w),
+    .swap_last_hit(factor_swap_last_hit_w),
+    .relation_opcode(support_relation_opcode_w),
+    .reuse_mode(support_relation_reuse_mode_w),
+    .border_clear(support_relation_border_clear_w),
+    .reuse_enable(support_relation_reuse_enable_w)
+);
+
 
 function [IDX_W-1:0] support_cached_at;
     input [4:0] rank;
@@ -2026,18 +2041,15 @@ case (state)
             end
             S_FACTOR_CHECK_DONE: begin
                 request_support_fingerprint_q <= factor_check_fingerprint_q;
-                if (factor_exact_hit_w || factor_truncate_hit_w)
-                    factor_reuse_mode_q <= FACTOR_REUSE_EXACT;
-                else if (factor_prefix_hit_w)
-                    factor_reuse_mode_q <= FACTOR_REUSE_PREFIX;
-                else if (factor_swap_last_hit_w) begin
-                    factor_reuse_mode_q <= FACTOR_REUSE_PREFIX;
+                if (support_relation_reuse_enable_w) begin
+                    factor_reuse_mode_q <= support_relation_reuse_mode_w;
+                end
+                if (support_relation_border_clear_w) begin
                     factor_k_q <= factor_k_q - 1'b1;
                     support_cache[factor_k_q - 1'b1] <=
                         factor_check_unmatched_value_q;
                     factor_border_clear_q <= 1'b1;
-                end
-                else begin
+                end else if (!support_relation_reuse_enable_w) begin
                     factor_reuse_mode_q <= FACTOR_REUSE_NONE;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         support_cache[gi] <=

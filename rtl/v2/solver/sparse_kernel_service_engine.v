@@ -139,7 +139,13 @@ module sparse_kernel_service_engine #(
     output wire                     support_done,
     output wire [IDX_W-1:0]         support_result_idx,
     output wire                     support_result_valid,
-    output wire                     select_done
+    output wire                     select_done,
+    output wire [31:0]              phase_cycle_corr,
+    output wire [31:0]              phase_cycle_topk,
+    output wire [31:0]              phase_cycle_support,
+    output wire [31:0]              phase_cycle_solve,
+    output wire [31:0]              phase_cycle_residual,
+    output wire [31:0]              phase_cycle_vector
 );
     wire select_append_valid;
     wire [IDX_W-1:0] select_append_idx;
@@ -281,7 +287,13 @@ module sparse_kernel_service_engine #(
         .vector_version(phase_vector_version_w),
         .matrix_version(phase_matrix_version_w),
         .phase_opcode(phase_opcode_w),
-        .phase_token_valid(phase_token_valid_w)
+        .phase_token_valid(phase_token_valid_w),
+        .phase_cycle_corr(phase_cycle_corr),
+        .phase_cycle_topk(phase_cycle_topk),
+        .phase_cycle_support(phase_cycle_support),
+        .phase_cycle_solve(phase_cycle_solve),
+        .phase_cycle_residual(phase_cycle_residual),
+        .phase_cycle_vector(phase_cycle_vector)
     );
 
 endmodule

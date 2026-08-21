@@ -714,3 +714,20 @@ The next narrow registered boundary is the sorted append ACK -> first scan
 position transition. K8 `S_SORT_WAIT` residency is 256 clocks. Any trial must
 reuse the existing result-list mux, preserve WNS >= +0.2 ns, and be rejected if
 its LUT growth exceeds the smaller cycle benefit.
+## Architectural refactor checkpoint: packet/phase boundary
+
+The first controller-centric refactor layer is now present in `rtl/v2`:
+
+- `phase_packet_pipe.v` carries narrow `{phase, mode, owner, version, idx,
+  data}` metadata through four registered stages, preserving PE0 ingress and
+  PE0→PE1→PE2→PE3 ordering. Wide arithmetic payloads remain on existing buses.
+- `support_relation_unit.v` normalizes EXACT, PREFIX, TRUNCATE and safe
+  SWAP-LAST factor outcomes before the existing LDLT issue states.
+- `phase_token_scheduler.v` owns phase-cycle counters, exposed through CSR
+  addresses `0x074..0x088` for correlation, top-K, support, solve, residual,
+  and vector phases.
+
+This is an interface extraction checkpoint, not yet the final migration of all
+algorithm scheduling out of `sparse_loop_controller`. The next step is to make
+the context stream carry explicit phase dependencies and let the extracted
+engines issue their own completion tokens.

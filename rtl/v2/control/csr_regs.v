@@ -58,6 +58,12 @@ module csr_regs #(
     input  wire [31:0]          result0,
     input  wire [31:0]          cycle_cnt,
     input  wire [CTX_AW-1:0]    pc_dbg,
+    input  wire [31:0]          phase_cycle_corr,
+    input  wire [31:0]          phase_cycle_topk,
+    input  wire [31:0]          phase_cycle_support,
+    input  wire [31:0]          phase_cycle_solve,
+    input  wire [31:0]          phase_cycle_residual,
+    input  wire [31:0]          phase_cycle_vector,
 
     output reg                  cfg_wr_en,
     output reg  [CTX_AW-1:0]    cfg_wr_addr,
@@ -90,6 +96,12 @@ module csr_regs #(
     localparam [AXIL_AW-1:0] A_RESULT0    = 12'h050;
     localparam [AXIL_AW-1:0] A_CYCLE_CNT  = 12'h054;
     localparam [AXIL_AW-1:0] A_PC_DBG     = 12'h058;
+    localparam [AXIL_AW-1:0] A_PHASE_CORR = 12'h074;
+    localparam [AXIL_AW-1:0] A_PHASE_TOPK = 12'h078;
+    localparam [AXIL_AW-1:0] A_PHASE_SUPPORT = 12'h07C;
+    localparam [AXIL_AW-1:0] A_PHASE_SOLVE = 12'h080;
+    localparam [AXIL_AW-1:0] A_PHASE_RESIDUAL = 12'h084;
+    localparam [AXIL_AW-1:0] A_PHASE_VECTOR = 12'h088;
     localparam [AXIL_AW-1:0] A_DENSE_STEP = 12'h05C;
     localparam [AXIL_AW-1:0] A_DENSE_LAMBDA = 12'h060;
     localparam [AXIL_AW-1:0] A_DENSE_RHO  = 12'h064;
@@ -253,6 +265,12 @@ module csr_regs #(
                         A_RESULT0: s_axi_rdata <= result0;
                         A_CYCLE_CNT: s_axi_rdata <= cycle_cnt;
                         A_PC_DBG: s_axi_rdata <= {{(32-CTX_AW){1'b0}}, pc_dbg};
+                        A_PHASE_CORR: s_axi_rdata <= phase_cycle_corr;
+                        A_PHASE_TOPK: s_axi_rdata <= phase_cycle_topk;
+                        A_PHASE_SUPPORT: s_axi_rdata <= phase_cycle_support;
+                        A_PHASE_SOLVE: s_axi_rdata <= phase_cycle_solve;
+                        A_PHASE_RESIDUAL: s_axi_rdata <= phase_cycle_residual;
+                        A_PHASE_VECTOR: s_axi_rdata <= phase_cycle_vector;
                         default: s_axi_rdata <= 32'd0;
                     endcase
                 end

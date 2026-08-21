@@ -94,6 +94,12 @@ module cgra_top #(
     wire [CTX_AW-1:0] pc_dbg;
     reg [31:0] cycle_cnt;
     reg [31:0] result0_q;
+    wire [31:0] phase_cycle_corr;
+    wire [31:0] phase_cycle_topk;
+    wire [31:0] phase_cycle_support;
+    wire [31:0] phase_cycle_solve;
+    wire [31:0] phase_cycle_residual;
+    wire [31:0] phase_cycle_vector;
 
     csr_regs #(.AXIL_AW(AXIL_AW), .AXIL_DW(AXIL_DW), .CTX_W(CTX_W), .CTX_AW(CTX_AW),
         .IDX_W(IDX_W), .DATA_W(DATA_W), .Q_FRAC_W(Q_FRAC_W)) u_csr (
@@ -110,6 +116,9 @@ module cgra_top #(
         .dense_rho_q8_8(dense_rho_q8_8), .dense_theta_q8_8(dense_theta_q8_8), .dense_damp_q8_8(dense_damp_q8_8),
         .prog_base(prog_base), .prog_len(prog_len), .busy(seq_busy), .done(seq_done), .converged(seq_converged),
         .error(seq_error), .error_code(seq_error_code), .result0(result0_q), .cycle_cnt(cycle_cnt), .pc_dbg(pc_dbg),
+        .phase_cycle_corr(phase_cycle_corr), .phase_cycle_topk(phase_cycle_topk),
+        .phase_cycle_support(phase_cycle_support), .phase_cycle_solve(phase_cycle_solve),
+        .phase_cycle_residual(phase_cycle_residual), .phase_cycle_vector(phase_cycle_vector),
         .cfg_wr_en(cfg_wr_en), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_word(cfg_wr_word), .cfg_wr_data(cfg_wr_data),
         .cfg_dbg_rd_en(cfg_dbg_rd_en), .cfg_dbg_rd_addr(cfg_dbg_rd_addr), .cfg_dbg_rd_data(cfg_dbg_rd_data)
     );
@@ -484,7 +493,10 @@ module cgra_top #(
         .topk_pipe_max_count(topk_pipe_max_count), .topk_pipe_result_valid(topk_pipe_result_valid),
         .topk_pipe_result_count(topk_pipe_result_count), .topk_pipe_result_idx_bus(topk_pipe_result_idx_bus),
         .mesh_ctx_valid(mesh_ctx_valid_raw), .mesh_ctx_word(mesh_ctx_word_raw), .mesh_ctx_mode(mesh_ctx_mode_raw), .mesh_ctx_base_idx(mesh_ctx_base_idx_raw), .mesh_ctx_limit(mesh_ctx_limit_raw), .mesh_ctx_threshold(mesh_ctx_threshold_raw), .mesh_ctx_shift(mesh_ctx_shift_raw), .mesh_ctx_x_bus(mesh_ctx_x_bus_raw), .mesh_ctx_delta_bus(mesh_ctx_delta_bus_raw), .mesh_ctx_keep_bus(mesh_ctx_keep_bus_raw), .mesh_ctx_commit_data(mesh_ctx_commit_data),
-        .support_done(skse_support_done), .support_result_idx(skse_support_result_idx), .support_result_valid(skse_support_result_valid), .select_done(skse_select_done)
+        .support_done(skse_support_done), .support_result_idx(skse_support_result_idx), .support_result_valid(skse_support_result_valid), .select_done(skse_select_done),
+        .phase_cycle_corr(phase_cycle_corr), .phase_cycle_topk(phase_cycle_topk),
+        .phase_cycle_support(phase_cycle_support), .phase_cycle_solve(phase_cycle_solve),
+        .phase_cycle_residual(phase_cycle_residual), .phase_cycle_vector(phase_cycle_vector)
     );
 
 
