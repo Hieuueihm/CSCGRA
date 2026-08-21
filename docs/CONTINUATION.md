@@ -778,6 +778,20 @@ alg2 at N=64) and a one-cycle schedule change. The trial was deleted and the
 controller restored to the signed-off inline scan. No Phi extraction is part
 of the retained checkpoint until a direct bit-exact equivalence test is added.
 
+## Functional sign-off after retained refactor layers
+
+The retained tuple metadata, LS issue boundary, and issued-stream telemetry
+were rerun across all sweep cases:
+
+- case 0 (N=256, K=16): 33 PASS / 0 FAIL, with the existing two 2K-capacity
+  CoSaMP/SP skips;
+- cases 1-7: 315 PASS / 0 FAIL;
+- aggregate: **348 PASS / 0 FAIL** over the executed algorithm/case records.
+
+Cycle records are unchanged from the preceding sign-off (for example OMP K8
+40,644 cycles and OMP K16 99,404 cycles). This is functional sign-off only;
+synthesis/implementation and WNS still need to be rerun on this checkpoint.
+
 ## Architectural refactor checkpoint: issued-stream phase accounting
 
 Phase counters now increment on `packet_valid_w` and the phase carried by the
