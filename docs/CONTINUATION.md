@@ -743,6 +743,31 @@ Verification after the change:
 The full 348-record sweep and synthesis/implementation timing are not claimed
 for this checkpoint until they are rerun after the remaining architectural
 changes.
+
+## Architectural refactor checkpoint: LS issue engine boundary
+
+`ls_issue_engine.v` now sits between `sparse_loop_controller` and the existing
+`ls_matrix_service`. It is deliberately a one-entry issue boundary:
+
+- accepts a command only while the previous request is inactive;
+- forwards an accepted command in the same cycle, so no schedule bubble is
+  introduced;
+- returns the existing service completion and ACC4 credit unchanged;
+- rejects accidental overlapping starts instead of allowing a row-bank
+  collision.
+
+The row-banked LDLT/ACC4 datapath, single active LS request rule, and strict
+PE0 ingress are unchanged. This gives the next ISA migration a stable place to
+move dependency/issue tracking without modifying the arithmetic service.
+
+Verification after the boundary extraction:
+
+- K2 standard sweep: 45 PASS / 0 FAIL;
+- K4 per-iteration sweep: 45 PASS / 0 FAIL;
+- cycle records match the tuple checkpoint exactly (K2 OMP 2,142 cycles;
+  K4 OMP 4,102 cycles).
+
+Full K-sweep and synthesis/implementation timing remain pending.
 ## Architectural refactor checkpoint: packet/phase boundary
 
 The first controller-centric refactor layer is now present in `rtl/v2`:

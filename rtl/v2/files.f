@@ -15,6 +15,7 @@ rtl/v2/pe/pe_cluster_4x4.v
 rtl/v2/pe/pe_column_connection.v
 rtl/v2/pe/pearray.v
 rtl/v2/solver/ls_matrix_service.v
+rtl/v2/solver/ls_issue_engine.v
 rtl/v2/datapath/lfsr_phi.v
 rtl/v2/memory/global_scalar_rf.v
 rtl/v2/control/dma_ctrl.v

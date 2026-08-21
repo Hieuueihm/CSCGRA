@@ -371,7 +371,7 @@ wire signed [GE_MAT_W-1:0] ls_rdata_b_w;
 wire signed [4*GE_MAT_W-1:0] ls_read4_rdata_w;
 wire signed [GE_MAT_W-1:0] ls_update_value_w;
 wire signed [63:0] ls_rhs_rdata_w;
-ls_matrix_service #(
+ls_issue_engine #(
     .MAX_K(MAX_K),
     .GE_W(GE_MAT_W),
     .LANES(COLS),
