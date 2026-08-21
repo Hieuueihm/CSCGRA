@@ -159,10 +159,14 @@ module sparse_kernel_service_engine #(
     reg select_done_q;
     assign select_busy = select_busy_q;
     assign select_done = select_done_q;
-    reg stream_select_pending_q;
-    reg stream_select_post_update_x_q;
-    reg stream_select_post_refine_support_q;
-    reg ls_done_deferred_q;
+    wire stream_select_pending_q;
+    wire stream_select_post_update_x_q;
+    wire stream_select_post_refine_support_q;
+    wire [7:0] phase_support_version_w;
+    wire [7:0] phase_vector_version_w;
+    wire [7:0] phase_matrix_version_w;
+    wire [3:0] phase_opcode_w;
+    wire phase_token_valid_w;
     // Timing-isolated sample used only by the loop controller.  It is aligned
     // with cgra_top's registered sparse_k_active value, so both operands seen
     // by the controller describe the same support-depth cycle.
@@ -185,7 +189,9 @@ module sparse_kernel_service_engine #(
         .reduce_idx(reduce_idx), .reduce_converged(reduce_converged)
     );
 
-    support_set_service #(.COLS(COLS), .IDX_W(IDX_W), .CTX_W(CTX_W), .SCALAR_W(SCALAR_W)) u_support_service (
+    support_set_service #(.COLS(COLS), .IDX_W(IDX_W), .CTX_W(CTX_W),
+        .SCALAR_W(SCALAR_W), .MAX_SUPPORT(MAX_K),
+        .MAX_CANDIDATE(2*MAX_K)) u_support_service (
         .clk(clk), .rst_n(rst_n),
         .clear_error_pulse(clear_error_pulse), .start_pulse(start_pulse), .support_clear_selected(support_clear_selected),
         .ctx_valid(ctx_valid), .ctx_word(ctx_word), .uop_class(uop_class), .ext_ctrl(ext_ctrl),
@@ -260,43 +266,23 @@ module sparse_kernel_service_engine #(
         .busy(ls_busy), .done(ls_done_raw), .result(ls_result)
     );
 
-wire stream_select_ctx = ctx_valid && (uop_class == 4'd5) && ctx_word[31];
-wire ls_done_deferred_fire = ls_done_deferred_q && !stream_select_pending_q && !select_busy;
-
-always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-        stream_select_pending_q <= 1'b0;
-        stream_select_post_update_x_q <= 1'b0;
-        stream_select_post_refine_support_q <= 1'b0;
-        ls_done_deferred_q <= 1'b0;
-    end else if (clear_error_pulse || (start_pulse && !stream_select_ctx)) begin
-        stream_select_pending_q <= 1'b0;
-        stream_select_post_update_x_q <= 1'b0;
-        stream_select_post_refine_support_q <= 1'b0;
-        ls_done_deferred_q <= 1'b0;
-    end else begin
-        if (stream_select_ctx) begin
-            stream_select_pending_q <= 1'b1;
-            // Context bit 29 selects the post-update x producer.  Zero keeps
-            // the existing correlation-score stream used by OMP/GOMP.
-            stream_select_post_update_x_q <= ctx_word[29];
-            // Context bit 28 selects coefficients committed by REFINE, with
-            // the controller limiting publication to its cached P0 support.
-            stream_select_post_refine_support_q <= ctx_word[28];
-        end
-        if (ls_done_raw && stream_select_pending_q && select_busy)
-            ls_done_deferred_q <= 1'b1;
-        if (select_done) begin
-            stream_select_pending_q <= 1'b0;
-            stream_select_post_update_x_q <= 1'b0;
-            stream_select_post_refine_support_q <= 1'b0;
-        end
-        if (ls_done_deferred_fire)
-            ls_done_deferred_q <= 1'b0;
-    end
-end
-
-assign ls_done = (ls_done_raw && !(stream_select_pending_q && select_busy)) || ls_done_deferred_fire;
+    phase_token_scheduler u_phase_token_scheduler (
+        .clk(clk), .rst_n(rst_n),
+        .flush(clear_error_pulse || (start_pulse &&
+               !(ctx_valid && (uop_class == 4'd5) && ctx_word[31]))),
+        .ctx_valid(ctx_valid), .ctx_word(ctx_word), .uop_class(uop_class),
+        .ext_ctrl(ext_ctrl), .ls_done_raw(ls_done_raw),
+        .select_busy(select_busy), .select_done(select_done),
+        .corr_stream_pending(stream_select_pending_q),
+        .corr_stream_post_update_x(stream_select_post_update_x_q),
+        .corr_stream_post_refine_support(stream_select_post_refine_support_q),
+        .ls_done(ls_done),
+        .support_version(phase_support_version_w),
+        .vector_version(phase_vector_version_w),
+        .matrix_version(phase_matrix_version_w),
+        .phase_opcode(phase_opcode_w),
+        .phase_token_valid(phase_token_valid_w)
+    );
 
 endmodule
 

@@ -204,9 +204,9 @@ module pe_cluster_4x4 #(
     reg [DATA_W-1:0] topk_global_score_q [0:MAX_K-1];
     reg [5:0] topk_global_count_q;
     reg topk_result_valid_q;
-    reg [4:0] topk_local_insert_pos [0:3];
+    reg [5:0] topk_local_insert_pos [0:3];
     reg topk_local_accept [0:3];
-    reg [4:0] topk_global_insert_pos;
+    reg [5:0] topk_global_insert_pos;
     reg topk_global_accept;
     integer topk_row;
     integer topk_rank;
@@ -253,19 +253,19 @@ module pe_cluster_4x4 #(
 
     always @(*) begin
         for (topk_row = 0; topk_row < 4; topk_row = topk_row + 1) begin
-            topk_local_insert_pos[topk_row] = MAX_K[4:0];
+            topk_local_insert_pos[topk_row] = MAX_K[5:0];
             topk_local_accept[topk_row] = 1'b0;
             if (topk_row_valid[topk_row] && topk_row_keep[topk_row] &&
                 (topk_row_idx[topk_row][1:0] == topk_row[1:0])) begin
                 for (topk_rank = 0; topk_rank < MAX_K; topk_rank = topk_rank + 1) begin
                     if ((topk_rank < topk_row_max[topk_row]) &&
                         (topk_rank <= topk_local_count_q[topk_row]) &&
-                        (topk_local_insert_pos[topk_row] == MAX_K[4:0]) &&
+                        (topk_local_insert_pos[topk_row] == MAX_K[5:0]) &&
                         ((topk_rank == topk_local_count_q[topk_row]) ||
                          topk_better(topk_row_score[topk_row], topk_row_idx[topk_row],
                                      topk_local_score_q[topk_row*MAX_K+topk_rank],
                                      topk_local_idx_q[topk_row*MAX_K+topk_rank])))
-                        topk_local_insert_pos[topk_row] = topk_rank[4:0];
+                        topk_local_insert_pos[topk_row] = topk_rank[5:0];
                 end
                 topk_local_accept[topk_row] =
                     (topk_local_insert_pos[topk_row] < topk_row_max[topk_row]) &&
@@ -273,19 +273,19 @@ module pe_cluster_4x4 #(
             end
         end
 
-        topk_global_insert_pos = MAX_K[4:0];
+        topk_global_insert_pos = MAX_K[5:0];
         topk_global_accept = 1'b0;
         if (topk_valid_r3_q && topk_keep_r3_q &&
             ((topk_idx_r3_q[1:0] != 2'd3) || topk_local_accept[3])) begin
             for (topk_rank = 0; topk_rank < MAX_K; topk_rank = topk_rank + 1) begin
                 if ((topk_rank < topk_max_r3_q) &&
                     (topk_rank <= topk_global_count_q) &&
-                    (topk_global_insert_pos == MAX_K[4:0]) &&
+                    (topk_global_insert_pos == MAX_K[5:0]) &&
                     ((topk_rank == topk_global_count_q) ||
                      topk_better(topk_score_r3_q, topk_idx_r3_q,
                                  topk_global_score_q[topk_rank],
                                  topk_global_idx_q[topk_rank])))
-                    topk_global_insert_pos = topk_rank[4:0];
+                    topk_global_insert_pos = topk_rank[5:0];
             end
             topk_global_accept =
                 (topk_global_insert_pos < topk_max_r3_q) &&
@@ -920,8 +920,14 @@ module pe_cluster_4x4 #(
                     (sparse_active && sparse_step_active && (sparse_op == 4'd3)) :
                     (r == 1) ? sparse_valid_r1_q :
                     (r == 2) ? sparse_valid_r2_q : sparse_valid_r3_q;
-                wire phys_resid_wave_active = resid_token_active &&
-                                              (sparse_k_active > GLOBAL_C);
+                // Residual is a phase-token operation across the complete
+                // eight-column row. Lanes beyond the current support are
+                // already zero padded by the controller; still issuing those
+                // zero MACs overwrites every registered product and prevents
+                // a narrow K2/K4 block from exposing stale correlation data.
+                // It also removes the support-depth comparator from the PE
+                // enable boundary.
+                wire phys_resid_wave_active = resid_token_active;
                 wire [1:0] corr_token_slot = (r == 0) ? corr_slot :
                                              (r == 1) ? corr_slot_r1_q :
                                              (r == 2) ? corr_slot_r2_q : corr_slot_r3_q;

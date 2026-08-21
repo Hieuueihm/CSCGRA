@@ -111,12 +111,13 @@ module sparse_loop_controller #(
     output reg done,
     output reg [SCALAR_W-1:0] result
 );
-localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
+
+localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_ACC_PE_WAIT3=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
 S_CACHE_BUILD=56, S_SCAN_DIRECT=55,
 S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76, S_SCAN_DIRECT_STEP=77, S_CACHE_BUILD_STEP=78,
 S_LS_CLEAR_START=86, S_LS_CLEAR_WAIT=87, S_SOLVE_SYM_READ=88, S_SOLVE_SYM_WAIT=89, S_SOLVE_SYM_WRITE=90, S_SOLVE_SYM_WRITE_WAIT=91,
 S_ELIM_ROW_READ=92, S_ELIM_ROW_WAIT=93, S_ELIM_UPDATE_START=94, S_ELIM_UPDATE_WAIT=95, S_BACK_ACC_READ=96, S_BACK_ACC_WAIT=97, S_BACK_PREP_READ=98, S_BACK_PREP_WAIT=99, S_GRAM_ACC_WAIT=100, S_SCAN_DIRECT_LATCH=101, S_RHS_INIT_WAIT=103, S_ELIM_RHS_READ_WAIT=104, S_ELIM_RHS_UPDATE_WAIT=105, S_BACK_RHS_READ=106, S_BACK_RHS_READ_WAIT=107;
-localparam [6:0] S_IHT_MESH_WAIT=108, S_IHT_MESH_WRITE=110, S_PRUNE_MESH_WAIT=111, S_PRUNE_MESH_WRITE=113, S_WR_MESH_WAIT=114, S_WR_MESH_COMMIT=116, S_WX_COMMIT=117;
+localparam [6:0] S_IHT_MESH_WAIT=108, S_IHT_MESH_WRITE=110, S_PRUNE_MESH_WAIT=111, S_PRUNE_MESH_WRITE=113, S_WR_MESH_WAIT=114, S_WR_MESH_COMMIT=116, S_WX_COMMIT=117, S_WX_CLEAR=4, S_DELTA_CLEAR_START=6, S_DELTA_CLEAR_WAIT=9;
 localparam [6:0] S_LDL_INIT=58, S_LDL_DIAG_READ=59, S_LDL_DIAG_WAIT=60,
 S_LDL_DIAG_GATHER=61, S_LDL_DIAG_GATHER_WAIT=62, S_LDL_DIAG_MUL1=63,
 S_LDL_DIAG_MUL1_WAIT=64, S_LDL_DIAG_MUL2=65, S_LDL_DIAG_MUL2_WAIT=66,
@@ -130,6 +131,14 @@ localparam [6:0] S_FACTOR_CHECK_INIT=125, S_FACTOR_CHECK_SCAN=126,
                  S_FACTOR_CHECK_DONE=127;
 localparam [6:0] S_FUSED_UPDATE_CAPTURE=7'd2;
 localparam [6:0] S_GP_DIV_DONE=7'd118;
+// Registered commit boundary for the GP x update.  GP is the only score
+// update which multiplies an SPM value by the line-search alpha; committing
+// it directly in S_IHT_SCORE_READ formed an SPM -> DSP -> saturation -> SPM
+// path in one clock.
+localparam [6:0] S_GP_UPDATE_COMMIT=7'd51,
+                 S_GP_UPDATE_OPERANDS=7'd52,
+                 S_GP_UPDATE_MUL=7'd81,
+                 S_GP_UPDATE_SAT=7'd83;
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GRAD_STEP=4'd7, OP_CORR_UPDATE=4'd8, OP_GP_PROJECT=4'd9, OP_GP_UPDATE=4'd10; // 9/10: isolated canonical GP project/update
 localparam [1:0] MESH_CTX_NONE=2'd0, MESH_CTX_UPDATE=2'd1, MESH_CTX_PRUNE=2'd2, MESH_CTX_RESID=2'd3;
 // Mesh tokens bypass the generic core-input register and advance through the
@@ -137,7 +146,7 @@ localparam [1:0] MESH_CTX_NONE=2'd0, MESH_CTX_UPDATE=2'd1, MESH_CTX_PRUNE=2'd2, 
 localparam [3:0] MESH_CTX_WAIT_CYCLES = 4'd3;
 localparam [4:0] RHS_BLOCK_STRIDE = COLS;
 localparam [4:0] LS_ROW_UPDATE_STRIDE = COLS;
-localparam [3:0] LS_OP_CLEAR=4'd0, LS_OP_WRITE=4'd1, LS_OP_READ2=4'd2, LS_OP_ACC_BLOCK=4'd3, LS_OP_ROW_UPDATE=4'd4, LS_OP_RHS_WRITE=4'd5, LS_OP_RHS_READ=4'd6, LS_OP_RHS_UPDATE=4'd7, LS_OP_READ4=4'd8, LS_OP_WRITE4=4'd9, LS_OP_ACC4=4'd10;
+localparam [3:0] LS_OP_CLEAR=4'd0, LS_OP_WRITE=4'd1, LS_OP_READ2=4'd2, LS_OP_ACC_BLOCK=4'd3, LS_OP_ROW_UPDATE=4'd4, LS_OP_RHS_WRITE=4'd5, LS_OP_RHS_READ=4'd6, LS_OP_RHS_UPDATE=4'd7, LS_OP_READ4=4'd8, LS_OP_WRITE4=4'd9, LS_OP_ACC4=4'd10, LS_OP_CLEAR_ROW=4'd11;
 localparam [1:0] FACTOR_REUSE_NONE=2'd0, FACTOR_REUSE_EXACT=2'd1,
                  FACTOR_REUSE_PREFIX=2'd2;
 
@@ -276,6 +285,13 @@ reg signed [63:0] acc_den11;
 reg signed [63:0] gp_num_acc_q;
 reg signed [63:0] gp_den_acc_q;
 reg signed [63:0] gp_alpha_q;
+reg signed [DATA_W-1:0] gp_update_x_q;
+reg signed [DATA_W-1:0] gp_update_grad_q;
+reg signed [DATA_W-1:0] gp_update_alpha_q;
+reg gp_update_support_q;
+reg signed [63:0] gp_update_product_q;
+reg signed [63:0] gp_update_sum_q;
+reg signed [DATA_W-1:0] gp_update_value_q;
 reg signed [DATA_W-1:0] y_cur;
 reg signed [DATA_W-1:0] phi_cur;
 reg signed [DATA_W-1:0] phi1_cur;
@@ -326,6 +342,7 @@ reg [4:0] ls_row_base_q;
 reg [COLS-1:0] ls_lane_valid_q;
 reg [4*COLS-1:0] ls_acc4_lane_valid_q;
 reg [3:0] ls_acc4_col_valid_q;
+reg ls_acc4_payload_valid_q;
 reg ls_row_update_block_q;
 reg signed [GE_MAT_W-1:0] ls_wdata_q;
 reg signed [4*GE_MAT_W-1:0] ls_write4_wdata_q;
@@ -334,12 +351,16 @@ reg signed [63:0] ls_factor_q;
 reg signed [63:0] ls_rhs_wdata_q;
 wire ls_busy_w;
 wire ls_done_w;
+wire ls_acc4_credit_w;
+wire [4*COLS*64-1:0] ls_acc4_product_q_bus;
 // Back-solve READ4 uses only controller registers for its address.  Decode the
 // dedicated command state directly at the service boundary so the request is
 // accepted on the READ -> WAIT edge instead of one clock after ls_start_q.
 // Other LS operations retain the registered command path unchanged.
 wire back_read4_fast_start_w = (state == S_BACK_RHS_READ);
-wire ls_start_w = ls_start_q | back_read4_fast_start_w;
+wire ls_start_w = (ls_start_q &&
+    ((ls_op_q != LS_OP_ACC4) || ls_acc4_payload_valid_q)) |
+    back_read4_fast_start_w;
 wire [3:0] ls_op_w = back_read4_fast_start_w ? LS_OP_READ4 : ls_op_q;
 wire [4:0] ls_row_a_w = back_read4_fast_start_w ? ldlt_p_base_q : ls_row_a_q;
 wire [4:0] ls_col_a_w = back_read4_fast_start_w ? back_i : ls_col_a_q;
@@ -369,7 +390,7 @@ ls_matrix_service #(
     .lane_valid(ls_lane_valid_q),
     .row_update_block(ls_row_update_block_q),
     .lane_add(pe_rhs_product_bus),
-    .lane_add4(ls_wide_product_bus),
+    .lane_add4(ls_acc4_product_q_bus),
     .acc4_lane_valid(ls_acc4_lane_valid_q),
     .acc4_col_valid(ls_acc4_col_valid_q),
     .wdata(ls_wdata_q),
@@ -379,6 +400,7 @@ ls_matrix_service #(
     .rhs_wdata(ls_rhs_wdata_q),
     .busy(ls_busy_w),
     .done(ls_done_w),
+    .acc4_credit(ls_acc4_credit_w),
     .rdata_a(ls_rdata_a_w),
     .rdata_b(ls_rdata_b_w),
     .read4_rdata(ls_read4_rdata_w),
@@ -394,7 +416,7 @@ localparam [3:0] WIDE_MUL_IDLE=4'd0, WIDE_MUL_ISSUE0=4'd1,
                  WIDE_MUL_ISSUE1=4'd2, WIDE_MUL_DRAIN=4'd3,
                  WIDE_MUL_VDRAIN1=4'd4, WIDE_MUL_VDRAIN2=4'd5,
                  WIDE_MUL_VDRAIN3=4'd6, WIDE_MUL_COMMIT=4'd7,
-                 WIDE_MUL_FINAL=4'd8;
+                 WIDE_MUL_FINAL=4'd8, WIDE_MUL_FINISH=4'd9;
 reg [3:0] wide_mul_state_q;
 reg wide_mul_start_q;
 reg wide_mul_done_q;
@@ -446,6 +468,12 @@ reg [4:0] border_token_tag_q [0:3];
 reg border_token_part_q [0:3];
 reg border_token_phase_q [0:3];
 reg [3:0] border_token_neg_q [0:3];
+// Narrow metadata stage aligned with the registered product egress of each PE.
+reg border_product_valid_q [0:3];
+reg [4:0] border_product_tag_q [0:3];
+reg border_product_part_q [0:3];
+reg border_product_phase_q [0:3];
+reg [3:0] border_product_neg_q [0:3];
 reg border_capture_valid_q [0:3];
 reg [4:0] border_capture_tag_q [0:3];
 reg border_capture_part_q [0:3];
@@ -521,8 +549,9 @@ wire signed [127:0] ldlt_wide_q16_sum =
     ($signed(wide_mul_result_q[3]) >>> 16);
 
 wire ls_rhs4_active = (state == S_ACC_PE_WAIT) ||
-                      (state == S_ACC_PE_WAIT2) ||
-                      (state == S_ACC_RHS);
+                       (state == S_ACC_PE_WAIT2) ||
+                       (state == S_ACC_PE_WAIT3) ||
+                       (state == S_ACC_RHS);
 wire ls_gram4_active = (state == S_GRAM_PE_WAIT) ||
                        (state == S_GRAM_PE_WAIT2) ||
                        (state == S_ACC_GRAM);
@@ -531,6 +560,8 @@ wire ls_batch4_active = busy &&
                         (ls_rhs4_active || ls_gram4_active);
 
 wire [COLS*64-1:0] rhs4_product_bus;
+assign ls_acc4_product_q_bus =
+    {wide_product_q[3], wide_product_q[2], wide_product_q[1], wide_product_q[0]};
 genvar rhs4_lane_g;
 generate
     for (rhs4_lane_g = 0; rhs4_lane_g < COLS; rhs4_lane_g = rhs4_lane_g + 1) begin : gen_rhs4_product
@@ -550,6 +581,17 @@ always @(*) begin
     for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
         wide_row_product_valid[wide_row] = 1'b0;
         wide_row_product_part1[wide_row] = 1'b0;
+    end
+
+    // Capture four Gram columns into the existing row-local product banks.
+    // ACC4 transfers this registered payload once and drains it locally over
+    // four clocks, leaving the controller free to prepare the next batch.
+    if (ls_gram4_active && (state == S_ACC_GRAM) &&
+        (wide_mul_state_q == WIDE_MUL_IDLE)) begin
+        for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
+            wide_row_product_valid[wide_row] = 1'b1;
+            wide_row_product_part1[wide_row] = 1'b0;
+        end
     end
 
     if (border_operand_boundary_active_q) begin
@@ -600,40 +642,40 @@ always @(*) begin
 
     if (wide_mul_vertical_q) begin
         case (wide_mul_state_q)
-            WIDE_MUL_ISSUE1: begin
+            WIDE_MUL_DRAIN: begin
                 wide_row_product_valid[0] = 1'b1;
                 wide_row_product_part1[0] = 1'b0;
             end
-            WIDE_MUL_DRAIN: begin
+            WIDE_MUL_VDRAIN1: begin
                 wide_row_product_valid[0] = 1'b1;
                 wide_row_product_part1[0] = 1'b1;
                 wide_row_product_valid[1] = 1'b1;
                 wide_row_product_part1[1] = 1'b0;
             end
-            WIDE_MUL_VDRAIN1: begin
+            WIDE_MUL_VDRAIN2: begin
                 wide_row_product_valid[1] = 1'b1;
                 wide_row_product_part1[1] = 1'b1;
                 wide_row_product_valid[2] = 1'b1;
                 wide_row_product_part1[2] = 1'b0;
             end
-            WIDE_MUL_VDRAIN2: begin
+            WIDE_MUL_VDRAIN3: begin
                 wide_row_product_valid[2] = 1'b1;
                 wide_row_product_part1[2] = 1'b1;
                 wide_row_product_valid[3] = 1'b1;
                 wide_row_product_part1[3] = 1'b0;
             end
-            WIDE_MUL_VDRAIN3: begin
+            WIDE_MUL_COMMIT: begin
                 wide_row_product_valid[3] = 1'b1;
                 wide_row_product_part1[3] = 1'b1;
             end
             default: begin end
         endcase
-    end else if ((wide_mul_state_q == WIDE_MUL_ISSUE1) ||
-                 (wide_mul_state_q == WIDE_MUL_DRAIN)) begin
+    end else if ((wide_mul_state_q == WIDE_MUL_DRAIN) ||
+                 (wide_mul_state_q == WIDE_MUL_COMMIT)) begin
         for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
             wide_row_product_valid[wide_row] = 1'b1;
             wide_row_product_part1[wide_row] =
-                (wide_mul_state_q == WIDE_MUL_DRAIN);
+                (wide_mul_state_q == WIDE_MUL_COMMIT);
         end
     end
 
@@ -696,52 +738,61 @@ always @(posedge clk or negedge rst_n) begin
             WIDE_MUL_ISSUE0: wide_mul_state_q <= WIDE_MUL_ISSUE1;
             WIDE_MUL_ISSUE1: wide_mul_state_q <= WIDE_MUL_DRAIN;
             WIDE_MUL_DRAIN: begin
-                if (wide_mul_vertical_q) begin
-                    wide_mul_acc_q[0] <= wide_partial_sum[0];
+                if (wide_mul_vertical_q)
                     wide_mul_state_q <= WIDE_MUL_VDRAIN1;
-                end else begin
-                    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
-                        wide_mul_acc_q[wide_row] <= wide_partial_sum[wide_row];
+                else
                     wide_mul_state_q <= WIDE_MUL_COMMIT;
-                end
             end
             WIDE_MUL_VDRAIN1: begin
-                wide_mul_partial_q[0] <= wide_partial_sum[0];
-                wide_mul_acc_q[1] <= wide_partial_sum[1];
+                wide_mul_acc_q[0] <= wide_partial_sum[0];
                 wide_mul_state_q <= WIDE_MUL_VDRAIN2;
             end
             WIDE_MUL_VDRAIN2: begin
+                wide_mul_partial_q[0] <= wide_partial_sum[0];
+                wide_mul_acc_q[1] <= wide_partial_sum[1];
+                wide_mul_state_q <= WIDE_MUL_VDRAIN3;
+            end
+            WIDE_MUL_VDRAIN3: begin
                 if (wide_mul_neg_q[0])
                     wide_mul_result_q[0] <= -$signed(wide_mul_acc_q[0] + wide_mul_partial_q[0]);
                 else
                     wide_mul_result_q[0] <= $signed(wide_mul_acc_q[0] + wide_mul_partial_q[0]);
                 wide_mul_partial_q[1] <= wide_partial_sum[1];
                 wide_mul_acc_q[2] <= wide_partial_sum[2];
-                wide_mul_state_q <= WIDE_MUL_VDRAIN3;
-            end
-            WIDE_MUL_VDRAIN3: begin
-                if (wide_mul_neg_q[1])
-                    wide_mul_result_q[1] <= -$signed(wide_mul_acc_q[1] + wide_mul_partial_q[1]);
-                else
-                    wide_mul_result_q[1] <= $signed(wide_mul_acc_q[1] + wide_mul_partial_q[1]);
-                wide_mul_partial_q[2] <= wide_partial_sum[2];
-                wide_mul_acc_q[3] <= wide_partial_sum[3];
                 wide_mul_state_q <= WIDE_MUL_COMMIT;
             end
             WIDE_MUL_COMMIT: begin
+                if (wide_mul_vertical_q) begin
+                    if (wide_mul_neg_q[1])
+                        wide_mul_result_q[1] <= -$signed(wide_mul_acc_q[1] + wide_mul_partial_q[1]);
+                    else
+                        wide_mul_result_q[1] <= $signed(wide_mul_acc_q[1] + wide_mul_partial_q[1]);
+                    wide_mul_partial_q[2] <= wide_partial_sum[2];
+                    wide_mul_acc_q[3] <= wide_partial_sum[3];
+                end else begin
+                    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
+                        wide_mul_acc_q[wide_row] <= wide_partial_sum[wide_row];
+                end
+                wide_mul_state_q <= WIDE_MUL_FINAL;
+            end
+            WIDE_MUL_FINAL: begin
                 if (wide_mul_vertical_q) begin
                     if (wide_mul_neg_q[2])
                         wide_mul_result_q[2] <= -$signed(wide_mul_acc_q[2] + wide_mul_partial_q[2]);
                     else
                         wide_mul_result_q[2] <= $signed(wide_mul_acc_q[2] + wide_mul_partial_q[2]);
+                    // Isolate PE3's registered product from the final
+                    // 128-bit add and completion edge.
                     wide_mul_partial_q[3] <= wide_partial_sum[3];
                 end else begin
+                    // All four rows capture the reduced part-1 limb here.
+                    // FINISH only sees locally registered acc/partial data.
                     for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
                         wide_mul_partial_q[wide_row] <= wide_partial_sum[wide_row];
                 end
-                wide_mul_state_q <= WIDE_MUL_FINAL;
+                wide_mul_state_q <= WIDE_MUL_FINISH;
             end
-            WIDE_MUL_FINAL: begin
+            WIDE_MUL_FINISH: begin
                 if (wide_mul_vertical_q) begin
                     if (wide_mul_neg_q[3])
                         wide_mul_result_q[3] <= -$signed(wide_mul_acc_q[3] + wide_mul_partial_q[3]);
@@ -831,6 +882,11 @@ always @(posedge clk or negedge rst_n) begin
             border_token_part_q[border_row] <= 1'b0;
             border_token_phase_q[border_row] <= 1'b0;
             border_token_neg_q[border_row] <= 4'd0;
+            border_product_valid_q[border_row] <= 1'b0;
+            border_product_tag_q[border_row] <= 5'd0;
+            border_product_part_q[border_row] <= 1'b0;
+            border_product_phase_q[border_row] <= 1'b0;
+            border_product_neg_q[border_row] <= 4'd0;
             border_capture_valid_q[border_row] <= 1'b0;
             border_capture_tag_q[border_row] <= 5'd0;
             border_capture_part_q[border_row] <= 1'b0;
@@ -869,12 +925,19 @@ always @(posedge clk or negedge rst_n) begin
         end
 
         for (border_row = 0; border_row < 4; border_row = border_row + 1) begin
-            border_capture_valid_q[border_row] <= border_token_valid_q[border_row];
+            border_product_valid_q[border_row] <= border_token_valid_q[border_row];
             if (border_token_valid_q[border_row]) begin
-                border_capture_tag_q[border_row] <= border_token_tag_q[border_row];
-                border_capture_part_q[border_row] <= border_token_part_q[border_row];
-                border_capture_phase_q[border_row] <= border_token_phase_q[border_row];
-                border_capture_neg_q[border_row] <= border_token_neg_q[border_row];
+                border_product_tag_q[border_row] <= border_token_tag_q[border_row];
+                border_product_part_q[border_row] <= border_token_part_q[border_row];
+                border_product_phase_q[border_row] <= border_token_phase_q[border_row];
+                border_product_neg_q[border_row] <= border_token_neg_q[border_row];
+            end
+            border_capture_valid_q[border_row] <= border_product_valid_q[border_row];
+            if (border_product_valid_q[border_row]) begin
+                border_capture_tag_q[border_row] <= border_product_tag_q[border_row];
+                border_capture_part_q[border_row] <= border_product_part_q[border_row];
+                border_capture_phase_q[border_row] <= border_product_phase_q[border_row];
+                border_capture_neg_q[border_row] <= border_product_neg_q[border_row];
                 border_product_q[border_row] <=
                     ls_wide_product_bus[border_row*COLS*64 +: COLS*64];
             end
@@ -982,7 +1045,7 @@ always @(posedge clk or negedge rst_n) begin
         if (wide_mul_vertical_done_q && !wide_vertical_pe3_done_prev_q)
             $error("PE_VERTICAL_ASSERT LDLT wide result committed before PE3 drain");
         wide_vertical_pe3_done_prev_q <=
-            wide_mul_vertical_q && (wide_mul_state_q == WIDE_MUL_FINAL);
+            wide_mul_vertical_q && (wide_mul_state_q == WIDE_MUL_FINISH);
     end
 end
 `endif
@@ -1021,13 +1084,25 @@ reg [5:0] acc_j;
 reg [5:0] back_i;
 reg [5:0] back_j;
 reg signed [127:0] residual_acc;
-reg signed [127:0] residual_row_partial [0:3];
-reg signed [127:0] residual_pipe_sum_r1_q;
-reg signed [127:0] residual_pipe_sum_r2_q;
-reg signed [127:0] residual_pipe_sum_r3_q;
+// A residual block contains at most eight signed 24x24 products. The exact
+// block sum needs at most 51 signed bits, so keep the PE-row reduction at
+// 64 bits and sign-extend only at the long-lived accumulator boundary.
+reg signed [63:0] residual_row_partial [0:3];
+reg signed [63:0] residual_pipe_sum_r1_q;
+reg signed [63:0] residual_pipe_sum_r2_q;
+reg signed [63:0] residual_pipe_sum_r3_q;
+reg signed [63:0] residual_pipe_sum_r1_delay_q;
+reg signed [63:0] residual_pipe_row1_product_q;
+reg signed [63:0] residual_pipe_row2_product_q;
+reg signed [63:0] residual_pipe_row3_product_q;
+reg signed [63:0] residual_pipe_sum_r4_q;
+reg residual_product_valid_q;
+reg residual_product_egress_valid_q;
 reg residual_pipe_valid_r1_q;
 reg residual_pipe_valid_r2_q;
 reg residual_pipe_valid_r3_q;
+reg residual_pipe_valid_r4_q;
+reg residual_pipe_valid_r5_q;
 reg [1:0] residual_blocks_total_q;
 reg [1:0] residual_blocks_issued_q;
 reg [1:0] residual_blocks_retired_q;
@@ -1040,6 +1115,11 @@ reg signed [COLS*DATA_W-1:0] residual_ingress_phi_q;
 reg signed [COLS*DATA_W-1:0] residual_ingress_coeff_q;
 reg signed [DATA_W-1:0] phi_cache [0:MAX_K-1];
 reg [IDX_W-1:0] support_cache [0:MAX_K-1];
+// Coherent sparse view of the dense x bank. LS coefficients remain resident
+// as (index,value) tuples; writeback touches only dropped and new support
+// entries instead of sweeping all N elements after every solve.
+reg [IDX_W-1:0] x_support_cache [0:MAX_K-1];
+reg [5:0] x_support_k_q;
 reg [MAX_K*IDX_W-1:0] factor_support_cache_q;
 // Four inverse-D banks match the four physical PE rows.  The solve reads one
 // aligned entry from each bank, avoiding four 16:1 x 64-bit register muxes.
@@ -1059,12 +1139,17 @@ reg [31:0] request_support_fingerprint_q;
 reg [1:0] factor_reuse_mode_q;
 reg [MAX_K*IDX_W-1:0] request_support_cache_q;
 reg [MAX_K*IDX_W-1:0] factor_check_request_shift_q;
-reg [4:0] factor_check_req_idx_q;
+reg [5:0] factor_check_req_idx_q;
 reg [IDX_W-1:0] factor_check_request_value_q;
 reg factor_check_ordered_match_q;
+reg factor_check_prefix_ordered_q;
 reg [5:0] factor_check_append_rank_q;
 reg [MAX_K-1:0] factor_check_seen_mask_q;
 reg [31:0] factor_check_fingerprint_q;
+reg [1:0] factor_check_unmatched_count_q;
+reg [4:0] factor_check_unmatched_tag_q;
+reg [IDX_W-1:0] factor_check_unmatched_value_q;
+reg factor_border_clear_q;
 reg [7:0] refine_prime_k_eff;
 reg [31:0] phi_state_q;
 reg [5:0] phi_load_i;
@@ -1112,7 +1197,6 @@ reg [3:0] mesh_ctx_wait_count;
 wire [COLS*DATA_W-1:0] pe_update_block_w = mesh_ctx_commit_data;
 reg [5:0] load_i;
 reg [5:0] rhs_block_base;
-reg [2:0] gram_drain_wait_q;
 reg [1:0] corr_drain_wait_q;
 reg [IDX_W-1:0] load_support_q;
 reg [IDX_W-1:0] load_support_next_q;
@@ -1156,7 +1240,15 @@ reg [COLS*MEM_AW-1:0] row3_wr_addr;
 reg [COLS*DATA_W-1:0] row3_wr_data;
 reg [COLS-1:0] row3_wr_en;
 wire row3_corr_mode_w = corr_active_op_w && (state == S_CORR_WRITE);
-wire row3_scalar_write_en_w = ((state == S_WX) || (state == S_WX_COMMIT) || (state == S_WR_MESH_COMMIT) || (state == S_IHT_MESH_WRITE) || (state == S_PRUNE_MESH_WRITE) || (state == S_IHT_SCORE_READ) || (state == S_MP_X_WRITE));
+wire row3_scalar_write_en_w = ((state == S_WX) || (state == S_WX_COMMIT) ||
+                                   (state == S_WX_CLEAR) ||
+                                   (state == S_WR_MESH_COMMIT) ||
+                                   (state == S_IHT_MESH_WRITE) ||
+                                   (state == S_PRUNE_MESH_WRITE) ||
+                                   ((state == S_IHT_SCORE_READ) &&
+                                    (active_op != OP_GP_UPDATE)) ||
+                                   (state == S_GP_UPDATE_COMMIT) ||
+                                   (state == S_MP_X_WRITE));
 wire row3_prune_block_mode_w = ((active_op == OP_PRUNE_X) && (state == S_PRUNE_MESH_WRITE));
 wire row3_update_block_mode_w = (((active_op == OP_IHT_UPDATE) ||
                                   (active_op == OP_GRAD_STEP) ||
@@ -1169,7 +1261,9 @@ wire residual_block_last_w = (write_idx[2:0] == (COLS-1)) || (write_idx + 1'b1 >
 wire row3_commit_value_mode_w = row3_update_block_mode_w || row3_prune_block_mode_w || row3_resid_mode_w;
 wire [DATA_W-1:0] row3_commit_value_w = row3_commit_value_mode_w ? row3_selected_value : write_value_now;
 wire [COLS*DATA_W-1:0] row3_block_value_w = (row3_update_block_mode_w || row3_prune_block_mode_w || row3_resid_mode_w) ? pe_update_block_w : rd_data;
-wire wx_commit_mode_w = (((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) && (state == S_WX_COMMIT));
+wire wx_commit_mode_w = (((active_op == OP_REFINE) ||
+                          (active_op == OP_REFINE_SPARSE)) &&
+                         ((state == S_WX_COMMIT) || (state == S_WX_CLEAR)));
 wire [2:0] row3_target_lane_w = wx_commit_mode_w ? wx_target_idx_q[2:0] : write_idx[2:0];
 wire mesh_ctx_update_issue_w = 1'b0;
 // Present a prune token to PE0 for exactly one cycle.  The cluster registers
@@ -1233,7 +1327,16 @@ always @(*) begin
     // wavefront without an extra staging clock.
     mesh_ctx_residual_delta_bus = residual_delta_block_q;
     mesh_ctx_residual_delta_bus[write_idx[2:0]*DATA_W +: DATA_W] = row3_residual_delta[DATA_W-1:0];
-    row3_selected_value = row3_commit_value_mode_w ? row3_block_value_w[row3_target_lane_w*DATA_W +: DATA_W] : write_value_now;
+    // Keep the GP multiplier/saturation cone structurally off the SPM DIN
+    // bus while S_IHT_SCORE_READ captures it.  Write enable is low in that
+    // state, but timing analysis still sees a BRAM -> DSP -> BRAM path unless
+    // DIN is sourced only from the registered GP commit value.
+    if (active_op == OP_GP_UPDATE)
+        row3_selected_value = gp_update_value_q;
+    else
+        row3_selected_value = row3_commit_value_mode_w ?
+                              row3_block_value_w[row3_target_lane_w*DATA_W +: DATA_W] :
+                              write_value_now;
     row3_wr_addr = {COLS*MEM_AW{1'b0}};
     row3_wr_data = {COLS*DATA_W{1'b0}};
     row3_wr_en = {COLS{1'b0}};
@@ -1254,17 +1357,23 @@ always @(*) begin
                                    (({write_idx[IDX_W-1:3], 3'b000} + row3_lane[IDX_W-1:0]) < write_limit);
         end else if ((row3_target_lane_w == row3_lane[2:0]) && !row3_project_write_op_w) begin
             row3_wr_data[row3_lane*DATA_W +: DATA_W] = row3_selected_value;
-            row3_wr_en[row3_lane] = busy && row3_scalar_write_en_w;
+            row3_wr_en[row3_lane] = busy && row3_scalar_write_en_w &&
+                ((state != S_WX_CLEAR) ||
+                 !support_cached_has_idx(wx_target_idx_q));
         end
     end
 end
 wire [5:0] active_k_count = active_k_count_q;
 wire [5:0] active_k_last = (active_k_count == 6'd0) ? 6'd0 : (active_k_count - 6'd1);
 wire residual_stream_prepare_w = (state == S_RESID_PE_WAIT) && residual_stream_issue_q;
-wire residual_stream_issue_w = (state == S_RESID_PE_WAIT) && residual_ingress_valid_q;
-wire residual_stream_retire_w = (state == S_RESID_PE_WAIT) && residual_pipe_valid_r3_q;
-wire signed [127:0] residual_stream_retire_sum_w =
-    residual_pipe_sum_r3_q + residual_row_partial[3];
+// residual_ingress_valid_q is the registered transaction token.  Use it as
+// the datapath select as well as the issue qualifier, so the controller state
+// decode does not sit in front of the four PE-row multipliers.
+wire residual_stream_issue_w = residual_ingress_valid_q;
+wire residual_stream_retire_w = (state == S_RESID_PE_WAIT) && residual_pipe_valid_r5_q;
+wire signed [63:0] residual_stream_retire_sum_w = residual_pipe_sum_r4_q;
+wire signed [127:0] residual_stream_retire_sum_ext_w =
+    {{64{residual_stream_retire_sum_w[63]}}, residual_stream_retire_sum_w};
 
 wire [5:0] request_k_eff_w = (support_depth0 < k_active[5:0]) ?
                              support_depth0 : k_active[5:0];
@@ -1290,7 +1399,7 @@ wire [31:0] factor_check_fingerprint_next_w =
     32'h9e3779b9;
 wire factor_pipe_resp_any_match_w = |factor_pipe_resp_match_mask;
 wire factor_pipe_resp_ordered_match_w =
-    (factor_pipe_resp_tag >= factor_k_q) ||
+    ({1'b0, factor_pipe_resp_tag} >= factor_k_q) ||
     factor_pipe_resp_match_mask[factor_pipe_resp_tag];
 reg factor_check_all_seen_w;
 always @(*) begin
@@ -1313,6 +1422,20 @@ wire factor_prefix_hit_w = factor_config_match_w &&
     (k_active != 0) && (k_active <= MAX_K) &&
     (factor_k_q != 0) && (request_k_eff_w > factor_k_q) &&
     factor_check_all_seen_w;
+// Safe downdate case: the request is an ordered prefix of the cached factor.
+// The leading principal LDLT block is already exact, so only RHS/solve run.
+wire factor_truncate_hit_w = factor_config_match_w &&
+    (request_k_eff_w != 0) && (request_k_eff_w < factor_k_q) &&
+    factor_check_ordered_match_q &&
+    (factor_check_unmatched_count_q == 0);
+// A last-rank replacement preserves the leading (K-1)x(K-1) factor. Clear
+// that one Gram border, refill it through ACC4, then use the existing four-row
+// LDLT border pipeline. Arbitrary interior DROP/SWAP still falls back safely.
+wire factor_swap_last_hit_w = factor_config_match_w &&
+    (request_k_eff_w == factor_k_q) && (factor_k_q != 0) &&
+    factor_check_prefix_ordered_q &&
+    (factor_check_unmatched_count_q == 1) &&
+    ({1'b0, factor_check_unmatched_tag_q} + 1'b1 == request_k_eff_w);
 
 
 function [IDX_W-1:0] support_cached_at;
@@ -1345,6 +1468,26 @@ function support_cached_has_idx;
         end
     end
 endfunction
+
+reg x_support_has_drop_w;
+integer x_drop_rank;
+integer x_drop_new_rank;
+reg x_drop_found;
+always @(*) begin
+    x_support_has_drop_w = 1'b0;
+    for (x_drop_rank = 0; x_drop_rank < MAX_K; x_drop_rank = x_drop_rank + 1) begin
+        x_drop_found = 1'b0;
+        for (x_drop_new_rank = 0; x_drop_new_rank < MAX_K;
+             x_drop_new_rank = x_drop_new_rank + 1) begin
+            if ((x_drop_rank < x_support_k_q) &&
+                (x_drop_new_rank < active_k_count) &&
+                (x_support_cache[x_drop_rank] == support_cache[x_drop_new_rank]))
+                x_drop_found = 1'b1;
+        end
+        if ((x_drop_rank < x_support_k_q) && !x_drop_found)
+            x_support_has_drop_w = 1'b1;
+    end
+end
 function [7:0] ge_lower_idx;
     input [4:0] row;
     input [4:0] col;
@@ -1403,6 +1546,7 @@ always @(*) begin
                           (corr_request_op_w ? OP_CORR : op_sel);
     pe_rhs_active = ((((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE) || (active_op == OP_MP_UPDATE) || (active_op == OP_RESID) || (active_op == OP_GP_PROJECT)) &&
                       ((state == S_ACC) || (state == S_ACC_PE_WAIT) || (state == S_ACC_PE_WAIT2) ||
+                       (state == S_ACC_PE_WAIT3) ||
                        (state == S_ACC_RHS) || (state == S_GRAM_PE_WAIT) ||
                        (state == S_GRAM_PE_WAIT2) || (state == S_ACC_GRAM))) ||
                      residual_stream_issue_w ||
@@ -1411,16 +1555,16 @@ always @(*) begin
     pe_rhs_y_bus = {COLS*DATA_W{1'b0}};
     for (rhs_lane = 0; rhs_lane < COLS; rhs_lane = rhs_lane + 1) begin
         pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] =
-            (state == S_RESID_PE_WAIT) ?
+            residual_ingress_valid_q ?
                 residual_ingress_phi_q[rhs_lane*DATA_W +: DATA_W] :
             (corr_active_op_w ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] :
                 (((rhs_block_base + rhs_lane) < active_k_count) ?
                     phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}));
         pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] =
-            (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) ||
-              (state == S_ACC_GRAM)) ? phi_cache[acc_j] :
-             ((state == S_RESID_PE_WAIT) ?
+            (residual_ingress_valid_q ?
                 residual_ingress_coeff_q[rhs_lane*DATA_W +: DATA_W] :
+             (((state == S_GRAM_PE_WAIT) || (state == S_GRAM_PE_WAIT2) ||
+               (state == S_ACC_GRAM)) ? phi_cache[acc_j] :
               (corr_active_op_w ?
                 corr_y_block[corr_row[2:0]*DATA_W +: DATA_W] :
                 rhs_y_sample_q)));
@@ -1431,7 +1575,7 @@ end
 // four equals r.  The partial sum follows its transaction from PE0 to PE3.
 always @(*) begin
     for (residual_row = 0; residual_row < 4; residual_row = residual_row + 1)
-        residual_row_partial[residual_row] = 128'sd0;
+        residual_row_partial[residual_row] = 64'sd0;
     for (residual_lane = 0; residual_lane < COLS; residual_lane = residual_lane + 1) begin
         residual_row_partial[residual_lane % 4] =
             residual_row_partial[residual_lane % 4] +
@@ -1506,14 +1650,6 @@ always @(*) begin
         write_value_now = sat_s24($signed(iht_x_value) + ($signed(rd_data[write_idx[2:0]*DATA_W +: DATA_W]) >>> mu_shift_eff));
     end else if ((active_op == OP_GRAD_STEP) && (state == S_IHT_SCORE_READ)) begin
         write_value_now = sat_s24($signed(iht_x_value) + ($signed(rd_data[write_idx[2:0]*DATA_W +: DATA_W]) >>> mu_shift_eff));
-    end else if ((active_op == OP_GP_UPDATE) && (state == S_IHT_SCORE_READ)) begin
-        if (support_cached_has_idx(write_idx))
-            write_value_now = sat_s24($signed(iht_x_value) +
-                                      ($signed(mul_s24_s24(
-                                          rd_data[write_idx[2:0]*DATA_W +: DATA_W],
-                                          gp_alpha_q[DATA_W-1:0])) >>> 16));
-        else
-            write_value_now = iht_x_value;
     end else if ((active_op == OP_PRUNE_X) && (state == S_PRUNE_X_WAIT)) begin
         write_value_now = keep_x ? rd_data[write_idx[2:0]*DATA_W +: DATA_W] : {DATA_W{1'b0}};
     end else if ((active_op == OP_MP_UPDATE) && (state == S_MP_X_WRITE)) begin
@@ -1552,12 +1688,21 @@ active_op <= OP_REFINE;
         acc_j <= 6'd0;
         acc_i <= 5'd0;
         residual_acc <= 128'sd0;
-        residual_pipe_sum_r1_q <= 128'sd0;
-        residual_pipe_sum_r2_q <= 128'sd0;
-        residual_pipe_sum_r3_q <= 128'sd0;
+        residual_pipe_sum_r1_q <= 64'sd0;
+        residual_pipe_sum_r2_q <= 64'sd0;
+        residual_pipe_sum_r3_q <= 64'sd0;
+        residual_pipe_sum_r1_delay_q <= 64'sd0;
+        residual_pipe_row1_product_q <= 64'sd0;
+        residual_pipe_row2_product_q <= 64'sd0;
+        residual_pipe_row3_product_q <= 64'sd0;
+        residual_pipe_sum_r4_q <= 64'sd0;
+        residual_product_valid_q <= 1'b0;
+        residual_product_egress_valid_q <= 1'b0;
         residual_pipe_valid_r1_q <= 1'b0;
         residual_pipe_valid_r2_q <= 1'b0;
         residual_pipe_valid_r3_q <= 1'b0;
+        residual_pipe_valid_r4_q <= 1'b0;
+        residual_pipe_valid_r5_q <= 1'b0;
         residual_blocks_total_q <= 2'd0;
         residual_blocks_issued_q <= 2'd0;
         residual_blocks_retired_q <= 2'd0;
@@ -1567,7 +1712,6 @@ active_op <= OP_REFINE;
         residual_ingress_coeff_q <= {COLS*DATA_W{1'b0}};
         rhs_block_base <= 6'd0;
         rhs4_product_q <= {COLS*64{1'b0}};
-        gram_drain_wait_q <= 3'd0;
         corr_drain_wait_q <= 2'd0;
         wx_target_idx_q <= {IDX_W{1'b0}};
         wx_value_q <= {DATA_W{1'b0}};
@@ -1606,6 +1750,7 @@ active_op <= OP_REFINE;
         ls_lane_valid_q <= {COLS{1'b0}};
         ls_acc4_lane_valid_q <= {4*COLS{1'b0}};
         ls_acc4_col_valid_q <= 4'b0000;
+        ls_acc4_payload_valid_q <= 1'b0;
         ls_wdata_q <= {GE_MAT_W{1'b0}};
         ls_write4_wdata_q <= {4*GE_MAT_W{1'b0}};
         ls_write4_valid_q <= 4'b0000;
@@ -1635,6 +1780,13 @@ active_op <= OP_REFINE;
         gp_num_acc_q <= 64'sd0;
         gp_den_acc_q <= 64'sd0;
         gp_alpha_q <= 64'sd0;
+        gp_update_x_q <= {DATA_W{1'b0}};
+        gp_update_grad_q <= {DATA_W{1'b0}};
+        gp_update_alpha_q <= {DATA_W{1'b0}};
+        gp_update_support_q <= 1'b0;
+        gp_update_product_q <= 64'sd0;
+        gp_update_sum_q <= 64'sd0;
+        gp_update_value_q <= {DATA_W{1'b0}};
         mesh_ctx_x_block <= {COLS*DATA_W{1'b0}};
         mesh_ctx_delta_block <= {COLS*DATA_W{1'b0}};
         mesh_ctx_keep_block <= {COLS{1'b0}};
@@ -1667,27 +1819,35 @@ active_op <= OP_REFINE;
         factor_support_fingerprint_q <= 32'd0;
         request_support_fingerprint_q <= 32'd0;
         factor_reuse_mode_q <= FACTOR_REUSE_NONE;
-        factor_check_req_idx_q <= 5'd0;
+        factor_check_req_idx_q <= 6'd0;
         factor_check_request_value_q <= {IDX_W{1'b0}};
         factor_check_ordered_match_q <= 1'b0;
+        factor_check_prefix_ordered_q <= 1'b0;
         factor_check_append_rank_q <= 6'd0;
         factor_check_seen_mask_q <= {MAX_K{1'b0}};
         factor_check_fingerprint_q <= 32'd0;
+        factor_check_unmatched_count_q <= 2'd0;
+        factor_check_unmatched_tag_q <= 5'd0;
+        factor_check_unmatched_value_q <= {IDX_W{1'b0}};
+        factor_border_clear_q <= 1'b0;
         factor_support_cache_q <= {MAX_K*IDX_W{1'b0}};
         request_support_cache_q <= {MAX_K*IDX_W{1'b0}};
         factor_check_request_shift_q <= {MAX_K*IDX_W{1'b0}};
         factor_pipe_valid <= 1'b0;
         factor_pipe_tag <= 5'd0;
         factor_pipe_value <= {IDX_W{1'b0}};
+        x_support_k_q <= 6'd0;
         for (gi = 0; gi < MAX_K; gi = gi + 1) begin
             rhs[gi] <= 64'sd0;
             coeff_mem[gi] <= {DATA_W{1'b0}};
             phi_cache[gi] <= {DATA_W{1'b0}};
             ge_x[gi] <= 64'sd0;
             ldlt_d_mem[gi] <= 64'sd0;
+            x_support_cache[gi] <= {IDX_W{1'b0}};
         end
     end else begin
                 ls_start_q <= 1'b0;
+                ls_acc4_payload_valid_q <= 1'b0;
                 wide_mul_start_q <= 1'b0;
                 wide_mul_vertical_request_q <= 1'b0;
                 residual_ingress_valid_q <= residual_stream_prepare_w;
@@ -1707,19 +1867,46 @@ active_op <= OP_REFINE;
                     end
                 end
                 if (state == S_RESID_PE_WAIT) begin
-                    residual_pipe_valid_r1_q <= residual_stream_issue_w;
+                    // Match the controller token to the registered PE input
+                    // and then the registered PE product egress.  No PE
+                    // multiplier remains on a residual accumulator edge.
+                    residual_product_valid_q <= residual_stream_issue_w;
+                    residual_product_egress_valid_q <= residual_product_valid_q;
+                    residual_pipe_valid_r1_q <= residual_product_egress_valid_q;
                     residual_pipe_valid_r2_q <= residual_pipe_valid_r1_q;
                     residual_pipe_valid_r3_q <= residual_pipe_valid_r2_q;
-                    if (residual_stream_issue_w)
+                    residual_pipe_valid_r4_q <= residual_pipe_valid_r3_q;
+                    residual_pipe_valid_r5_q <= residual_pipe_valid_r4_q;
+                    if (residual_product_egress_valid_q)
                         residual_pipe_sum_r1_q <= residual_row_partial[0];
-                    if (residual_pipe_valid_r1_q)
-                        residual_pipe_sum_r2_q <= residual_pipe_sum_r1_q + residual_row_partial[1];
-                    if (residual_pipe_valid_r2_q)
-                        residual_pipe_sum_r3_q <= residual_pipe_sum_r2_q + residual_row_partial[2];
+                    // Register each arriving PE-row product before its
+                    // accumulator stage. This removes the row-1 and row-2
+                    // DSP -> carry-chain paths without changing II=1.
+                    if (residual_pipe_valid_r1_q) begin
+                        residual_pipe_sum_r1_delay_q <= residual_pipe_sum_r1_q;
+                        residual_pipe_row1_product_q <= residual_row_partial[1];
+                    end
+                    if (residual_pipe_valid_r2_q) begin
+                        residual_pipe_sum_r2_q <= residual_pipe_sum_r1_delay_q +
+                                                  residual_pipe_row1_product_q;
+                        residual_pipe_row2_product_q <= residual_row_partial[2];
+                    end
+                    if (residual_pipe_valid_r3_q) begin
+                        residual_pipe_sum_r3_q <= residual_pipe_sum_r2_q +
+                                                  residual_pipe_row2_product_q;
+                        residual_pipe_row3_product_q <= residual_row_partial[3];
+                    end
+                    if (residual_pipe_valid_r4_q)
+                        residual_pipe_sum_r4_q <= residual_pipe_sum_r3_q +
+                                                  residual_pipe_row3_product_q;
                 end else begin
+                    residual_product_valid_q <= 1'b0;
+                    residual_product_egress_valid_q <= 1'b0;
                     residual_pipe_valid_r1_q <= 1'b0;
                     residual_pipe_valid_r2_q <= 1'b0;
                     residual_pipe_valid_r3_q <= 1'b0;
+                    residual_pipe_valid_r4_q <= 1'b0;
+                    residual_pipe_valid_r5_q <= 1'b0;
                 end
                 if (ls_done_w)
                     ls_row_update_block_q <= 1'b0;
@@ -1747,6 +1934,7 @@ case (state)
                                 request_support_flat_w[gi*IDX_W +: IDX_W];
                     end
                     factor_reuse_mode_q <= FACTOR_REUSE_NONE;
+                    factor_border_clear_q <= 1'b0;
                     write_idx <= {IDX_W{1'b0}};
                     phase_residual <= 1'b0;
                     write_limit <= n_size;
@@ -1759,28 +1947,30 @@ case (state)
                 end
             end
             S_FACTOR_CHECK_INIT: begin
-                factor_check_req_idx_q <= 5'd0;
+                factor_check_req_idx_q <= 6'd0;
                 factor_check_request_value_q <=
                     request_support_cache_q[0 +: IDX_W];
                 factor_check_request_shift_q <=
                     request_support_cache_q >> IDX_W;
                 factor_check_ordered_match_q <= factor_config_match_w;
+                factor_check_prefix_ordered_q <= factor_config_match_w;
                 factor_check_seen_mask_q <= {MAX_K{1'b0}};
                 factor_check_fingerprint_q <=
                     32'h6d2b79f5 ^ {26'd0, request_k_eff_w};
                 factor_check_append_rank_q <= factor_config_match_w ?
                                               factor_k_q : 6'd0;
+                factor_check_unmatched_count_q <= 2'd0;
+                factor_check_unmatched_tag_q <= 5'd0;
+                factor_check_unmatched_value_q <= {IDX_W{1'b0}};
                 if (factor_config_match_w) begin
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         support_cache[gi] <=
                             factor_support_cache_q[gi*IDX_W +: IDX_W];
                 end
-                // No exact scan can authorize reuse when the cached sensing
-                // configuration differs, or when the request is smaller than
-                // the cached factor.  Copying the request in DONE is already
-                // the exact miss behavior, so do not inject useless tokens.
+                // A smaller request can reuse a leading principal LDLT block,
+                // so it must be scanned as well. Only configuration mismatch
+                // and the empty request bypass the PE0 factor-token wavefront.
                 state <= (!factor_config_match_w ||
-                          (request_k_eff_w < factor_k_q) ||
                           (request_k_eff_w == 0)) ?
                          S_FACTOR_CHECK_DONE : S_FACTOR_CHECK_SCAN;
             end
@@ -1790,7 +1980,7 @@ case (state)
                 // match mask after the vertical pipe drain.
                 if (factor_check_req_idx_q < request_k_eff_w) begin
                     factor_pipe_valid <= 1'b1;
-                    factor_pipe_tag <= factor_check_req_idx_q;
+                    factor_pipe_tag <= factor_check_req_idx_q[4:0];
                     factor_pipe_value <= factor_check_request_value_q;
                     factor_check_fingerprint_q <=
                         factor_check_fingerprint_next_w;
@@ -1802,7 +1992,7 @@ case (state)
                             factor_check_request_shift_q >> IDX_W;
                     end else begin
                         // Mark all requests issued; responses continue to drain.
-                        factor_check_req_idx_q <= request_k_eff_w[4:0];
+                        factor_check_req_idx_q <= request_k_eff_w;
                     end
                 end
 
@@ -1812,6 +2002,10 @@ case (state)
                     factor_check_ordered_match_q <=
                         factor_check_ordered_match_q &&
                         factor_pipe_resp_ordered_match_w;
+                    if ({1'b0, factor_pipe_resp_tag} + 1'b1 < request_k_eff_w)
+                        factor_check_prefix_ordered_q <=
+                            factor_check_prefix_ordered_q &&
+                            factor_pipe_resp_ordered_match_w;
                     if (!factor_pipe_resp_any_match_w &&
                         (factor_check_append_rank_q < MAX_K)) begin
                         support_cache[factor_check_append_rank_q] <=
@@ -1819,16 +2013,30 @@ case (state)
                         factor_check_append_rank_q <=
                             factor_check_append_rank_q + 1'b1;
                     end
-                    if (factor_pipe_resp_tag + 1'b1 >= request_k_eff_w)
+                    if (!factor_pipe_resp_any_match_w) begin
+                        if (factor_check_unmatched_count_q != 2'b11)
+                            factor_check_unmatched_count_q <=
+                                factor_check_unmatched_count_q + 1'b1;
+                        factor_check_unmatched_tag_q <= factor_pipe_resp_tag;
+                        factor_check_unmatched_value_q <= factor_pipe_resp_value;
+                    end
+                    if ({1'b0, factor_pipe_resp_tag} + 1'b1 >= request_k_eff_w)
                         state <= S_FACTOR_CHECK_DONE;
                 end
             end
             S_FACTOR_CHECK_DONE: begin
                 request_support_fingerprint_q <= factor_check_fingerprint_q;
-                if (factor_exact_hit_w)
+                if (factor_exact_hit_w || factor_truncate_hit_w)
                     factor_reuse_mode_q <= FACTOR_REUSE_EXACT;
                 else if (factor_prefix_hit_w)
                     factor_reuse_mode_q <= FACTOR_REUSE_PREFIX;
+                else if (factor_swap_last_hit_w) begin
+                    factor_reuse_mode_q <= FACTOR_REUSE_PREFIX;
+                    factor_k_q <= factor_k_q - 1'b1;
+                    support_cache[factor_k_q - 1'b1] <=
+                        factor_check_unmatched_value_q;
+                    factor_border_clear_q <= 1'b1;
+                end
                 else begin
                     factor_reuse_mode_q <= FACTOR_REUSE_NONE;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
@@ -1890,7 +2098,8 @@ case (state)
                         // hits accumulate only the newly appended columns.
                         phi_scan_col_q <= {IDX_W{1'b0}};
                         phi_scan_state_q <= (|seed) ? seed : DEFAULT_SEED;
-                        state <= S_SCAN_DIRECT_STEP;
+                        state <= factor_border_clear_q ?
+                                 S_DELTA_CLEAR_START : S_SCAN_DIRECT_STEP;
                     end else begin
                         factor_valid_q <= 1'b0;
                         state <= S_LS_CLEAR_START;
@@ -1971,6 +2180,22 @@ case (state)
                     state <= (write_limit == 0) ? ((active_op == OP_CORR) ? S_DONE : S_WR) : S_WX;
                 end
             end
+            S_DELTA_CLEAR_START: begin
+                // SWAP_LAST reuses the leading principal factor. The replaced
+                // rank is the first new border (factor_k_q after decrement).
+                ls_start_q <= 1'b1;
+                ls_op_q <= LS_OP_CLEAR_ROW;
+                ls_row_a_q <= factor_k_q[4:0];
+                state <= S_DELTA_CLEAR_WAIT;
+            end
+            S_DELTA_CLEAR_WAIT: begin
+                if (ls_done_w) begin
+                    factor_border_clear_q <= 1'b0;
+                    phi_scan_col_q <= {IDX_W{1'b0}};
+                    phi_scan_state_q <= (|seed) ? seed : DEFAULT_SEED;
+                    state <= S_SCAN_DIRECT_STEP;
+                end
+            end
             S_LS_CLEAR_START: begin
                 ls_start_q <= 1'b1;
                 ls_op_q <= LS_OP_CLEAR;
@@ -1995,6 +2220,9 @@ case (state)
                 state <= S_ACC_PE_WAIT2;
             end
             S_ACC_PE_WAIT2: begin
+                state <= S_ACC_PE_WAIT3;
+            end
+            S_ACC_PE_WAIT3: begin
                 rhs4_product_q <= rhs4_product_bus;
                 state <= S_ACC_RHS;
             end
@@ -2038,7 +2266,9 @@ case (state)
                 end
             end
             S_GRAM_PE_WAIT: begin
-                state <= S_ACC_GRAM;
+                // Hold the four-row batch through the registered core input
+                // and registered product egress boundaries.
+                state <= S_GRAM_PE_WAIT2;
             end
             S_GRAM_PE_WAIT2: begin
                 state <= S_ACC_GRAM;
@@ -2046,6 +2276,7 @@ case (state)
             S_ACC_GRAM: begin
                 ls_start_q <= 1'b1;
                 ls_op_q <= LS_OP_ACC4;
+                ls_acc4_payload_valid_q <= 1'b1;
                 ls_row_base_q <= rhs_block_base;
                 ls_col_a_q <= acc_j;
                 for (gi = 0; gi < 4; gi = gi + 1) begin
@@ -2060,20 +2291,12 @@ case (state)
                               ((rhs_block_base + acc4_valid_col) >= factor_k_q)));
                     end
                 end
-                // Consecutive ACC4 batches retain one guard clock because the
-                // producer can otherwise outrun the four-clock matrix-store
-                // drain.  The final batch of a measurement row may enqueue on
-                // the previous batch's final write: the following direct-scan
-                // and RHS interval gives the one-entry queue time to drain.
-                gram_drain_wait_q <=
-                    ((rhs_block_base + RHS_BLOCK_STRIDE >= active_k_count) &&
-                     (acc_j + 5'd4 >= active_k_count)) ? 3'd0 : 3'd1;
                 state <= S_GRAM_ACC_WAIT;
             end
             S_GRAM_ACC_WAIT: begin
-                if (gram_drain_wait_q != 0) begin
-                    gram_drain_wait_q <= gram_drain_wait_q - 1'b1;
-                end else begin
+                if (((rhs_block_base + RHS_BLOCK_STRIDE < active_k_count) ||
+                     (acc_j + 5'd4 < active_k_count)) ?
+                    ls_acc4_credit_w : ls_done_w) begin
                     if (rhs_block_base + RHS_BLOCK_STRIDE < active_k_count) begin
                         rhs_block_base <= rhs_block_base + RHS_BLOCK_STRIDE;
                         acc_i <= 5'd0;
@@ -2081,10 +2304,6 @@ case (state)
                     end else if (acc_j + 5'd4 < active_k_count) begin
                         acc_j <= acc_j + 5'd4;
                         acc_i <= 5'd0;
-                        // For a border extension, every column batch starts no
-                        // earlier than the block containing the first new row.
-                        // This covers old/new cross terms without revisiting the
-                        // cached old/old factor.
                         if ((factor_reuse_mode_q == FACTOR_REUSE_PREFIX) &&
                             ((((acc_j + 5'd4) / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE) <
                              ((factor_k_q / RHS_BLOCK_STRIDE) * RHS_BLOCK_STRIDE)))
@@ -2145,6 +2364,10 @@ case (state)
                         refine_stream_count_q <= refine_stream_count_q + 1'b1;
                     end
                 if (write_idx + 1 >= write_limit) begin
+                    x_support_k_q <= active_k_count;
+                    for (gi = 0; gi < MAX_K; gi = gi + 1)
+                        if (gi < active_k_count)
+                            x_support_cache[gi] <= support_cache[gi];
                     write_idx <= {IDX_W{1'b0}};
                     phase_residual <= 1'b1;
                     write_limit <= m_size;
@@ -2157,14 +2380,24 @@ case (state)
                     state <= (m_size == 0) ? S_DONE : S_SCAN_DIRECT_STEP;
                 end else begin
                     write_idx <= write_idx + 1'b1;
-                    if (active_op == OP_REFINE_SPARSE) begin
-                        wx_target_idx_q <= support_cached_at(write_idx[4:0] + 5'd1);
-                        wx_value_q <= coeff_mem[write_idx[4:0] + 5'd1];
-                    end else if (active_op == OP_REFINE) begin
-                        wx_target_idx_q <= write_idx + 1'b1;
-                        wx_value_q <= coeff_for_dense_idx(write_idx + 1'b1);
-                    end
+                    wx_target_idx_q <= support_cached_at(write_idx[4:0] + 5'd1);
+                    wx_value_q <= coeff_mem[write_idx[4:0] + 5'd1];
                 end
+                end
+            end
+            S_WX_CLEAR: begin
+                // Inspect one old tuple per clock. The row-3 write-enable
+                // suppresses retained indices and clears only true DROPs.
+                if (write_idx + 1 >= write_limit) begin
+                    write_idx <= {IDX_W{1'b0}};
+                    write_limit <= active_k_count;
+                    wx_target_idx_q <= support_cached_at(5'd0);
+                    wx_value_q <= coeff_mem[0];
+                    state <= S_WX_COMMIT;
+                end else begin
+                    write_idx <= write_idx + 1'b1;
+                    wx_target_idx_q <= x_support_cache[write_idx[4:0] + 5'd1];
+                    wx_value_q <= {DATA_W{1'b0}};
                 end
             end
             S_WR_ACC_INIT: begin
@@ -2206,7 +2439,7 @@ case (state)
                         (residual_blocks_issued_q + 1'b1 < residual_blocks_total_q);
                 end
                 if (residual_stream_retire_w) begin
-                    residual_acc <= residual_acc + residual_stream_retire_sum_w;
+                    residual_acc <= residual_acc + residual_stream_retire_sum_ext_w;
                     residual_blocks_retired_q <= residual_blocks_retired_q + 1'b1;
                     if (residual_blocks_retired_q + 1'b1 >= residual_blocks_total_q) begin
                         residual_stream_issue_q <= 1'b0;
@@ -3064,24 +3297,12 @@ case (state)
                             div_trial_quot[div_iter - 2'd2] = 1'b1;
                         end
                     end
-                    // Two more restoring steps halve the LS divider latency
-                    // from 32 to 16 clocks without adding another divider or
-                    // changing the fixed-point quotient/rounding behavior.
-                    if (div_iter > 2) begin
-                        div_trial_rem = {div_trial_rem[63:0], div_abs_num[div_iter - 3'd3]};
-                        if (div_trial_rem >= {1'b0, div_abs_den}) begin
-                            div_trial_rem = div_trial_rem - {1'b0, div_abs_den};
-                            div_trial_quot[div_iter - 3'd3] = 1'b1;
-                        end
-                    end
-                    if (div_iter > 3) begin
-                        div_trial_rem = {div_trial_rem[63:0], div_abs_num[div_iter - 3'd4]};
-                        if (div_trial_rem >= {1'b0, div_abs_den}) begin
-                            div_trial_rem = div_trial_rem - {1'b0, div_abs_den};
-                            div_trial_quot[div_iter - 3'd4] = 1'b1;
-                        end
-                    end
-                    if (div_iter <= 4) begin
+                    // Limit the shared divider to two restoring bits per
+                    // clock.  Four chained compare/subtract steps were the
+                    // next routed critical path after the GP SPM boundary.
+                    // This trades divider cycles for a much shorter 65-bit
+                    // carry path without changing quotient or rounding.
+                    if (div_iter <= 2) begin
                         // Canonical fixed-point GP defines alpha with signed
                         // division truncated toward zero.  The shared LS/MP
                         // divider retains its historical round-to-nearest
@@ -3100,7 +3321,7 @@ case (state)
                     end else begin
                         div_rem <= div_trial_rem;
                         div_quot <= div_trial_quot;
-                        div_iter <= div_iter - 7'd4;
+                        div_iter <= div_iter - 7'd2;
                     end
                 end
             end
@@ -3190,11 +3411,19 @@ case (state)
                     coeff_mem[12], coeff_mem[13], coeff_mem[14], coeff_mem[15]);
 `endif
                 write_idx <= {IDX_W{1'b0}};
-                write_limit <= (active_op == OP_REFINE_SPARSE) ? active_k : n_size;
                 phase_residual <= 1'b0;
-                wx_target_idx_q <= (active_op == OP_REFINE_SPARSE) ? support_cached_at(5'd0) : {IDX_W{1'b0}};
-                wx_value_q <= (active_op == OP_REFINE_SPARSE) ? coeff_mem[0] : coeff_for_dense_idx({IDX_W{1'b0}});
-                state <= S_WX_COMMIT;
+                refine_stream_count_q <= 6'd0;
+                if (x_support_has_drop_w && (x_support_k_q != 0)) begin
+                    write_limit <= x_support_k_q;
+                    wx_target_idx_q <= x_support_cache[0];
+                    wx_value_q <= {DATA_W{1'b0}};
+                    state <= S_WX_CLEAR;
+                end else begin
+                    write_limit <= active_k_count;
+                    wx_target_idx_q <= support_cached_at(5'd0);
+                    wx_value_q <= coeff_mem[0];
+                    state <= S_WX_COMMIT;
+                end
             end
             S_CORR_INIT: begin
                 corr_row <= {IDX_W{1'b0}};
@@ -3255,7 +3484,9 @@ case (state)
                     // Row 3 consumes the final m mod 4 token, then its PE
                     // accumulator commits on the following edge.  Keep one
                     // explicit capture clock before exposing corr_acc_bus.
-                    corr_drain_wait_q <= 2'd2;
+                    // The registered multiplier result needs one additional
+                    // drain clock before the final PE accumulator is visible.
+                    corr_drain_wait_q <= 2'd3;
                     state <= S_CORR_PE_WAIT;
                 end else begin
                     if (corr_row[2:0] == 3'd7)
@@ -3359,7 +3590,45 @@ case (state)
                 state <= S_IHT_SCORE_READ;
             end
             S_IHT_SCORE_READ: begin
-                write_value <= write_value_now;
+                if (active_op == OP_GP_UPDATE) begin
+                    // Conservative GP retime: BRAM output, multiplier, add,
+                    // saturation and SPM commit each terminate at a register.
+                    // The extra clocks are intentional timing margin; the
+                    // fixed-point operation order and truncation stay exact.
+                    gp_update_x_q <= iht_x_value;
+                    gp_update_grad_q <=
+                        rd_data[write_idx[2:0]*DATA_W +: DATA_W];
+                    gp_update_alpha_q <= gp_alpha_q[DATA_W-1:0];
+                    gp_update_support_q <= support_cached_has_idx(write_idx);
+                    state <= S_GP_UPDATE_OPERANDS;
+                end else begin
+                    write_value <= write_value_now;
+                    if (write_idx + 1'b1 >= write_limit) begin
+                        state <= S_DONE;
+                    end else begin
+                        write_idx <= write_idx + 1'b1;
+                        rd_addr <= 10'h000 + ((write_idx + 1'b1) >> 3);
+                        state <= S_IHT_X_READ;
+                    end
+                end
+            end
+            S_GP_UPDATE_OPERANDS: begin
+                gp_update_product_q <= gp_update_support_q ?
+                    mul_s24_s24(gp_update_grad_q, gp_update_alpha_q) :
+                    64'sd0;
+                state <= S_GP_UPDATE_MUL;
+            end
+            S_GP_UPDATE_MUL: begin
+                gp_update_sum_q <= $signed(gp_update_x_q) +
+                                   ($signed(gp_update_product_q) >>> 16);
+                state <= S_GP_UPDATE_SAT;
+            end
+            S_GP_UPDATE_SAT: begin
+                gp_update_value_q <= sat_s24(gp_update_sum_q);
+                state <= S_GP_UPDATE_COMMIT;
+            end
+            S_GP_UPDATE_COMMIT: begin
+                write_value <= gp_update_value_q;
                 if (write_idx + 1'b1 >= write_limit) begin
                     state <= S_DONE;
                 end else begin
@@ -3419,6 +3688,10 @@ case (state)
             end
             S_PRUNE_MESH_WRITE: begin
                 if (write_idx + COLS[IDX_W-1:0] >= write_limit) begin
+                    x_support_k_q <= active_k_count;
+                    for (gi = 0; gi < MAX_K; gi = gi + 1)
+                        if (gi < active_k_count)
+                            x_support_cache[gi] <= support_cache[gi];
                     state <= S_DONE;
                 end else begin
                     write_idx <= write_idx + COLS[IDX_W-1:0];

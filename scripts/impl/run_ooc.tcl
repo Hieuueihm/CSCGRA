@@ -36,6 +36,8 @@ synth_design -top $top_name -part $part_name -mode out_of_context \
 create_clock -period $clock_period_ns -name clk [get_ports clk]
 opt_design -directive Explore
 place_design -directive Explore
+report_timing_summary -file [file join $log_dir "${top_name}_post_place_timing.rpt"] \
+    -delay_type max -max_paths 20 -report_unconstrained
 phys_opt_design -directive Explore
 route_design -directive Explore
 report_route_status -file [file join $log_dir "${top_name}_route_status.rpt"]

@@ -30,3 +30,6 @@ Use `files.f` for compile order. Current sign-off is checkpoint `88f9411`:
 - chained narrow top-K support append acknowledgements.
 
 See `docs/PROJECT_STATUS.md` for the complete inventory and rejected trials.
+The five post-sign-off unified-architecture extensions and their exact
+verification boundaries are tracked in
+`docs/v2/UNIFIED_PHASE_TOKEN_ARCHITECTURE.md`.

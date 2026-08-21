@@ -3,9 +3,11 @@
 // Eight row banks hold the regularized Cholesky LDLT matrix. READ4/WRITE4 use
 // four distinct row banks. ACC4 captures the products from all four physical
 // PE rows once, then drains the four Gram columns into the row banks while the
-// controller prepares the next batch.  A one-entry fall-through queue accepts
-// the following ACC4 transaction before the current batch drains its last
-// column, so consecutive four-row PE batches do not insert an idle write slot.
+// controller prepares the next batch. ACC4 intentionally exposes only one
+// active transaction: the producer advances on done before issuing another
+// token. Keeping the wide payload row-stationary removes the former 2048-bit
+// pending queue, its promotion mux and its 1.8k-load capture enables. The
+// small drain latency is traded for lower congestion and deterministic timing.
 module ls_matrix_service #(
     parameter integer MAX_K = 16,
     parameter integer GE_W = 56,
@@ -38,6 +40,7 @@ module ls_matrix_service #(
     input  wire signed [RHS_W-1:0]      rhs_wdata,
     output reg                          busy,
     output reg                          done,
+    output reg                          acc4_credit,
     output reg signed [GE_W-1:0]        rdata_a,
     output reg signed [GE_W-1:0]        rdata_b,
     output reg signed [4*GE_W-1:0]      read4_rdata,
@@ -55,24 +58,48 @@ module ls_matrix_service #(
     localparam [3:0] OP_READ4      = 4'd8;
     localparam [3:0] OP_WRITE4     = 4'd9;
     localparam [3:0] OP_ACC4       = 4'd10;
+    localparam [3:0] OP_CLEAR_ROW  = 4'd11;
 
-    localparam [2:0] S_IDLE=3'd0, S_CLEAR=3'd1, S_DONE=3'd4, S_ACC4=3'd5;
+    localparam [2:0] S_IDLE=3'd0, S_CLEAR=3'd1, S_CLEAR_ROW=3'd2,
+                     S_DONE=3'd4, S_ACC4=3'd5;
     localparam integer ROW_BANKS = 8;
     localparam integer COL_BANKS = 1;
     localparam integer BANK_DEPTH = (MAX_K/ROW_BANKS)*MAX_K;
+    localparam integer MAT_AW = $clog2(BANK_DEPTH);
 
     reg [2:0] state;
-    reg [4:0] clear_addr_q;
+    reg [MAT_AW-1:0] clear_addr_q;
+    reg [4:0] clear_row_q;
+    reg [4:0] clear_col_q;
     reg [1:0] acc4_drain_col_q;
-    reg [4:0] acc4_col_base_q, acc4_row_base_q;
-    reg signed [4*LANES*64-1:0] acc4_lane_add_q;
-    reg [4*LANES-1:0] acc4_lane_valid_q;
-    reg [3:0] acc4_col_valid_q;
-    reg acc4_pending_valid_q;
-    reg [4:0] acc4_pending_col_base_q, acc4_pending_row_base_q;
-    reg signed [4*LANES*64-1:0] acc4_pending_lane_add_q;
-    reg [4*LANES-1:0] acc4_pending_lane_valid_q;
-    reg [3:0] acc4_pending_col_valid_q;
+    reg [4:0] acc4_col_base_q;
+    reg [4:0] acc4_row_base_q;
+    reg signed [LANES*64-1:0] acc4_column_add_q;
+    reg [LANES-1:0] acc4_column_valid_q;
+    reg signed [LANES*64-1:0] acc4_prefetch_add_w;
+    reg [LANES-1:0] acc4_prefetch_valid_w;
+    wire [4*LANES-1:0] acc4_effective_lane_valid_w =
+        acc4_lane_valid & {{LANES{acc4_col_valid[3]}},
+                           {LANES{acc4_col_valid[2]}},
+                           {LANES{acc4_col_valid[1]}},
+                           {LANES{acc4_col_valid[0]}}};
+
+    always @* begin
+        case (acc4_drain_col_q)
+            2'd0: begin
+                acc4_prefetch_add_w = lane_add4[LANES*64 +: LANES*64];
+                acc4_prefetch_valid_w = acc4_effective_lane_valid_w[LANES +: LANES];
+            end
+            2'd1: begin
+                acc4_prefetch_add_w = lane_add4[2*LANES*64 +: LANES*64];
+                acc4_prefetch_valid_w = acc4_effective_lane_valid_w[2*LANES +: LANES];
+            end
+            default: begin
+                acc4_prefetch_add_w = lane_add4[3*LANES*64 +: LANES*64];
+                acc4_prefetch_valid_w = acc4_effective_lane_valid_w[3*LANES +: LANES];
+            end
+        endcase
+    end
 
     wire [4:0] read4_row0 = row_a;
     wire [4:0] read4_row1 = row_a + 5'd1;
@@ -82,11 +109,11 @@ module ls_matrix_service #(
     wire signed [ROW_BANKS*COL_BANKS*GE_W-1:0] bank_read_a;
     wire signed [ROW_BANKS*COL_BANKS*GE_W-1:0] bank_read_b;
 
-    function [4:0] matrix_addr;
+    function [MAT_AW-1:0] matrix_addr;
         input [4:0] row;
         input [4:0] col;
         begin
-            matrix_addr = {row[3], col[3:0]};
+            matrix_addr = ((row >> 3) * MAX_K) + col;
         end
     endfunction
 
@@ -116,9 +143,9 @@ module ls_matrix_service #(
                 wire [4:0] read4_row_sel = read4_hit0 ? read4_row0 :
                                            read4_hit1 ? read4_row1 :
                                            read4_hit2 ? read4_row2 : read4_row3;
-                wire [4:0] read_addr_a = (op == OP_READ4) ?
+                wire [MAT_AW-1:0] read_addr_a = (op == OP_READ4) ?
                     matrix_addr(read4_row_sel,col_a) : matrix_addr(row_a,col_a);
-                wire [4:0] read_addr_b = matrix_addr(row_b,col_b);
+                wire [MAT_AW-1:0] read_addr_b = matrix_addr(row_b,col_b);
 
                 wire write4_hit0 = write4_valid[0] && (read4_row0[2:0] == rb[2:0]);
                 wire write4_hit1 = write4_valid[1] && (read4_row1[2:0] == rb[2:0]);
@@ -129,7 +156,6 @@ module ls_matrix_service #(
                 wire [4:0] write4_row = write4_lane==0 ? read4_row0 :
                                         write4_lane==1 ? read4_row1 :
                                         write4_lane==2 ? read4_row2 : read4_row3;
-
                 wire [4:0] acc4_col = acc4_col_base_q + {3'd0,acc4_drain_col_q};
                 wire [4:0] acc4_row = acc4_row_base_q + rb[4:0];
 
@@ -137,15 +163,20 @@ module ls_matrix_service #(
                     if (state == S_CLEAR) begin
                         mem_a[clear_addr_q] <= {GE_W{1'b0}};
                         mem_b[clear_addr_q] <= {GE_W{1'b0}};
-                    end else if ((state == S_ACC4) &&
-                                 acc4_col_valid_q[acc4_drain_col_q] &&
-                                 acc4_lane_valid_q[acc4_drain_col_q*LANES+rb]) begin
+                    end else if ((state == S_CLEAR_ROW) &&
+                                 (clear_row_q[2:0] == rb[2:0])) begin
+                        // Delta-SWAP invalidates exactly one lower-triangle
+                        // border. Clearing it serially keeps the bank write
+                        // ports unchanged and costs at most MAX_K clocks.
+                        mem_a[matrix_addr(clear_row_q,clear_col_q)] <= {GE_W{1'b0}};
+                        mem_b[matrix_addr(clear_row_q,clear_col_q)] <= {GE_W{1'b0}};
+                    end else if ((state == S_ACC4) && acc4_column_valid_q[rb]) begin
                         mem_a[matrix_addr(acc4_row,acc4_col)] <= add_to_ge(
                             mem_a[matrix_addr(acc4_row,acc4_col)],
-                            $signed(acc4_lane_add_q[(acc4_drain_col_q*LANES+rb)*64 +: 64]));
+                            $signed(acc4_column_add_q[rb*64 +: 64]));
                         mem_b[matrix_addr(acc4_row,acc4_col)] <= add_to_ge(
                             mem_a[matrix_addr(acc4_row,acc4_col)],
-                            $signed(acc4_lane_add_q[(acc4_drain_col_q*LANES+rb)*64 +: 64]));
+                            $signed(acc4_column_add_q[rb*64 +: 64]));
                     end else if ((state == S_IDLE) && start && (op == OP_ACC_BLOCK) &&
                                  lane_valid[rb]) begin
                         mem_a[matrix_addr(row_base+rb[4:0],col_a)] <= add_to_ge(
@@ -176,21 +207,17 @@ module ls_matrix_service #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state <= S_IDLE;
-            clear_addr_q <= 5'd0;
+            clear_addr_q <= {MAT_AW{1'b0}};
+            clear_row_q <= 5'd0;
+            clear_col_q <= 5'd0;
             acc4_drain_col_q <= 2'd0;
             acc4_col_base_q <= 5'd0;
             acc4_row_base_q <= 5'd0;
-            acc4_lane_add_q <= {4*LANES*64{1'b0}};
-            acc4_lane_valid_q <= {4*LANES{1'b0}};
-            acc4_col_valid_q <= 4'b0000;
-            acc4_pending_valid_q <= 1'b0;
-            acc4_pending_col_base_q <= 5'd0;
-            acc4_pending_row_base_q <= 5'd0;
-            acc4_pending_lane_add_q <= {4*LANES*64{1'b0}};
-            acc4_pending_lane_valid_q <= {4*LANES{1'b0}};
-            acc4_pending_col_valid_q <= 4'b0000;
+            acc4_column_add_q <= {LANES*64{1'b0}};
+            acc4_column_valid_q <= {LANES{1'b0}};
             busy <= 1'b0;
             done <= 1'b0;
+            acc4_credit <= 1'b0;
             rdata_a <= {GE_W{1'b0}};
             rdata_b <= {GE_W{1'b0}};
             read4_rdata <= {4*GE_W{1'b0}};
@@ -200,6 +227,7 @@ module ls_matrix_service #(
                 rhs_mem[clear_i] <= {RHS_W{1'b0}};
         end else begin
             done <= 1'b0;
+            acc4_credit <= 1'b0;
             case (state)
                 S_IDLE: begin
                     busy <= 1'b0;
@@ -207,10 +235,15 @@ module ls_matrix_service #(
                         busy <= 1'b1;
                         case (op)
                             OP_CLEAR: begin
-                                clear_addr_q <= 5'd0;
+                                clear_addr_q <= {MAT_AW{1'b0}};
                                 for (clear_i=0; clear_i<MAX_K; clear_i=clear_i+1)
                                     rhs_mem[clear_i] <= {RHS_W{1'b0}};
                                 state <= S_CLEAR;
+                            end
+                            OP_CLEAR_ROW: begin
+                                clear_row_q <= row_a;
+                                clear_col_q <= 5'd0;
+                                state <= S_CLEAR_ROW;
                             end
                             OP_READ2: begin
                                 rdata_a <= bank_read_a[row_a[2:0]*GE_W +: GE_W];
@@ -234,10 +267,8 @@ module ls_matrix_service #(
                                 acc4_drain_col_q <= 2'd0;
                                 acc4_col_base_q <= col_a;
                                 acc4_row_base_q <= row_base;
-                                acc4_lane_add_q <= lane_add4;
-                                acc4_lane_valid_q <= acc4_lane_valid;
-                                acc4_col_valid_q <= acc4_col_valid;
-                                acc4_pending_valid_q <= 1'b0;
+                                acc4_column_add_q <= lane_add4[0 +: LANES*64];
+                                acc4_column_valid_q <= acc4_effective_lane_valid_w[0 +: LANES];
                                 state <= S_ACC4;
                             end
                             default: state <= S_DONE; // WRITE/WRITE4/ACC/ACC4 occur in banks above.
@@ -250,57 +281,23 @@ module ls_matrix_service #(
                     else
                         clear_addr_q <= clear_addr_q + 1'b1;
                 end
+                S_CLEAR_ROW: begin
+                    if (clear_col_q >= clear_row_q)
+                        state <= S_DONE;
+                    else
+                        clear_col_q <= clear_col_q + 1'b1;
+                end
                 S_ACC4: begin
                     if (acc4_drain_col_q == 2'd3) begin
-                        // The bank write above still consumes the current
-                        // column 3 on this edge.  Promote a queued request, or
-                        // bypass a request arriving on this edge directly into
-                        // the active slot, ready to write column 0 next cycle.
                         done <= 1'b1;
-                        if (acc4_pending_valid_q) begin
-                            acc4_drain_col_q <= 2'd0;
-                            acc4_col_base_q <= acc4_pending_col_base_q;
-                            acc4_row_base_q <= acc4_pending_row_base_q;
-                            acc4_lane_add_q <= acc4_pending_lane_add_q;
-                            acc4_lane_valid_q <= acc4_pending_lane_valid_q;
-                            acc4_col_valid_q <= acc4_pending_col_valid_q;
-                            busy <= 1'b1;
-                            state <= S_ACC4;
-                            if (start && (op == OP_ACC4)) begin
-                                acc4_pending_valid_q <= 1'b1;
-                                acc4_pending_col_base_q <= col_a;
-                                acc4_pending_row_base_q <= row_base;
-                                acc4_pending_lane_add_q <= lane_add4;
-                                acc4_pending_lane_valid_q <= acc4_lane_valid;
-                                acc4_pending_col_valid_q <= acc4_col_valid;
-                            end else begin
-                                acc4_pending_valid_q <= 1'b0;
-                            end
-                        end else if (start && (op == OP_ACC4)) begin
-                            acc4_drain_col_q <= 2'd0;
-                            acc4_col_base_q <= col_a;
-                            acc4_row_base_q <= row_base;
-                            acc4_lane_add_q <= lane_add4;
-                            acc4_lane_valid_q <= acc4_lane_valid;
-                            acc4_col_valid_q <= acc4_col_valid;
-                            acc4_pending_valid_q <= 1'b0;
-                            busy <= 1'b1;
-                            state <= S_ACC4;
-                        end else begin
-                            acc4_pending_valid_q <= 1'b0;
-                            busy <= 1'b0;
-                            state <= S_IDLE;
-                        end
+                        busy <= 1'b0;
+                        state <= S_IDLE;
                     end else begin
+                        acc4_column_add_q <= acc4_prefetch_add_w;
+                        acc4_column_valid_q <= acc4_prefetch_valid_w;
+                        if (acc4_drain_col_q == 2'd0)
+                            acc4_credit <= 1'b1;
                         acc4_drain_col_q <= acc4_drain_col_q + 1'b1;
-                        if (start && (op == OP_ACC4) && !acc4_pending_valid_q) begin
-                            acc4_pending_valid_q <= 1'b1;
-                            acc4_pending_col_base_q <= col_a;
-                            acc4_pending_row_base_q <= row_base;
-                            acc4_pending_lane_add_q <= lane_add4;
-                            acc4_pending_lane_valid_q <= acc4_lane_valid;
-                            acc4_pending_col_valid_q <= acc4_col_valid;
-                        end
                     end
                 end
                 S_DONE: begin busy <= 1'b0; done <= 1'b1; state <= S_IDLE; end

@@ -6,7 +6,9 @@ module support_set_service #(
     parameter integer COLS     = 8,
     parameter integer IDX_W    = 10,
     parameter integer CTX_W    = 64,
-    parameter integer SCALAR_W = 56
+    parameter integer SCALAR_W = 56,
+    parameter integer MAX_SUPPORT = 16,
+    parameter integer MAX_CANDIDATE = 32
 )(
     input  wire                     clk,
     input  wire                     rst_n,
@@ -67,8 +69,9 @@ module support_set_service #(
 );
     localparam integer PATHS = 2;
     localparam integer PATH_AW = 1;
-    localparam integer MAX_K = 32;
-    localparam integer K_AW = 5;
+    localparam integer STORE_STRIDE = MAX_CANDIDATE;
+    localparam integer K_AW = $clog2(MAX_CANDIDATE);
+    localparam integer COUNT_W = K_AW + 1;
 
     localparam [3:0] S_IDLE       = 4'd0;
     localparam [3:0] S_COPY       = 4'd1;
@@ -80,8 +83,8 @@ module support_set_service #(
     localparam [3:0] S_MERGE_NEXT = 4'd7;
     localparam [3:0] S_DONE       = 4'd8;
 
-    reg [K_AW:0] depth_mem [0:PATHS-1];
-    reg [IDX_W-1:0] support_mem [0:(PATHS*MAX_K)-1];
+    reg [COUNT_W-1:0] depth_mem [0:PATHS-1];
+    reg [IDX_W-1:0] support_mem [0:(PATHS*STORE_STRIDE)-1];
 
     wire candidate_uop = ctx_valid && (uop_class == 4'd6);
     wire candidate_commit = candidate_uop && ext_ctrl[0];
@@ -99,22 +102,34 @@ module support_set_service #(
     wire [4:0] candidate_dst_slot = ctx_word[15:11];
     wire candidate_imm_idx_en = ctx_word[10];
     wire [IDX_W-1:0] candidate_append_idx = candidate_imm_idx_en ? ctx_word[IDX_W-1:0] : last_result_idx;
-    localparam [K_AW:0] MAX_K_COUNT = 5'd16;
-    wire [K_AW:0] candidate_depth_clamped = (candidate_depth >= MAX_K_COUNT) ? MAX_K_COUNT : {1'b0, candidate_depth[K_AW-1:0]};
-    wire [K_AW:0] candidate_depth_now = (depth_mem[candidate_path] >= MAX_K_COUNT) ? MAX_K_COUNT : depth_mem[candidate_path];
-    wire [K_AW:0] candidate_copy_depth = (depth_mem[candidate_path] >= MAX_K_COUNT) ? MAX_K_COUNT : depth_mem[candidate_path];
+    wire [COUNT_W-1:0] candidate_path_capacity = candidate_path ?
+        MAX_CANDIDATE[COUNT_W-1:0] : MAX_SUPPORT[COUNT_W-1:0];
+    wire [COUNT_W-1:0] candidate_depth_ext =
+        // A five-bit legacy field cannot encode 32/64. For META only, bit10
+        // means "full capacity"; zero without bit10 remains a true clear.
+        (candidate_meta && ctx_word[10]) ? candidate_path_capacity :
+        {{(COUNT_W-5){1'b0}}, candidate_depth};
+    wire [COUNT_W-1:0] candidate_depth_clamped =
+        (candidate_depth_ext >= candidate_path_capacity) ?
+        candidate_path_capacity : candidate_depth_ext;
+    wire [COUNT_W-1:0] candidate_depth_now =
+        (depth_mem[candidate_path] >= candidate_path_capacity) ?
+        candidate_path_capacity : depth_mem[candidate_path];
+    wire [COUNT_W-1:0] candidate_copy_depth =
+        (depth_mem[candidate_path] >= MAX_SUPPORT) ?
+        MAX_SUPPORT[COUNT_W-1:0] : depth_mem[candidate_path];
 
     reg [PATH_AW-1:0] selected_path_q;
     reg [3:0] state_q;
     reg [PATH_AW-1:0] op_path_q;
     reg [PATH_AW-1:0] op_src_path_q;
     reg [IDX_W-1:0] op_idx_q;
-    reg [K_AW:0] scan_q;
-    reg [K_AW:0] insert_pos_q;
+    reg [COUNT_W-1:0] scan_q;
+    reg [COUNT_W-1:0] insert_pos_q;
     reg dup_q;
     reg found_q;
-    reg [K_AW:0] merge_src_q;
-    reg [K_AW:0] merge_depth_q;
+    reg [COUNT_W-1:0] merge_src_q;
+    reg [COUNT_W-1:0] merge_depth_q;
     reg op_done_q;
 
     assign op_done = op_done_q;
@@ -140,32 +155,32 @@ module support_set_service #(
     assign support13 = support_mem[13];
     assign support14 = support_mem[14];
     assign support15 = support_mem[15];
-    assign support16 = {IDX_W{1'b0}};
-    assign support17 = {IDX_W{1'b0}};
-    assign support18 = {IDX_W{1'b0}};
-    assign support19 = {IDX_W{1'b0}};
-    assign support20 = {IDX_W{1'b0}};
-    assign support21 = {IDX_W{1'b0}};
-    assign support22 = {IDX_W{1'b0}};
-    assign support23 = {IDX_W{1'b0}};
-    assign support24 = {IDX_W{1'b0}};
-    assign support25 = {IDX_W{1'b0}};
-    assign support26 = {IDX_W{1'b0}};
-    assign support27 = {IDX_W{1'b0}};
-    assign support28 = {IDX_W{1'b0}};
-    assign support29 = {IDX_W{1'b0}};
-    assign support30 = {IDX_W{1'b0}};
-    assign support31 = {IDX_W{1'b0}};
+    assign support16 = (MAX_SUPPORT > 16) ? support_mem[16] : {IDX_W{1'b0}};
+    assign support17 = (MAX_SUPPORT > 17) ? support_mem[17] : {IDX_W{1'b0}};
+    assign support18 = (MAX_SUPPORT > 18) ? support_mem[18] : {IDX_W{1'b0}};
+    assign support19 = (MAX_SUPPORT > 19) ? support_mem[19] : {IDX_W{1'b0}};
+    assign support20 = (MAX_SUPPORT > 20) ? support_mem[20] : {IDX_W{1'b0}};
+    assign support21 = (MAX_SUPPORT > 21) ? support_mem[21] : {IDX_W{1'b0}};
+    assign support22 = (MAX_SUPPORT > 22) ? support_mem[22] : {IDX_W{1'b0}};
+    assign support23 = (MAX_SUPPORT > 23) ? support_mem[23] : {IDX_W{1'b0}};
+    assign support24 = (MAX_SUPPORT > 24) ? support_mem[24] : {IDX_W{1'b0}};
+    assign support25 = (MAX_SUPPORT > 25) ? support_mem[25] : {IDX_W{1'b0}};
+    assign support26 = (MAX_SUPPORT > 26) ? support_mem[26] : {IDX_W{1'b0}};
+    assign support27 = (MAX_SUPPORT > 27) ? support_mem[27] : {IDX_W{1'b0}};
+    assign support28 = (MAX_SUPPORT > 28) ? support_mem[28] : {IDX_W{1'b0}};
+    assign support29 = (MAX_SUPPORT > 29) ? support_mem[29] : {IDX_W{1'b0}};
+    assign support30 = (MAX_SUPPORT > 30) ? support_mem[30] : {IDX_W{1'b0}};
+    assign support31 = (MAX_SUPPORT > 31) ? support_mem[31] : {IDX_W{1'b0}};
 
     always @(*) begin
         support_lane_mask = {COLS{1'b0}};
         selected_lane_mask = {COLS{1'b0}};
         for (mask_i = 0; mask_i < COLS; mask_i = mask_i + 1) begin
-            for (mask_k = 0; mask_k < MAX_K; mask_k = mask_k + 1) begin
-                if ((mask_k < MAX_K_COUNT) && (mask_k < depth_mem[0]) && (support_mem[mask_k] == (addr_support_query_base + mask_i[IDX_W-1:0]))) begin
+            for (mask_k = 0; mask_k < MAX_CANDIDATE; mask_k = mask_k + 1) begin
+                if ((mask_k < MAX_SUPPORT) && (mask_k < depth_mem[0]) && (support_mem[mask_k] == (addr_support_query_base + mask_i[IDX_W-1:0]))) begin
                     support_lane_mask[mask_i] = 1'b1;
                 end
-                if ((mask_k < depth_mem[selected_path_q]) && (support_mem[(selected_path_q * MAX_K) + mask_k] == (addr_support_query_base + mask_i[IDX_W-1:0]))) begin
+                if ((mask_k < depth_mem[selected_path_q]) && (support_mem[(selected_path_q * STORE_STRIDE) + mask_k] == (addr_support_query_base + mask_i[IDX_W-1:0]))) begin
                     selected_lane_mask[mask_i] = 1'b1;
                 end
             end
@@ -183,15 +198,15 @@ module support_set_service #(
             op_path_q <= 3'd0;
             op_src_path_q <= 3'd0;
             op_idx_q <= {IDX_W{1'b0}};
-            scan_q <= {(K_AW+1){1'b0}};
-            insert_pos_q <= {(K_AW+1){1'b0}};
+            scan_q <= {COUNT_W{1'b0}};
+            insert_pos_q <= {COUNT_W{1'b0}};
             dup_q <= 1'b0;
             found_q <= 1'b0;
-            merge_src_q <= {(K_AW+1){1'b0}};
-            merge_depth_q <= {(K_AW+1){1'b0}};
+            merge_src_q <= {COUNT_W{1'b0}};
+            merge_depth_q <= {COUNT_W{1'b0}};
             for (state_p = 0; state_p < PATHS; state_p = state_p + 1)
                 depth_mem[state_p] <= {(K_AW+1){1'b0}};
-            for (state_k = 0; state_k < PATHS*MAX_K; state_k = state_k + 1)
+            for (state_k = 0; state_k < PATHS*STORE_STRIDE; state_k = state_k + 1)
                 support_mem[state_k] <= {IDX_W{1'b0}};
         end else begin
             op_done_q <= 1'b0;
@@ -208,9 +223,10 @@ module support_set_service #(
                         if (select_append_valid) begin
                             op_path_q <= select_append_path;
                             op_idx_q <= select_append_idx;
-                            if (depth_mem[select_append_path] >= MAX_K) op_done_q <= 1'b1;
+                            if (depth_mem[select_append_path] >=
+                                (select_append_path == 0 ? MAX_SUPPORT : MAX_CANDIDATE)) op_done_q <= 1'b1;
                             else begin
-                                support_mem[(select_append_path * MAX_K) + depth_mem[select_append_path][K_AW-1:0]] <= select_append_idx;
+                                support_mem[(select_append_path * STORE_STRIDE) + depth_mem[select_append_path][K_AW-1:0]] <= select_append_idx;
                                 depth_mem[select_append_path] <= depth_mem[select_append_path] + 1'b1;
                                 op_done_q <= 1'b1;
                             end
@@ -220,14 +236,14 @@ module support_set_service #(
                         end else if (candidate_copy_to_path0) begin
                             selected_path_q <= 3'd0;
                             op_path_q <= candidate_path;
-                            scan_q <= {(K_AW+1){1'b0}};
+                            scan_q <= {COUNT_W{1'b0}};
                             depth_mem[0] <= candidate_copy_depth;
                             state_q <= (candidate_copy_depth == 0) ? S_DONE : S_COPY;
                         end else if (candidate_merge_sel_to_path) begin
                             op_path_q <= candidate_path;
                             op_src_path_q <= selected_path_q;
-                            scan_q <= {(K_AW+1){1'b0}};
-                            merge_src_q <= {(K_AW+1){1'b0}};
+                            scan_q <= {COUNT_W{1'b0}};
+                            merge_src_q <= {COUNT_W{1'b0}};
                             merge_depth_q <= depth_mem[candidate_path];
                             state_q <= S_MERGE_INIT;
                         end else if (candidate_meta) begin
@@ -236,14 +252,14 @@ module support_set_service #(
                         end else if (candidate_commit) begin
                             op_path_q <= candidate_path;
                             op_idx_q <= candidate_append_idx;
-                            scan_q <= {(K_AW+1){1'b0}};
+                            scan_q <= {COUNT_W{1'b0}};
                             insert_pos_q <= candidate_depth_now;
                             dup_q <= 1'b0;
                             found_q <= 1'b0;
-                            if (candidate_depth_now >= MAX_K) begin
+                            if (candidate_depth_now >= candidate_path_capacity) begin
                                 op_done_q <= 1'b1;
                             end else if (!candidate_sorted) begin
-                                support_mem[(candidate_path * MAX_K) + candidate_depth_now[K_AW-1:0]] <= candidate_append_idx;
+                                support_mem[(candidate_path * STORE_STRIDE) + candidate_depth_now[K_AW-1:0]] <= candidate_append_idx;
                                 depth_mem[candidate_path] <= candidate_depth_now + 1'b1;
                                 op_done_q <= 1'b1;
                             end else begin
@@ -253,16 +269,16 @@ module support_set_service #(
                     end
 
                     S_COPY: begin
-                        support_mem[scan_q[K_AW-1:0]] <= support_mem[(op_path_q * MAX_K) + scan_q[K_AW-1:0]];
+                        support_mem[scan_q[K_AW-1:0]] <= support_mem[(op_path_q * STORE_STRIDE) + scan_q[K_AW-1:0]];
                         if ((scan_q + 1'b1) >= depth_mem[op_path_q]) state_q <= S_DONE;
                         else scan_q <= scan_q + 1'b1;
                     end
 
                     S_APPEND_SCAN: begin
                         if (scan_q < depth_mem[op_path_q]) begin
-                            if (support_mem[(op_path_q * MAX_K) + scan_q[K_AW-1:0]] == op_idx_q)
+                            if (support_mem[(op_path_q * STORE_STRIDE) + scan_q[K_AW-1:0]] == op_idx_q)
                                 dup_q <= 1'b1;
-                            if (!found_q && (op_idx_q < support_mem[(op_path_q * MAX_K) + scan_q[K_AW-1:0]])) begin
+                            if (!found_q && (op_idx_q < support_mem[(op_path_q * STORE_STRIDE) + scan_q[K_AW-1:0]])) begin
                                 insert_pos_q <= scan_q;
                                 found_q <= 1'b1;
                             end
@@ -278,7 +294,7 @@ module support_set_service #(
 
                     S_APPEND_SHIFT: begin
                         if (scan_q > insert_pos_q) begin
-                            support_mem[(op_path_q * MAX_K) + scan_q[K_AW-1:0]] <= support_mem[(op_path_q * MAX_K) + (scan_q[K_AW-1:0] - 1'b1)];
+                            support_mem[(op_path_q * STORE_STRIDE) + scan_q[K_AW-1:0]] <= support_mem[(op_path_q * STORE_STRIDE) + (scan_q[K_AW-1:0] - 1'b1)];
                             scan_q <= scan_q - 1'b1;
                         end else begin
                             state_q <= S_APPEND_WR;
@@ -286,15 +302,15 @@ module support_set_service #(
                     end
 
                     S_APPEND_WR: begin
-                        support_mem[(op_path_q * MAX_K) + insert_pos_q[K_AW-1:0]] <= op_idx_q;
+                        support_mem[(op_path_q * STORE_STRIDE) + insert_pos_q[K_AW-1:0]] <= op_idx_q;
                         depth_mem[op_path_q] <= depth_mem[op_path_q] + 1'b1;
                         state_q <= S_DONE;
                     end
 
                     S_MERGE_INIT: begin
                         if (merge_src_q < depth_mem[op_src_path_q]) begin
-                            op_idx_q <= support_mem[(op_src_path_q * MAX_K) + merge_src_q[K_AW-1:0]];
-                            scan_q <= {(K_AW+1){1'b0}};
+                            op_idx_q <= support_mem[(op_src_path_q * STORE_STRIDE) + merge_src_q[K_AW-1:0]];
+                            scan_q <= {COUNT_W{1'b0}};
                             insert_pos_q <= merge_depth_q;
                             dup_q <= 1'b0;
                             found_q <= 1'b0;
@@ -307,9 +323,9 @@ module support_set_service #(
 
                     S_MERGE_SCAN: begin
                         if (scan_q < merge_depth_q) begin
-                            if (support_mem[(op_path_q * MAX_K) + scan_q[K_AW-1:0]] == op_idx_q)
+                            if (support_mem[(op_path_q * STORE_STRIDE) + scan_q[K_AW-1:0]] == op_idx_q)
                                 dup_q <= 1'b1;
-                            if (!found_q && (op_idx_q < support_mem[(op_path_q * MAX_K) + scan_q[K_AW-1:0]])) begin
+                            if (!found_q && (op_idx_q < support_mem[(op_path_q * STORE_STRIDE) + scan_q[K_AW-1:0]])) begin
                                 insert_pos_q <= scan_q;
                                 found_q <= 1'b1;
                             end
@@ -318,9 +334,10 @@ module support_set_service #(
                             if (dup_q) begin
                                 merge_src_q <= merge_src_q + 1'b1;
                                 state_q <= S_MERGE_INIT;
-                            end else if (merge_depth_q >= MAX_K) begin
+                            end else if (merge_depth_q >=
+                                         (op_path_q == 0 ? MAX_SUPPORT : MAX_CANDIDATE)) begin
                                 if (found_q) begin
-                                    scan_q <= MAX_K_COUNT - 1'b1;
+                                    scan_q <= (op_path_q == 0 ? MAX_SUPPORT : MAX_CANDIDATE) - 1'b1;
                                     state_q <= S_MERGE_NEXT;
                                 end else begin
                                     merge_src_q <= merge_src_q + 1'b1;
@@ -335,11 +352,11 @@ module support_set_service #(
 
                     S_MERGE_NEXT: begin
                         if (scan_q > insert_pos_q) begin
-                            support_mem[(op_path_q * MAX_K) + scan_q[K_AW-1:0]] <= support_mem[(op_path_q * MAX_K) + (scan_q[K_AW-1:0] - 1'b1)];
+                            support_mem[(op_path_q * STORE_STRIDE) + scan_q[K_AW-1:0]] <= support_mem[(op_path_q * STORE_STRIDE) + (scan_q[K_AW-1:0] - 1'b1)];
                             scan_q <= scan_q - 1'b1;
                         end else begin
-                            support_mem[(op_path_q * MAX_K) + insert_pos_q[K_AW-1:0]] <= op_idx_q;
-                            if (merge_depth_q < MAX_K)
+                            support_mem[(op_path_q * STORE_STRIDE) + insert_pos_q[K_AW-1:0]] <= op_idx_q;
+                            if (merge_depth_q < (op_path_q == 0 ? MAX_SUPPORT : MAX_CANDIDATE))
                                 merge_depth_q <= merge_depth_q + 1'b1;
                             merge_src_q <= merge_src_q + 1'b1;
                             state_q <= S_MERGE_INIT;

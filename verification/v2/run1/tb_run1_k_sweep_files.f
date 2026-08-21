@@ -2,6 +2,7 @@ verification/v2/run1/tb_run1_k_sweep.v
 rtl/v2/interconnect/switchbox.v
 rtl/v2/memory/spm_cluster.v
 rtl/v2/control/sparse_loop_controller.v
+rtl/v2/control/phase_token_scheduler.v
 rtl/v2/solver/sparse_kernel_service_engine.v
 rtl/v2/control/sequencer.v
 rtl/v2/datapath/reduce_scan.v

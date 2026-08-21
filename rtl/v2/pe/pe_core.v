@@ -65,6 +65,16 @@ module pe_core #(
     integer i;
     reg [DATA_W-1:0] rf [0:RF_DEPTH-1];
     reg signed [ACC_W-1:0]  acc;
+    // Shared registered product-token boundary.  Every MAC-class transaction
+    // (including LS, residual and border work with acc_en deasserted) captures
+    // its product here.  Both the local accumulator and the external wide
+    // collectors consume this registered value, so controller/state decode,
+    // operand selection and the 24x24 multiplier can never share a capture
+    // edge with residual/Gram/LDLT completion arithmetic.  The register has no
+    // reset intentionally; validity/control is reset and guards observation.
+    reg signed [ACC_W-1:0] mac_product_q;
+    reg                    mac_valid_q;
+    reg                    mac_clear_q;
 
     assign acc_out    = acc;
     assign rf_rd_data = rf[rf_rd_addr];
@@ -169,8 +179,9 @@ module pe_core #(
     wire signed [DATA_W-1:0] mul_b_s = b_s;
     wire signed [(2*DATA_W)-1:0] prod_full = mul_a_s * mul_b_s;
     wire signed [ACC_W-1:0]      prod_ext  = $signed(prod_full);
-    assign mul_product_out = prod_ext;
-    wire signed [ACC_W:0] acc_add_wide = {acc[ACC_W-1], acc} + {prod_ext[ACC_W-1], prod_ext};
+    assign mul_product_out = mac_product_q;
+    wire signed [ACC_W:0] acc_add_wide =
+        {acc[ACC_W-1], acc} + {mac_product_q[ACC_W-1], mac_product_q};
     wire signed [ACC_W:0] prod_round_ext = {prod_ext[ACC_W-1], prod_ext} + (prod_ext[ACC_W-1] ? -($signed(1) <<< (Q_FRAC_W-1)) : ($signed(1) <<< (Q_FRAC_W-1)));
     wire signed [ACC_W-1:0] prod_q_ext = prod_round_ext >>> Q_FRAC_W;
     wire signed [ACC_W:0] mul_q_wide = {prod_q_ext[ACC_W-1], prod_q_ext};
@@ -178,7 +189,8 @@ module pe_core #(
 
     wire signed [ACC_W-1:0] abs_a_acc_q = $signed({{(ACC_W-DATA_W){1'b0}}, abs_a_s}) <<< Q_FRAC_W;
     wire signed [ACC_W:0] acc_norm1_wide = {acc[ACC_W-1], acc} + {abs_a_acc_q[ACC_W-1], abs_a_acc_q};
-    wire signed [ACC_W:0] acc_clear_mac_wide    = {prod_ext[ACC_W-1], prod_ext};
+    wire signed [ACC_W:0] acc_clear_mac_wide    =
+        {mac_product_q[ACC_W-1], mac_product_q};
     wire signed [ACC_W:0] acc_clear_macabs_wide = {prod_ext[ACC_W-1], prod_ext};
     wire signed [ACC_W:0] acc_clear_norm1_wide  = {abs_a_acc_q[ACC_W-1], abs_a_acc_q};
     wire [ACC_W-1:0] acc_mac_next          = sat_acc(acc_add_wide);
@@ -294,40 +306,45 @@ module pe_core #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             acc    <= {ACC_W{1'b0}};
+            mac_valid_q <= 1'b0;
+            mac_clear_q <= 1'b0;
             pe_out <= {DATA_W{1'b0}};
             mac_out_pipe <= {DATA_W{1'b0}};
             idx_out <= {IDX_W{1'b0}};
             for (i = 0; i < RF_DEPTH; i = i + 1)
                 rf[i] <= {DATA_W{1'b0}};
-        end else if (ce) begin
-            // Timing stage: convert the already-registered accumulator instead
-            // of chaining multiply -> 64-bit saturating add -> Q conversion in
-            // one cycle.  MAC consumers account for this single output-drain
-            // stage; the accumulator update itself remains bit-exact.
-            mac_out_pipe <= acc_to_q(acc);
-            pe_out <= comb_out;
-            idx_out <= comb_idx;
-
-            if (acc_clear) begin
-                if (acc_en) begin
-                    case (pe_op)
-                        OP_MAC:    acc <= acc_mac_clear_next;
-                        default:   acc <= {ACC_W{1'b0}};
-                    endcase
-                end else begin
-                    acc <= {ACC_W{1'b0}};
-                end
-            end else if (comb_acc_override)
-                acc <= comb_acc_next;
-            else if (acc_en) begin
-                case (pe_op)
-                    OP_MAC:    acc <= acc_mac_next;
-                    default:   acc <= acc;
-                endcase
+        end else begin
+            // Capture a product token for every MAC operation, even when the
+            // transaction is a wide LS/residual operation that does not update
+            // the local accumulator. Continuous streams retain II=1.
+            mac_valid_q <= ce && acc_en && (pe_op == OP_MAC);
+            if (ce && (pe_op == OP_MAC))
+                mac_product_q <= prod_ext;
+            if (ce && acc_en && (pe_op == OP_MAC)) begin
+                mac_clear_q <= acc_clear;
             end
 
-            if (rf_wr_en)
-                rf[rf_wr_addr] <= comb_out;
+            // Commit the preceding registered product.  No state/mode decode
+            // or multiplier is present on this accumulator feedback edge.
+            if (mac_valid_q) begin
+                acc <= mac_clear_q ? acc_mac_clear_next : acc_mac_next;
+            end else if (ce) begin
+                if (acc_clear)
+                    acc <= {ACC_W{1'b0}};
+                else if (comb_acc_override)
+                    acc <= comb_acc_next;
+            end
+
+            if (ce) begin
+                // Convert the already-registered accumulator instead of
+                // chaining accumulator feedback and Q conversion.
+                mac_out_pipe <= acc_to_q(acc);
+                pe_out <= comb_out;
+                idx_out <= comb_idx;
+
+                if (rf_wr_en)
+                    rf[rf_wr_addr] <= comb_out;
+            end
         end
     end
 endmodule

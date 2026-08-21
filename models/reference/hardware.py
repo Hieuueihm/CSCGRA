@@ -10,7 +10,7 @@ quantisation). It never imports RTL or a RTL-generated golden.
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import re
 from typing import Sequence
@@ -21,7 +21,12 @@ DATA_W = 24
 DATA_MASK = (1 << DATA_W) - 1
 MIN_S24 = -(1 << (DATA_W - 1))
 MAX_S24 = (1 << (DATA_W - 1)) - 1
+# Signed-off v2 golden profile remains K<=16. The synthesizable scalable
+# profile exposes 32 solution entries and 64 candidate entries without
+# changing the frozen regression contract.
 MAX_SUPPORT = 16
+SCALABLE_MAX_SUPPORT = 32
+MAX_CANDIDATE = 64
 TAPS = 0x80200003
 DEFAULT_SEED = 0xDEADBEEF
 ROOT = Path(__file__).resolve().parents[2]
@@ -160,11 +165,48 @@ def _support_fingerprint(support: Sequence[int]) -> int:
 
 
 @dataclass
+class ArchitectureStats:
+    """Observable phase-level work of the architecture, not a golden oracle."""
+
+    phase_tokens: int = 0
+    support_version: int = 0
+    vector_version: int = 0
+    factor_exact: int = 0
+    factor_prefix: int = 0
+    factor_truncate: int = 0
+    factor_swap_last: int = 0
+    factor_rebuild: int = 0
+    gram_columns_built: int = 0
+    gram_block4_batches: int = 0
+    sparse_tuple_writes: int = 0
+    sparse_drop_clears: int = 0
+
+
+@dataclass
 class HardwareTrace:
     x: list[int]
     residual: list[int]
     support: list[int]
     history: list[tuple[list[int], list[int], list[int]]]
+    architecture: ArchitectureStats = field(default_factory=ArchitectureStats)
+
+
+@dataclass
+class _SparseWriteback:
+    """Dual sparse/dense x coherence used by the RTL lazy writeback path."""
+
+    stats: ArchitectureStats
+    materialized_support: list[int] = field(default_factory=list)
+
+    def commit(self, support: Sequence[int]) -> None:
+        new_support = list(dict.fromkeys(support))[:MAX_SUPPORT]
+        new_set = set(new_support)
+        self.stats.sparse_drop_clears += sum(
+            index not in new_set for index in self.materialized_support
+        )
+        self.stats.sparse_tuple_writes += len(new_support)
+        self.stats.vector_version += 1
+        self.materialized_support = new_support
 
 
 def _ldlt_solve(phi: list[list[int]], y: Sequence[int], support: Sequence[int]) -> tuple[list[int], list[int]]:
@@ -230,16 +272,22 @@ class _LdltService:
     y: Sequence[int]
     factor_order: list[int]
     factor_fingerprint: int | None
+    stats: ArchitectureStats
 
     @classmethod
-    def create(cls, phi: list[list[int]], y: Sequence[int]) -> "_LdltService":
-        return cls(phi, y, [], None)
+    def create(
+        cls,
+        phi: list[list[int]],
+        y: Sequence[int],
+        stats: ArchitectureStats | None = None,
+    ) -> "_LdltService":
+        return cls(phi, y, [], None, stats or ArchitectureStats())
 
     def solve(self, support: Sequence[int]) -> tuple[list[int], list[int]]:
         request = list(dict.fromkeys(support))[:MAX_SUPPORT]
         cached = self.factor_order
         request_fingerprint = _support_fingerprint(request)
-        scanned = bool(cached) and len(request) >= len(cached)
+        scanned = bool(cached)
         exact = (
             scanned
             and len(request) == len(cached)
@@ -247,19 +295,50 @@ class _LdltService:
             and request_fingerprint == self.factor_fingerprint
         )
         prefix = scanned and len(request) > len(cached) and set(cached).issubset(request)
+        truncate = scanned and len(request) < len(cached) and request == cached[:len(request)]
+        swap_last = (
+            scanned
+            and len(request) == len(cached)
+            and bool(request)
+            and request[:-1] == cached[:-1]
+            and request[-1] != cached[-1]
+            and request[-1] not in cached[:-1]
+        )
+        self.stats.phase_tokens += 1
         if exact:
             # FACTOR_REUSE_EXACT is set-based. The controller restores the
             # cached order when both its set scan and reject fingerprint hit.
             order = list(cached)
+            self.stats.factor_exact += 1
+            new_gram_columns = 0
         elif prefix:
             # Prefix extension retains the old triangle and appends newly
             # observed entries in request order.
             cached_set = set(cached)
             order = list(cached) + [index for index in request if index not in cached_set]
+            self.stats.factor_prefix += 1
+            new_gram_columns = len(order) - len(cached)
+        elif truncate:
+            # The leading principal LDLT block is already exact. RTL keeps the
+            # larger cache for a possible later re-expansion and solves only
+            # the requested prefix.
+            order = request
+            self.stats.factor_truncate += 1
+            new_gram_columns = 0
+        elif swap_last:
+            # Clear/rebuild one Gram border and extend the cached K-1 factor
+            # with the existing four-row block LDLT datapath.
+            order = request
+            self.stats.factor_swap_last += 1
+            new_gram_columns = 1
         else:
             order = request
+            self.stats.factor_rebuild += 1
+            new_gram_columns = len(order)
+        self.stats.gram_columns_built += new_gram_columns
+        self.stats.gram_block4_batches += (new_gram_columns + 3) // 4
         result = _ldlt_solve(self.phi, self.y, order)
-        if not exact:
+        if not (exact or truncate):
             self.factor_order = order
             # When factor-check is bypassed (no cache or a smaller request),
             # RTL reaches DONE without scanning support tokens and caches only
@@ -274,12 +353,16 @@ class _LdltService:
 def _omp(phi: list[list[int]], y: Sequence[int], k: int) -> HardwareTrace:
     x = [0] * len(phi[0]); residual = [s24(value) for value in y]
     support: list[int] = []; history: list[tuple[list[int], list[int], list[int]]] = []
-    ls = _LdltService.create(phi, y)
+    architecture = ArchitectureStats()
+    ls = _LdltService.create(phi, y, architecture)
+    writeback = _SparseWriteback(architecture)
     for _ in range(k):
         support.append(_argmax_abs(_corr(phi, residual), set(support)))
         x, residual = ls.solve(support)
+        writeback.commit(support)
+        architecture.support_version += 1
         history.append((list(support), list(x), list(residual)))
-    return HardwareTrace(x, residual, support, history)
+    return HardwareTrace(x, residual, support, history, architecture)
 
 
 def cosamp(phi: list[list[int]], y: Sequence[int], k: int) -> HardwareTrace:
@@ -287,56 +370,74 @@ def cosamp(phi: list[list[int]], y: Sequence[int], k: int) -> HardwareTrace:
     residual = [s24(value) for value in y]
     support: list[int] = []
     history: list[tuple[list[int], list[int], list[int]]] = []
-    ls = _LdltService.create(phi, y)
+    architecture = ArchitectureStats()
+    ls = _LdltService.create(phi, y, architecture)
+    writeback = _SparseWriteback(architecture)
     for _ in range(k):
         candidates = _top(_corr(phi, residual), 2 * k)
         merged = sorted(set(support).union(candidates))[:MAX_SUPPORT]
         temp_x, _ = ls.solve(merged)
+        writeback.commit(merged)
         support = _threshold_refine_support(temp_x, k)
         x, residual = ls.solve(support)
+        writeback.commit(support)
+        architecture.support_version += 2
         history.append((list(support), list(x), list(residual)))
-    return HardwareTrace(x, residual, support, history)
+    return HardwareTrace(x, residual, support, history, architecture)
 
 
 def _htp(phi: list[list[int]], y: Sequence[int], k: int) -> HardwareTrace:
     x = [0] * len(phi[0]); residual = [s24(value) for value in y]
     support: list[int] = []; history: list[tuple[list[int], list[int], list[int]]] = []
-    ls = _LdltService.create(phi, y)
+    architecture = ArchitectureStats()
+    ls = _LdltService.create(phi, y, architecture)
+    writeback = _SparseWriteback(architecture)
     for _ in range(k):
         corr = _corr(phi, residual)
         z = [sat_s24(x[i] + (corr[i] >> 3)) for i in range(len(x))]
         support = _threshold(z, k)
         x, residual = ls.solve(support)
+        writeback.commit(support)
+        architecture.support_version += 1
         history.append((list(support), list(x), list(residual)))
-    return HardwareTrace(x, residual, support, history)
+    return HardwareTrace(x, residual, support, history, architecture)
 
 
 def _sp(phi: list[list[int]], y: Sequence[int], k: int) -> HardwareTrace:
     x = [0] * len(phi[0]); residual = [s24(value) for value in y]
     support: list[int] = []; history: list[tuple[list[int], list[int], list[int]]] = []
-    ls = _LdltService.create(phi, y)
+    architecture = ArchitectureStats()
+    ls = _LdltService.create(phi, y, architecture)
+    writeback = _SparseWriteback(architecture)
     for _ in range(k):
         candidates = _top(_corr(phi, residual), k)
         merged = sorted(set(support).union(candidates))[:MAX_SUPPORT]
         temp_x, _ = ls.solve(merged)
+        writeback.commit(merged)
         support = _threshold_refine_support(temp_x, k)
         x, residual = ls.solve(support)
+        writeback.commit(support)
+        architecture.support_version += 2
         history.append((list(support), list(x), list(residual)))
-    return HardwareTrace(x, residual, support, history)
+    return HardwareTrace(x, residual, support, history, architecture)
 
 
 def _gomp(phi: list[list[int]], y: Sequence[int], k: int) -> HardwareTrace:
     x = [0] * len(phi[0]); residual = [s24(value) for value in y]
     support: list[int] = []; history: list[tuple[list[int], list[int], list[int]]] = []
-    ls = _LdltService.create(phi, y)
+    architecture = ArchitectureStats()
+    ls = _LdltService.create(phi, y, architecture)
+    writeback = _SparseWriteback(architecture)
     iteration = 0
     while len(support) < k:
         count = min(2, k - len(support))
         support.extend(_top(_corr(phi, residual), count, set(support)))
         x, residual = ls.solve(support)
+        writeback.commit(support)
+        architecture.support_version += 1
         history.append((list(support), list(x), list(residual)))
         iteration += 1
-    return HardwareTrace(x, residual, support, history)
+    return HardwareTrace(x, residual, support, history, architecture)
 
 
 def _gradient_update(phi: list[list[int]], y: Sequence[int], k: int) -> HardwareTrace:

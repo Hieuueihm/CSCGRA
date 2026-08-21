@@ -88,10 +88,30 @@ module pe_tile #(
     reg [1:0] core_rf_rd_addr;
     reg [1:0] core_rf_wr_addr;
     reg core_rf_wr_en;
-    reg core_acc_clear;
-    reg core_acc_en;
+    // Latency-elastic execution token for the registered core payload.  The
+    // operands and controls below already crossed a tile-local register, but
+    // driving pe_core.ce directly from tile_en allowed the controller/state
+    // decode to remain on the MAC capture edge.  Carrying validity through
+    // the same boundary makes the transaction atomic: payload stays local to
+    // the PE while only this one-bit phase token advances.
+    reg core_phase_valid_q;
+    // These are intentional per-tile timing cut points. Preserve them so
+    // synthesis cannot merge the local enables back into the sparse
+    // controller state decode and recreate a controller-to-32-PE fanout path.
+    (* dont_touch = "true" *) reg core_acc_clear;
+    (* dont_touch = "true" *) reg core_acc_en;
     reg [IDX_W-1:0] core_idx_a;
     reg [IDX_W-1:0] core_idx_b;
+
+    // Correlation and mesh-context transactions intentionally use the
+    // PE0->PE3 single-hop wavefront.  They bypass the generic input payload
+    // stage and therefore also bypass its phase-valid token.  Suppressing
+    // capture while bypass is active prevents the final wavefront token from
+    // being replayed through the registered path during drain.
+    wire mesh_ctx_ingress_active = ENABLE_MESH_CTX &&
+                                   (mesh_ctx_mode != 2'd0);
+    wire vertical_ingress_active = mesh_ctx_ingress_active ||
+                                   corr_wavefront_active;
 
     function signed [DATA_W-1:0] imm16_to_q;
         input [15:0] value;
@@ -152,14 +172,17 @@ module pe_tile #(
                     core_mesh_ctx_x <= {DATA_W{1'b0}};
                     core_mesh_ctx_delta <= {DATA_W{1'b0}};
                     core_mesh_ctx_keep <= 1'b0;
-                    core_rf_rd_addr <= 2'd0;
-                    core_rf_wr_addr <= 2'd0;
-                    core_rf_wr_en <= 1'b0;
-                    core_acc_clear <= 1'b0;
-                    core_acc_en <= 1'b0;
-                    core_idx_a <= {IDX_W{1'b0}};
-                    core_idx_b <= {IDX_W{1'b0}};
-                end else if (tile_en) begin
+                core_rf_rd_addr <= 2'd0;
+                core_rf_wr_addr <= 2'd0;
+                core_rf_wr_en <= 1'b0;
+                core_phase_valid_q <= 1'b0;
+                core_acc_clear <= 1'b0;
+                core_acc_en <= 1'b0;
+                core_idx_a <= {IDX_W{1'b0}};
+                core_idx_b <= {IDX_W{1'b0}};
+            end else begin
+                core_phase_valid_q <= tile_en && !vertical_ingress_active;
+                if (tile_en && !vertical_ingress_active) begin
                     core_src_a <= src_a_mux;
                     core_src_b <= src_b_mux;
                     core_pe_op <= pe_op;
@@ -180,6 +203,7 @@ module pe_tile #(
                     core_idx_a <= idxW_in;
                     core_idx_b <= idxE_in;
                 end
+            end
             end
         end else begin : gen_core_input_comb
             always @(*) begin
@@ -209,8 +233,11 @@ module pe_tile #(
     // inter-PE outS register remains enabled, so a token advances exactly one
     // physical row per clock.  Non-mesh contexts keep the timing-isolating
     // core-input register unchanged.
-    wire mesh_ctx_ingress_active = ENABLE_MESH_CTX && (mesh_ctx_mode != 2'd0);
-    wire vertical_ingress_active = mesh_ctx_ingress_active || sparse_wavefront_active || corr_wavefront_active;
+    // Residual products use the normal core input register. The controller
+    // carries a matching extra valid stage, so the PE0 -> PE3 wavefront keeps
+    // its ordering while the wide multiplier no longer starts at the sparse
+    // controller/state mux. Correlation and mesh contexts retain their signed-
+    // off single-hop bypass schedules.
     wire [DATA_W-1:0] core_src_a_i = vertical_ingress_active ? src_a_mux : core_src_a;
     wire [DATA_W-1:0] core_src_b_i = vertical_ingress_active ? src_b_mux : core_src_b;
     wire [3:0] core_pe_op_i = vertical_ingress_active ? pe_op : core_pe_op;
@@ -225,14 +252,16 @@ module pe_tile #(
     wire core_mesh_ctx_keep_i = mesh_ctx_ingress_active ? mesh_ctx_keep : core_mesh_ctx_keep;
     // Once correlation uses the combinational wavefront bypass, its registered
     // acc_en copy must not replay the last owner token during pipeline drain.
-    wire core_acc_clear_i = corr_pipeline_active ? acc_clear : core_acc_clear;
-    wire core_acc_en_i = corr_pipeline_active ? (corr_wavefront_active && acc_en) : core_acc_en;
+    wire core_acc_clear_i = vertical_ingress_active ? acc_clear : core_acc_clear;
+    wire core_acc_en_i = vertical_ingress_active ? acc_en :
+                         (corr_pipeline_active ? 1'b0 : core_acc_en);
+    wire core_ce_i = vertical_ingress_active ? tile_en : core_phase_valid_q;
 
     pe_core #(
         .DATA_W(DATA_W), .ACC_W(ACC_W), .RF_DEPTH(4),
         .Q_FRAC_W(Q_FRAC_W), .IDX_W(IDX_W), .ROW_ID(ROW_ID), .GLOBAL_COL(GLOBAL_COL), .ENABLE_MESH_CTX(ENABLE_MESH_CTX)
     ) u_core (
-        .clk(clk), .rst_n(rst_n), .ce(tile_en),
+        .clk(clk), .rst_n(rst_n), .ce(core_ce_i),
         .src_a(core_src_a_i), .src_b(core_src_b_i), .pe_op(core_pe_op_i), .imm16(core_imm16_i),
         .mesh_ctx_mode(core_mesh_ctx_mode_i),
         .mesh_ctx_base_idx(core_mesh_ctx_base_idx_i), .mesh_ctx_limit(core_mesh_ctx_limit_i), .mesh_ctx_threshold(core_mesh_ctx_threshold_i), .mesh_ctx_shift(core_mesh_ctx_shift_i), .mesh_ctx_x(core_mesh_ctx_x_i), .mesh_ctx_delta(core_mesh_ctx_delta_i), .mesh_ctx_keep(core_mesh_ctx_keep_i),

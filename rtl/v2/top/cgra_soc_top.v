@@ -2,7 +2,10 @@ module cgra_soc_top #(
     parameter integer AXIL_AW = 14,
     parameter integer AXIL_DW = 32,
     parameter integer AXI_AW  = 32,
-    parameter integer AXI_DW  = 32
+    parameter integer AXI_DW  = 32,
+    parameter integer IDX_W = 10,
+    parameter integer SPARSE_MAX_N = 256,
+    parameter integer SPARSE_MAX_K = 16
 )(
     (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 ap_clk CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axi_control:m_axi_gmem, ASSOCIATED_RESET ap_rst_n" *)
@@ -63,7 +66,10 @@ module cgra_soc_top #(
         .AXIL_AW(AXIL_AW),
         .AXIL_DW(AXIL_DW),
         .AXI_AW(AXI_AW),
-        .AXI_DW(AXI_DW)
+        .AXI_DW(AXI_DW),
+        .IDX_W(IDX_W),
+        .SPARSE_MAX_N(SPARSE_MAX_N),
+        .SPARSE_MAX_K(SPARSE_MAX_K)
     ) u_cgra_top (
         .clk(ap_clk),
         .rst_n(ap_rst_n),
