@@ -721,6 +721,9 @@ The first controller-centric refactor layer is now present in `rtl/v2`:
 - `phase_packet_pipe.v` carries narrow `{phase, mode, owner, version, idx,
   data}` metadata through four registered stages, preserving PE0 ingress and
   PE0→PE1→PE2→PE3 ordering. Wide arithmetic payloads remain on existing buses.
+- `phase_isa_decoder.v` normalizes each legacy context word into phase,
+  engine owner and dependency mask before packetization; existing context
+  encodings remain backward-compatible.
 - `support_relation_unit.v` normalizes EXACT, PREFIX, TRUNCATE and safe
   SWAP-LAST factor outcomes before the existing LDLT issue states.
 - `phase_token_scheduler.v` owns phase-cycle counters, exposed through CSR

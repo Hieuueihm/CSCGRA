@@ -63,13 +63,27 @@ module phase_token_scheduler #(
 
     // Narrow metadata packet for the PE0 -> PE1 -> PE2 -> PE3 control path.
     // Wide arithmetic data stays on its existing registered buses.
-    wire [3:0] packet_mode_now = sparse_ctx ? sparse_op : ext_ctrl;
-    wire [3:0] packet_owner_now = uop_class;
+    wire [3:0] isa_phase_w;
+    wire [3:0] isa_engine_w;
+    wire [3:0] isa_owner_w;
+    wire [7:0] isa_dependency_w;
+    wire [3:0] isa_opcode_w;
+    wire isa_control_w;
+    wire isa_last_w;
+    phase_isa_decoder u_phase_isa_decoder (
+        .ctx_word(ctx_word), .ctx_valid(ctx_valid), .phase(isa_phase_w),
+        .engine(isa_engine_w), .owner(isa_owner_w),
+        .dependency_mask(isa_dependency_w), .opcode(isa_opcode_w),
+        .is_control(isa_control_w), .is_last(isa_last_w)
+    );
+    wire [3:0] packet_mode_now = isa_engine_w;
+    wire [3:0] packet_owner_now = isa_owner_w;
     wire [7:0] packet_version_now = sparse_writes_vector ? vector_version : support_version;
     wire [9:0] packet_idx_now = ctx_word[39:30];
     wire [23:0] packet_data_now = ctx_word[23:0];
     wire packet_valid_w;
     wire [3:0] packet_phase_w, packet_mode_w, packet_owner_w;
+    wire [7:0] packet_dependency_w;
     wire [7:0] packet_version_w;
     wire [9:0] packet_idx_w;
     wire [23:0] packet_data_w;
@@ -81,22 +95,7 @@ module phase_token_scheduler #(
                      ls_done_deferred_fire;
 
     always @(*) begin
-        phase_opcode = PH_NOP;
-        if (ctx_valid) begin
-            case (uop_class)
-                UOP_SELECT:    phase_opcode = PH_SELECT_TOPK;
-                UOP_CANDIDATE: phase_opcode = PH_SUPPORT_EDIT;
-                UOP_SPARSE: begin
-                    case (sparse_op)
-                        4'd0, 4'd6: phase_opcode = PH_SOLVE;
-                        4'd1, 4'd8: phase_opcode = PH_CORRELATE;
-                        4'd3:       phase_opcode = PH_RESIDUAL;
-                        default:    phase_opcode = PH_VECTOR;
-                    endcase
-                end
-                default: phase_opcode = PH_NOP;
-            endcase
-        end
+        phase_opcode = isa_phase_w;
     end
 
     phase_packet_pipe #(.VERSION_W(VERSION_W), .IDX_W(10), .DATA_W(24), .STAGES(4))
@@ -104,10 +103,12 @@ module phase_token_scheduler #(
         .clk(clk), .rst_n(rst_n), .flush(flush),
         .in_valid(ctx_valid), .in_phase(phase_opcode),
         .in_mode(packet_mode_now), .in_owner(packet_owner_now),
+        .in_dependency_mask(isa_dependency_w),
         .in_version(packet_version_now), .in_idx(packet_idx_now),
         .in_data(packet_data_now), .out_valid(packet_valid_w),
         .out_phase(packet_phase_w), .out_mode(packet_mode_w),
-        .out_owner(packet_owner_w), .out_version(packet_version_w),
+        .out_owner(packet_owner_w), .out_dependency_mask(packet_dependency_w),
+        .out_version(packet_version_w),
         .out_idx(packet_idx_w), .out_data(packet_data_w)
     );
 

@@ -16,6 +16,7 @@ module phase_packet_pipe #(
     input  wire [3:0]             in_phase,
     input  wire [3:0]             in_mode,
     input  wire [3:0]             in_owner,
+    input  wire [7:0]             in_dependency_mask,
     input  wire [VERSION_W-1:0]   in_version,
     input  wire [IDX_W-1:0]       in_idx,
     input  wire [DATA_W-1:0]      in_data,
@@ -23,6 +24,7 @@ module phase_packet_pipe #(
     output wire [3:0]             out_phase,
     output wire [3:0]             out_mode,
     output wire [3:0]             out_owner,
+    output wire [7:0]             out_dependency_mask,
     output wire [VERSION_W-1:0]   out_version,
     output wire [IDX_W-1:0]       out_idx,
     output wire [DATA_W-1:0]      out_data
@@ -31,6 +33,7 @@ module phase_packet_pipe #(
     reg [3:0] phase_q [0:STAGES-1];
     reg [3:0] mode_q [0:STAGES-1];
     reg [3:0] owner_q [0:STAGES-1];
+    reg [7:0] dependency_q [0:STAGES-1];
     reg [VERSION_W-1:0] version_q [0:STAGES-1];
     reg [IDX_W-1:0] idx_q [0:STAGES-1];
     reg [DATA_W-1:0] data_q [0:STAGES-1];
@@ -43,6 +46,7 @@ module phase_packet_pipe #(
                 phase_q[stage_i] <= 4'd0;
                 mode_q[stage_i] <= 4'd0;
                 owner_q[stage_i] <= 4'd0;
+                dependency_q[stage_i] <= 8'd0;
                 version_q[stage_i] <= {VERSION_W{1'b0}};
                 idx_q[stage_i] <= {IDX_W{1'b0}};
                 data_q[stage_i] <= {DATA_W{1'b0}};
@@ -52,6 +56,7 @@ module phase_packet_pipe #(
             phase_q[0] <= in_phase;
             mode_q[0] <= in_mode;
             owner_q[0] <= in_owner;
+            dependency_q[0] <= in_dependency_mask;
             version_q[0] <= in_version;
             idx_q[0] <= in_idx;
             data_q[0] <= in_data;
@@ -60,6 +65,7 @@ module phase_packet_pipe #(
                 phase_q[stage_i] <= phase_q[stage_i-1];
                 mode_q[stage_i] <= mode_q[stage_i-1];
                 owner_q[stage_i] <= owner_q[stage_i-1];
+                dependency_q[stage_i] <= dependency_q[stage_i-1];
                 version_q[stage_i] <= version_q[stage_i-1];
                 idx_q[stage_i] <= idx_q[stage_i-1];
                 data_q[stage_i] <= data_q[stage_i-1];
@@ -71,6 +77,7 @@ module phase_packet_pipe #(
     assign out_phase = phase_q[STAGES-1];
     assign out_mode = mode_q[STAGES-1];
     assign out_owner = owner_q[STAGES-1];
+    assign out_dependency_mask = dependency_q[STAGES-1];
     assign out_version = version_q[STAGES-1];
     assign out_idx = idx_q[STAGES-1];
     assign out_data = data_q[STAGES-1];

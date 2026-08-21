@@ -3,6 +3,7 @@ rtl/v2/memory/spm_cluster.v
 rtl/v2/control/sparse_loop_controller.v
 rtl/v2/control/phase_token_scheduler.v
 rtl/v2/control/phase_packet_pipe.v
+rtl/v2/control/phase_isa_decoder.v
 rtl/v2/control/support_relation_unit.v
 rtl/v2/solver/sparse_kernel_service_engine.v
 rtl/v2/control/sequencer.v
