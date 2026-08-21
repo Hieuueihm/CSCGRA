@@ -820,3 +820,25 @@ This is an interface extraction checkpoint, not yet the final migration of all
 algorithm scheduling out of `sparse_loop_controller`. The next step is to make
 the context stream carry explicit phase dependencies and let the extracted
 engines issue their own completion tokens.
+
+## Implementation checkpoint after the retained refactor
+
+The retained RTL was run through the OOC implementation flow as
+`arch_refactor_impl` after the 348-record functional sweep. The run completed
+placement, physical optimization, routing, DRC, route-status verification and
+checkpoint generation with no implementation errors.
+
+- post-route setup WNS: **+0.153 ns** at a 100 MHz, 10 ns constraint;
+- post-route TNS: 0.000 ns, with 0 failing setup endpoints;
+- post-route hold slack: +0.048 ns, with 0 failing hold endpoints;
+- all 166,123 routable nets fully routed; 0 routing-error nets;
+- implemented utilization: 123,353 LUTs, 52,004 FFs, 24 RAMB36 and 77 DSP48;
+- worst post-route path remains the unpipelined PE MAC DSP path, with 9.470 ns
+  data-path delay (3.526 ns logic, 5.944 ns routing).
+
+Vivado reports the 100 MHz requirement as met, but +0.153 ns is below the
+project's conservative +0.2 ns margin target. Therefore this is a routed
+timing checkpoint, not final timing sign-off. The next RTL timing step should
+register/isolate the state/operand boundary feeding the PE MAC while keeping
+the strict PE0 ingress and one-request LS contract; top-K mesh mode and Phi
+column-stream extraction remain deferred until that margin is recovered.
