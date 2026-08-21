@@ -769,6 +769,15 @@ Verification after the boundary extraction:
 
 Full K-sweep and synthesis/implementation timing remain pending.
 
+## Rejected trial: extracted Phi column-stream module
+
+A trial moved the existing 32/64/128-column LFSR-jump scan from the controller
+into a reusable `phi_column_stream` module. The K2 sweep remained green, but
+K4 exposed fixed-point `x` mismatches in GP/HTP paths (for example alg1 and
+alg2 at N=64) and a one-cycle schedule change. The trial was deleted and the
+controller restored to the signed-off inline scan. No Phi extraction is part
+of the retained checkpoint until a direct bit-exact equivalence test is added.
+
 ## Architectural refactor checkpoint: issued-stream phase accounting
 
 Phase counters now increment on `packet_valid_w` and the phase carried by the
