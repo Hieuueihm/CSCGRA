@@ -714,6 +714,35 @@ The next narrow registered boundary is the sorted append ACK -> first scan
 position transition. K8 `S_SORT_WAIT` residency is 256 clocks. Any trial must
 reuse the existing result-list mux, preserve WNS >= +0.2 ns, and be rejected if
 its LUT growth exceeds the smaller cycle benefit.
+
+## Architectural refactor checkpoint: versioned support tuples
+
+`support_set_service.vh` now keeps explicit tuple metadata beside the legacy
+support index store:
+
+- one valid bit per `{path, slot}` tuple;
+- an 8-bit tuple version and per-path version counter;
+- every append, sorted shift, merge insert, and candidate copy goes through a
+  common tuple write operation;
+- candidate metadata and error clear invalidate slots explicitly before the
+  next operation.
+
+The legacy `support_mem` index remains the functional source for this
+checkpoint, while the valid/version state is consumed by the support-lane
+membership mask. This makes writeback/invalidate semantics explicit without
+changing the current sparse-loop schedule or widening a memory port. It is the
+safe first step toward a tuple register file; replacing dense support scans can
+be evaluated only after the LS issue boundary is isolated.
+
+Verification after the change:
+
+- K2 standard sweep: 45 PASS / 0 FAIL;
+- K2 per-iteration sweep: 45 PASS / 0 FAIL;
+- K4 per-iteration sweep: 45 PASS / 0 FAIL.
+
+The full 348-record sweep and synthesis/implementation timing are not claimed
+for this checkpoint until they are rerun after the remaining architectural
+changes.
 ## Architectural refactor checkpoint: packet/phase boundary
 
 The first controller-centric refactor layer is now present in `rtl/v2`:

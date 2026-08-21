@@ -85,6 +85,13 @@ module support_set_service #(
 
     reg [COUNT_W-1:0] depth_mem [0:PATHS-1];
     reg [IDX_W-1:0] support_mem [0:(PATHS*STORE_STRIDE)-1];
+    // Tuple metadata is kept alongside the legacy index store.  The index
+    // remains the bit-exact source for the existing controller; valid/version
+    // make writeback and invalidate explicit so dense scans can be removed in
+    // a later checkpoint without changing support semantics.
+    reg [PATHS*STORE_STRIDE-1:0] tuple_valid_mem;
+    reg [7:0] tuple_version_mem [0:(PATHS*STORE_STRIDE)-1];
+    reg [7:0] path_version_mem [0:PATHS-1];
 
     wire candidate_uop = ctx_valid && (uop_class == 4'd6);
     wire candidate_commit = candidate_uop && ext_ctrl[0];
@@ -138,6 +145,20 @@ module support_set_service #(
     integer state_k;
     integer mask_i;
     integer mask_k;
+    integer tuple_addr;
+
+    task tuple_write;
+        input [PATH_AW-1:0] tw_path;
+        input [K_AW-1:0] tw_slot;
+        input [IDX_W-1:0] tw_value;
+        begin
+            tuple_addr = (tw_path * STORE_STRIDE) + tw_slot;
+            support_mem[tuple_addr] <= tw_value;
+            tuple_valid_mem[tuple_addr] <= 1'b1;
+            tuple_version_mem[tuple_addr] <= path_version_mem[tw_path] + 1'b1;
+            path_version_mem[tw_path] <= path_version_mem[tw_path] + 1'b1;
+        end
+    endtask
     assign depth0 = depth_mem[0];
     assign support0 = support_mem[0];
     assign support1 = support_mem[1];
@@ -177,10 +198,10 @@ module support_set_service #(
         selected_lane_mask = {COLS{1'b0}};
         for (mask_i = 0; mask_i < COLS; mask_i = mask_i + 1) begin
             for (mask_k = 0; mask_k < MAX_CANDIDATE; mask_k = mask_k + 1) begin
-                if ((mask_k < MAX_SUPPORT) && (mask_k < depth_mem[0]) && (support_mem[mask_k] == (addr_support_query_base + mask_i[IDX_W-1:0]))) begin
+                if ((mask_k < MAX_SUPPORT) && (mask_k < depth_mem[0]) && tuple_valid_mem[mask_k] && (support_mem[mask_k] == (addr_support_query_base + mask_i[IDX_W-1:0]))) begin
                     support_lane_mask[mask_i] = 1'b1;
                 end
-                if ((mask_k < depth_mem[selected_path_q]) && (support_mem[(selected_path_q * STORE_STRIDE) + mask_k] == (addr_support_query_base + mask_i[IDX_W-1:0]))) begin
+                if ((mask_k < depth_mem[selected_path_q]) && tuple_valid_mem[(selected_path_q * STORE_STRIDE) + mask_k] && (support_mem[(selected_path_q * STORE_STRIDE) + mask_k] == (addr_support_query_base + mask_i[IDX_W-1:0]))) begin
                     selected_lane_mask[mask_i] = 1'b1;
                 end
             end
@@ -205,9 +226,16 @@ module support_set_service #(
             merge_src_q <= {COUNT_W{1'b0}};
             merge_depth_q <= {COUNT_W{1'b0}};
             for (state_p = 0; state_p < PATHS; state_p = state_p + 1)
-                depth_mem[state_p] <= {(K_AW+1){1'b0}};
+                begin
+                    depth_mem[state_p] <= {(K_AW+1){1'b0}};
+                    path_version_mem[state_p] <= 8'd0;
+                end
             for (state_k = 0; state_k < PATHS*STORE_STRIDE; state_k = state_k + 1)
-                support_mem[state_k] <= {IDX_W{1'b0}};
+                begin
+                    support_mem[state_k] <= {IDX_W{1'b0}};
+                    tuple_valid_mem[state_k] <= 1'b0;
+                    tuple_version_mem[state_k] <= 8'd0;
+                end
         end else begin
             op_done_q <= 1'b0;
             result_valid <= 1'b0;
@@ -215,8 +243,11 @@ module support_set_service #(
                 selected_path_q <= 3'd0;
                 state_q <= S_IDLE;
                 op_done_q <= 1'b0;
-                for (state_p = 0; state_p < PATHS; state_p = state_p + 1)
+                for (state_p = 0; state_p < PATHS; state_p = state_p + 1) begin
                     depth_mem[state_p] <= {(K_AW+1){1'b0}};
+                    tuple_valid_mem[state_p*STORE_STRIDE +: STORE_STRIDE] <= {STORE_STRIDE{1'b0}};
+                    path_version_mem[state_p] <= path_version_mem[state_p] + 1'b1;
+                end
             end else begin
                 case (state_q)
                     S_IDLE: begin
@@ -226,7 +257,7 @@ module support_set_service #(
                             if (depth_mem[select_append_path] >=
                                 (select_append_path == 0 ? MAX_SUPPORT : MAX_CANDIDATE)) op_done_q <= 1'b1;
                             else begin
-                                support_mem[(select_append_path * STORE_STRIDE) + depth_mem[select_append_path][K_AW-1:0]] <= select_append_idx;
+                                tuple_write(select_append_path[PATH_AW-1:0], depth_mem[select_append_path][K_AW-1:0], select_append_idx);
                                 depth_mem[select_append_path] <= depth_mem[select_append_path] + 1'b1;
                                 op_done_q <= 1'b1;
                             end
@@ -238,6 +269,8 @@ module support_set_service #(
                             op_path_q <= candidate_path;
                             scan_q <= {COUNT_W{1'b0}};
                             depth_mem[0] <= candidate_copy_depth;
+                            tuple_valid_mem[0 +: STORE_STRIDE] <= {STORE_STRIDE{1'b0}};
+                            path_version_mem[0] <= path_version_mem[0] + 1'b1;
                             state_q <= (candidate_copy_depth == 0) ? S_DONE : S_COPY;
                         end else if (candidate_merge_sel_to_path) begin
                             op_path_q <= candidate_path;
@@ -248,6 +281,10 @@ module support_set_service #(
                             state_q <= S_MERGE_INIT;
                         end else if (candidate_meta) begin
                             depth_mem[candidate_path] <= candidate_depth_clamped;
+                            path_version_mem[candidate_path] <= path_version_mem[candidate_path] + 1'b1;
+                            for (state_k = 0; state_k < STORE_STRIDE; state_k = state_k + 1)
+                                tuple_valid_mem[(candidate_path * STORE_STRIDE) + state_k] <=
+                                    (state_k < candidate_depth_clamped);
                             op_done_q <= 1'b1;
                         end else if (candidate_commit) begin
                             op_path_q <= candidate_path;
@@ -259,7 +296,7 @@ module support_set_service #(
                             if (candidate_depth_now >= candidate_path_capacity) begin
                                 op_done_q <= 1'b1;
                             end else if (!candidate_sorted) begin
-                                support_mem[(candidate_path * STORE_STRIDE) + candidate_depth_now[K_AW-1:0]] <= candidate_append_idx;
+                                tuple_write(candidate_path[PATH_AW-1:0], candidate_depth_now[K_AW-1:0], candidate_append_idx);
                                 depth_mem[candidate_path] <= candidate_depth_now + 1'b1;
                                 op_done_q <= 1'b1;
                             end else begin
@@ -269,7 +306,7 @@ module support_set_service #(
                     end
 
                     S_COPY: begin
-                        support_mem[scan_q[K_AW-1:0]] <= support_mem[(op_path_q * STORE_STRIDE) + scan_q[K_AW-1:0]];
+                        tuple_write(1'b0, scan_q[K_AW-1:0], support_mem[(op_path_q * STORE_STRIDE) + scan_q[K_AW-1:0]]);
                         if ((scan_q + 1'b1) >= depth_mem[op_path_q]) state_q <= S_DONE;
                         else scan_q <= scan_q + 1'b1;
                     end
@@ -294,7 +331,7 @@ module support_set_service #(
 
                     S_APPEND_SHIFT: begin
                         if (scan_q > insert_pos_q) begin
-                            support_mem[(op_path_q * STORE_STRIDE) + scan_q[K_AW-1:0]] <= support_mem[(op_path_q * STORE_STRIDE) + (scan_q[K_AW-1:0] - 1'b1)];
+                            tuple_write(op_path_q, scan_q[K_AW-1:0], support_mem[(op_path_q * STORE_STRIDE) + (scan_q[K_AW-1:0] - 1'b1)]);
                             scan_q <= scan_q - 1'b1;
                         end else begin
                             state_q <= S_APPEND_WR;
@@ -302,7 +339,7 @@ module support_set_service #(
                     end
 
                     S_APPEND_WR: begin
-                        support_mem[(op_path_q * STORE_STRIDE) + insert_pos_q[K_AW-1:0]] <= op_idx_q;
+                        tuple_write(op_path_q, insert_pos_q[K_AW-1:0], op_idx_q);
                         depth_mem[op_path_q] <= depth_mem[op_path_q] + 1'b1;
                         state_q <= S_DONE;
                     end
@@ -352,10 +389,10 @@ module support_set_service #(
 
                     S_MERGE_NEXT: begin
                         if (scan_q > insert_pos_q) begin
-                            support_mem[(op_path_q * STORE_STRIDE) + scan_q[K_AW-1:0]] <= support_mem[(op_path_q * STORE_STRIDE) + (scan_q[K_AW-1:0] - 1'b1)];
+                            tuple_write(op_path_q, scan_q[K_AW-1:0], support_mem[(op_path_q * STORE_STRIDE) + (scan_q[K_AW-1:0] - 1'b1)]);
                             scan_q <= scan_q - 1'b1;
                         end else begin
-                            support_mem[(op_path_q * STORE_STRIDE) + insert_pos_q[K_AW-1:0]] <= op_idx_q;
+                            tuple_write(op_path_q, insert_pos_q[K_AW-1:0], op_idx_q);
                             if (merge_depth_q < (op_path_q == 0 ? MAX_SUPPORT : MAX_CANDIDATE))
                                 merge_depth_q <= merge_depth_q + 1'b1;
                             merge_src_q <= merge_src_q + 1'b1;
