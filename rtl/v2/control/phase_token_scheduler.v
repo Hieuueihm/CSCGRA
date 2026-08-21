@@ -95,7 +95,10 @@ module phase_token_scheduler #(
                      ls_done_deferred_fire;
 
     always @(*) begin
-        phase_opcode = isa_phase_w;
+        // Report the phase at the packet issue point.  During the four-cycle
+        // PE0->PE3 flight the decoded context phase is still useful for
+        // observability, but CSR counters must count only an issued token.
+        phase_opcode = packet_valid_w ? packet_phase_w : isa_phase_w;
     end
 
     phase_packet_pipe #(.VERSION_W(VERSION_W), .IDX_W(10), .DATA_W(24), .STAGES(4))
@@ -147,8 +150,8 @@ module phase_token_scheduler #(
             phase_cycle_vector <= 32'd0;
         end else begin
             phase_token_valid <= packet_valid_w;
-            if (ctx_valid) begin
-                case (phase_opcode)
+            if (packet_valid_w) begin
+                case (packet_phase_w)
                     PH_CORRELATE: phase_cycle_corr <= phase_cycle_corr + 1'b1;
                     PH_SELECT_TOPK: phase_cycle_topk <= phase_cycle_topk + 1'b1;
                     PH_SUPPORT_EDIT: phase_cycle_support <= phase_cycle_support + 1'b1;

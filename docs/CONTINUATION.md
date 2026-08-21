@@ -768,6 +768,15 @@ Verification after the boundary extraction:
   K4 OMP 4,102 cycles).
 
 Full K-sweep and synthesis/implementation timing remain pending.
+
+## Architectural refactor checkpoint: issued-stream phase accounting
+
+Phase counters now increment on `packet_valid_w` and the phase carried by the
+registered packet at the PE3 boundary, rather than on the raw context decode.
+`phase_opcode` follows the same issued token when one is valid. This removes
+the four-cycle packet-flight ambiguity from CSR telemetry and makes the phase
+cycle report suitable for per-algorithm/program ablation. It does not gate or
+retime any solver operation.
 ## Architectural refactor checkpoint: packet/phase boundary
 
 The first controller-centric refactor layer is now present in `rtl/v2`:
