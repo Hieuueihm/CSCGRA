@@ -58,6 +58,13 @@ integer profile_support_cycles [0:15];
 integer profile_uop_cycles [0:15];
 integer profile_wide_cycles [0:15];
 reg done_seen, error_seen;
+integer iter_snapshot_count;
+reg iter_snapshot_latched;
+// CoSaMP/SP execute a temporary merged-support LS solve followed by the
+// loop's final refined-support solve.  Both complete with OP_REFINE, but only
+// the second completion is the algorithmic loop boundary represented by the
+// hardware golden history.
+reg iter_refine_pending;
 
 // The default sign-off golden is generated only by
 // models/reference/hardware.py. Canonical mode remains an explicit audit.
@@ -91,6 +98,52 @@ begin
 `endif
 end
 endfunction
+
+`ifdef TB_PER_ITER
+function [23:0] expected_x_check;
+input integer case_id; input integer alg_id; input integer iter_count; input integer elem_id;
+begin
+    expected_x_check = hwgold_x_iter(case_id, alg_id, iter_count-1, elem_id);
+end
+endfunction
+`else
+function [23:0] expected_x_check;
+input integer case_id; input integer alg_id; input integer iter_count; input integer elem_id;
+begin
+    expected_x_check = expected_x_final(case_id, alg_id, elem_id);
+end
+endfunction
+`endif
+
+`ifdef TB_PER_ITER
+function [23:0] dut_x_at;
+input integer elem_id;
+begin
+    case (elem_id[2:0])
+        0: dut_x_at = dut.u_spm.gen_bank[0].mem_pa[elem_id >> 3];
+        1: dut_x_at = dut.u_spm.gen_bank[1].mem_pa[elem_id >> 3];
+        2: dut_x_at = dut.u_spm.gen_bank[2].mem_pa[elem_id >> 3];
+        3: dut_x_at = dut.u_spm.gen_bank[3].mem_pa[elem_id >> 3];
+        4: dut_x_at = dut.u_spm.gen_bank[4].mem_pa[elem_id >> 3];
+        5: dut_x_at = dut.u_spm.gen_bank[5].mem_pa[elem_id >> 3];
+        6: dut_x_at = dut.u_spm.gen_bank[6].mem_pa[elem_id >> 3];
+        default: dut_x_at = dut.u_spm.gen_bank[7].mem_pa[elem_id >> 3];
+    endcase
+end
+endfunction
+
+task capture_iter_snapshot; input integer n_arg; input integer alg_arg; integer snap_i; reg [23:0] snap_got; begin
+    for(snap_i=0;snap_i<n_arg;snap_i=snap_i+1) begin
+        snap_got=dut_x_at(snap_i);
+        if(!absdiff_le(snap_got,hwgold_x_iter(case_idx,alg_arg,iter_snapshot_count,snap_i),0)) begin
+            if(mismatch_prints < 8)
+                $display("ITER_X_MISM case=%0d alg=%0d iter=%0d i=%0d got=%h exp=%h", case_idx,alg_arg,iter_snapshot_count+1,snap_i,snap_got,hwgold_x_iter(case_idx,alg_arg,iter_snapshot_count,snap_i));
+            fail_cnt=fail_cnt+1;
+        end
+    end
+    iter_snapshot_count=iter_snapshot_count+1;
+end endtask
+`endif
 
 cgra_top dut(.clk(clk),.rst_n(rst_n),.s_axi_awaddr(s_axi_awaddr),.s_axi_awvalid(s_axi_awvalid),.s_axi_awready(s_axi_awready),.s_axi_wdata(s_axi_wdata),.s_axi_wstrb(s_axi_wstrb),.s_axi_wvalid(s_axi_wvalid),.s_axi_wready(s_axi_wready),.s_axi_bresp(s_axi_bresp),.s_axi_bvalid(s_axi_bvalid),.s_axi_bready(s_axi_bready),.s_axi_araddr(s_axi_araddr),.s_axi_arvalid(s_axi_arvalid),.s_axi_arready(s_axi_arready),.s_axi_rdata(s_axi_rdata),.s_axi_rresp(s_axi_rresp),.s_axi_rvalid(s_axi_rvalid),.s_axi_rready(s_axi_rready),.m_axi_araddr(m_axi_araddr),.m_axi_arlen(m_axi_arlen),.m_axi_arsize(m_axi_arsize),.m_axi_arburst(m_axi_arburst),.m_axi_arvalid(m_axi_arvalid),.m_axi_arready(m_axi_arready),.m_axi_rdata(m_axi_rdata),.m_axi_rvalid(m_axi_rvalid),.m_axi_rlast(m_axi_rlast),.m_axi_rready(m_axi_rready),.m_axi_awaddr(m_axi_awaddr),.m_axi_awlen(m_axi_awlen),.m_axi_awsize(m_axi_awsize),.m_axi_awburst(m_axi_awburst),.m_axi_awvalid(m_axi_awvalid),.m_axi_awready(m_axi_awready),.m_axi_wdata(m_axi_wdata),.m_axi_wstrb(m_axi_wstrb),.m_axi_wlast(m_axi_wlast),.m_axi_wvalid(m_axi_wvalid),.m_axi_wready(m_axi_wready),.m_axi_bresp(m_axi_bresp),.m_axi_bvalid(m_axi_bvalid),.m_axi_bready(m_axi_bready),.irq_done(irq_done),.irq_error(irq_error));
 
@@ -247,7 +300,54 @@ task run_alg_case_iter; input integer alg_id; input integer m; input integer n; 
     axi_write(REG_FLAGS,{28'd0,hwgold_case_phi_kind(case_idx),1'b0,1'b0}); axi_write(REG_MU_SHIFT,32'd3); axi_write(REG_MAX_ITER,iter_count); axi_write(REG_PROG_BASE,0); axi_write(REG_PROG_LEN,plen);
     profile_reset();
     axi_write(REG_CTRL,1);
-    done_seen=0; error_seen=0; timeout=0; while(!done_seen && !error_seen && timeout<50000000) begin timeout=timeout+1; tick(); if(irq_done) done_seen=1; if(irq_error) error_seen=1; end
+    done_seen=0; error_seen=0; timeout=0;
+`ifdef TB_PER_ITER
+    iter_snapshot_count=0;
+    iter_snapshot_latched=0;
+    iter_refine_pending=0;
+`endif
+    while(!done_seen && !error_seen && timeout<50000000) begin
+        timeout=timeout+1;
+        tick();
+`ifdef TB_PER_ITER
+        // The full program is kept intact; this observes x after each
+        // residual/writeback boundary without changing the loop's last-bit
+        // semantics.  The S_DONE state is one cycle wide, so latch once.
+        if ((dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state == 7'd8) &&
+            dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.phase_residual &&
+            ((dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.active_op == 4'd0) ||
+             (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.active_op == 4'd3) ||
+             (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.active_op == 4'd5) ||
+             (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.active_op == 4'd6)) &&
+            !iter_snapshot_latched) begin
+            iter_snapshot_latched=1;
+            // The first OP_REFINE completion in each CoSaMP/SP body is the
+            // temporary merged-support solve.  Ignore it and capture the
+            // second completion, which is the final residual-producing solve.
+            if (((alg_id==ALG_COSAMP)||(alg_id==ALG_SP)) &&
+                (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.active_op == 4'd0)) begin
+                if (!iter_refine_pending) begin
+                    iter_refine_pending=1;
+                end else begin
+                    iter_refine_pending=0;
+                    capture_iter_snapshot(n,alg_id);
+                end
+            end else begin
+                capture_iter_snapshot(n,alg_id);
+            end
+        end
+        if (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state != 7'd8)
+            iter_snapshot_latched=0;
+`endif
+        if(irq_done) done_seen=1;
+        if(irq_error) error_seen=1;
+    end
+`ifdef TB_PER_ITER
+    if(iter_snapshot_count != ((alg_id==ALG_6)?((k+1)/2):k)) begin
+        $display("FAIL iter_snapshot_count case=%0d alg=%0d got=%0d exp=%0d",case_idx,alg_id,iter_snapshot_count,((alg_id==ALG_6)?((k+1)/2):k));
+        fail_cnt=fail_cnt+1;
+    end
+`endif
     profile_dump(alg_id);
     axi_read(REG_STATUS,status_rd); axi_read(REG_CYCLE_CNT,cycle_rd); axi_read(REG_PC_DBG,pc_rd);
     nz_count=0;
@@ -255,9 +355,9 @@ task run_alg_case_iter; input integer alg_id; input integer m; input integer n; 
     for(i=0;i<n;i=i+1) begin
         got=ddr_x[i][23:0];
         if(got != 24'd0) nz_count=nz_count+1;
-        if(!absdiff_le(got,expected_x_final(case_idx,alg_id,i),ACTIVE_GOLD_TOL)) begin
+        if(!absdiff_le(got,expected_x_check(case_idx,alg_id,iter_count,i),ACTIVE_GOLD_TOL)) begin
             if(mismatch_prints < 8) begin
-                $display("X_MISM case=%0d alg=%0d iter=%0d i=%0d got=%h exp=%h", case_idx, alg_id, iter_count, i, got, expected_x_final(case_idx,alg_id,i));
+                $display("X_MISM case=%0d alg=%0d iter=%0d i=%0d got=%h exp=%h", case_idx, alg_id, iter_count, i, got, expected_x_check(case_idx,alg_id,iter_count,i));
                 mismatch_prints=mismatch_prints+1;
             end
             fail_cnt=fail_cnt+1;

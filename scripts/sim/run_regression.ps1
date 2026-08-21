@@ -5,6 +5,7 @@ param(
     [int[]]$Algorithms = @(),
     [switch]$ProfileStates,
     [switch]$PhaseTrace,
+    [switch]$PerIteration,
     [switch]$CanonicalGolden,
     [switch]$CanonicalAll,
     [switch]$LegacyHardwareGolden,
@@ -76,6 +77,7 @@ $metadata = [ordered]@{
     algorithms = @($Algorithms)
     profile_states = $ProfileStates.IsPresent
     phase_trace = $PhaseTrace.IsPresent
+    per_iteration = $PerIteration.IsPresent
     hardware_golden = (!$CanonicalGolden.IsPresent -and !$CanonicalAll.IsPresent)
     canonical_golden = ($CanonicalGolden.IsPresent -or $CanonicalAll.IsPresent)
     canonical_all = $CanonicalAll.IsPresent
@@ -94,6 +96,9 @@ try {
     }
     if ($PhaseTrace) {
         $xvlogArgs += @("-d", "TB_PHASE_TRACE")
+    }
+    if ($PerIteration) {
+        $xvlogArgs += @("-d", "TB_PER_ITER")
     }
     if ($CanonicalGolden -or $CanonicalAll) {
         $xvlogArgs += @("-d", "TB_CANONICAL_GP")

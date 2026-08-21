@@ -594,6 +594,7 @@ def generate_golden(output_path: Path = DEFAULT_GOLDEN) -> str:
         "localparam integer KSWEEP_GOLD_CASES = 8;",
         "localparam integer KSWEEP_GOLD_ALGS = 8;",
         "localparam integer KSWEEP_GOLD_MAX_N = 256;",
+        "localparam integer KSWEEP_GOLD_MAX_ITER = 16;",
         "localparam integer KSWEEP_GOLD_TOL = 0;",
     ]
     for case_idx, (m_size, n_size, k_size) in enumerate(CASES):
@@ -619,6 +620,20 @@ def generate_golden(output_path: Path = DEFAULT_GOLDEN) -> str:
     for elem_idx, value in enumerate(y64):
         lines.append(f"  {elem_idx}: hwgold_y = {_hex24(value)};")
     lines.append("  default: hwgold_y = 24'h000000; endcase end endfunction")
+
+    lines.append("function [23:0] hwgold_x_iter;")
+    lines.append("input integer case_idx; input integer alg_idx; input integer iter_idx; input integer elem_idx; begin case((((case_idx * KSWEEP_GOLD_ALGS + alg_idx) * KSWEEP_GOLD_MAX_ITER + iter_idx) * KSWEEP_GOLD_MAX_N) + elem_idx)")
+    for case_idx, (m_size, n_size, k_size) in enumerate(CASES):
+        phi = make_phi(m_size, n_size, seed, scale_q)
+        y = y64[:m_size]
+        for alg_idx, algorithm in enumerate(ALGORITHM_NAMES):
+            result = run(algorithm, phi, y, k_size)
+            for iter_idx, (_support, x_iter, _residual) in enumerate(result.history):
+                for elem_idx, value in enumerate(x_iter):
+                    if value:
+                        flat_key = (((case_idx * len(ALGORITHM_NAMES) + alg_idx) * 16 + iter_idx) * 256) + elem_idx
+                        lines.append(f"  {flat_key}: hwgold_x_iter = {_hex24(value)};")
+    lines.append("  default: hwgold_x_iter = 24'h000000; endcase end endfunction")
 
     lines.append("function [23:0] hwgold_x_final;")
     lines.append("input integer case_idx; input integer alg_idx; input integer elem_idx; begin case(((case_idx * KSWEEP_GOLD_ALGS + alg_idx) * KSWEEP_GOLD_MAX_N) + elem_idx)")

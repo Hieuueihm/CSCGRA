@@ -66,6 +66,24 @@ For RTL phase bring-up, add `-PhaseTrace` to `scripts/sim/run_regression.ps1`.
 It emits controller/PE `PHASE_TOPK` and `PHASE_LS_DONE` records without
 changing the normal regression or golden data.
 
+For loop-level sign-off, add `-PerIteration`.  The testbench keeps the full
+context program unchanged, observes the internal SPM after each residual
+boundary, and compares it against `hwgold_x_iter` from `hardware.py` with
+zero tolerance.  CoSaMP/SP have a temporary merged-support `OP_REFINE`; the
+checker deliberately ignores that internal solve and checks only the final
+refined-support solve that is recorded in `HardwareTrace.history`.
+
+Example:
+
+```powershell
+& .\scripts\sim\run_regression.ps1 -RtlVersion v2 -Cases 0,1,2,3,4,5,6,7 -PerIteration -RunId hardware_per_iter_signoff
+```
+
+This is a hardware-contract check, not a textbook-canonical check.  The
+canonical flow remains an explicit diagnostic (`-CanonicalAll`) and is
+expected to report differences for the currently hardware-specialized
+CoSaMP/SP support-selection path.
+
 The first command recomputes and verifies the checked-in hardware include
 without changing it. The second regenerates it intentionally. The active
 hardware golden uses zero tolerance, so every checked coefficient must match
