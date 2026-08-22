@@ -1,8 +1,59 @@
 # Repository refactor continuation log
 
-Last updated: 2026-08-10 (Asia/Saigon)
+Last updated: 2026-08-22 (Asia/Saigon)
 
-## Active optimization checkpoint
+## 2026-08-22 checkpoint: batch replay + controller decomposition (R0-R2)
+
+Branch `codex/strict-pe0-timing`, all gates green at commit `0c236c6`:
+
+- `35f21e0` direct-bank routed sign-off: routed 100 MHz met at +0.032 ns
+  WNS / 0 TNS (thin 3 ps margin, not the +0.2 ns guard).
+- `1061d4a` batch multi-signal factor amortization: opt-in `BATCH_REPLAY=1`
+  plusarg, follower solve on retained exact factor, 3.0x-24.0x amortization,
+  bit-exact; DMA ctx word gained a 16-bit element offset (`ctx[31:16]`).
+- `d22bbfb` refactor R0+R1: state table into `controller_states.vh` +
+  `check_controller_state_encodings.py`; `wide_mul_sequencer.v` extracted.
+- `0c236c6` refactor R2: `factor_check_unit.v` extracted (lockstep start/
+  scan_done, normalized support via packed `norm_support_bus`).
+
+Current controller submodules: `ls_issue_engine`, `support_relation_unit`,
+`wide_mul_sequencer`, `factor_check_unit`.  Map: `docs/architecture/
+controller_map.md`.  Every refactor gate was cycle-identical (62-record
+sum 1,469,117 across R0/R1/R2).
+
+### Refactor rules learned (apply to R3+)
+
+- xsim 2018.1 drops all but the last per-element NBA into a 1-bit
+  unpacked array across a module boundary.  Use packed vectors
+  (`reg [3:0] x` not `reg x [0:3]`) for cross-boundary flags.
+- Lockstep pattern for state-region extraction (R2): `start` combinational
+  on the controller's first state; completion combinational on the last
+  absorbed response; controller states stay as thin arms so the frozen
+  encodings and cycle counts are preserved.
+- Process per step: isolated selftest -> K8 case1 cycle-identical ->
+  full sweep 348/0 + 62-record sum identical -> OOC WNS >= +0.2 ns ->
+  one commit.
+
+### Next steps (in order)
+
+1. **R3-lite border pipeline**: extract the LDLT border metadata always
+   block, payload banks, and ingress comb (~50 regs, decls around lines
+   501-557 of `sparse_loop_controller.v`) into `ldlt_border_pipeline.v`.
+   Watch: `border_operand_boundary_active_q` feeds the controller's
+   `ls_wide_operand_valid`/`vertical_active`/`vertical_tag` outputs.
+   The 21 `S_LDL_*` orchestration states stay in the controller; a full
+   solver-subsystem extraction is a separate design initiative, not a
+   mechanical step.
+2. **R4 residual pipeline**: r1-r5 tagged pipeline + ingress (decls ~1011,
+   pipeline always ~1790, uses in S_WR_ACC_INIT/S_RESID_PE_WAIT/S_WR);
+   phi_cache/coeff_mem become input buses.
+3. **R5 writeback scatter** (row3 write path + S_WX_* arms).
+4. **Incremental correlation** on the cleaned base: Gram-column cache
+   (N x K, ~3-4 RAMB36) + rank-K correlation update + periodic exact
+   refresh; golden regeneration via hardware.py (Gate-2 sanctioned), like
+   batch replay did.
+
+## Active optimization checkpoint (2026-08-10)
 
 - Current sign-off checkpoint: direct-Phi scan128 for N=256, on top of the
   one-entry `OP_ACC4` queue and earlier four-row Gram batch overlap.
