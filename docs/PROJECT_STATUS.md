@@ -1,6 +1,6 @@
 # CSCGRA project status and optimization inventory
 
-Updated: 2026-08-20
+Updated: 2026-08-22
 
 This is the top-level handoff document for the repository. It separates what
 is present in the current RTL from experiments that were measured and removed.
@@ -14,19 +14,18 @@ result should depend on it.
 | Item | Current value |
 |---|---:|
 | RTL branch | `codex/strict-pe0-timing` |
-| Validation base commit | `5734bda` plus reviewed working-tree candidate |
+| Latest functional checkpoint | Batch replay candidate on top of `35f21e0` |
 | Target | `xczu7ev-ffvc1156-2-e`, 100 MHz |
 | Full K-sweep | 348 PASS / 0 FAIL |
+| Batch replay (opt-in plusarg) | 8/8 cases bit-exact, 3.0x-24.0x amortization |
 | Measured rows | 62 |
 | Expected skips | CoSaMP and SP at K16 |
-| Full-sweep cycles | 1,360,052 |
-| K8 cycles (case 1 + case 3) | 602,382 |
-| OOC WNS | +0.374 ns |
-| Routed WNS / TNS | −0.356 ns / −210.368 ns |
-| Routed setup failing endpoints | 1,768 |
+| Full-sweep cycles (62-record sum) | 1,469,117 (-14,592 vs direct-bank from the DMA M-word fix) |
+| OOC WNS | +2.085 ns |
+| Routed WNS / TNS | +0.032 ns / 0.000 (direct-bank run, thin margin) |
 | Routed hold WNS | +0.034 ns |
-| Routed LUT / FF | 122,321 / 53,641 |
-| Routed LUTRAM / SRL | 1,696 / 7 |
+| Routed LUT / FF | 121,763 / 51,975 |
+| Routed LUTRAM / SRL | 1,696 / 10 |
 | RAMB36 / DSP | 24 / 77 |
 
 The current reviewed evidence is
@@ -172,6 +171,29 @@ Primary RTL: `rtl/v2/pe/pe_stream_topk_serial_service.v`,
 
 Primary RTL: `rtl/v2/control/sparse_loop_controller.v` and
 `rtl/v2/solver/ls_matrix_service.v`.
+
+### Batch multi-signal factor amortization (2026-08-22)
+
+- Class-7 DMA context words carry a 16-bit element offset added to the CSR
+  DDR base, so one program streams B measurement vectors in and stores B
+  solutions out without host reprogramming (`ctx_decoder.v`, `cgra_top.v`).
+- The batch program runs the OMP leader loop, then each follower signal
+  reloads y at offset `b*M` and replays `SOP_REFINE_SPARSE` on the retained
+  exact LDLT factor: no correlation, top-K, Gram, or factorization per
+  follower, only RHS rebuild + forward/diagonal/backward solve + writeback.
+- `models/reference/hardware.py` generates follower signals
+  (`y_b = Q16(Phi x_b)`, LFSR-sparse) and the replay golden
+  (`hwgold_y_batch`, `hwgold_x_batch`); the frozen input file is untouched.
+- Measured per-follower amortization vs the leader program: 24.0x (K16,
+  M64/N256), 14.5x (K8, M64/N256), 3.0x-11.1x for the smaller cases, with
+  bit-exact follower solutions in all 8 cases (opt-in `BATCH_REPLAY=1`
+  plusarg; canonical 348 sweep unchanged without it).
+- Fixing the DMA `addr_dim` field to its real position (`ctx[51:48]`)
+  shortens canonical Y/R loads from N to M words: -14,592 cycles on the
+  62-record sweep sum, all checks still bit-exact.
+- Cost: +1 LUT, +1 FF, no DSP/BRAM change; OOC WNS +2.085 ns.
+
+See `reports/v2/history/batch_replay_amortization.md` for the full table.
 
 ### Verification and profiling infrastructure
 

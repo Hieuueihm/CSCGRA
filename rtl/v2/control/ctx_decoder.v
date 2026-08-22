@@ -36,6 +36,7 @@ module ctx_decoder #(
     output wire [2:0]       reduce_dst,
     output wire [7:0]       scalar_op,
     output wire [3:0]       next_ctrl,
+    output wire [15:0]      dma_elem_offset,
 
     output wire             ctx_version_ok,
     output wire             ctx_decode_error
@@ -108,6 +109,11 @@ module ctx_decoder #(
     assign reduce_src_vec = scalar_fmt ? ctx[12:10] : 3'd0;
     assign reduce_dst     = scalar_fmt ? ctx[15:13] : 3'd0;
     assign scalar_op      = scalar_fmt ? ctx[27:20] : 8'd0;
+
+    // DMA-only element offset added to the CSR DDR base.  Bits [31:16] are
+    // unused by every other format; non-DMA words must decode zero so legacy
+    // programs keep the base address.
+    assign dma_elem_offset = dma_fmt ? ctx[31:16] : 16'd0;
 
     assign ctx_version_ok = (ctx_ver == 4'h1);
 

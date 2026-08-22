@@ -264,8 +264,8 @@ static uint64_t dma_ctx(uint8_t vec_id, uint8_t addr_dim, int ddr_write, int is_
     w |= 1ULL << 60;
     w |= 7ULL << 56;
     if (is_last) w |= 6ULL << 44;
+    w |= ((uint64_t)(addr_dim & 0xfU)) << 48;
     w |= ((uint64_t)(vec_id & 7U)) << 41;
-    w |= ((uint64_t)(addr_dim & 0xfU)) << 28;
     if (ddr_write) w |= 1ULL;
     return w;
 }

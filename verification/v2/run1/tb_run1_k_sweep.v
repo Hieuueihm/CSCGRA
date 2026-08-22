@@ -40,7 +40,7 @@ reg [1:0] m_axi_bresp; reg m_axi_bvalid; wire m_axi_bready;
 wire irq_done, irq_error;
 
 reg [31:0] ddr_y [0:255];
-reg [31:0] ddr_x [0:255];
+reg [31:0] ddr_x [0:1023];
 reg [31:0] rd_base_word;
 reg rd_sel_x;
 reg [8:0] rd_len, rd_count;
@@ -52,6 +52,7 @@ integer pass_cnt, fail_cnt, alg, i, timeout, pc, ctx_loop_count, iter;
 integer start_alg, end_alg, case_idx, start_case, end_case, run_case_alg;
 integer case_m, case_n, case_k, nz_count, mismatch_prints;
 integer profile_states, profile_total_cycles;
+integer batch_replay, batch_pass_cnt, batch_fail_cnt, batch_mismatch_prints;
 integer profile_ctrl_cycles [0:127];
 integer profile_topk_cycles [0:7];
 integer profile_support_cycles [0:15];
@@ -242,7 +243,7 @@ function [63:0] candidate_meta_depth_ctx; input [7:0] path; input [7:0] depth; i
 function [63:0] candidate_select_path_ctx; input [7:0] path; input is_last; begin candidate_select_path_ctx=64'd0; candidate_select_path_ctx[63:60]=4'h1; candidate_select_path_ctx[59:56]=4'd6; if(is_last) candidate_select_path_ctx[47:44]=4'd6; candidate_select_path_ctx[22:20]=path[2:0]; candidate_select_path_ctx[19:16]=4'd6; end endfunction
 function [63:0] candidate_merge_path_ctx; input [7:0] path; input is_last; begin candidate_merge_path_ctx=64'd0; candidate_merge_path_ctx[63:60]=4'h1; candidate_merge_path_ctx[59:56]=4'd6; if(is_last) candidate_merge_path_ctx[47:44]=4'd6; candidate_merge_path_ctx[22:20]=path[2:0]; candidate_merge_path_ctx[19:16]=4'd2; end endfunction
 function [63:0] candidate_copy_to_p0_ctx; input [7:0] path; input is_last; begin candidate_copy_to_p0_ctx=64'd0; candidate_copy_to_p0_ctx[63:60]=4'h1; candidate_copy_to_p0_ctx[59:56]=4'd6; if(is_last) candidate_copy_to_p0_ctx[47:44]=4'd6; candidate_copy_to_p0_ctx[22:20]=path[2:0]; candidate_copy_to_p0_ctx[19:16]=4'd14; end endfunction
-function [63:0] dma_ctx; input [7:0] vec_id; input [7:0] addr_dim; input ddr_write; input is_last; begin dma_ctx=64'd0; dma_ctx[63:60]=4'h1; dma_ctx[59:56]=4'd7; if(is_last) dma_ctx[47:44]=4'd6; dma_ctx[43:41]=vec_id[2:0]; dma_ctx[31:28]=addr_dim[3:0]; dma_ctx[0]=ddr_write; end endfunction
+function [63:0] dma_ctx; input [7:0] vec_id; input [7:0] addr_dim; input ddr_write; input is_last; input [15:0] elem_offset; begin dma_ctx=64'd0; dma_ctx[63:60]=4'h1; dma_ctx[59:56]=4'd7; if(is_last) dma_ctx[47:44]=4'd6; dma_ctx[51:48]=addr_dim[3:0]; dma_ctx[43:41]=vec_id[2:0]; dma_ctx[31:16]=elem_offset; dma_ctx[0]=ddr_write; end endfunction
 function [63:0] ctrl_loop_rel_ctx; input integer rel_off; input [7:0] count; input [7:0] loop_id; input is_last; reg [5:0] rel6; begin rel6=rel_off[5:0]; ctrl_loop_rel_ctx=64'd0; ctrl_loop_rel_ctx[63:60]=4'h1; ctrl_loop_rel_ctx[59:56]=4'd9; if(is_last) ctrl_loop_rel_ctx[47:44]=4'd6; ctrl_loop_rel_ctx[43:40]=4'd3; ctrl_loop_rel_ctx[33:28]=rel6; ctrl_loop_rel_ctx[27:20]=count; ctrl_loop_rel_ctx[19:18]=loop_id[1:0]; end endfunction
 
 task emit_select_append; inout integer pcv; begin write_ctx(pcv, stream_topk_ctx(1,0,1,0,0)); pcv=pcv+1; write_ctx(pcv, sparse_op_ctx(SOP_CORR,0)); pcv=pcv+1; end endtask
@@ -252,9 +253,9 @@ task emit_loop_tail; inout integer pcv; input integer body_start; input [7:0] co
 
 task build_program; input integer alg_id; input integer k_param; output integer plen; integer body_start; begin
     pc=0; ctx_loop_count=0;
-    write_ctx(pc,dma_ctx(VEC_X,0,0,0)); pc=pc+1;
-    write_ctx(pc,dma_ctx(VEC_R,1,0,0)); pc=pc+1;
-    write_ctx(pc,dma_ctx(VEC_Y,1,0,0)); pc=pc+1;
+    write_ctx(pc,dma_ctx(VEC_X,0,0,0,16'd0)); pc=pc+1;
+    write_ctx(pc,dma_ctx(VEC_R,1,0,0,16'd0)); pc=pc+1;
+    write_ctx(pc,dma_ctx(VEC_Y,1,0,0,16'd0)); pc=pc+1;
     body_start=pc;
     case(alg_id)
     ALG_OMP: begin emit_select_append(pc); write_ctx(pc,sparse_op_ctx(SOP_REFINE_SPARSE,0)); pc=pc+1; end
@@ -276,7 +277,29 @@ task build_program; input integer alg_id; input integer k_param; output integer 
     ALG_MP: begin emit_mp_select_append(pc); write_ctx(pc,sparse_op_ctx(SOP_MP_UPDATE,0)); pc=pc+1; end
     endcase
     emit_loop_tail(pc,body_start,k_param,0);
-    write_ctx(pc,dma_ctx(VEC_X,0,1,1)); pc=pc+1;
+    write_ctx(pc,dma_ctx(VEC_X,0,1,1,16'd0)); pc=pc+1;
+    plen=pc;
+end endtask
+
+// Batch replay program: the OMP leader runs its full K-iteration loop, then
+// follower signals stream in one at a time.  Each follower reloads its y
+// vector at an element offset, replays SOP_REFINE_SPARSE on the retained
+// exact factor (RHS rebuild + solve only), and stores x at its own offset.
+task build_batch_program; input integer k_param; input integer replay_count; output integer plen; integer body_start; integer b; begin
+    pc=0; ctx_loop_count=0;
+    write_ctx(pc,dma_ctx(VEC_X,0,0,0,16'd0)); pc=pc+1;
+    write_ctx(pc,dma_ctx(VEC_R,1,0,0,16'd0)); pc=pc+1;
+    write_ctx(pc,dma_ctx(VEC_Y,1,0,0,16'd0)); pc=pc+1;
+    body_start=pc;
+    emit_select_append(pc);
+    write_ctx(pc,sparse_op_ctx(SOP_REFINE_SPARSE,0)); pc=pc+1;
+    emit_loop_tail(pc,body_start,k_param,0);
+    write_ctx(pc,dma_ctx(VEC_X,0,1,0,16'd0)); pc=pc+1;
+    for(b=1;b<=replay_count;b=b+1) begin
+        write_ctx(pc,dma_ctx(VEC_Y,1,0,0,b*case_m)); pc=pc+1;
+        write_ctx(pc,sparse_op_ctx(SOP_REFINE_SPARSE,0)); pc=pc+1;
+        write_ctx(pc,dma_ctx(VEC_X,0,1,(b==replay_count),b*case_n)); pc=pc+1;
+    end
     plen=pc;
 end endtask
 
@@ -285,8 +308,15 @@ task reset_dut; begin rst_n=0; s_axi_awaddr=0; s_axi_awvalid=0; s_axi_wdata=0; s
 task init_ddr; input integer m; input integer n; begin
     for(i=0;i<256;i=i+1) begin
         ddr_y[i]=(i<m) ? hwgold_y(i) : 0;
-        ddr_x[i]=0;
     end
+    for(i=0;i<1024;i=i+1) ddr_x[i]=0;
+end endtask
+
+task init_ddr_batch; input integer m; input integer n; integer b; begin
+    init_ddr(m,n);
+    for(b=1;b<4;b=b+1)
+        for(i=0;i<m;i=i+1)
+            ddr_y[b*m+i]=hwgold_y_batch(case_idx,b-1,i);
 end endtask
 
 task run_alg_case_iter; input integer alg_id; input integer m; input integer n; input integer k; input integer iter_count; integer plen; begin
@@ -383,6 +413,71 @@ task run_alg_case; input integer alg_id; input integer m; input integer n; input
     end
 end endtask
 
+// Batch replay: one leader OMP program followed by follower REFINE replays
+// inside the same program.  The leader-only run provides the cycle baseline;
+// the per-follower amortized cost is the delta over the follower count.
+task run_batch_program; input integer m; input integer n; input integer k; input integer replay_count; output integer cycles_out; integer plen; begin
+    init_ddr_batch(m,n);
+    build_batch_program(k,replay_count,plen);
+    $display("BATCH_PROGRAM m=%0d n=%0d k=%0d replays=%0d plen=%0d", m, n, k, replay_count, plen);
+    axi_write(REG_M_SIZE,m); axi_write(REG_N_SIZE,n); axi_write(REG_K_PARAM,k);
+    axi_write(REG_Y_DDR,DDR_Y_BASE); axi_write(REG_X_DDR,DDR_X_BASE); axi_write(REG_SEED,hwgold_case_seed(case_idx)); axi_write(REG_PHI_SCALE,hwgold_case_scale(case_idx));
+    axi_write(REG_FLAGS,{28'd0,hwgold_case_phi_kind(case_idx),1'b0,1'b0}); axi_write(REG_MU_SHIFT,32'd3); axi_write(REG_MAX_ITER,k); axi_write(REG_PROG_BASE,0); axi_write(REG_PROG_LEN,plen);
+    axi_write(REG_CTRL,1);
+    done_seen=0; error_seen=0; timeout=0;
+    while(!done_seen && !error_seen && timeout<50000000) begin
+        timeout=timeout+1;
+        tick();
+        if(irq_done) done_seen=1;
+        if(irq_error) error_seen=1;
+    end
+    axi_read(REG_STATUS,status_rd); axi_read(REG_CYCLE_CNT,cycle_rd); axi_read(REG_PC_DBG,pc_rd);
+    cycles_out=cycle_rd;
+    if(!done_seen || error_seen || timeout>=50000000)
+        $display("BATCH_FAIL_PROGRAM case=%0d replays=%0d done=%0d error=%0d timeout=%0d status=%h pc=%0d",
+                 case_idx, replay_count, done_seen, error_seen, timeout, status_rd, pc_rd);
+    // Soft reset so the next batch program starts from a clean core boundary.
+    axi_write(REG_CTRL,2);
+    repeat(10) tick();
+end endtask
+
+task check_batch_x; input integer m; input integer n; input integer sig_id; integer base; begin
+    base=sig_id*n;
+    for(i=0;i<n;i=i+1) begin
+        got=ddr_x[base+i][23:0];
+        if(sig_id==0) begin
+            if(!absdiff_le(got,hwgold_x_final(case_idx,ALG_OMP,i),ACTIVE_GOLD_TOL)) begin
+                if(batch_mismatch_prints < 8) begin
+                    $display("BATCH_X_MISM case=%0d sig=leader i=%0d got=%h exp=%h", case_idx, i, got, hwgold_x_final(case_idx,ALG_OMP,i));
+                    batch_mismatch_prints=batch_mismatch_prints+1;
+                end
+                batch_fail_cnt=batch_fail_cnt+1;
+            end else batch_pass_cnt=batch_pass_cnt+1;
+        end else begin
+            if(!absdiff_le(got,hwgold_x_batch(case_idx,sig_id-1,i),ACTIVE_GOLD_TOL)) begin
+                if(batch_mismatch_prints < 8) begin
+                    $display("BATCH_X_MISM case=%0d sig=%0d i=%0d got=%h exp=%h", case_idx, sig_id, i, got, hwgold_x_batch(case_idx,sig_id-1,i));
+                    batch_mismatch_prints=batch_mismatch_prints+1;
+                end
+                batch_fail_cnt=batch_fail_cnt+1;
+            end else batch_pass_cnt=batch_pass_cnt+1;
+        end
+    end
+end endtask
+
+task run_batch_case; input integer m; input integer n; input integer k; integer leader_cycles; integer total_cycles; integer per_follower; integer sig; begin
+    batch_mismatch_prints=0;
+    run_batch_program(m,n,k,0,leader_cycles);
+    check_batch_x(m,n,0);
+    run_batch_program(m,n,k,3,total_cycles);
+    for(sig=0;sig<4;sig=sig+1) check_batch_x(m,n,sig);
+    per_follower=(total_cycles-leader_cycles)/3;
+    if(per_follower==0) per_follower=1;
+    $display("BATCH_REPLAY_RESULT case=%0d m=%0d n=%0d k=%0d leader_cycles=%0d batch_total_cycles=%0d followers=3 per_follower_cycles=%0d amortization=%0d.%02d",
+             case_idx, m, n, k, leader_cycles, total_cycles, per_follower,
+             (leader_cycles*100/per_follower)/100, (leader_cycles*100/per_follower)%100);
+end endtask
+
 always @* begin
     m_axi_rdata = m_axi_rvalid ? (rd_sel_x ? ddr_x[rd_base_word + rd_count] : ddr_y[rd_base_word + rd_count]) : 32'd0;
     m_axi_rlast = m_axi_rvalid && (rd_count + 1 >= rd_len);
@@ -424,9 +519,13 @@ end
 
 initial begin
     clk=0; pass_cnt=0; fail_cnt=0; start_alg=0; end_alg=7; start_case=0; end_case=CASE_COUNT-1; profile_states=0;
+    batch_replay=0; batch_pass_cnt=0; batch_fail_cnt=0; batch_mismatch_prints=0;
 `ifdef TB_STATE_PROFILE
     profile_states=1;
 `endif
+    if($value$plusargs("BATCH_REPLAY=%d", batch_replay)) begin
+        if(batch_replay!=0) batch_replay=1;
+    end
     if($value$plusargs("ALG=%d", start_alg)) end_alg=start_alg;
     if($value$plusargs("START_ALG=%d", start_alg)) begin if(!$value$plusargs("END_ALG=%d", end_alg)) end_alg=start_alg; end
     if($value$plusargs("CASE=%d", start_case)) end_case=start_case;
@@ -511,8 +610,11 @@ initial begin
         case_k = hwgold_case_k(case_idx);
         $display("RUN_CASE case=%0d m=%0d n=%0d k=%0d", case_idx, case_m, case_n, case_k);
         for(alg=start_alg; alg<=end_alg; alg=alg+1) run_alg_case(alg, case_m, case_n, case_k);
+        if(batch_replay) run_batch_case(case_m, case_n, case_k);
     end
     $display("tb_run1_k_sweep: %0d PASS, %0d FAIL", pass_cnt, fail_cnt);
+    if(batch_replay)
+        $display("tb_run1_batch: %0d PASS, %0d FAIL", batch_pass_cnt, batch_fail_cnt);
     $finish;
 end
 endmodule

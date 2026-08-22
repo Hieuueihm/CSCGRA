@@ -44,6 +44,10 @@ CASES = [
     (16, 64, 2),
 ]
 ALGORITHM_NAMES = ["OMP", "CoSaMP", "IHT", "HTP", "SP", "GP", "GOMP", "MP"]
+# Batch replay: one leader (b=0, the frozen golden y) plus deterministic
+# synthetic sparse followers solved on the leader's retained factor.
+BATCH_SIGNALS = 4
+BATCH_ATOM_MAG = 3 << Q
 
 # This table is reviewed from canonical.py toward hardware.py.  It is not
 # inferred from RTL behavior.  A semantic variant must remain visible here
@@ -91,6 +95,33 @@ def make_phi(m_size: int, n_size: int, seed: int, scale_q: int) -> list[list[int
             row.append(scale_q if state & 1 else -scale_q)
         phi.append(row)
     return phi
+
+
+def make_batch_signal(
+    m_size: int, n_size: int, k_size: int, seed: int, scale_q: int, sig_idx: int
+) -> list[int]:
+    """Follower measurement vector y_b = Q16(Phi x_b), x_b sparse from the LFSR.
+
+    The leader (b=0) is the frozen golden y.  Followers are deterministic
+    synthetic sparse signals, so the batch golden never depends on frozen
+    result data and never touches the immutable input file.
+    """
+
+    phi = make_phi(m_size, n_size, seed, scale_q)
+    state = _lfsr_advance(
+        ((seed ^ (sig_idx * 0x9E3779B9)) & 0xFFFFFFFF) or DEFAULT_SEED, 32
+    )
+    dense = [0] * n_size
+    picked: list[int] = []
+    target = min(k_size, n_size)
+    while len(picked) < target:
+        state = _galois_step(state)
+        idx = state % n_size
+        if idx in picked:
+            continue
+        picked.append(idx)
+        dense[idx] = BATCH_ATOM_MAG if state & 0x100 else -BATCH_ATOM_MAG
+    return _matvec(phi, dense)
 
 
 def _div_round(num: int, den: int) -> int:
@@ -348,6 +379,29 @@ class _LdltService:
                 request_fingerprint if scanned else (0x6D2B79F5 ^ len(request)) & 0xFFFFFFFF
             )
         return result
+
+
+def batch_replay(
+    phi: list[list[int]],
+    y_b: Sequence[int],
+    leader_support: Sequence[int],
+    stats: ArchitectureStats | None = None,
+) -> tuple[list[int], list[int]]:
+    """Follower solve on the leader's retained factor (batch amortization).
+
+    Models the RTL batch replay path: the leader's final LDLT factor stays
+    cached, so the follower REFINE hits FACTOR_REUSE_EXACT and rebuilds only
+    the RHS and the forward/diagonal/backward solve.  The recomputed factor
+    equals the cached prefix-extension factor deterministically, so
+    ``_ldlt_solve`` on the leader order is the exact replay semantics.
+    """
+
+    stats = stats or ArchitectureStats()
+    service = _LdltService.create(phi, y_b, stats)
+    service.factor_order = list(dict.fromkeys(leader_support))[:MAX_SUPPORT]
+    service.factor_fingerprint = _support_fingerprint(service.factor_order)
+    x, residual = service.solve(service.factor_order)
+    return x, residual
 
 
 def _omp(phi: list[list[int]], y: Sequence[int], k: int) -> HardwareTrace:
@@ -621,6 +675,34 @@ def generate_golden(output_path: Path = DEFAULT_GOLDEN) -> str:
         lines.append(f"  {elem_idx}: hwgold_y = {_hex24(value)};")
     lines.append("  default: hwgold_y = 24'h000000; endcase end endfunction")
 
+    follower_count = BATCH_SIGNALS - 1
+    lines.append("localparam integer KSWEEP_GOLD_BATCH_SIGNALS = 4;")
+    lines.append("function [23:0] hwgold_y_batch;")
+    lines.append("input integer case_idx; input integer sig_idx; input integer elem_idx;")
+    lines.append("begin case(((case_idx * (KSWEEP_GOLD_BATCH_SIGNALS - 1) + sig_idx) * 64) + elem_idx)")
+    for case_idx, (m_size, n_size, k_size) in enumerate(CASES):
+        for sig_idx in range(1, BATCH_SIGNALS):
+            y_b = make_batch_signal(m_size, n_size, k_size, seed, scale_q, sig_idx)
+            for elem_idx in range(m_size):
+                flat_key = ((case_idx * follower_count + (sig_idx - 1)) * 64) + elem_idx
+                lines.append(f"  {flat_key}: hwgold_y_batch = {_hex24(y_b[elem_idx])};")
+    lines.append("  default: hwgold_y_batch = 24'h000000; endcase end endfunction")
+
+    lines.append("function [23:0] hwgold_x_batch;")
+    lines.append("input integer case_idx; input integer sig_idx; input integer elem_idx;")
+    lines.append("begin case(((case_idx * (KSWEEP_GOLD_BATCH_SIGNALS - 1) + sig_idx) * KSWEEP_GOLD_MAX_N) + elem_idx)")
+    for case_idx, (m_size, n_size, k_size) in enumerate(CASES):
+        phi = make_phi(m_size, n_size, seed, scale_q)
+        leader_support = run("OMP", phi, y64[:m_size], k_size).support
+        for sig_idx in range(1, BATCH_SIGNALS):
+            y_b = make_batch_signal(m_size, n_size, k_size, seed, scale_q, sig_idx)
+            x_b, _residual = batch_replay(phi, y_b, leader_support)
+            for elem_idx, value in enumerate(x_b):
+                if value:
+                    flat_key = ((case_idx * follower_count + (sig_idx - 1)) * 256) + elem_idx
+                    lines.append(f"  {flat_key}: hwgold_x_batch = {_hex24(value)};")
+    lines.append("  default: hwgold_x_batch = 24'h000000; endcase end endfunction")
+
     lines.append("function [23:0] hwgold_x_iter;")
     lines.append("input integer case_idx; input integer alg_idx; input integer iter_idx; input integer elem_idx; begin case((((case_idx * KSWEEP_GOLD_ALGS + alg_idx) * KSWEEP_GOLD_MAX_ITER + iter_idx) * KSWEEP_GOLD_MAX_N) + elem_idx)")
     for case_idx, (m_size, n_size, k_size) in enumerate(CASES):
@@ -667,10 +749,22 @@ def generate_c_header(output_path: Path = DEFAULT_C_GOLDEN) -> str:
         return rows
 
     results = []
+    batch_y = []
+    batch_x = []
     for case_idx, (m_size, n_size, k_size) in enumerate(CASES):
         phi = make_phi(m_size, n_size, seed, scale_q)
         y = [s24(value) for value in y64[:m_size]]
         results.append([run(algorithm, phi, y, k_size).x for algorithm in ALGORITHM_NAMES])
+        leader_support = run("OMP", phi, y, k_size).support
+        case_y = []
+        case_x = []
+        for sig_idx in range(1, BATCH_SIGNALS):
+            y_b = make_batch_signal(m_size, n_size, k_size, seed, scale_q, sig_idx)
+            x_b, _residual = batch_replay(phi, y_b, leader_support)
+            case_y.append(list(y_b[:m_size]) + [0] * (64 - m_size))
+            case_x.append(list(x_b[:n_size]) + [0] * (256 - n_size))
+        batch_y.append(case_y)
+        batch_x.append(case_x)
 
     lines = [
         "#ifndef CSCGRA_K_SWEEP_GOLDEN_H",
@@ -701,8 +795,33 @@ def generate_c_header(output_path: Path = DEFAULT_C_GOLDEN) -> str:
         *c_values(y64),
         "};",
         "",
-        "static const uint32_t ksgold_x_final[KSGOLD_ALG_COUNT][KSGOLD_CASE_COUNT][KSGOLD_MAX_N] = {",
+        f"#define KSGOLD_BATCH_SIGNALS {BATCH_SIGNALS}U",
+        "static const uint32_t ksgold_y_batch[KSGOLD_CASE_COUNT][KSGOLD_BATCH_SIGNALS - 1U][KSGOLD_MAX_M] = {",
     ]
+    for case_idx in range(len(CASES)):
+        lines.append("    {")
+        for sig_idx in range(BATCH_SIGNALS - 1):
+            lines.append("        {")
+            lines.extend("        " + row for row in c_values(batch_y[case_idx][sig_idx]))
+            lines.append("        },")
+        lines.append("    },")
+    lines.extend([
+        "};",
+        "",
+        "static const uint32_t ksgold_x_batch[KSGOLD_CASE_COUNT][KSGOLD_BATCH_SIGNALS - 1U][KSGOLD_MAX_N] = {",
+    ])
+    for case_idx in range(len(CASES)):
+        lines.append("    {")
+        for sig_idx in range(BATCH_SIGNALS - 1):
+            lines.append("        {")
+            lines.extend("        " + row for row in c_values(batch_x[case_idx][sig_idx]))
+            lines.append("        },")
+        lines.append("    },")
+    lines.extend([
+        "};",
+        "",
+        "static const uint32_t ksgold_x_final[KSGOLD_ALG_COUNT][KSGOLD_CASE_COUNT][KSGOLD_MAX_N] = {",
+    ])
     for alg_idx, _algorithm in enumerate(ALGORITHM_NAMES):
         lines.append("    {")
         for case_idx in range(len(CASES)):

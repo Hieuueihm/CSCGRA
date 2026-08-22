@@ -27,6 +27,19 @@ With `-ProfileStates`, the testbench reports controller, top-K, support, uop,
 and internal wide-multiplier residency. Profiling is verification-only and is
 not synthesized.
 
+## Batch replay mode
+
+The same testbench accepts the plusarg `BATCH_REPLAY=1` (e.g.
+`xsim ... -testplusarg "CASE=1" -testplusarg "BATCH_REPLAY=1"`). After the
+canonical per-algorithm runs, each case executes a batch program: an OMP
+leader loop followed by three follower signals solved on the retained exact
+LDLT factor (`FACTOR_REUSE_EXACT`). Follower y vectors and expected x
+solutions come from `hwgold_y_batch`/`hwgold_x_batch` in the hardware
+golden; results are bit-exact and reported in a separate
+`tb_run1_batch: N PASS, 0 FAIL` tally plus a `BATCH_REPLAY_RESULT` cycle
+record (leader vs per-follower amortization). Without the plusarg the
+canonical 348-check contract is byte-identical.
+
 ## Other files
 
 - `run1/k_sweep_golden_hardware.vh`: active bit-exact RTL sign-off golden,

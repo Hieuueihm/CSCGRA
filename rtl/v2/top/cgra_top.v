@@ -152,6 +152,7 @@ module cgra_top #(
     wire [2:0] reduce_src_vec, reduce_dst;
     wire [7:0] scalar_op;
     wire [3:0] next_ctrl;
+    wire [15:0] dma_elem_offset;
     wire ctx_decode_error;
 
     ctx_decoder #(.CTX_W(CTX_W)) u_decode (
@@ -164,6 +165,7 @@ module cgra_top #(
         .addr_dim(addr_dim), .spm_a_vec(spm_a_vec), .spm_b_vec(spm_b_vec), .spm_w_vec(spm_w_vec),
         .spm_addr_mode(spm_addr_mode), .abs_addr(abs_addr), .lfsr_ctrl(lfsr_ctrl),
         .reduce_src_vec(reduce_src_vec), .reduce_dst(reduce_dst), .scalar_op(scalar_op), .next_ctrl(next_ctrl),
+        .dma_elem_offset(dma_elem_offset),
         .ctx_version_ok(), .ctx_decode_error(ctx_decode_error)
     );
 
@@ -538,6 +540,7 @@ module cgra_top #(
         .addr_dim(mesh_ctx_dec_addr_dim), .spm_a_vec(mesh_ctx_dec_spm_a_vec), .spm_b_vec(mesh_ctx_dec_spm_b_vec), .spm_w_vec(mesh_ctx_dec_spm_w_vec),
         .spm_addr_mode(mesh_ctx_dec_spm_addr_mode), .abs_addr(mesh_ctx_dec_abs_addr), .lfsr_ctrl(mesh_ctx_dec_lfsr_ctrl),
         .reduce_src_vec(mesh_ctx_dec_reduce_src_vec), .reduce_dst(mesh_ctx_dec_reduce_dst), .scalar_op(mesh_ctx_dec_scalar_op), .next_ctrl(mesh_ctx_dec_next_ctrl),
+        .dma_elem_offset(),
         .ctx_version_ok(), .ctx_decode_error()
     );
 
@@ -682,10 +685,18 @@ module cgra_top #(
         end
     endgenerate
 
+    // Batch DMA window: class-7 words may add an element offset to the CSR
+    // DDR base so one program can stream B measurement vectors and store B
+    // solutions without host reprogramming.  Legacy programs decode offset 0.
+    wire [AXI_AW-1:0] dma_ddr_base_w =
+        (ctx_word[0] || (spm_a_vec == 3'd0)) ? x_ddr_addr : y_ddr_addr;
+    wire [AXI_AW-1:0] dma_ddr_addr_w =
+        dma_ddr_base_w + {14'd0, dma_elem_offset, 2'b00};
+
     dma_ctrl #(.AXI_AW(AXI_AW), .AXI_DW(AXI_DW), .COLS(COLS), .MEM_AW(MEM_AW), .DATA_W(DATA_W), .IDX_W(IDX_W)) u_dma (
         .clk(clk), .rst_n(rst_core_n), .start(ctx_valid && (uop_class == 4'd7)), .dir(ctx_word[0]),
         .vec_id(spm_a_vec), .length((addr_dim == 4'd1) ? m_size : n_size),
-        .ddr_addr((ctx_word[0] || (spm_a_vec == 3'd0)) ? x_ddr_addr : y_ddr_addr), .done(dma_done), .error(dma_error), .error_code(dma_error_code),
+        .ddr_addr(dma_ddr_addr_w), .done(dma_done), .error(dma_error), .error_code(dma_error_code),
         .m_axi_araddr(m_axi_araddr), .m_axi_arlen(m_axi_arlen), .m_axi_arsize(m_axi_arsize), .m_axi_arburst(m_axi_arburst),
         .m_axi_arvalid(m_axi_arvalid), .m_axi_arready(m_axi_arready), .m_axi_rdata(m_axi_rdata),
         .m_axi_rvalid(m_axi_rvalid), .m_axi_rlast(m_axi_rlast), .m_axi_rready(m_axi_rready),
