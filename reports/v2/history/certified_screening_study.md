@@ -46,5 +46,28 @@ build.
 - The session pivots to the phase-ISA tooling track (compiler + cost
   model), which needs no golden or datapath change.
 
+## Addendum: support-column scan mask — rejected by analysis (same day)
+
+The companion micro-idea (skip the K support columns in the correlation
+scan, since selection excludes them) is **cycle-void** in the current
+structure and was not implemented:
+
+- `S_CORR_ACC` issues exactly `n_size/COLS` column words per measurement
+  row; scan time is bound by the word walk, not by the MACs.  Masking
+  individual lanes saves switching, not clocks, and support atoms are
+  scattered so no fully-masked word exists at K<=16.
+- Compacting the walk to candidate-only words requires per-lane
+  variable-offset LFSR advance (`lfsr_advance(row_state, j+1)` with
+  data-dependent j), a combinational chain the controller timing cone
+  cannot absorb — the same class of change as the previously rejected
+  scan fast-start forms.
+- Scope is narrower than it looks anyway: CoSaMP/SP candidate top-K
+  (exclude_support=0), IHT/HTP gradient updates (every c value consumed),
+  and MP re-selection all read support-column correlations.  Only
+  OMP/GOMP/GP could mask.
+
+Remaining correlation-cycle lever: datapath widening (16 columns/clock),
+a measured trial with explicit timing-risk gating.
+
 Study script: ad-hoc harness over `models/reference/hardware.py`
 (`_corr`/`_ldlt_solve` reuse, frozen inputs, both norm variants).

@@ -14,7 +14,7 @@ result should depend on it.
 | Item | Current value |
 |---|---:|
 | RTL branch | `codex/strict-pe0-timing` |
-| Latest functional checkpoint | Batch replay candidate on top of `35f21e0` |
+| Latest functional checkpoint | Phase compiler on top of `0c236c6` (R0-R2 refactor) |
 | Target | `xczu7ev-ffvc1156-2-e`, 100 MHz |
 | Full K-sweep | 348 PASS / 0 FAIL |
 | Batch replay (opt-in plusarg) | 8/8 cases bit-exact, 3.0x-24.0x amortization |
@@ -22,9 +22,9 @@ result should depend on it.
 | Expected skips | CoSaMP and SP at K16 |
 | Full-sweep cycles (62-record sum) | 1,469,117 (-14,592 vs direct-bank from the DMA M-word fix) |
 | OOC WNS | +2.085 ns |
-| Routed WNS / TNS | +0.032 ns / 0.000 (direct-bank run, thin margin) |
-| Routed hold WNS | +0.034 ns |
-| Routed LUT / FF | 121,763 / 51,975 |
+| Routed WNS / TNS | +0.184 ns / 0.000 (R0-R2 refactor re-route) |
+| Routed hold WNS | +0.047 ns |
+| Routed LUT / FF | 120,987 / 52,209 |
 | Routed LUTRAM / SRL | 1,696 / 10 |
 | RAMB36 / DSP | 24 / 77 |
 

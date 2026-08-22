@@ -63,3 +63,14 @@ re-route before claiming closure.
 Primary RTL: `rtl/v2/control/sparse_loop_controller.v`,
 `rtl/v2/solver/sparse_kernel_service_engine.v`, `rtl/v2/pe/pearray.v`,
 `rtl/v2/pe/pe_cluster_4x4.v`, `rtl/v2/top/cgra_top.v`.
+
+## Addendum (2026-08-22): margin recovered by the R0-R2 refactor
+
+A full re-route of the tree after the controller decomposition
+(`r2_refactor_impl`, commits `d22bbfb`/`0c236c6` on top of this
+checkpoint) closes at **WNS +0.184 ns / TNS 0.000 / WHS +0.047 ns**, all
+constraints met, 163,363/163,363 nets routed, 120,987 LUT / 52,209 FF.
+The module boundaries introduced by the refactor improve the routed
+margin 5.75x over this checkpoint's 3.2 ps.  Still 16 ps short of the
++0.2 ns guard band, but the thin-margin caveat above is now historical.
+Logs: `logs/impl/v2/r2_refactor_impl/`.

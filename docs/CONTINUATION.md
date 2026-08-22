@@ -36,7 +36,19 @@ sum 1,469,117 across R0/R1/R2).
 
 ### Next steps (in order)
 
-1. **R3-lite border pipeline**: extract the LDLT border metadata always
+1. **B1 scheduler elevation** (phase-ISA track): audit
+   `phase_token_scheduler` — the three cross-service fusions are real
+   control; verify version tokens gate every consumer, then extend toward
+   elastic phase ordering.  Gate: cycle-identical.
+   DONE 2026-08-22 instead: `sw/v2/tools/phase_compiler.py` +
+   `check_phase_compiler.py` (62 program images byte-identical to the TB
+   builder) + `docs/architecture/phase_isa.md` (commit `2434059`).
+   REJECTED by analysis same day: certified screening (0% pruning on all
+   16 case/algorithm combos, see
+   `reports/v2/history/certified_screening_study.md`) and the
+   support-column scan mask (cycle-void: the scan is word-walk bound;
+   compaction needs variable-offset LFSR advance — timing cone risk).
+2. **R3-lite border pipeline**: extract the LDLT border metadata always
    block, payload banks, and ingress comb (~50 regs, decls around lines
    501-557 of `sparse_loop_controller.v`) into `ldlt_border_pipeline.v`.
    Watch: `border_operand_boundary_active_q` feeds the controller's
@@ -44,14 +56,14 @@ sum 1,469,117 across R0/R1/R2).
    The 21 `S_LDL_*` orchestration states stay in the controller; a full
    solver-subsystem extraction is a separate design initiative, not a
    mechanical step.
-2. **R4 residual pipeline**: r1-r5 tagged pipeline + ingress (decls ~1011,
+3. **R4 residual pipeline**: r1-r5 tagged pipeline + ingress (decls ~1011,
    pipeline always ~1790, uses in S_WR_ACC_INIT/S_RESID_PE_WAIT/S_WR);
    phi_cache/coeff_mem become input buses.
-3. **R5 writeback scatter** (row3 write path + S_WX_* arms).
-4. **Incremental correlation** on the cleaned base: Gram-column cache
-   (N x K, ~3-4 RAMB36) + rank-K correlation update + periodic exact
-   refresh; golden regeneration via hardware.py (Gate-2 sanctioned), like
-   batch replay did.
+4. **R5 writeback scatter** (row3 write path + S_WX_* arms).
+5. **Correlation datapath widening** (16 cols/clock) as the remaining
+   correlation cycle lever — measured trial, timing-risk gated.
+6. **Paper-facing**: energy profile + clock gating, prior-art comparison
+   table, end-to-end demo on real data.
 
 ## Active optimization checkpoint (2026-08-10)
 
