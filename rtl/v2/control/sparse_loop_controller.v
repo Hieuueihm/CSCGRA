@@ -1,3 +1,24 @@
+// sparse_loop_controller: the algorithm-phase FSM of the sparse kernel
+// service.  It sequences correlation, top-K handoff, support/factor reuse
+// qualification, Gram/LDLT factorization, forward/diagonal/backward
+// solves, sparse x writeback, and residual streaming for the eight
+// supported algorithms.
+//
+// Structure (see docs/architecture/controller_map.md for the full map):
+//   - Main FSM: one always block, states in controller_states.vh.
+//     Encodings are a frozen TB contract; do not renumber.
+//   - REGION factor-check: S_FACTOR_CHECK_* qualifies cache reuse.
+//   - REGION phi-scan: S_SCAN_DIRECT* regenerates support Phi columns
+//     from the LFSR jump windows (sparse_loop_lfsr_jump.vh).
+//   - REGION wide-mul: the 64x64 limb multiplier sequencer driven by the
+//     LDLT/solve states; shares operand banks with the batch4 Gram/RHS
+//     capture path.
+//   - REGION writeback: S_WX_* sparse tuple scatter into the SPM x bank.
+//   - REGION residual: S_WR_* block-8 PE stream with an r1..r5 pipeline.
+//   - Submodules: ls_issue_engine (GE matrix service command boundary),
+//     support_relation_unit (reuse-mode encoder).
+// The single-FSM design means every shared array (support_cache, phi_cache,
+// wide operand banks) is accessed sequentially, never concurrently.
 module sparse_loop_controller #(
     parameter integer COLS = 8,
     parameter integer DATA_W = 24,
@@ -122,33 +143,7 @@ module sparse_loop_controller #(
     output reg [SCALAR_W-1:0] result
 );
 
-localparam [6:0] S_IDLE=0, S_PRIME=1, S_ACC=3, S_WX=5, S_WR=7, S_DONE=8, S_SCAN=10, S_SOLVE_INIT=11, S_ELIM_START=12, S_ELIM_ROW=13, S_ELIM_UPDATE=14, S_BACK_INIT=15, S_BACK_ACC=16, S_BACK_DIV=17, S_SOLVE_DONE=18, S_ACC_RHS=19, S_ACC_GRAM=20, S_WR_ACC_INIT=21, S_ACC_PE_WAIT3=22, S_BACK_PREP=23, S_ELIM_PREP=24, S_ELIM_MUL=25, S_BACK_MUL=26, S_BACK_UPDATE=27, S_DIV_INIT=28, S_DIV_STEP=29, S_ELIM_DIV_DONE=30, S_BACK_DIV_DONE=31, S_CORR_INIT=34, S_CORR_SCAN=35, S_CORR_ACC=36, S_CORR_WRITE=37, S_IHT_X_WAIT=38, S_IHT_SCORE_WAIT=39, S_LOAD_COEFF_WAIT=40, S_PRUNE_X_WAIT=41, S_IHT_SCORE_READ=42, S_IHT_X_READ=43, S_PRUNE_X_READ=44, S_LOAD_COEFF_READ=45, S_LOAD_COEFF_CAP=46, S_ACC_PE_WAIT=47, S_GRAM_PE_WAIT=48, S_GRAM_PE_WAIT2=49, S_RESID_PE_WAIT=50, S_ACC_PE_WAIT2=53, S_CORR_PE_WAIT=54, S_CORR_LATCH=57,
-S_CACHE_BUILD=56, S_SCAN_DIRECT=55,
-S_MP_X_READ=70, S_MP_X_WAIT=71, S_MP_DIV_PREP=72, S_MP_X_WRITE=73, S_MP_DIV_DONE=74, S_MP_SCORE_CAP=75, S_MP_X_CAP=76, S_SCAN_DIRECT_STEP=77, S_CACHE_BUILD_STEP=78,
-S_LS_CLEAR_START=86, S_LS_CLEAR_WAIT=87, S_SOLVE_SYM_READ=88, S_SOLVE_SYM_WAIT=89, S_SOLVE_SYM_WRITE=90, S_SOLVE_SYM_WRITE_WAIT=91,
-S_ELIM_ROW_READ=92, S_ELIM_ROW_WAIT=93, S_ELIM_UPDATE_START=94, S_ELIM_UPDATE_WAIT=95, S_BACK_ACC_READ=96, S_BACK_ACC_WAIT=97, S_BACK_PREP_READ=98, S_BACK_PREP_WAIT=99, S_GRAM_ACC_WAIT=100, S_SCAN_DIRECT_LATCH=101, S_RHS_INIT_WAIT=103, S_ELIM_RHS_READ_WAIT=104, S_ELIM_RHS_UPDATE_WAIT=105, S_BACK_RHS_READ=106, S_BACK_RHS_READ_WAIT=107;
-localparam [6:0] S_IHT_MESH_WAIT=108, S_IHT_MESH_WRITE=110, S_PRUNE_MESH_WAIT=111, S_PRUNE_MESH_WRITE=113, S_WR_MESH_WAIT=114, S_WR_MESH_COMMIT=116, S_WX_COMMIT=117, S_WX_CLEAR=4, S_DELTA_CLEAR_START=6, S_DELTA_CLEAR_WAIT=9;
-localparam [6:0] S_LDL_INIT=58, S_LDL_DIAG_READ=59, S_LDL_DIAG_WAIT=60,
-S_LDL_DIAG_GATHER=61, S_LDL_DIAG_GATHER_WAIT=62, S_LDL_DIAG_MUL1=63,
-S_LDL_DIAG_MUL1_WAIT=64, S_LDL_DIAG_MUL2=65, S_LDL_DIAG_MUL2_WAIT=66,
-S_LDL_DIAG_WRITE=67, S_LDL_DIAG_WRITE_WAIT=68, S_LDL_INV_DIV=69,
-S_LDL_INV_DONE=79, S_LDL_ROW_INIT=80,
-S_LDL_ROW_A_WAIT=82, S_LDL_ROW_P_WAIT=84,
-S_LDL_ROW_MUL1=85, S_LDL_ROW_MUL2=119, S_LDL_ROW_FINAL_MUL=121,
-S_LDL_ROW_FINAL_WAIT=122,
-S_LDL_ROW_WRITE_WAIT=124;
-localparam [6:0] S_FACTOR_CHECK_INIT=125, S_FACTOR_CHECK_SCAN=126,
-                 S_FACTOR_CHECK_DONE=127;
-localparam [6:0] S_FUSED_UPDATE_CAPTURE=7'd2;
-localparam [6:0] S_GP_DIV_DONE=7'd118;
-// Registered commit boundary for the GP x update.  GP is the only score
-// update which multiplies an SPM value by the line-search alpha; committing
-// it directly in S_IHT_SCORE_READ formed an SPM -> DSP -> saturation -> SPM
-// path in one clock.
-localparam [6:0] S_GP_UPDATE_COMMIT=7'd51,
-                 S_GP_UPDATE_OPERANDS=7'd52,
-                 S_GP_UPDATE_MUL=7'd81,
-                 S_GP_UPDATE_SAT=7'd83;
+`include "controller_states.vh"
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GRAD_STEP=4'd7, OP_CORR_UPDATE=4'd8, OP_GP_PROJECT=4'd9, OP_GP_UPDATE=4'd10; // 9/10: isolated canonical GP project/update
 localparam [1:0] MESH_CTX_NONE=2'd0, MESH_CTX_UPDATE=2'd1, MESH_CTX_PRUNE=2'd2, MESH_CTX_RESID=2'd3;
 // Mesh tokens bypass the generic core-input register and advance through the
@@ -427,33 +422,65 @@ localparam [3:0] WIDE_MUL_IDLE=4'd0, WIDE_MUL_ISSUE0=4'd1,
                  WIDE_MUL_VDRAIN1=4'd4, WIDE_MUL_VDRAIN2=4'd5,
                  WIDE_MUL_VDRAIN3=4'd6, WIDE_MUL_COMMIT=4'd7,
                  WIDE_MUL_FINAL=4'd8, WIDE_MUL_FINISH=4'd9;
-reg [3:0] wide_mul_state_q;
+// The wide-multiply FSM lives in u_wide_mul_sequencer; the wires below keep
+// the original signal names so the operand decode, the PE boundary tokens,
+// and the solve consumers are unchanged.  The controller still owns operand
+// selection (wide_mul_a_q/b_q) and the batch4 product-capture gating
+// (wide_row_product_*), which depend on controller state.
 reg wide_mul_start_q;
-reg wide_mul_done_q;
-reg wide_mul_vertical_done_q;
 reg wide_mul_vertical_request_q;
-reg wide_mul_vertical_q;
+reg signed [4*64-1:0] wide_mul_a_q;
+reg signed [4*64-1:0] wide_mul_b_q;
+wire [3:0] wide_mul_state_q;
+wire wide_mul_done_q;
+wire wide_mul_vertical_done_q;
+wire wide_mul_vertical_q;
 // Registered phase tokens mirror the WIDE_MUL state transitions without
 // changing their latency.  The PE array consumes these tokens at its wide
 // operand boundary instead of decoding the controller FSM state directly.
-(* dont_touch = "true" *) reg wide_mul_active_token_q;
-(* dont_touch = "true" *) reg wide_mul_vertical_token_q;
-(* dont_touch = "true" *) reg wide_mul_issue_token_q;
-(* dont_touch = "true" *) reg wide_mul_issue_part1_token_q;
-reg signed [4*64-1:0] wide_mul_a_q;
-reg signed [4*64-1:0] wide_mul_b_q;
-reg [63:0] wide_mul_abs_a_q [0:3];
-reg [63:0] wide_mul_abs_b_q [0:3];
-reg wide_mul_neg_q [0:3];
-reg [127:0] wide_mul_acc_q [0:3];
-reg [127:0] wide_mul_partial_q [0:3];
-reg signed [127:0] wide_mul_result_q [0:3];
-reg [COLS*64-1:0] wide_product_q [0:3];
-reg wide_product_valid_q [0:3];
-reg wide_product_part1_q [0:3];
-reg [127:0] wide_partial_sum [0:3];
+wire wide_mul_active_token_q;
+wire wide_mul_vertical_token_q;
+wire wide_mul_issue_token_q;
+wire wide_mul_issue_part1_token_q;
+wire [4*64-1:0] wide_mul_abs_a_bus;
+wire [4*64-1:0] wide_mul_abs_b_bus;
+wire [4*128-1:0] wide_mul_result_flat;
+wire [4*COLS*64-1:0] wide_mul_captured_flat;
 reg wide_row_product_valid [0:3];
 reg wide_row_product_part1 [0:3];
+wire [3:0] wide_mul_row_product_valid_bus;
+wire [3:0] wide_mul_row_product_part1_bus;
+
+wide_mul_sequencer #(.COLS(COLS)) u_wide_mul_sequencer (
+    .clk(clk), .rst_n(rst_n),
+    .wide_mul_start_q(wide_mul_start_q),
+    .wide_mul_vertical_request_q(wide_mul_vertical_request_q),
+    .wide_mul_operand_a(wide_mul_a_q),
+    .wide_mul_operand_b(wide_mul_b_q),
+    .product_bus(ls_wide_product_bus),
+    .row_product_valid(wide_mul_row_product_valid_bus),
+    .row_product_part1(wide_mul_row_product_part1_bus),
+    .wide_mul_state_q(wide_mul_state_q),
+    .wide_mul_done_q(wide_mul_done_q),
+    .wide_mul_vertical_done_q(wide_mul_vertical_done_q),
+    .wide_mul_vertical_q(wide_mul_vertical_q),
+    .wide_mul_active_token_q(wide_mul_active_token_q),
+    .wide_mul_vertical_token_q(wide_mul_vertical_token_q),
+    .wide_mul_issue_token_q(wide_mul_issue_token_q),
+    .wide_mul_issue_part1_token_q(wide_mul_issue_part1_token_q),
+    .wide_mul_abs_a_bus(wide_mul_abs_a_bus),
+    .wide_mul_abs_b_bus(wide_mul_abs_b_bus),
+    .wide_mul_result_flat(wide_mul_result_flat),
+    .wide_mul_captured_flat(wide_mul_captured_flat)
+);
+
+genvar wide_pack_g;
+generate
+    for (wide_pack_g = 0; wide_pack_g < 4; wide_pack_g = wide_pack_g + 1) begin : gen_wide_pack
+        assign wide_mul_row_product_valid_bus[wide_pack_g] = wide_row_product_valid[wide_pack_g];
+        assign wide_mul_row_product_part1_bus[wide_pack_g] = wide_row_product_part1[wide_pack_g];
+    end
+endgenerate
 reg [4:0] ldlt_k_q;
 reg [4:0] ldlt_i_base_q;
 reg [4:0] ldlt_p_base_q;
@@ -534,7 +561,6 @@ integer wide_col;
 integer wide_part;
 integer wide_a_limb;
 integer wide_b_limb;
-integer wide_shift;
 integer acc4_valid_col;
 integer border_row;
 integer border_col;
@@ -560,15 +586,15 @@ assign ls_wide_operand_valid = wide_mul_issue_token_q ||
 assign ls_wide_vertical_tag = border_operand_boundary_active_q ?
                               border_operand_boundary_tag_q : ldlt_i_base_q;
 wire signed [127:0] ldlt_wide_q32_sum =
-    ($signed(wide_mul_result_q[0]) >>> 32) +
-    ($signed(wide_mul_result_q[1]) >>> 32) +
-    ($signed(wide_mul_result_q[2]) >>> 32) +
-    ($signed(wide_mul_result_q[3]) >>> 32);
+    ($signed(wide_mul_result_flat[0*128 +: 128]) >>> 32) +
+    ($signed(wide_mul_result_flat[1*128 +: 128]) >>> 32) +
+    ($signed(wide_mul_result_flat[2*128 +: 128]) >>> 32) +
+    ($signed(wide_mul_result_flat[3*128 +: 128]) >>> 32);
 wire signed [127:0] ldlt_wide_q16_sum =
-    ($signed(wide_mul_result_q[0]) >>> 16) +
-    ($signed(wide_mul_result_q[1]) >>> 16) +
-    ($signed(wide_mul_result_q[2]) >>> 16) +
-    ($signed(wide_mul_result_q[3]) >>> 16);
+    ($signed(wide_mul_result_flat[0*128 +: 128]) >>> 16) +
+    ($signed(wide_mul_result_flat[1*128 +: 128]) >>> 16) +
+    ($signed(wide_mul_result_flat[2*128 +: 128]) >>> 16) +
+    ($signed(wide_mul_result_flat[3*128 +: 128]) >>> 16);
 
 wire ls_rhs4_active = (state == S_ACC_PE_WAIT) ||
                        (state == S_ACC_PE_WAIT2) ||
@@ -582,8 +608,7 @@ wire ls_batch4_active = busy &&
                         (ls_rhs4_active || ls_gram4_active);
 
 wire [COLS*64-1:0] rhs4_product_bus;
-assign ls_acc4_product_q_bus =
-    {wide_product_q[3], wide_product_q[2], wide_product_q[1], wide_product_q[0]};
+assign ls_acc4_product_q_bus = wide_mul_captured_flat;
 genvar rhs4_lane_g;
 generate
     for (rhs4_lane_g = 0; rhs4_lane_g < COLS; rhs4_lane_g = rhs4_lane_g + 1) begin : gen_rhs4_product
@@ -598,8 +623,6 @@ always @(*) begin
                          ls_batch4_active || ldlt_border_issue_active_w;
     ls_wide_a_full_bus = {4*COLS*DATA_W{1'b0}};
     ls_wide_b_full_bus = {4*COLS*DATA_W{1'b0}};
-    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
-        wide_partial_sum[wide_row] = 128'd0;
     for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
         wide_row_product_valid[wide_row] = 1'b0;
         wide_row_product_part1[wide_row] = 1'b0;
@@ -654,9 +677,9 @@ always @(*) begin
                 wide_a_limb = wide_part >> 2;
                 wide_b_limb = wide_part & 3;
                 ls_wide_a_full_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
-                    {{(DATA_W-16){1'b0}}, wide_mul_abs_a_q[wide_row][wide_a_limb*16 +: 16]};
+                    {{(DATA_W-16){1'b0}}, wide_mul_abs_a_bus[wide_row*64 + wide_a_limb*16 +: 16]};
                 ls_wide_b_full_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
-                    {{(DATA_W-16){1'b0}}, wide_mul_abs_b_q[wide_row][wide_b_limb*16 +: 16]};
+                    {{(DATA_W-16){1'b0}}, wide_mul_abs_b_bus[wide_row*64 + wide_b_limb*16 +: 16]};
             end
         end
     end
@@ -699,19 +722,6 @@ always @(*) begin
                 (wide_mul_state_q == WIDE_MUL_COMMIT);
         end
     end
-
-    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
-        if (wide_product_valid_q[wide_row]) begin
-            for (wide_col = 0; wide_col < COLS; wide_col = wide_col + 1) begin
-                wide_part = (wide_product_part1_q[wide_row] ? COLS : 0) + wide_col;
-                wide_a_limb = wide_part >> 2;
-                wide_b_limb = wide_part & 3;
-                wide_shift = (wide_a_limb + wide_b_limb) * 16;
-                wide_partial_sum[wide_row] = wide_partial_sum[wide_row] +
-                    ({64'd0, $unsigned(wide_product_q[wide_row][wide_col*64 +: 64])} << wide_shift);
-            end
-        end
-    end
 end
 
 // Split only after the source schedule has selected the payload.  The four
@@ -728,149 +738,7 @@ always @(*) begin
     ls_wide_b_row3_bus = ls_wide_b_full_bus[3*COLS*DATA_W +: COLS*DATA_W];
 end
 
-always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-        wide_mul_state_q <= WIDE_MUL_IDLE;
-        wide_mul_done_q <= 1'b0;
-        wide_mul_vertical_done_q <= 1'b0;
-        wide_mul_vertical_q <= 1'b0;
-        wide_mul_active_token_q <= 1'b0;
-        wide_mul_vertical_token_q <= 1'b0;
-        wide_mul_issue_token_q <= 1'b0;
-        wide_mul_issue_part1_token_q <= 1'b0;
-        for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
-            wide_mul_abs_a_q[wide_row] <= 64'd0;
-            wide_mul_abs_b_q[wide_row] <= 64'd0;
-            wide_mul_neg_q[wide_row] <= 1'b0;
-            wide_mul_acc_q[wide_row] <= 128'd0;
-            wide_mul_partial_q[wide_row] <= 128'd0;
-            wide_mul_result_q[wide_row] <= 128'sd0;
-            wide_product_q[wide_row] <= {(COLS*64){1'b0}};
-            wide_product_valid_q[wide_row] <= 1'b0;
-            wide_product_part1_q[wide_row] <= 1'b0;
-        end
-    end else begin
-        wide_mul_done_q <= 1'b0;
-        wide_mul_vertical_done_q <= 1'b0;
-        for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
-            wide_product_valid_q[wide_row] <= wide_row_product_valid[wide_row];
-            if (wide_row_product_valid[wide_row]) begin
-                wide_product_q[wide_row] <=
-                    ls_wide_product_bus[wide_row*COLS*64 +: COLS*64];
-                wide_product_part1_q[wide_row] <= wide_row_product_part1[wide_row];
-            end
-        end
-            case (wide_mul_state_q)
-            WIDE_MUL_IDLE: begin
-                wide_mul_issue_token_q <= 1'b0;
-                wide_mul_issue_part1_token_q <= 1'b0;
-                if (wide_mul_start_q) begin
-                    wide_mul_active_token_q <= 1'b1;
-                    wide_mul_vertical_token_q <= wide_mul_vertical_request_q;
-                    wide_mul_issue_token_q <= 1'b1;
-                    wide_mul_issue_part1_token_q <= 1'b0;
-                    wide_mul_vertical_q <= wide_mul_vertical_request_q;
-                    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
-                        wide_mul_abs_a_q[wide_row] <= wide_mul_a_q[wide_row*64+63] ?
-                            -$signed(wide_mul_a_q[wide_row*64 +: 64]) : $signed(wide_mul_a_q[wide_row*64 +: 64]);
-                        wide_mul_abs_b_q[wide_row] <= wide_mul_b_q[wide_row*64+63] ?
-                            -$signed(wide_mul_b_q[wide_row*64 +: 64]) : $signed(wide_mul_b_q[wide_row*64 +: 64]);
-                        wide_mul_neg_q[wide_row] <= wide_mul_a_q[wide_row*64+63] ^ wide_mul_b_q[wide_row*64+63];
-                    end
-                    wide_mul_state_q <= WIDE_MUL_ISSUE0;
-                end
-            end
-            WIDE_MUL_ISSUE0: begin
-                wide_mul_issue_token_q <= 1'b1;
-                wide_mul_issue_part1_token_q <= 1'b1;
-                wide_mul_state_q <= WIDE_MUL_ISSUE1;
-            end
-            WIDE_MUL_ISSUE1: begin
-                wide_mul_issue_token_q <= 1'b0;
-                wide_mul_issue_part1_token_q <= 1'b0;
-                wide_mul_state_q <= WIDE_MUL_DRAIN;
-            end
-            WIDE_MUL_DRAIN: begin
-                if (wide_mul_vertical_q)
-                    wide_mul_state_q <= WIDE_MUL_VDRAIN1;
-                else
-                    wide_mul_state_q <= WIDE_MUL_COMMIT;
-            end
-            WIDE_MUL_VDRAIN1: begin
-                wide_mul_acc_q[0] <= wide_partial_sum[0];
-                wide_mul_state_q <= WIDE_MUL_VDRAIN2;
-            end
-            WIDE_MUL_VDRAIN2: begin
-                wide_mul_partial_q[0] <= wide_partial_sum[0];
-                wide_mul_acc_q[1] <= wide_partial_sum[1];
-                wide_mul_state_q <= WIDE_MUL_VDRAIN3;
-            end
-            WIDE_MUL_VDRAIN3: begin
-                if (wide_mul_neg_q[0])
-                    wide_mul_result_q[0] <= -$signed(wide_mul_acc_q[0] + wide_mul_partial_q[0]);
-                else
-                    wide_mul_result_q[0] <= $signed(wide_mul_acc_q[0] + wide_mul_partial_q[0]);
-                wide_mul_partial_q[1] <= wide_partial_sum[1];
-                wide_mul_acc_q[2] <= wide_partial_sum[2];
-                wide_mul_state_q <= WIDE_MUL_COMMIT;
-            end
-            WIDE_MUL_COMMIT: begin
-                if (wide_mul_vertical_q) begin
-                    if (wide_mul_neg_q[1])
-                        wide_mul_result_q[1] <= -$signed(wide_mul_acc_q[1] + wide_mul_partial_q[1]);
-                    else
-                        wide_mul_result_q[1] <= $signed(wide_mul_acc_q[1] + wide_mul_partial_q[1]);
-                    wide_mul_partial_q[2] <= wide_partial_sum[2];
-                    wide_mul_acc_q[3] <= wide_partial_sum[3];
-                end else begin
-                    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
-                        wide_mul_acc_q[wide_row] <= wide_partial_sum[wide_row];
-                end
-                wide_mul_state_q <= WIDE_MUL_FINAL;
-            end
-            WIDE_MUL_FINAL: begin
-                if (wide_mul_vertical_q) begin
-                    if (wide_mul_neg_q[2])
-                        wide_mul_result_q[2] <= -$signed(wide_mul_acc_q[2] + wide_mul_partial_q[2]);
-                    else
-                        wide_mul_result_q[2] <= $signed(wide_mul_acc_q[2] + wide_mul_partial_q[2]);
-                    // Isolate PE3's registered product from the final
-                    // 128-bit add and completion edge.
-                    wide_mul_partial_q[3] <= wide_partial_sum[3];
-                end else begin
-                    // All four rows capture the reduced part-1 limb here.
-                    // FINISH only sees locally registered acc/partial data.
-                    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
-                        wide_mul_partial_q[wide_row] <= wide_partial_sum[wide_row];
-                end
-                wide_mul_state_q <= WIDE_MUL_FINISH;
-            end
-            WIDE_MUL_FINISH: begin
-                if (wide_mul_vertical_q) begin
-                    if (wide_mul_neg_q[3])
-                        wide_mul_result_q[3] <= -$signed(wide_mul_acc_q[3] + wide_mul_partial_q[3]);
-                    else
-                        wide_mul_result_q[3] <= $signed(wide_mul_acc_q[3] + wide_mul_partial_q[3]);
-                    wide_mul_vertical_done_q <= 1'b1;
-                end else begin
-                    for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
-                        if (wide_mul_neg_q[wide_row])
-                            wide_mul_result_q[wide_row] <= -$signed(wide_mul_acc_q[wide_row] + wide_mul_partial_q[wide_row]);
-                        else
-                            wide_mul_result_q[wide_row] <= $signed(wide_mul_acc_q[wide_row] + wide_mul_partial_q[wide_row]);
-                    end
-                end
-                wide_mul_done_q <= 1'b1;
-                wide_mul_state_q <= WIDE_MUL_IDLE;
-                wide_mul_vertical_q <= 1'b0;
-                wide_mul_active_token_q <= 1'b0;
-                wide_mul_vertical_token_q <= 1'b0;
-                wide_mul_issue_token_q <= 1'b0;
-                wide_mul_issue_part1_token_q <= 1'b0;
-            end
-        endcase
-    end
-end
+// The wide-multiply sequencer FSM moved to u_wide_mul_sequencer.
 
 always @(*) begin
     border_ingress_neg = 4'd0;
@@ -1209,9 +1077,6 @@ reg [IDX_W-1:0] factor_check_unmatched_value_q;
 reg factor_border_clear_q;
 reg [7:0] refine_prime_k_eff;
 reg [31:0] phi_state_q;
-reg [5:0] phi_load_i;
-reg [IDX_W-1:0] phi_support_q;
-reg phi_support_valid_q;
 reg [IDX_W-1:0] padded_n_q;
 reg [IDX_W-1:0] phi_scan_col_q;
 reg [31:0] phi_scan_state_q;
@@ -1751,7 +1616,6 @@ active_op <= OP_REFINE;
         active_k_count_q <= 6'd0;
         rhs_y_sample_q <= {DATA_W{1'b0}};
         phi_state_q <= DEFAULT_SEED;
-        phi_load_i <= 5'd0;
         back_j <= 6'd0;
         back_i <= 6'd0;
         solve_k <= 6'd0;
@@ -1787,8 +1651,6 @@ active_op <= OP_REFINE;
         corr_drain_wait_q <= 2'd0;
         wx_target_idx_q <= {IDX_W{1'b0}};
         wx_value_q <= {DATA_W{1'b0}};
-        phi_support_q <= {IDX_W{1'b0}};
-        phi_support_valid_q <= 1'b0;
         phi_scan_col_q <= {IDX_W{1'b0}};
         phi_scan_state_q <= DEFAULT_SEED;
         padded_n_q <= {IDX_W{1'b0}};
@@ -2757,7 +2619,7 @@ case (state)
                     state <= S_LDL_DIAG_MUL2;
             end
             S_LDL_DIAG_MUL2: begin
-                wide_mul_a_q <= {wide_mul_result_q[3][63:0],wide_mul_result_q[2][63:0],wide_mul_result_q[1][63:0],wide_mul_result_q[0][63:0]};
+                wide_mul_a_q <= {wide_mul_result_flat[3*128 +: 64],wide_mul_result_flat[2*128 +: 64],wide_mul_result_flat[1*128 +: 64],wide_mul_result_flat[0*128 +: 64]};
                 wide_mul_b_q <= {
                     ((ldlt_p_base_q+3 < ldlt_k_q) ? ldlt_d_mem[ldlt_p_base_q+3] : 64'sd0),
                     ((ldlt_p_base_q+2 < ldlt_k_q) ? ldlt_d_mem[ldlt_p_base_q+2] : 64'sd0),
@@ -3015,7 +2877,7 @@ case (state)
                     ls_col_a_q <= ldlt_k_q;
                     for (gi = 0; gi < 4; gi = gi + 1) begin
                         ls_write4_wdata_q[gi*GE_MAT_W +: GE_MAT_W] <=
-                            $signed(wide_mul_result_q[gi]) >>> 32;
+                            $signed(wide_mul_result_flat[gi*128 +: 128]) >>> 32;
                         ls_write4_valid_q[gi] <=
                             ((ldlt_i_base_q + gi) < active_k_count);
                     end
@@ -3249,7 +3111,7 @@ case (state)
                 if (wide_mul_done_q) begin
                     for (gi = 0; gi < 4; gi = gi + 1)
                         if ((ldlt_i_base_q + gi) < active_k_count)
-                            ge_x[ldlt_i_base_q + gi] <= $signed(wide_mul_result_q[gi]) >>> 32;
+                            ge_x[ldlt_i_base_q + gi] <= $signed(wide_mul_result_flat[gi*128 +: 128]) >>> 32;
                     if (ldlt_i_base_q + 5'd4 < active_k_count) begin
                         ldlt_i_base_q <= ldlt_i_base_q + 5'd4;
                         state <= S_BACK_INIT;

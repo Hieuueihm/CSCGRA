@@ -497,8 +497,8 @@ always @(posedge clk) begin
         profile_ctrl_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state]=
             profile_ctrl_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.state]+1;
         profile_uop_cycles[dut.uop_class]=profile_uop_cycles[dut.uop_class]+1;
-        profile_wide_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_state_q]=
-            profile_wide_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_state_q]+1;
+        profile_wide_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.u_wide_mul_sequencer.wide_mul_state_q]=
+            profile_wide_cycles[dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.u_wide_mul_sequencer.wide_mul_state_q]+1;
         if(dut.u_sparse_kernel_service_engine.u_stream_topk.state_q!=0)
             profile_topk_cycles[dut.u_sparse_kernel_service_engine.u_stream_topk.state_q]=
                 profile_topk_cycles[dut.u_sparse_kernel_service_engine.u_stream_topk.state_q]+1;

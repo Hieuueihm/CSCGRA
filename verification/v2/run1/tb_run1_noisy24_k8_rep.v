@@ -2809,15 +2809,15 @@ begin
     while (!dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_done_q && wide_timeout < 32) begin
         @(posedge clk); #1; wide_timeout = wide_timeout + 1;
     end
-    if ((dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[0] !== e0) ||
-        (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[1] !== e1) ||
-        (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[2] !== e2) ||
-        (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[3] !== e3)) begin
+    if ((dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.u_wide_mul_sequencer.wide_mul_result_q[0] !== e0) ||
+        (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.u_wide_mul_sequencer.wide_mul_result_q[1] !== e1) ||
+        (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.u_wide_mul_sequencer.wide_mul_result_q[2] !== e2) ||
+        (dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.u_wide_mul_sequencer.wide_mul_result_q[3] !== e3)) begin
         $display("WIDE_MUL_4ROW FAIL timeout=%0d", wide_timeout);
-        $display("row0 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[0], e0);
-        $display("row1 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[1], e1);
-        $display("row2 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[2], e2);
-        $display("row3 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.wide_mul_result_q[3], e3);
+        $display("row0 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.u_wide_mul_sequencer.wide_mul_result_q[0], e0);
+        $display("row1 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.u_wide_mul_sequencer.wide_mul_result_q[1], e1);
+        $display("row2 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.u_wide_mul_sequencer.wide_mul_result_q[2], e2);
+        $display("row3 got=%0d exp=%0d", dut.u_sparse_kernel_service_engine.u_sparse_loop_controller.u_wide_mul_sequencer.wide_mul_result_q[3], e3);
         $fatal(1);
     end else begin
         $display("WIDE_MUL_4ROW PASS cycles=%0d", wide_timeout);
