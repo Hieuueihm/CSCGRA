@@ -65,6 +65,27 @@ sum 1,469,117 across R0/R1/R2).
 6. **Paper-facing**: energy profile + clock gating, prior-art comparison
    table, end-to-end demo on real data.
 
+## Rejected timing trial (2026-08-22, same day): registered instruction decode
+
+Critical path after R0-R2 re-route: configmem BRAM -> sequencer live
+decode (scalar_op) -> controller op cone -> fo=131 broadcast into all PE
+tiles -> MAC/threshold carry -> pe_out_reg (29 levels, routed +0.184 ns).
+
+Attempted RTL fix (no synthesis directives): sequencer exports
+`decode_advance` (S_DECODE strobe), cgra_top latches `scalar_op_dec_q`
+and repoints ls_start / scalar_valid / scalar_op_low / the array
+sparse_op mux at it.  REVERTED: K8 hangs at the first sparse op —
+`ls_start` never fires, so the S_DECODE->issue value-timing assumption is
+wrong somewhere (suspect: not every issue path passes S_DECODE the cycle
+before, or scalar_uop/class decode interplay).  Tree reverted to
+`824d92b`; diagnose with a short xsim trace of seq state/decode_advance/
+ctx_valid before retrying.  A synthesis-directive variant
+(KEEP_HIERARCHY on pe_tile) compiled and was K8-identical but was dropped
+by decision (RTL-level fixes only).  Root analysis stands: the live
+`scalar_op` cone from cgra_top.v:580 area is the target; the alternative
+RTL lever is per-row decode duplication inside pe_cluster_4x4 (each row
+consumes a structurally distinct copy, no cross-tile sharing).
+
 ## Active optimization checkpoint (2026-08-10)
 
 - Current sign-off checkpoint: direct-Phi scan128 for N=256, on top of the
