@@ -53,6 +53,8 @@ integer start_alg, end_alg, case_idx, start_case, end_case, run_case_alg;
 integer case_m, case_n, case_k, nz_count, mismatch_prints;
 integer profile_states, profile_total_cycles;
 integer batch_replay, batch_pass_cnt, batch_fail_cnt, batch_mismatch_prints;
+reg dump_program, dump_only;
+integer dump_alg_q, dump_k_q;
 integer profile_ctrl_cycles [0:127];
 integer profile_topk_cycles [0:7];
 integer profile_support_cycles [0:15];
@@ -205,6 +207,8 @@ task axi_read; input [13:0] a; output [31:0] d; begin
 end endtask
 
 task write_ctx; input integer cidx; input [63:0] word; begin
+    if(dump_program)
+        $display("CTX_WORD alg=%0d k=%0d idx=%0d word=%016h", dump_alg_q, dump_k_q, cidx, word);
     if(cidx >= CTX_LIMIT) begin $display("FAIL ctx_overflow idx=%0d", cidx); fail_cnt=fail_cnt+1; end
     if(word[59:56] == 4'd9 && word[43:40] == 4'd3) ctx_loop_count=ctx_loop_count+1;
     axi_write(REG_CTX_BASE + (cidx<<3), word[31:0]);
@@ -252,6 +256,7 @@ task emit_reduce_append_loop; inout integer pcv; input [63:0] reduce_word; input
 task emit_loop_tail; inout integer pcv; input integer body_start; input [7:0] count; input [7:0] loop_id; integer rel; begin if(count>1) begin rel=body_start-pcv; write_ctx(pcv, ctrl_loop_rel_ctx(rel,count,loop_id,0)); pcv=pcv+1; end end endtask
 
 task build_program; input integer alg_id; input integer k_param; output integer plen; integer body_start; begin
+    dump_alg_q=alg_id; dump_k_q=k_param;
     pc=0; ctx_loop_count=0;
     write_ctx(pc,dma_ctx(VEC_X,0,0,0,16'd0)); pc=pc+1;
     write_ctx(pc,dma_ctx(VEC_R,1,0,0,16'd0)); pc=pc+1;
@@ -325,6 +330,10 @@ task run_alg_case_iter; input integer alg_id; input integer m; input integer n; 
     check("program_len_nonzero", plen > 0);
     check("program_len_fits_ctx", plen < CTX_LIMIT);
     if((alg_id==ALG_COSAMP)||(alg_id==ALG_SP)||(alg_id==ALG_IHT)||(alg_id==ALG_HTP)||(alg_id==ALG_5)) check("cf_loop_present", ctx_loop_count > 0);
+    if(dump_only) begin
+        // Program-image dump mode: no execution, no golden compare.
+        pc_rd=0; status_rd=0; cycle_rd=0; nz_count=0;
+    end else begin
     axi_write(REG_M_SIZE,m); axi_write(REG_N_SIZE,n); axi_write(REG_K_PARAM,k);
     axi_write(REG_Y_DDR,DDR_Y_BASE); axi_write(REG_X_DDR,DDR_X_BASE); axi_write(REG_SEED,hwgold_case_seed(case_idx)); axi_write(REG_PHI_SCALE,hwgold_case_scale(case_idx));
     axi_write(REG_FLAGS,{28'd0,hwgold_case_phi_kind(case_idx),1'b0,1'b0}); axi_write(REG_MU_SHIFT,32'd3); axi_write(REG_MAX_ITER,iter_count); axi_write(REG_PROG_BASE,0); axi_write(REG_PROG_LEN,plen);
@@ -403,6 +412,7 @@ task run_alg_case_iter; input integer alg_id; input integer m; input integer n; 
     // the following algorithm.  The next run reloads data and configmem.
     axi_write(REG_CTRL,2);
     repeat(10) tick();
+    end
 end endtask
 
 task run_alg_case; input integer alg_id; input integer m; input integer n; input integer k; begin
@@ -526,6 +536,9 @@ initial begin
     if($value$plusargs("BATCH_REPLAY=%d", batch_replay)) begin
         if(batch_replay!=0) batch_replay=1;
     end
+    dump_program=0; dump_only=0; dump_alg_q=0; dump_k_q=0;
+    if($test$plusargs("DUMP_PROGRAM")) dump_program=1;
+    if($test$plusargs("DUMP_ONLY")) dump_only=1;
     if($value$plusargs("ALG=%d", start_alg)) end_alg=start_alg;
     if($value$plusargs("START_ALG=%d", start_alg)) begin if(!$value$plusargs("END_ALG=%d", end_alg)) end_alg=start_alg; end
     if($value$plusargs("CASE=%d", start_case)) end_case=start_case;
