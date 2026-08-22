@@ -56,10 +56,17 @@ module pe_cluster_4x4 #(
     input  wire corr_acc_en,
     input  wire [1:0] corr_slot,
     input  wire ls_wide_mul_active,
+    input  wire ls_wide_operand_valid,
     input  wire ls_wide_vertical_active,
     input  wire [4:0] ls_wide_vertical_tag,
-    input  wire [ROWS*CLUSTER_COLS*DATA_W-1:0] ls_wide_a_bus,
-    input  wire [ROWS*CLUSTER_COLS*DATA_W-1:0] ls_wide_b_bus,
+    input  wire [CLUSTER_COLS*DATA_W-1:0]       ls_wide_a_row0_bus,
+    input  wire [CLUSTER_COLS*DATA_W-1:0]       ls_wide_a_row1_bus,
+    input  wire [CLUSTER_COLS*DATA_W-1:0]       ls_wide_a_row2_bus,
+    input  wire [CLUSTER_COLS*DATA_W-1:0]       ls_wide_a_row3_bus,
+    input  wire [CLUSTER_COLS*DATA_W-1:0]       ls_wide_b_row0_bus,
+    input  wire [CLUSTER_COLS*DATA_W-1:0]       ls_wide_b_row1_bus,
+    input  wire [CLUSTER_COLS*DATA_W-1:0]       ls_wide_b_row2_bus,
+    input  wire [CLUSTER_COLS*DATA_W-1:0]       ls_wide_b_row3_bus,
     input  wire [3:0] mesh_keepalive,
     // Factor-cache requests have one ingress at PE row0.  Each row compares
     // the cache ranks owned by rank mod 4 and forwards the accumulated mask.
@@ -151,6 +158,14 @@ module pe_cluster_4x4 #(
     reg [4:0] ls_wide_tag_r1_q, ls_wide_tag_r2_q, ls_wide_tag_r3_q;
     reg [ROWS*CLUSTER_COLS*DATA_W-1:0] ls_wide_a_r1_q, ls_wide_a_r2_q, ls_wide_a_r3_q;
     reg [ROWS*CLUSTER_COLS*DATA_W-1:0] ls_wide_b_r1_q, ls_wide_b_r2_q, ls_wide_b_r3_q;
+    // Local reconstruction is confined to one cluster.  Upstream routing
+    // still sees four independent row banks rather than a single 4-row bus.
+    wire [ROWS*CLUSTER_COLS*DATA_W-1:0] ls_wide_a_bus = {
+        ls_wide_a_row3_bus, ls_wide_a_row2_bus,
+        ls_wide_a_row1_bus, ls_wide_a_row0_bus};
+    wire [ROWS*CLUSTER_COLS*DATA_W-1:0] ls_wide_b_bus = {
+        ls_wide_b_row3_bus, ls_wide_b_row2_bus,
+        ls_wide_b_row1_bus, ls_wide_b_row0_bus};
     wire ls_wide_any_vertical_active = ls_wide_vertical_active |
         ls_wide_vertical_r1_q | ls_wide_vertical_r2_q | ls_wide_vertical_r3_q;
 
@@ -985,9 +1000,22 @@ module pe_cluster_4x4 #(
                     (r == 1) ? ls_wide_b_r1_q[(1*CLUSTER_COLS+lc)*DATA_W +: DATA_W] :
                     (r == 2) ? ls_wide_b_r2_q[(2*CLUSTER_COLS+lc)*DATA_W +: DATA_W] :
                                ls_wide_b_r3_q[(3*CLUSTER_COLS+lc)*DATA_W +: DATA_W];
+                // Normal wide traffic consumes its own row bank directly;
+                // only the legacy vertical LDLT token uses the reconstructed
+                // four-row payload above.
+                wire [DATA_W-1:0] ls_wide_bank_a_row = (r == 0) ?
+                    ls_wide_a_row0_bus[lc*DATA_W +: DATA_W] :
+                    (r == 1) ? ls_wide_a_row1_bus[lc*DATA_W +: DATA_W] :
+                    (r == 2) ? ls_wide_a_row2_bus[lc*DATA_W +: DATA_W] :
+                               ls_wide_a_row3_bus[lc*DATA_W +: DATA_W];
+                wire [DATA_W-1:0] ls_wide_bank_b_row = (r == 0) ?
+                    ls_wide_b_row0_bus[lc*DATA_W +: DATA_W] :
+                    (r == 1) ? ls_wide_b_row1_bus[lc*DATA_W +: DATA_W] :
+                    (r == 2) ? ls_wide_b_row2_bus[lc*DATA_W +: DATA_W] :
+                               ls_wide_b_row3_bus[lc*DATA_W +: DATA_W];
                 wire [DATA_W-1:0] tile_phi_data = ls_wide_active_row ?
                     (ls_wide_any_vertical_active ? ls_wide_vertical_a_row :
-                     ls_wide_a_bus[CELL*DATA_W +: DATA_W]) :
+                     ls_wide_bank_a_row) :
                     ((phys_corr_pe_active && corr_token_active) ?
                                              ((r == 0) ? phi_bus[lc*DATA_W +: DATA_W] :
                                                (r == 1) ? corr_phi_r1_q[lc*DATA_W +: DATA_W] :
@@ -1000,7 +1028,7 @@ module pe_cluster_4x4 #(
                                              phi_bus[lc*DATA_W +: DATA_W]));
                 wire [DATA_W-1:0] tile_scalar_data = ls_wide_active_row ?
                     (ls_wide_any_vertical_active ? ls_wide_vertical_b_row :
-                     ls_wide_b_bus[CELL*DATA_W +: DATA_W]) :
+                     ls_wide_bank_b_row) :
                     ((phys_corr_pe_active && corr_token_active) ?
                                              ((r == 0) ? scalar_bus[lc*DATA_W +: DATA_W] :
                                                (r == 1) ? corr_scalar_r1_q[lc*DATA_W +: DATA_W] :

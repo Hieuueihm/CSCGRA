@@ -57,10 +57,17 @@ module pearray #(
     input  wire [3:0]                 sparse_op,
     input  wire [7:0]                 sparse_k_active,
     input  wire                       ls_wide_mul_active,
+    input  wire                       ls_wide_operand_valid,
     input  wire                       ls_wide_vertical_active,
     input  wire [4:0]                 ls_wide_vertical_tag,
-    input  wire [ROWS*COLS*DATA_W-1:0] ls_wide_a_bus,
-    input  wire [ROWS*COLS*DATA_W-1:0] ls_wide_b_bus,
+    input  wire [COLS*DATA_W-1:0]      ls_wide_a_row0_bus,
+    input  wire [COLS*DATA_W-1:0]      ls_wide_a_row1_bus,
+    input  wire [COLS*DATA_W-1:0]      ls_wide_a_row2_bus,
+    input  wire [COLS*DATA_W-1:0]      ls_wide_a_row3_bus,
+    input  wire [COLS*DATA_W-1:0]      ls_wide_b_row0_bus,
+    input  wire [COLS*DATA_W-1:0]      ls_wide_b_row1_bus,
+    input  wire [COLS*DATA_W-1:0]      ls_wide_b_row2_bus,
+    input  wire [COLS*DATA_W-1:0]      ls_wide_b_row3_bus,
     input  wire                       factor_pipe_valid,
     input  wire [4:0]                 factor_pipe_tag,
     input  wire [IDX_W-1:0]           factor_pipe_value,
@@ -149,10 +156,22 @@ module pearray #(
     wire [ROWS*CLUSTER_COLS*ACC_W-1:0]  cluster1_tile_acc_bus;
     wire [ROWS*CLUSTER_COLS*ACC_W-1:0]  cluster0_all_mul_product_bus;
     wire [ROWS*CLUSTER_COLS*ACC_W-1:0]  cluster1_all_mul_product_bus;
-    wire [ROWS*CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_a_bus;
-    wire [ROWS*CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_a_bus;
-    wire [ROWS*CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_b_bus;
-    wire [ROWS*CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_b_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_a_row0_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_a_row1_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_a_row2_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_a_row3_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_a_row0_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_a_row1_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_a_row2_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_a_row3_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_b_row0_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_b_row1_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_b_row2_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster0_ls_wide_b_row3_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_b_row0_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_b_row1_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_b_row2_bus;
+    wire [CLUSTER_COLS*DATA_W-1:0] cluster1_ls_wide_b_row3_bus;
     wire [ROWS*CLUSTER_COLS*IDX_W-1:0]  cluster0_idx_out_bus;
     wire [ROWS*CLUSTER_COLS*IDX_W-1:0]  cluster1_idx_out_bus;
     wire [CLUSTER_COLS*DATA_W-1:0] cluster0_colbus_r0_bus;
@@ -223,10 +242,17 @@ module pearray #(
         .sparse_active(sparse_active), .sparse_step_active(sparse_step_active), .sparse_op(sparse_op), .sparse_k_active(sparse_k_active),
         .corr_acc_clear(corr_acc_clear), .corr_acc_en(corr_acc_en), .corr_slot(corr_slot_q),
         .ls_wide_mul_active(ls_wide_mul_active),
+        .ls_wide_operand_valid(ls_wide_operand_valid),
         .ls_wide_vertical_active(ls_wide_vertical_active),
         .ls_wide_vertical_tag(ls_wide_vertical_tag),
-        .ls_wide_a_bus(cluster0_ls_wide_a_bus),
-        .ls_wide_b_bus(cluster0_ls_wide_b_bus),
+        .ls_wide_a_row0_bus(cluster0_ls_wide_a_row0_bus),
+        .ls_wide_a_row1_bus(cluster0_ls_wide_a_row1_bus),
+        .ls_wide_a_row2_bus(cluster0_ls_wide_a_row2_bus),
+        .ls_wide_a_row3_bus(cluster0_ls_wide_a_row3_bus),
+        .ls_wide_b_row0_bus(cluster0_ls_wide_b_row0_bus),
+        .ls_wide_b_row1_bus(cluster0_ls_wide_b_row1_bus),
+        .ls_wide_b_row2_bus(cluster0_ls_wide_b_row2_bus),
+        .ls_wide_b_row3_bus(cluster0_ls_wide_b_row3_bus),
         .mesh_keepalive(mesh_keepalive_q),
         .factor_pipe_valid(factor_pipe_valid), .factor_pipe_tag(factor_pipe_tag),
         .factor_pipe_value(factor_pipe_value), .factor_pipe_cache_k(factor_pipe_cache_k),
@@ -266,10 +292,17 @@ module pearray #(
         .sparse_active(sparse_active), .sparse_step_active(sparse_step_active), .sparse_op(sparse_op), .sparse_k_active(sparse_k_active),
         .corr_acc_clear(corr_acc_clear), .corr_acc_en(corr_acc_en), .corr_slot(corr_slot_q),
         .ls_wide_mul_active(ls_wide_mul_active),
+        .ls_wide_operand_valid(ls_wide_operand_valid),
         .ls_wide_vertical_active(ls_wide_vertical_active),
         .ls_wide_vertical_tag(ls_wide_vertical_tag),
-        .ls_wide_a_bus(cluster1_ls_wide_a_bus),
-        .ls_wide_b_bus(cluster1_ls_wide_b_bus),
+        .ls_wide_a_row0_bus(cluster1_ls_wide_a_row0_bus),
+        .ls_wide_a_row1_bus(cluster1_ls_wide_a_row1_bus),
+        .ls_wide_a_row2_bus(cluster1_ls_wide_a_row2_bus),
+        .ls_wide_a_row3_bus(cluster1_ls_wide_a_row3_bus),
+        .ls_wide_b_row0_bus(cluster1_ls_wide_b_row0_bus),
+        .ls_wide_b_row1_bus(cluster1_ls_wide_b_row1_bus),
+        .ls_wide_b_row2_bus(cluster1_ls_wide_b_row2_bus),
+        .ls_wide_b_row3_bus(cluster1_ls_wide_b_row3_bus),
         .mesh_keepalive(mesh_keepalive_q),
         .factor_pipe_valid(1'b0), .factor_pipe_tag(5'd0),
         .factor_pipe_value({IDX_W{1'b0}}), .factor_pipe_cache_k(6'd0),
@@ -296,19 +329,35 @@ module pearray #(
                 assign tile_acc[r*COLS+lc] = cluster0_tile_acc_bus[(r*CLUSTER_COLS+lc)*ACC_W +: ACC_W];
                 assign idx_out[r*COLS+lc] = cluster0_idx_out_bus[(r*CLUSTER_COLS+lc)*IDX_W +: IDX_W];
                 assign colbus_r0[lc] = cluster0_colbus_r0_bus[lc*DATA_W +: DATA_W];
-                assign cluster0_ls_wide_a_bus[(r*CLUSTER_COLS+lc)*DATA_W +: DATA_W] = ls_wide_a_bus[(r*COLS+lc)*DATA_W +: DATA_W];
-                assign cluster0_ls_wide_b_bus[(r*CLUSTER_COLS+lc)*DATA_W +: DATA_W] = ls_wide_b_bus[(r*COLS+lc)*DATA_W +: DATA_W];
                 assign ls_wide_product_bus[(r*COLS+lc)*ACC_W +: ACC_W] = cluster0_all_mul_product_bus[(r*CLUSTER_COLS+lc)*ACC_W +: ACC_W];
                 assign tile_out[r*COLS+CLUSTER_COLS+lc] = cluster1_tile_out_bus[(r*CLUSTER_COLS+lc)*DATA_W +: DATA_W];
                 assign tile_acc[r*COLS+CLUSTER_COLS+lc] = cluster1_tile_acc_bus[(r*CLUSTER_COLS+lc)*ACC_W +: ACC_W];
                 assign idx_out[r*COLS+CLUSTER_COLS+lc] = cluster1_idx_out_bus[(r*CLUSTER_COLS+lc)*IDX_W +: IDX_W];
                 assign colbus_r0[CLUSTER_COLS+lc] = cluster1_colbus_r0_bus[lc*DATA_W +: DATA_W];
-                assign cluster1_ls_wide_a_bus[(r*CLUSTER_COLS+lc)*DATA_W +: DATA_W] = ls_wide_a_bus[(r*COLS+CLUSTER_COLS+lc)*DATA_W +: DATA_W];
-                assign cluster1_ls_wide_b_bus[(r*CLUSTER_COLS+lc)*DATA_W +: DATA_W] = ls_wide_b_bus[(r*COLS+CLUSTER_COLS+lc)*DATA_W +: DATA_W];
                 assign ls_wide_product_bus[(r*COLS+CLUSTER_COLS+lc)*ACC_W +: ACC_W] = cluster1_all_mul_product_bus[(r*CLUSTER_COLS+lc)*ACC_W +: ACC_W];
             end
         end
     endgenerate
+
+    // The controller-facing operand bus is split into local column banks
+    // before entering either PE cluster.  Each bank now has only one row and
+    // one eight-column destination, instead of feeding a 4-row crossbar.
+    assign cluster0_ls_wide_a_row0_bus = ls_wide_a_row0_bus[0 +: CLUSTER_COLS*DATA_W];
+    assign cluster0_ls_wide_a_row1_bus = ls_wide_a_row1_bus[0 +: CLUSTER_COLS*DATA_W];
+    assign cluster0_ls_wide_a_row2_bus = ls_wide_a_row2_bus[0 +: CLUSTER_COLS*DATA_W];
+    assign cluster0_ls_wide_a_row3_bus = ls_wide_a_row3_bus[0 +: CLUSTER_COLS*DATA_W];
+    assign cluster1_ls_wide_a_row0_bus = ls_wide_a_row0_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W];
+    assign cluster1_ls_wide_a_row1_bus = ls_wide_a_row1_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W];
+    assign cluster1_ls_wide_a_row2_bus = ls_wide_a_row2_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W];
+    assign cluster1_ls_wide_a_row3_bus = ls_wide_a_row3_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W];
+    assign cluster0_ls_wide_b_row0_bus = ls_wide_b_row0_bus[0 +: CLUSTER_COLS*DATA_W];
+    assign cluster0_ls_wide_b_row1_bus = ls_wide_b_row1_bus[0 +: CLUSTER_COLS*DATA_W];
+    assign cluster0_ls_wide_b_row2_bus = ls_wide_b_row2_bus[0 +: CLUSTER_COLS*DATA_W];
+    assign cluster0_ls_wide_b_row3_bus = ls_wide_b_row3_bus[0 +: CLUSTER_COLS*DATA_W];
+    assign cluster1_ls_wide_b_row0_bus = ls_wide_b_row0_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W];
+    assign cluster1_ls_wide_b_row1_bus = ls_wide_b_row1_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W];
+    assign cluster1_ls_wide_b_row2_bus = ls_wide_b_row2_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W];
+    assign cluster1_ls_wide_b_row3_bus = ls_wide_b_row3_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W];
 
     genvar cc_r;
     generate

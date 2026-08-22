@@ -36,10 +36,20 @@ module sparse_loop_controller #(
     output reg pe_corr_acc_en,
     output reg [3:0] pe_sparse_op,
     output reg ls_wide_mul_active,
+    output wire ls_wide_operand_valid,
     output wire ls_wide_vertical_active,
     output wire [4:0] ls_wide_vertical_tag,
-    output reg [4*COLS*DATA_W-1:0] ls_wide_a_bus,
-    output reg [4*COLS*DATA_W-1:0] ls_wide_b_bus,
+    // Wide operands leave the controller as four independently routed row
+    // banks.  Keeping the bank boundary explicit prevents one 4-row bus
+    // from becoming a high-fanout cross-fabric net at the PE array.
+    output reg [COLS*DATA_W-1:0] ls_wide_a_row0_bus,
+    output reg [COLS*DATA_W-1:0] ls_wide_a_row1_bus,
+    output reg [COLS*DATA_W-1:0] ls_wide_a_row2_bus,
+    output reg [COLS*DATA_W-1:0] ls_wide_a_row3_bus,
+    output reg [COLS*DATA_W-1:0] ls_wide_b_row0_bus,
+    output reg [COLS*DATA_W-1:0] ls_wide_b_row1_bus,
+    output reg [COLS*DATA_W-1:0] ls_wide_b_row2_bus,
+    output reg [COLS*DATA_W-1:0] ls_wide_b_row3_bus,
     input wire [4*COLS*64-1:0] ls_wide_product_bus,
     output reg factor_pipe_valid,
     output reg [4:0] factor_pipe_tag,
@@ -532,6 +542,8 @@ integer border_part;
 integer border_a_limb;
 integer border_b_limb;
 integer border_shift;
+reg [4*COLS*DATA_W-1:0] ls_wide_a_full_bus;
+reg [4*COLS*DATA_W-1:0] ls_wide_b_full_bus;
 wire ldlt_border_stream_state_w = (state == S_LDL_ROW_MUL1) ||
                                   (state == S_LDL_ROW_MUL2);
 wire ldlt_border_issue_active_w = ldlt_border_stream_state_w &&
@@ -542,6 +554,9 @@ wire legacy_wide_vertical_active_w =
     wide_mul_active_token_q && wide_mul_vertical_token_q;
 assign ls_wide_vertical_active = legacy_wide_vertical_active_w ||
                                  border_operand_boundary_active_q;
+assign ls_wide_operand_valid = wide_mul_issue_token_q ||
+                               border_operand_boundary_active_q ||
+                               (ls_batch4_active && (wide_mul_state_q == WIDE_MUL_IDLE));
 assign ls_wide_vertical_tag = border_operand_boundary_active_q ?
                               border_operand_boundary_tag_q : ldlt_i_base_q;
 wire signed [127:0] ldlt_wide_q32_sum =
@@ -581,8 +596,8 @@ endgenerate
 always @(*) begin
     ls_wide_mul_active = wide_mul_active_token_q ||
                          ls_batch4_active || ldlt_border_issue_active_w;
-    ls_wide_a_bus = {4*COLS*DATA_W{1'b0}};
-    ls_wide_b_bus = {4*COLS*DATA_W{1'b0}};
+    ls_wide_a_full_bus = {4*COLS*DATA_W{1'b0}};
+    ls_wide_b_full_bus = {4*COLS*DATA_W{1'b0}};
     for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1)
         wide_partial_sum[wide_row] = 128'd0;
     for (wide_row = 0; wide_row < 4; wide_row = wide_row + 1) begin
@@ -607,9 +622,9 @@ always @(*) begin
                 wide_part = (border_operand_boundary_part_q ? COLS : 0) + wide_col;
                 wide_a_limb = wide_part >> 2;
                 wide_b_limb = wide_part & 3;
-                ls_wide_a_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                ls_wide_a_full_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
                     {{(DATA_W-16){1'b0}}, border_operand_abs_a_q[wide_row][wide_a_limb*16 +: 16]};
-                ls_wide_b_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                ls_wide_b_full_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
                     {{(DATA_W-16){1'b0}}, border_operand_abs_b_q[wide_row][wide_b_limb*16 +: 16]};
             end
         end
@@ -618,15 +633,15 @@ always @(*) begin
             for (wide_col = 0; wide_col < COLS; wide_col = wide_col + 1) begin
                 if ((rhs_block_base + wide_col) < active_k_count) begin
                     if (ls_rhs4_active && ((wide_col % 4) == wide_row)) begin
-                        ls_wide_a_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                        ls_wide_a_full_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
                             phi_cache[rhs_block_base + wide_col];
-                        ls_wide_b_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                        ls_wide_b_full_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
                             rhs_y_sample_q;
                     end else if (ls_gram4_active && ((acc_j + wide_row) < active_k_count)) begin
                         // Physical row r owns Gram column acc_j+r.
-                        ls_wide_a_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                        ls_wide_a_full_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
                             phi_cache[rhs_block_base + wide_col];
-                        ls_wide_b_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                        ls_wide_b_full_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
                             phi_cache[acc_j + wide_row];
                     end
                 end
@@ -638,9 +653,9 @@ always @(*) begin
                 wide_part = (wide_mul_issue_part1_token_q ? COLS : 0) + wide_col;
                 wide_a_limb = wide_part >> 2;
                 wide_b_limb = wide_part & 3;
-                ls_wide_a_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                ls_wide_a_full_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
                     {{(DATA_W-16){1'b0}}, wide_mul_abs_a_q[wide_row][wide_a_limb*16 +: 16]};
-                ls_wide_b_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
+                ls_wide_b_full_bus[(wide_row*COLS+wide_col)*DATA_W +: DATA_W] =
                     {{(DATA_W-16){1'b0}}, wide_mul_abs_b_q[wide_row][wide_b_limb*16 +: 16]};
             end
         end
@@ -697,6 +712,20 @@ always @(*) begin
             end
         end
     end
+end
+
+// Split only after the source schedule has selected the payload.  The four
+// bank outputs are bit-identical to the former wide bus, but each row now has
+// an independent physical routing boundary at the PE array.
+always @(*) begin
+    ls_wide_a_row0_bus = ls_wide_a_full_bus[0*COLS*DATA_W +: COLS*DATA_W];
+    ls_wide_a_row1_bus = ls_wide_a_full_bus[1*COLS*DATA_W +: COLS*DATA_W];
+    ls_wide_a_row2_bus = ls_wide_a_full_bus[2*COLS*DATA_W +: COLS*DATA_W];
+    ls_wide_a_row3_bus = ls_wide_a_full_bus[3*COLS*DATA_W +: COLS*DATA_W];
+    ls_wide_b_row0_bus = ls_wide_b_full_bus[0*COLS*DATA_W +: COLS*DATA_W];
+    ls_wide_b_row1_bus = ls_wide_b_full_bus[1*COLS*DATA_W +: COLS*DATA_W];
+    ls_wide_b_row2_bus = ls_wide_b_full_bus[2*COLS*DATA_W +: COLS*DATA_W];
+    ls_wide_b_row3_bus = ls_wide_b_full_bus[3*COLS*DATA_W +: COLS*DATA_W];
 end
 
 always @(posedge clk or negedge rst_n) begin

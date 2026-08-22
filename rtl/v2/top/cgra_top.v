@@ -336,9 +336,16 @@ module cgra_top #(
     wire [COLS*64-1:0] ls_pe_rhs_product_bus;
     wire [COLS*64-1:0] pe_corr_acc_bus;
     wire [ROWS*COLS*ACC_W-1:0] ls_wide_product_bus;
-    wire [ROWS*COLS*DATA_W-1:0] ls_wide_a_bus;
-    wire [ROWS*COLS*DATA_W-1:0] ls_wide_b_bus;
+    wire [COLS*DATA_W-1:0] ls_wide_a_row0_bus;
+    wire [COLS*DATA_W-1:0] ls_wide_a_row1_bus;
+    wire [COLS*DATA_W-1:0] ls_wide_a_row2_bus;
+    wire [COLS*DATA_W-1:0] ls_wide_a_row3_bus;
+    wire [COLS*DATA_W-1:0] ls_wide_b_row0_bus;
+    wire [COLS*DATA_W-1:0] ls_wide_b_row1_bus;
+    wire [COLS*DATA_W-1:0] ls_wide_b_row2_bus;
+    wire [COLS*DATA_W-1:0] ls_wide_b_row3_bus;
     wire ls_wide_mul_active;
+    wire ls_wide_operand_valid;
     wire ls_wide_vertical_active;
     wire [4:0] ls_wide_vertical_tag;
     wire factor_pipe_valid;
@@ -484,7 +491,9 @@ module cgra_top #(
         .ls_busy(ls_busy), .ls_done(ls_done), .ls_result(ls_result),
         .ls_rd_addr(ls_rd_addr), .ls_wr_addr(ls_wr_addr), .ls_wr_data(ls_wr_data), .ls_wr_en(ls_wr_en),
         .ls_pe_rhs_phi_bus(ls_pe_rhs_phi_bus), .ls_pe_rhs_y_bus(ls_pe_rhs_y_bus), .ls_pe_rhs_active(ls_pe_rhs_active), .pe_sparse_clear(ls_pe_sparse_clear), .pe_corr_acc_clear(ls_pe_corr_acc_clear), .pe_corr_acc_en(ls_pe_corr_acc_en), .pe_sparse_op(ls_pe_sparse_op),
-        .ls_wide_mul_active(ls_wide_mul_active), .ls_wide_vertical_active(ls_wide_vertical_active), .ls_wide_vertical_tag(ls_wide_vertical_tag), .ls_wide_a_bus(ls_wide_a_bus), .ls_wide_b_bus(ls_wide_b_bus),
+        .ls_wide_mul_active(ls_wide_mul_active), .ls_wide_operand_valid(ls_wide_operand_valid), .ls_wide_vertical_active(ls_wide_vertical_active), .ls_wide_vertical_tag(ls_wide_vertical_tag),
+        .ls_wide_a_row0_bus(ls_wide_a_row0_bus), .ls_wide_a_row1_bus(ls_wide_a_row1_bus), .ls_wide_a_row2_bus(ls_wide_a_row2_bus), .ls_wide_a_row3_bus(ls_wide_a_row3_bus),
+        .ls_wide_b_row0_bus(ls_wide_b_row0_bus), .ls_wide_b_row1_bus(ls_wide_b_row1_bus), .ls_wide_b_row2_bus(ls_wide_b_row2_bus), .ls_wide_b_row3_bus(ls_wide_b_row3_bus),
         .factor_pipe_valid(factor_pipe_valid), .factor_pipe_tag(factor_pipe_tag), .factor_pipe_value(factor_pipe_value), .factor_pipe_cache_k(factor_pipe_cache_k), .factor_pipe_cache_bus(factor_pipe_cache_bus),
         .factor_pipe_resp_valid(factor_pipe_resp_valid), .factor_pipe_resp_tag(factor_pipe_resp_tag), .factor_pipe_resp_value(factor_pipe_resp_value), .factor_pipe_resp_match_mask(factor_pipe_resp_match_mask),
         .topk_pipe_clear(topk_pipe_clear), .topk_pipe_token_valid(topk_pipe_token_valid),
@@ -566,7 +575,9 @@ module cgra_top #(
         .lane_valid(pe_array_lane_valid), .base_idx(pe_array_base_idx), .first_in_phase(pe_array_first_in_phase),
         .spm_a_rdata(pe_spm_pa_rdata), .spm_b_rdata(pe_spm_pb_rdata), .phi_bus(ls_busy ? ls_pe_rhs_phi_bus : phi_bus), .scalar_bus(ls_busy ? ls_pe_rhs_y_bus : scalar_bus),
         .sparse_active(ls_start || ls_busy), .sparse_step_active(ls_pe_rhs_active), .sparse_clear(ls_pe_sparse_clear), .corr_acc_clear(ls_pe_corr_acc_clear), .corr_acc_en(ls_pe_corr_acc_en), .sparse_op((ls_busy || ls_start) ? ls_pe_sparse_op : scalar_op[3:0]), .sparse_k_active(sparse_k_active),
-        .ls_wide_mul_active(ls_wide_mul_active), .ls_wide_vertical_active(ls_wide_vertical_active), .ls_wide_vertical_tag(ls_wide_vertical_tag), .ls_wide_a_bus(ls_wide_a_bus), .ls_wide_b_bus(ls_wide_b_bus), .ls_wide_product_bus(ls_wide_product_bus),
+        .ls_wide_mul_active(ls_wide_mul_active), .ls_wide_operand_valid(ls_wide_operand_valid), .ls_wide_vertical_active(ls_wide_vertical_active), .ls_wide_vertical_tag(ls_wide_vertical_tag),
+        .ls_wide_a_row0_bus(ls_wide_a_row0_bus), .ls_wide_a_row1_bus(ls_wide_a_row1_bus), .ls_wide_a_row2_bus(ls_wide_a_row2_bus), .ls_wide_a_row3_bus(ls_wide_a_row3_bus),
+        .ls_wide_b_row0_bus(ls_wide_b_row0_bus), .ls_wide_b_row1_bus(ls_wide_b_row1_bus), .ls_wide_b_row2_bus(ls_wide_b_row2_bus), .ls_wide_b_row3_bus(ls_wide_b_row3_bus), .ls_wide_product_bus(ls_wide_product_bus),
         .factor_pipe_valid(factor_pipe_valid), .factor_pipe_tag(factor_pipe_tag), .factor_pipe_value(factor_pipe_value), .factor_pipe_cache_k(factor_pipe_cache_k), .factor_pipe_cache_bus(factor_pipe_cache_bus),
         .factor_pipe_resp_valid(factor_pipe_resp_valid), .factor_pipe_resp_tag(factor_pipe_resp_tag), .factor_pipe_resp_value(factor_pipe_resp_value), .factor_pipe_resp_match_mask(factor_pipe_resp_match_mask),
         .topk_pipe_clear(topk_pipe_clear), .topk_pipe_token_valid(topk_pipe_token_valid),
