@@ -2,6 +2,7 @@ rtl/v2/interconnect/switchbox.v
 rtl/v2/memory/spm_cluster.v
 rtl/v2/control/sparse_loop_controller.v
 rtl/v2/control/wide_mul_sequencer.v
+rtl/v2/control/factor_check_unit.v
 rtl/v2/control/phase_token_scheduler.v
 rtl/v2/control/phase_packet_pipe.v
 rtl/v2/control/phase_isa_decoder.v

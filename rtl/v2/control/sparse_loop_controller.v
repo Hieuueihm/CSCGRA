@@ -72,9 +72,9 @@ module sparse_loop_controller #(
     output reg [COLS*DATA_W-1:0] ls_wide_b_row2_bus,
     output reg [COLS*DATA_W-1:0] ls_wide_b_row3_bus,
     input wire [4*COLS*64-1:0] ls_wide_product_bus,
-    output reg factor_pipe_valid,
-    output reg [4:0] factor_pipe_tag,
-    output reg [IDX_W-1:0] factor_pipe_value,
+    output wire factor_pipe_valid,
+    output wire [4:0] factor_pipe_tag,
+    output wire [IDX_W-1:0] factor_pipe_value,
     output wire [5:0] factor_pipe_cache_k,
     output wire [MAX_K*IDX_W-1:0] factor_pipe_cache_bus,
     input wire factor_pipe_resp_valid,
@@ -1063,17 +1063,18 @@ reg [31:0] factor_support_fingerprint_q;
 reg [31:0] request_support_fingerprint_q;
 reg [1:0] factor_reuse_mode_q;
 reg [MAX_K*IDX_W-1:0] request_support_cache_q;
-reg [MAX_K*IDX_W-1:0] factor_check_request_shift_q;
-reg [5:0] factor_check_req_idx_q;
-reg [IDX_W-1:0] factor_check_request_value_q;
-reg factor_check_ordered_match_q;
-reg factor_check_prefix_ordered_q;
-reg [5:0] factor_check_append_rank_q;
-reg [MAX_K-1:0] factor_check_seen_mask_q;
-reg [31:0] factor_check_fingerprint_q;
-reg [1:0] factor_check_unmatched_count_q;
-reg [4:0] factor_check_unmatched_tag_q;
-reg [IDX_W-1:0] factor_check_unmatched_value_q;
+// The factor-check scanner lives in u_factor_check_unit; these wires keep
+// the original names so the hit predicates, support_relation resolution,
+// and the reuse trace read unchanged sources.
+wire factor_check_ordered_match_q;
+wire factor_check_prefix_ordered_q;
+wire [MAX_K-1:0] factor_check_seen_mask_q;
+wire [31:0] factor_check_fingerprint_q;
+wire [1:0] factor_check_unmatched_count_q;
+wire [4:0] factor_check_unmatched_tag_q;
+wire [IDX_W-1:0] factor_check_unmatched_value_q;
+wire fc_scan_done_w;
+wire [MAX_K*IDX_W-1:0] fc_norm_support_bus;
 reg factor_border_clear_q;
 reg [7:0] refine_prime_k_eff;
 reg [31:0] phi_state_q;
@@ -1313,16 +1314,32 @@ wire factor_config_match_w = factor_valid_q &&
     (factor_scale_q == scale_q) && (factor_phi_kind_q == phi_kind);
 assign factor_pipe_cache_k = factor_k_q;
 assign factor_pipe_cache_bus = factor_support_cache_q;
-wire [31:0] factor_check_word_w = {{(32-IDX_W){1'b0}},
-    factor_check_request_value_q};
-wire [31:0] factor_check_fingerprint_next_w =
-    factor_check_fingerprint_q ^ factor_check_word_w ^
-    (factor_check_word_w << 10) ^ (factor_check_word_w << 20) ^
-    32'h9e3779b9;
-wire factor_pipe_resp_any_match_w = |factor_pipe_resp_match_mask;
-wire factor_pipe_resp_ordered_match_w =
-    ({1'b0, factor_pipe_resp_tag} >= factor_k_q) ||
-    factor_pipe_resp_match_mask[factor_pipe_resp_tag];
+factor_check_unit #(.IDX_W(IDX_W), .MAX_K(MAX_K)) u_factor_check_unit (
+    .clk(clk), .rst_n(rst_n),
+    .start((state == S_FACTOR_CHECK_INIT)),
+    .config_match(factor_config_match_w),
+    .request_k(request_k_eff_w),
+    .request_support(request_support_cache_q),
+    .cached_k(factor_k_q),
+    .cached_support(factor_support_cache_q),
+    .resp_valid(factor_pipe_resp_valid),
+    .resp_tag(factor_pipe_resp_tag),
+    .resp_value(factor_pipe_resp_value),
+    .resp_match_mask(factor_pipe_resp_match_mask),
+    .scan_done(fc_scan_done_w),
+    .norm_support_bus(fc_norm_support_bus),
+    .fingerprint_q(factor_check_fingerprint_q),
+    .seen_mask_q(factor_check_seen_mask_q),
+    .ordered_match_q(factor_check_ordered_match_q),
+    .prefix_ordered_q(factor_check_prefix_ordered_q),
+    .unmatched_count_q(factor_check_unmatched_count_q),
+    .unmatched_tag_q(factor_check_unmatched_tag_q),
+    .unmatched_value_q(factor_check_unmatched_value_q),
+    .pipe_valid(factor_pipe_valid),
+    .pipe_tag(factor_pipe_tag),
+    .pipe_value(factor_pipe_value)
+);
+
 reg factor_check_all_seen_w;
 always @(*) begin
     factor_check_all_seen_w = 1'b1;
@@ -1753,23 +1770,9 @@ active_op <= OP_REFINE;
         factor_support_fingerprint_q <= 32'd0;
         request_support_fingerprint_q <= 32'd0;
         factor_reuse_mode_q <= FACTOR_REUSE_NONE;
-        factor_check_req_idx_q <= 6'd0;
-        factor_check_request_value_q <= {IDX_W{1'b0}};
-        factor_check_ordered_match_q <= 1'b0;
-        factor_check_prefix_ordered_q <= 1'b0;
-        factor_check_append_rank_q <= 6'd0;
-        factor_check_seen_mask_q <= {MAX_K{1'b0}};
-        factor_check_fingerprint_q <= 32'd0;
-        factor_check_unmatched_count_q <= 2'd0;
-        factor_check_unmatched_tag_q <= 5'd0;
-        factor_check_unmatched_value_q <= {IDX_W{1'b0}};
         factor_border_clear_q <= 1'b0;
         factor_support_cache_q <= {MAX_K*IDX_W{1'b0}};
         request_support_cache_q <= {MAX_K*IDX_W{1'b0}};
-        factor_check_request_shift_q <= {MAX_K*IDX_W{1'b0}};
-        factor_pipe_valid <= 1'b0;
-        factor_pipe_tag <= 5'd0;
-        factor_pipe_value <= {IDX_W{1'b0}};
         x_support_k_q <= 6'd0;
         for (gi = 0; gi < MAX_K; gi = gi + 1) begin
             rhs[gi] <= 64'sd0;
@@ -1848,7 +1851,6 @@ active_op <= OP_REFINE;
             corr_stream_valid_q <= 1'b0;
             corr_stream_done_q <= 1'b0;
         end
-        factor_pipe_valid <= 1'b0;
 case (state)
             S_IDLE: begin
                 busy <= 1'b0;
@@ -1881,26 +1883,8 @@ case (state)
                 end
             end
             S_FACTOR_CHECK_INIT: begin
-                factor_check_req_idx_q <= 6'd0;
-                factor_check_request_value_q <=
-                    request_support_cache_q[0 +: IDX_W];
-                factor_check_request_shift_q <=
-                    request_support_cache_q >> IDX_W;
-                factor_check_ordered_match_q <= factor_config_match_w;
-                factor_check_prefix_ordered_q <= factor_config_match_w;
-                factor_check_seen_mask_q <= {MAX_K{1'b0}};
-                factor_check_fingerprint_q <=
-                    32'h6d2b79f5 ^ {26'd0, request_k_eff_w};
-                factor_check_append_rank_q <= factor_config_match_w ?
-                                              factor_k_q : 6'd0;
-                factor_check_unmatched_count_q <= 2'd0;
-                factor_check_unmatched_tag_q <= 5'd0;
-                factor_check_unmatched_value_q <= {IDX_W{1'b0}};
-                if (factor_config_match_w) begin
-                    for (gi = 0; gi < MAX_K; gi = gi + 1)
-                        support_cache[gi] <=
-                            factor_support_cache_q[gi*IDX_W +: IDX_W];
-                end
+                // Register setup, fingerprint seed, and the config-match
+                // preload run in u_factor_check_unit (started this cycle).
                 // A smaller request can reuse a leading principal LDLT block,
                 // so it must be scanned as well. Only configuration mismatch
                 // and the empty request bypass the PE0 factor-token wavefront.
@@ -1909,62 +1893,28 @@ case (state)
                          S_FACTOR_CHECK_DONE : S_FACTOR_CHECK_SCAN;
             end
             S_FACTOR_CHECK_SCAN: begin
-                // One request token enters PE row0 per cycle.  The four rows
-                // compare rank groups (rank mod 4) and PE3 returns a complete
-                // match mask after the vertical pipe drain.
-                if (factor_check_req_idx_q < request_k_eff_w) begin
-                    factor_pipe_valid <= 1'b1;
-                    factor_pipe_tag <= factor_check_req_idx_q[4:0];
-                    factor_pipe_value <= factor_check_request_value_q;
-                    factor_check_fingerprint_q <=
-                        factor_check_fingerprint_next_w;
-                    if (factor_check_req_idx_q + 1'b1 < request_k_eff_w) begin
-                        factor_check_req_idx_q <= factor_check_req_idx_q + 1'b1;
-                        factor_check_request_value_q <=
-                            factor_check_request_shift_q[0 +: IDX_W];
-                        factor_check_request_shift_q <=
-                            factor_check_request_shift_q >> IDX_W;
-                    end else begin
-                        // Mark all requests issued; responses continue to drain.
-                        factor_check_req_idx_q <= request_k_eff_w;
-                    end
-                end
-
-                if (factor_pipe_resp_valid) begin
-                    factor_check_seen_mask_q <= factor_check_seen_mask_q |
-                                                factor_pipe_resp_match_mask;
-                    factor_check_ordered_match_q <=
-                        factor_check_ordered_match_q &&
-                        factor_pipe_resp_ordered_match_w;
-                    if ({1'b0, factor_pipe_resp_tag} + 1'b1 < request_k_eff_w)
-                        factor_check_prefix_ordered_q <=
-                            factor_check_prefix_ordered_q &&
-                            factor_pipe_resp_ordered_match_w;
-                    if (!factor_pipe_resp_any_match_w &&
-                        (factor_check_append_rank_q < MAX_K)) begin
-                        support_cache[factor_check_append_rank_q] <=
-                            factor_pipe_resp_value;
-                        factor_check_append_rank_q <=
-                            factor_check_append_rank_q + 1'b1;
-                    end
-                    if (!factor_pipe_resp_any_match_w) begin
-                        if (factor_check_unmatched_count_q != 2'b11)
-                            factor_check_unmatched_count_q <=
-                                factor_check_unmatched_count_q + 1'b1;
-                        factor_check_unmatched_tag_q <= factor_pipe_resp_tag;
-                        factor_check_unmatched_value_q <= factor_pipe_resp_value;
-                    end
-                    if ({1'b0, factor_pipe_resp_tag} + 1'b1 >= request_k_eff_w)
-                        state <= S_FACTOR_CHECK_DONE;
-                end
+                // Token issue and response absorption run in
+                // u_factor_check_unit; fc_scan_done_w is combinational on
+                // the last absorbed response, so this edge matches the
+                // pre-extraction SCAN->DONE transition cycle.
+                if (fc_scan_done_w)
+                    state <= S_FACTOR_CHECK_DONE;
             end
             S_FACTOR_CHECK_DONE: begin
                 request_support_fingerprint_q <= factor_check_fingerprint_q;
                 if (support_relation_reuse_enable_w) begin
                     factor_reuse_mode_q <= support_relation_reuse_mode_w;
+                    // Commit the scanner's normalized view (config-match
+                    // preload plus unmatched appends) in one shot.
+                    for (gi = 0; gi < MAX_K; gi = gi + 1)
+                        support_cache[gi] <=
+                            fc_norm_support_bus[gi*IDX_W +: IDX_W];
                 end
                 if (support_relation_border_clear_w) begin
                     factor_k_q <= factor_k_q - 1'b1;
+                    for (gi = 0; gi < MAX_K; gi = gi + 1)
+                        support_cache[gi] <=
+                            fc_norm_support_bus[gi*IDX_W +: IDX_W];
                     support_cache[factor_k_q - 1'b1] <=
                         factor_check_unmatched_value_q;
                     factor_border_clear_q <= 1'b1;

@@ -16,18 +16,25 @@ extraction or optimization must preserve the state sequence cycle-for-cycle
 |---|---|---|
 | `u_ls_matrix_service` | `solver/ls_issue_engine.v` | one-active command boundary to the Gram/L/D/RHS storage service |
 | `u_support_relation_unit` | `control/support_relation_unit.v` | combinational reuse-mode encoder (exact/prefix/truncate/swap-last) |
+| `u_wide_mul_sequencer` | `control/wide_mul_sequencer.v` | 64x64 limb multiplier FSM (issue/drain/reduce) |
+| `u_factor_check_unit` | `control/factor_check_unit.v` | reuse-qualification scanner (token stream, fingerprint, normalized support) |
 
 ## Functional regions
 
-### REGION factor-check (reuse qualification)
+### REGION factor-check (reuse qualification) -> u_factor_check_unit
 
-States `S_FACTOR_CHECK_INIT/SCAN/DONE`.  Streams the request support tuple
-by tuple through the PE-row factor pipe (`factor_pipe_*`), accumulates
-`factor_check_seen_mask_q` / fingerprint / unmatched bookkeeping, then
-resolves the reuse mode via the hit predicates (`factor_exact_hit_w`...)
-and normalizes `support_cache[]`.  Factor descriptors
+The scanner runs in `u_factor_check_unit` in lockstep with the controller
+states `S_FACTOR_CHECK_INIT/SCAN/DONE`: `start` is combinational on INIT,
+`scan_done` is combinational on the last absorbed response, so the
+SCAN->DONE edge keeps its pre-extraction cycle.  The unit streams request
+tuples through the PE-row factor pipe (`factor_pipe_*`), accumulates the
+seen-mask / fingerprint / unmatched bookkeeping, and owns the normalized
+support view (config-match preload + unmatched appends, exposed as
+`norm_support_bus`).  The controller keeps the DONE-time decisions: hit
+predicates (`factor_exact_hit_w`...), `support_relation` resolution, and
+the commit into `support_cache[]`.  Factor descriptors
 (`factor_valid_q`, `factor_k_q`, config regs) are written by
-`S_LDL_INV_DONE` and read here.
+`S_LDL_INV_DONE`.
 
 ### REGION phi-scan (deterministic Phi regeneration)
 
