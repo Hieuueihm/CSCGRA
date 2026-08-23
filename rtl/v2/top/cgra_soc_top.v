@@ -1,8 +1,9 @@
 module cgra_soc_top #(
-    parameter integer AXIL_AW = 14,
+    parameter integer AXIL_AW = 15,
     parameter integer AXIL_DW = 32,
     parameter integer AXI_AW  = 32,
     parameter integer AXI_DW  = 32,
+    parameter integer NCTX = 2048,
     parameter integer IDX_W = 10,
     parameter integer SPARSE_MAX_N = 256,
     parameter integer SPARSE_MAX_K = 16
@@ -39,6 +40,7 @@ module cgra_soc_top #(
     output wire                 m_axi_gmem_arvalid,
     input  wire                 m_axi_gmem_arready,
     input  wire [AXI_DW-1:0]    m_axi_gmem_rdata,
+    input  wire [1:0]           m_axi_gmem_rresp,
     input  wire                 m_axi_gmem_rvalid,
     input  wire                 m_axi_gmem_rlast,
     output wire                 m_axi_gmem_rready,
@@ -67,6 +69,7 @@ module cgra_soc_top #(
         .AXIL_DW(AXIL_DW),
         .AXI_AW(AXI_AW),
         .AXI_DW(AXI_DW),
+        .NCTX(NCTX),
         .IDX_W(IDX_W),
         .SPARSE_MAX_N(SPARSE_MAX_N),
         .SPARSE_MAX_K(SPARSE_MAX_K)
@@ -97,6 +100,7 @@ module cgra_soc_top #(
         .m_axi_arvalid(m_axi_gmem_arvalid),
         .m_axi_arready(m_axi_gmem_arready),
         .m_axi_rdata(m_axi_gmem_rdata),
+        .m_axi_rresp(m_axi_gmem_rresp),
         .m_axi_rvalid(m_axi_gmem_rvalid),
         .m_axi_rlast(m_axi_gmem_rlast),
         .m_axi_rready(m_axi_gmem_rready),

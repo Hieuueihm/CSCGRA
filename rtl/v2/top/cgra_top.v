@@ -8,7 +8,8 @@ module cgra_top #(
     parameter integer IDX_W      = 10,
     parameter integer CTX_W      = 64,
     parameter integer NCTX       = 2048,
-    parameter integer AXIL_AW    = 14,
+    // 0x100 + 2048 * 8 requires 15 byte-address bits.
+    parameter integer AXIL_AW    = 15,
     parameter integer AXIL_DW    = 32,
     parameter integer AXI_AW     = 32,
     parameter integer AXI_DW     = 32,
@@ -43,6 +44,7 @@ module cgra_top #(
     output wire                  m_axi_arvalid,
     input  wire                  m_axi_arready,
     input  wire [AXI_DW-1:0]     m_axi_rdata,
+    input  wire [1:0]            m_axi_rresp,
     input  wire                  m_axi_rvalid,
     input  wire                  m_axi_rlast,
     output wire                  m_axi_rready,
@@ -66,9 +68,46 @@ module cgra_top #(
     localparam integer CTX_AW = 11;
     localparam integer Q_FRAC_W = DATA_W - 8;
 
+`ifndef SYNTHESIS
+    // Architecture width contracts, guarded at elaboration:
+    //  - the LFSR jump table and the 32/64/128-column scan windows cover at
+    //    most 256 columns; a larger N would silently take the identity jump
+    //    default in sparse_loop_lfsr_jump.vh;
+    //  - controller K counters (2-bit residual block count, 5-bit LS
+    //    row/col addresses, 6-bit K slices) are sized for K <= 16.
+    // Dense M*N may exceed the SPM by design: Phi is regenerated from the
+    // LFSR stream, never stored as a dense matrix.
+    initial begin
+        if (SPARSE_MAX_N > 256)
+            $error("cgra_top: SPARSE_MAX_N=%0d exceeds the 256-column LFSR/scan window contract", SPARSE_MAX_N);
+        if (SPARSE_MAX_K > 16)
+            $error("cgra_top: SPARSE_MAX_K=%0d exceeds the controller K width contract (K <= 16)", SPARSE_MAX_K);
+    end
+`endif
+
     wire rst_core_n;
     wire soft_reset_pulse;
-    assign rst_core_n = rst_n & !soft_reset_pulse;
+    // Synchronize the CSR event before using it as the reset of the core.
+    // The raw one-cycle pulse must not be used as an asynchronous reset.
+    reg [1:0] soft_reset_pipe_q;
+    wire soft_reset_active = |soft_reset_pipe_q;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            soft_reset_pipe_q <= 2'b00;
+        else
+            soft_reset_pipe_q <= {soft_reset_pipe_q[0], soft_reset_pulse};
+    end
+    assign rst_core_n = rst_n & !soft_reset_active;
+
+    // The AXI4 master must not be reset mid-transaction: dropping a burst
+    // before its terminating beat (wlast/rlast) can wedge the interconnect's
+    // write/read channel.  Route the soft reset to the DMA only while it is
+    // idle; an in-flight transfer runs to completion and its done pulse is
+    // dropped because the sequencer is already in reset by then.  The busy
+    // term is a same-clock function of registered state, so the gated reset
+    // only asserts/releases aligned to clock edges.
+    wire dma_busy_w;
+    wire rst_dma_n = rst_n & !(soft_reset_active && !dma_busy_w);
 
     wire start_pulse, clear_error_pulse;
     wire [IDX_W-1:0] m_size, n_size;
@@ -85,6 +124,7 @@ module cgra_top #(
     wire [CTX_AW-1:0] cfg_wr_addr;
     wire cfg_wr_word;
     wire [AXIL_DW-1:0] cfg_wr_data;
+    wire [AXIL_DW/8-1:0] cfg_wr_strb;
     wire cfg_dbg_rd_en;
     wire [CTX_AW-1:0] cfg_dbg_rd_addr;
     wire [CTX_W-1:0] cfg_dbg_rd_data;
@@ -102,6 +142,7 @@ module cgra_top #(
     wire [31:0] phase_cycle_vector;
 
     csr_regs #(.AXIL_AW(AXIL_AW), .AXIL_DW(AXIL_DW), .CTX_W(CTX_W), .CTX_AW(CTX_AW),
+        .NCTX(NCTX),
         .IDX_W(IDX_W), .DATA_W(DATA_W), .Q_FRAC_W(Q_FRAC_W)) u_csr (
         .clk(clk), .rst_n(rst_n),
         .s_axi_awaddr(s_axi_awaddr), .s_axi_awvalid(s_axi_awvalid), .s_axi_awready(s_axi_awready),
@@ -119,7 +160,7 @@ module cgra_top #(
         .phase_cycle_corr(phase_cycle_corr), .phase_cycle_topk(phase_cycle_topk),
         .phase_cycle_support(phase_cycle_support), .phase_cycle_solve(phase_cycle_solve),
         .phase_cycle_residual(phase_cycle_residual), .phase_cycle_vector(phase_cycle_vector),
-        .cfg_wr_en(cfg_wr_en), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_word(cfg_wr_word), .cfg_wr_data(cfg_wr_data),
+        .cfg_wr_en(cfg_wr_en), .cfg_wr_addr(cfg_wr_addr), .cfg_wr_word(cfg_wr_word), .cfg_wr_data(cfg_wr_data), .cfg_wr_strb(cfg_wr_strb),
         .cfg_dbg_rd_en(cfg_dbg_rd_en), .cfg_dbg_rd_addr(cfg_dbg_rd_addr), .cfg_dbg_rd_data(cfg_dbg_rd_data)
     );
 
@@ -130,7 +171,7 @@ module cgra_top #(
 
     configmem #(.NCTX(NCTX), .CTX_W(CTX_W), .CTX_AW(CTX_AW)) u_configmem (
         .clk(clk), .rst_n(rst_core_n), .wr_en(cfg_wr_en), .wr_addr(cfg_wr_addr), .wr_data(cfg_wr_data),
-        .wr_word(cfg_wr_word), .seq_addr(seq_ctx_addr), .seq_ctx(cfg_seq_ctx),
+        .wr_word(cfg_wr_word), .wr_strb(cfg_wr_strb), .seq_addr(seq_ctx_addr), .seq_ctx(cfg_seq_ctx),
         .dbg_rd_en(cfg_dbg_rd_en), .dbg_rd_addr(cfg_dbg_rd_addr), .dbg_rd_data(cfg_dbg_rd_data)
     );
 
@@ -228,7 +269,7 @@ module cgra_top #(
     wire scalar_cmp_true  = result_flag;
     wire scalar_error     = 1'b0;
 
-    sequencer #(.CTX_W(CTX_W), .CTX_AW(CTX_AW), .IDX_W(IDX_W)) u_seq (
+    sequencer #(.CTX_W(CTX_W), .CTX_AW(CTX_AW), .IDX_W(IDX_W), .NCTX(NCTX)) u_seq (
         .clk(clk), .rst_n(rst_core_n), .start(start_pulse), .prog_base(prog_base), .prog_len(prog_len),
         .m_size(m_size), .n_size(n_size), .k_param(k_param), .max_iter(max_iter), .tol_sq_q16_16(tol_sq_q16_16),
         .ctx_addr(seq_ctx_addr), .ctx_rdata(seq_ctx), .ctx_valid(ctx_valid), .ctx_word(ctx_word),
@@ -694,11 +735,11 @@ module cgra_top #(
         dma_ddr_base_w + {14'd0, dma_elem_offset, 2'b00};
 
     dma_ctrl #(.AXI_AW(AXI_AW), .AXI_DW(AXI_DW), .COLS(COLS), .MEM_AW(MEM_AW), .DATA_W(DATA_W), .IDX_W(IDX_W)) u_dma (
-        .clk(clk), .rst_n(rst_core_n), .start(ctx_valid && (uop_class == 4'd7)), .dir(ctx_word[0]),
+        .clk(clk), .rst_n(rst_dma_n), .start(ctx_valid && (uop_class == 4'd7)), .dir(ctx_word[0]),
         .vec_id(spm_a_vec), .length((addr_dim == 4'd1) ? m_size : n_size),
-        .ddr_addr(dma_ddr_addr_w), .done(dma_done), .error(dma_error), .error_code(dma_error_code),
+        .ddr_addr(dma_ddr_addr_w), .done(dma_done), .error(dma_error), .error_code(dma_error_code), .busy(dma_busy_w),
         .m_axi_araddr(m_axi_araddr), .m_axi_arlen(m_axi_arlen), .m_axi_arsize(m_axi_arsize), .m_axi_arburst(m_axi_arburst),
-        .m_axi_arvalid(m_axi_arvalid), .m_axi_arready(m_axi_arready), .m_axi_rdata(m_axi_rdata),
+        .m_axi_arvalid(m_axi_arvalid), .m_axi_arready(m_axi_arready), .m_axi_rdata(m_axi_rdata), .m_axi_rresp(m_axi_rresp),
         .m_axi_rvalid(m_axi_rvalid), .m_axi_rlast(m_axi_rlast), .m_axi_rready(m_axi_rready),
         .m_axi_awaddr(m_axi_awaddr), .m_axi_awlen(m_axi_awlen), .m_axi_awsize(m_axi_awsize), .m_axi_awburst(m_axi_awburst),
         .m_axi_awvalid(m_axi_awvalid), .m_axi_awready(m_axi_awready), .m_axi_wdata(m_axi_wdata), .m_axi_wstrb(m_axi_wstrb),
@@ -719,6 +760,10 @@ module cgra_top #(
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
+            cycle_cnt <= 32'd0; result0_q <= 32'd0;
+            last_result_value <= {SCALAR_W{1'b0}};
+            last_result_idx <= {IDX_W{1'b0}};
+        end else if (soft_reset_active) begin
             cycle_cnt <= 32'd0; result0_q <= 32'd0;
             last_result_value <= {SCALAR_W{1'b0}};
             last_result_idx <= {IDX_W{1'b0}};

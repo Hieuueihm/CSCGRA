@@ -17,6 +17,10 @@ module dma_ctrl #(
     output reg                      done,
     output reg                      error,
     output reg  [3:0]               error_code,
+    // High whenever a transaction is in flight (state != S_IDLE).  The top
+    // level uses this to hold the soft reset off the AXI master until it is
+    // back at a transaction boundary.
+    output wire                     busy,
 
     output reg  [AXI_AW-1:0]        m_axi_araddr,
     output reg  [7:0]               m_axi_arlen,
@@ -25,6 +29,7 @@ module dma_ctrl #(
     output reg                      m_axi_arvalid,
     input  wire                     m_axi_arready,
     input  wire [AXI_DW-1:0]        m_axi_rdata,
+    input  wire [1:0]               m_axi_rresp,
     input  wire                     m_axi_rvalid,
     input  wire                     m_axi_rlast,
     output reg                      m_axi_rready,
@@ -68,9 +73,15 @@ module dma_ctrl #(
     reg [2:0] state;
     reg [IDX_W-1:0] beat_idx;
     reg [IDX_W-1:0] remaining;
-    reg [7:0] burst_beats;
+    // AXI4 encodes a 256-beat burst as ARLEN/AWLEN=8'hFF.  Keep the
+    // internal count at nine bits so 256 is not confused with zero.
+    reg [8:0] burst_left;
     reg [AXI_AW-1:0] addr_q;
     reg [1:0] spm_read_wait;
+    // Set once an error has been latched but the slave may still owe beats
+    // of the current burst.  AXI4 obliges the master to accept every beat
+    // through rlast, so the FSM keeps rready asserted and discards data.
+    reg rd_err_drain_q;
 
     function [MEM_AW-1:0] vec_base;
         input [2:0] v;
@@ -121,10 +132,11 @@ module dma_ctrl #(
     wire [MEM_AW-1:0] bank_addr = vec_base(vec_id) + beat_idx[IDX_W-1:3];
     wire [7:0] remaining_u8 = idx_to_u8(remaining);
     wire [7:0] length_u8 = idx_to_u8(length);
-    wire [7:0] next_burst = (remaining > 256) ? 8'd0 : remaining_u8;
-    wire [7:0] burst_len_minus_one = burst_beats - 1'b1;
+    wire [7:0] burst_len_minus_one = burst_left - 1'b1;
 
     integer j;
+
+    assign busy = (state != S_IDLE);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -153,9 +165,10 @@ module dma_ctrl #(
             spm_wen <= {COLS{1'b0}};
             beat_idx <= {IDX_W{1'b0}};
             remaining <= {IDX_W{1'b0}};
-            burst_beats <= 8'd0;
+            burst_left <= 9'd0;
             addr_q <= {AXI_AW{1'b0}};
             spm_read_wait <= 2'd0;
+            rd_err_drain_q <= 1'b0;
         end else begin
             done <= 1'b0;
             spm_wen <= {COLS{1'b0}};
@@ -184,7 +197,7 @@ module dma_ctrl #(
                         end else begin
                             beat_idx <= {IDX_W{1'b0}};
                             remaining <= length;
-                            burst_beats <= (length > 256) ? 8'd0 : length_u8;
+                            burst_left <= (length > 256) ? 9'd256 : length;
                             addr_q <= ddr_addr;
                             if (dir) begin
                                 m_axi_awaddr <= ddr_addr;
@@ -217,21 +230,63 @@ module dma_ctrl #(
                     end
                 end
                 S_R: begin
-                    if (m_axi_rvalid) begin
-                        spm_addr[lane*MEM_AW +: MEM_AW] <= bank_addr;
-                        spm_wdata[lane*DATA_W +: DATA_W] <= m_axi_rdata[DATA_W-1:0];
-                        spm_wen[lane] <= 1'b1;
-                        beat_idx <= beat_idx + 1'b1;
-                        remaining <= remaining - 1'b1;
-
-                        if (remaining == 1) begin
+                    if (m_axi_rvalid && m_axi_rready) begin
+                        if (rd_err_drain_q) begin
+                            // An error is already latched.  Keep rready
+                            // asserted and discard beats until rlast so the
+                            // slave can retire the burst; abandoning it
+                            // mid-flight would stall the read channel.
+                            if (m_axi_rlast) begin
+                                m_axi_rready <= 1'b0;
+                                rd_err_drain_q <= 1'b0;
+                                state <= S_DONE;
+                            end
+                        end else if ((m_axi_rresp == 2'b10) || (m_axi_rresp == 2'b11)) begin
+                            // RRESP is part of the AXI read handshake.  Only
+                            // the two error encodings are actionable; OKAY and
+                            // EXOKAY both carry valid data.
+                            error <= 1'b1;
+                            error_code <= ERR_READ;
+                            if (m_axi_rlast)
+                                state <= S_DONE;
+                            else
+                                rd_err_drain_q <= 1'b1;
+                        end else if ((burst_left == 1) && !m_axi_rlast) begin
+                            // The slave must terminate an ARLEN+1-beat burst
+                            // with rlast and has not.  Latch the error and
+                            // drain whatever beats still follow.
+                            error <= 1'b1;
+                            error_code <= ERR_READ;
+                            rd_err_drain_q <= 1'b1;
+                        end else if ((burst_left != 1) && m_axi_rlast) begin
+                            // An early rlast terminates the burst itself, so
+                            // no further beats can follow: fail immediately.
                             m_axi_rready <= 1'b0;
+                            error <= 1'b1;
+                            error_code <= ERR_READ;
                             state <= S_DONE;
-                        end else if (m_axi_rlast) begin
-                            m_axi_rready <= 1'b0;
-                            addr_q <= addr_q + (burst_beats * (AXI_DW/8));
-                            burst_beats <= next_burst;
-                            state <= S_AR;
+                        end else begin
+                            spm_addr[lane*MEM_AW +: MEM_AW] <= bank_addr;
+                            spm_wdata[lane*DATA_W +: DATA_W] <= m_axi_rdata[DATA_W-1:0];
+                            spm_wen[lane] <= 1'b1;
+                            beat_idx <= beat_idx + 1'b1;
+                            remaining <= remaining - 1'b1;
+
+                            if (remaining == 1) begin
+                                m_axi_rready <= 1'b0;
+                                state <= S_DONE;
+                            end else if (burst_left == 1) begin
+                                // This edge ends a full 256-beat burst: bursts
+                                // are only re-issued at full length (see the
+                                // sizing above), so advance the DDR address by
+                                // one whole burst, matching the write path.
+                                m_axi_rready <= 1'b0;
+                                addr_q <= addr_q + (256 * (AXI_DW/8));
+                                burst_left <= (((remaining - 1) > 256) ? 9'd256 : (remaining - 1));
+                                state <= S_AR;
+                            end else begin
+                                burst_left <= burst_left - 1'b1;
+                            end
                         end
                     end
                 end
@@ -255,14 +310,14 @@ module dma_ctrl #(
                         m_axi_wdata <= {{(AXI_DW-DATA_W){spm_rdata[lane*DATA_W + DATA_W-1]}},
                                         spm_rdata[lane*DATA_W +: DATA_W]};
                         m_axi_wstrb <= {(AXI_DW/8){1'b1}};
-                        m_axi_wlast <= (remaining == 1) || (burst_beats == 1);
+                        m_axi_wlast <= (burst_left == 1);
                         m_axi_wvalid <= 1'b1;
                     end else if (m_axi_wready) begin
                         beat_idx <= beat_idx + 1'b1;
                         remaining <= remaining - 1'b1;
-                        burst_beats <= burst_beats - 1'b1;
+                        burst_left <= burst_left - 1'b1;
                         m_axi_wvalid <= 1'b0;
-                        if (remaining == 1 || burst_beats == 1) begin
+                        if (burst_left == 1) begin
                             m_axi_bready <= 1'b1;
                             state <= S_B;
                         end else begin
@@ -281,7 +336,7 @@ module dma_ctrl #(
                             state <= S_DONE;
                         end else begin
                             addr_q <= addr_q + 256 * (AXI_DW/8);
-                            burst_beats <= (remaining > 256) ? 8'd0 : remaining_u8;
+                            burst_left <= (remaining > 256) ? 9'd256 : remaining;
                             state <= S_AW;
                         end
                     end

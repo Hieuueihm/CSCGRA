@@ -28,12 +28,12 @@ localparam VEC_X=0, VEC_R=1, VEC_Y=2;
 localparam CASE_COUNT=8;
 
 reg clk,rst_n;
-reg [13:0] s_axi_awaddr; reg s_axi_awvalid; wire s_axi_awready;
+reg [14:0] s_axi_awaddr; reg s_axi_awvalid; wire s_axi_awready;
 reg [31:0] s_axi_wdata; reg [3:0] s_axi_wstrb; reg s_axi_wvalid; wire s_axi_wready;
 wire [1:0] s_axi_bresp; wire s_axi_bvalid; reg s_axi_bready;
-reg [13:0] s_axi_araddr; reg s_axi_arvalid; wire s_axi_arready; wire [31:0] s_axi_rdata; wire [1:0] s_axi_rresp; wire s_axi_rvalid; reg s_axi_rready;
+reg [14:0] s_axi_araddr; reg s_axi_arvalid; wire s_axi_arready; wire [31:0] s_axi_rdata; wire [1:0] s_axi_rresp; wire s_axi_rvalid; reg s_axi_rready;
 wire [31:0] m_axi_araddr; wire [7:0] m_axi_arlen; wire [2:0] m_axi_arsize; wire [1:0] m_axi_arburst; wire m_axi_arvalid; reg m_axi_arready;
-reg [31:0] m_axi_rdata; reg m_axi_rvalid; reg m_axi_rlast; wire m_axi_rready;
+reg [31:0] m_axi_rdata; reg [1:0] m_axi_rresp; reg m_axi_rvalid; reg m_axi_rlast; wire m_axi_rready;
 wire [31:0] m_axi_awaddr; wire [7:0] m_axi_awlen; wire [2:0] m_axi_awsize; wire [1:0] m_axi_awburst; wire m_axi_awvalid; reg m_axi_awready;
 wire [31:0] m_axi_wdata; wire [3:0] m_axi_wstrb; wire m_axi_wlast; wire m_axi_wvalid; reg m_axi_wready;
 reg [1:0] m_axi_bresp; reg m_axi_bvalid; wire m_axi_bready;
@@ -148,7 +148,7 @@ task capture_iter_snapshot; input integer n_arg; input integer alg_arg; integer 
 end endtask
 `endif
 
-cgra_top dut(.clk(clk),.rst_n(rst_n),.s_axi_awaddr(s_axi_awaddr),.s_axi_awvalid(s_axi_awvalid),.s_axi_awready(s_axi_awready),.s_axi_wdata(s_axi_wdata),.s_axi_wstrb(s_axi_wstrb),.s_axi_wvalid(s_axi_wvalid),.s_axi_wready(s_axi_wready),.s_axi_bresp(s_axi_bresp),.s_axi_bvalid(s_axi_bvalid),.s_axi_bready(s_axi_bready),.s_axi_araddr(s_axi_araddr),.s_axi_arvalid(s_axi_arvalid),.s_axi_arready(s_axi_arready),.s_axi_rdata(s_axi_rdata),.s_axi_rresp(s_axi_rresp),.s_axi_rvalid(s_axi_rvalid),.s_axi_rready(s_axi_rready),.m_axi_araddr(m_axi_araddr),.m_axi_arlen(m_axi_arlen),.m_axi_arsize(m_axi_arsize),.m_axi_arburst(m_axi_arburst),.m_axi_arvalid(m_axi_arvalid),.m_axi_arready(m_axi_arready),.m_axi_rdata(m_axi_rdata),.m_axi_rvalid(m_axi_rvalid),.m_axi_rlast(m_axi_rlast),.m_axi_rready(m_axi_rready),.m_axi_awaddr(m_axi_awaddr),.m_axi_awlen(m_axi_awlen),.m_axi_awsize(m_axi_awsize),.m_axi_awburst(m_axi_awburst),.m_axi_awvalid(m_axi_awvalid),.m_axi_awready(m_axi_awready),.m_axi_wdata(m_axi_wdata),.m_axi_wstrb(m_axi_wstrb),.m_axi_wlast(m_axi_wlast),.m_axi_wvalid(m_axi_wvalid),.m_axi_wready(m_axi_wready),.m_axi_bresp(m_axi_bresp),.m_axi_bvalid(m_axi_bvalid),.m_axi_bready(m_axi_bready),.irq_done(irq_done),.irq_error(irq_error));
+cgra_top dut(.clk(clk),.rst_n(rst_n),.s_axi_awaddr(s_axi_awaddr),.s_axi_awvalid(s_axi_awvalid),.s_axi_awready(s_axi_awready),.s_axi_wdata(s_axi_wdata),.s_axi_wstrb(s_axi_wstrb),.s_axi_wvalid(s_axi_wvalid),.s_axi_wready(s_axi_wready),.s_axi_bresp(s_axi_bresp),.s_axi_bvalid(s_axi_bvalid),.s_axi_bready(s_axi_bready),.s_axi_araddr(s_axi_araddr),.s_axi_arvalid(s_axi_arvalid),.s_axi_arready(s_axi_arready),.s_axi_rdata(s_axi_rdata),.s_axi_rresp(s_axi_rresp),.s_axi_rvalid(s_axi_rvalid),.s_axi_rready(s_axi_rready),.m_axi_araddr(m_axi_araddr),.m_axi_arlen(m_axi_arlen),.m_axi_arsize(m_axi_arsize),.m_axi_arburst(m_axi_arburst),.m_axi_arvalid(m_axi_arvalid),.m_axi_arready(m_axi_arready),.m_axi_rdata(m_axi_rdata),.m_axi_rresp(m_axi_rresp),.m_axi_rvalid(m_axi_rvalid),.m_axi_rlast(m_axi_rlast),.m_axi_rready(m_axi_rready),.m_axi_awaddr(m_axi_awaddr),.m_axi_awlen(m_axi_awlen),.m_axi_awsize(m_axi_awsize),.m_axi_awburst(m_axi_awburst),.m_axi_awvalid(m_axi_awvalid),.m_axi_awready(m_axi_awready),.m_axi_wdata(m_axi_wdata),.m_axi_wstrb(m_axi_wstrb),.m_axi_wlast(m_axi_wlast),.m_axi_wvalid(m_axi_wvalid),.m_axi_wready(m_axi_wready),.m_axi_bresp(m_axi_bresp),.m_axi_bvalid(m_axi_bvalid),.m_axi_bready(m_axi_bready),.irq_done(irq_done),.irq_error(irq_error));
 
 always #5 clk=~clk;
 task tick; begin @(posedge clk); #1; end endtask
@@ -193,14 +193,14 @@ task profile_dump; input integer alg_id; integer p; integer factor_total; intege
     end
 end endtask
 function absdiff_le; input [23:0] a,b; input integer tol; begin diff={a[23],a}-{b[23],b}; if(diff<0) diff=-diff; absdiff_le=(diff<=tol); end endfunction
-task axi_write; input [13:0] a; input [31:0] d; begin
+task axi_write; input [14:0] a; input [31:0] d; begin
     while(!s_axi_awready || !s_axi_wready) tick();
     s_axi_awaddr=a; s_axi_wdata=d; s_axi_awvalid=1; s_axi_wvalid=1; tick();
     s_axi_awvalid=0; s_axi_wvalid=0;
     while(!s_axi_bvalid) tick(); tick();
 end endtask
 
-task axi_read; input [13:0] a; output [31:0] d; begin
+task axi_read; input [14:0] a; output [31:0] d; begin
     while(!s_axi_arready) tick();
     s_axi_araddr=a; s_axi_arvalid=1; tick(); s_axi_arvalid=0;
     while(!s_axi_rvalid) tick(); d=s_axi_rdata; tick();
@@ -308,7 +308,7 @@ task build_batch_program; input integer k_param; input integer replay_count; out
     plen=pc;
 end endtask
 
-task reset_dut; begin rst_n=0; s_axi_awaddr=0; s_axi_awvalid=0; s_axi_wdata=0; s_axi_wstrb=4'hf; s_axi_wvalid=0; s_axi_bready=1; s_axi_araddr=0; s_axi_arvalid=0; s_axi_rready=1; m_axi_arready=1; m_axi_rdata=0; m_axi_rvalid=0; m_axi_rlast=0; m_axi_awready=1; m_axi_wready=1; m_axi_bresp=0; m_axi_bvalid=0; rd_count=0; wr_count=0; repeat(5) tick(); rst_n=1; repeat(5) tick(); end endtask
+task reset_dut; begin rst_n=0; s_axi_awaddr=0; s_axi_awvalid=0; s_axi_wdata=0; s_axi_wstrb=4'hf; s_axi_wvalid=0; s_axi_bready=1; s_axi_araddr=0; s_axi_arvalid=0; s_axi_rready=1; m_axi_arready=1; m_axi_rdata=0; m_axi_rresp=0; m_axi_rvalid=0; m_axi_rlast=0; m_axi_awready=1; m_axi_wready=1; m_axi_bresp=0; m_axi_bvalid=0; rd_count=0; wr_count=0; repeat(5) tick(); rst_n=1; repeat(5) tick(); end endtask
 
 task init_ddr; input integer m; input integer n; begin
     for(i=0;i<256;i=i+1) begin
@@ -631,8 +631,6 @@ initial begin
     $finish;
 end
 endmodule
-
-
 
 
 
