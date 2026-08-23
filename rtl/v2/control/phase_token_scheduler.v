@@ -95,16 +95,16 @@ module phase_token_scheduler #(
                      ls_done_deferred_fire;
 
     always @(*) begin
-        // Report the phase at the packet issue point.  During the four-cycle
-        // PE0->PE3 flight the decoded context phase is still useful for
-        // observability, but CSR counters must count only an issued token.
-        phase_opcode = packet_valid_w ? packet_phase_w : isa_phase_w;
+        // The packet pipe is a registered delay line.  Its output must never
+        // be fed back into the phase field of the next input token: doing so
+        // repeats the previous token's phase whenever the pipe is full.
+        phase_opcode = isa_phase_w;
     end
 
     phase_packet_pipe #(.VERSION_W(VERSION_W), .IDX_W(10), .DATA_W(24), .STAGES(4))
     u_phase_packet_pipe (
         .clk(clk), .rst_n(rst_n), .flush(flush),
-        .in_valid(ctx_valid), .in_phase(phase_opcode),
+        .in_valid(ctx_valid), .in_phase(isa_phase_w),
         .in_mode(packet_mode_now), .in_owner(packet_owner_now),
         .in_dependency_mask(isa_dependency_w),
         .in_version(packet_version_now), .in_idx(packet_idx_now),

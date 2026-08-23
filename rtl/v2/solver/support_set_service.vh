@@ -102,6 +102,11 @@ module support_set_service #(
     wire candidate_merge_sel_to_path = candidate_uop && (ext_ctrl == 4'b0010);
     wire [2:0] candidate_path_raw = ctx_word[22:20];
     wire [PATH_AW-1:0] candidate_path = candidate_path_raw[PATH_AW-1:0];
+    // The stream top-K service forwards the full 3-bit program field.
+    // depth_mem has only PATHS entries; truncate explicitly so simulation
+    // matches synthesis (an untruncated index reads X and a write is
+    // dropped in sim, while synthesis silently wraps).
+    wire [PATH_AW-1:0] select_append_path_trunc = select_append_path[PATH_AW-1:0];
     wire [4:0] candidate_depth = ctx_word[15:11];
     wire [2:0] candidate_src_path_raw = ctx_word[25:23];
     wire [PATH_AW-1:0] candidate_src_path = candidate_src_path_raw[PATH_AW-1:0];
@@ -254,11 +259,16 @@ module support_set_service #(
                         if (select_append_valid) begin
                             op_path_q <= select_append_path;
                             op_idx_q <= select_append_idx;
-                            if (depth_mem[select_append_path] >=
-                                (select_append_path == 0 ? MAX_SUPPORT : MAX_CANDIDATE)) op_done_q <= 1'b1;
+`ifndef SYNTHESIS
+                            if (select_append_path >= PATHS)
+                                $error("support_set_service: append path %0d exceeds PATHS=%0d; it aliases to path %0d",
+                                       select_append_path, PATHS, select_append_path_trunc);
+`endif
+                            if (depth_mem[select_append_path_trunc] >=
+                                (select_append_path_trunc == 0 ? MAX_SUPPORT : MAX_CANDIDATE)) op_done_q <= 1'b1;
                             else begin
-                                tuple_write(select_append_path[PATH_AW-1:0], depth_mem[select_append_path][K_AW-1:0], select_append_idx);
-                                depth_mem[select_append_path] <= depth_mem[select_append_path] + 1'b1;
+                                tuple_write(select_append_path_trunc, depth_mem[select_append_path_trunc][K_AW-1:0], select_append_idx);
+                                depth_mem[select_append_path_trunc] <= depth_mem[select_append_path_trunc] + 1'b1;
                                 op_done_q <= 1'b1;
                             end
                         end else if (candidate_selpath) begin

@@ -159,6 +159,12 @@ module ls_matrix_service #(
                 wire [4:0] acc4_col = acc4_col_base_q + {3'd0,acc4_drain_col_q};
                 wire [4:0] acc4_row = acc4_row_base_q + rb[4:0];
 
+                // mem_a and mem_b are exact mirrors.  Every write path below
+                // stores the same value into both banks, and the
+                // read-modify-write adds (OP_ACC_BLOCK, the S_ACC4 drain)
+                // deliberately read mem_a only.  This yields two independent
+                // read ports (rdata_a/rdata_b) on LUTRAM without a second
+                // write port.  Never update one bank without the other.
                 always @(posedge clk) begin
                     if (state == S_CLEAR) begin
                         mem_a[clear_addr_q] <= {GE_W{1'b0}};

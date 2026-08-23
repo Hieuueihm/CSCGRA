@@ -1129,40 +1129,6 @@ function [31:0] lfsr_jump_padded;
                 lfsr_jump_padded[30] = ^(state & 32'h6fab3a50);
                 lfsr_jump_padded[31] = ^(state & 32'hdf5674a1);
             end
-            11'd1024: begin
-                lfsr_jump_padded[0] = ^(state & 32'h7f34d906);
-                lfsr_jump_padded[1] = ^(state & 32'h815d6b0a);
-                lfsr_jump_padded[2] = ^(state & 32'h7d8e0f12);
-                lfsr_jump_padded[3] = ^(state & 32'hfb1c1e25);
-                lfsr_jump_padded[4] = ^(state & 32'hf6383c4a);
-                lfsr_jump_padded[5] = ^(state & 32'hec707895);
-                lfsr_jump_padded[6] = ^(state & 32'hd8e0f12b);
-                lfsr_jump_padded[7] = ^(state & 32'hb1c1e256);
-                lfsr_jump_padded[8] = ^(state & 32'h6383c4ac);
-                lfsr_jump_padded[9] = ^(state & 32'hc7078958);
-                lfsr_jump_padded[10] = ^(state & 32'h8e0f12b1);
-                lfsr_jump_padded[11] = ^(state & 32'h1c1e2562);
-                lfsr_jump_padded[12] = ^(state & 32'h383c4ac5);
-                lfsr_jump_padded[13] = ^(state & 32'h7078958a);
-                lfsr_jump_padded[14] = ^(state & 32'he0f12b14);
-                lfsr_jump_padded[15] = ^(state & 32'hc1e25628);
-                lfsr_jump_padded[16] = ^(state & 32'h83c4ac50);
-                lfsr_jump_padded[17] = ^(state & 32'h078958a1);
-                lfsr_jump_padded[18] = ^(state & 32'h0f12b143);
-                lfsr_jump_padded[19] = ^(state & 32'h1e256286);
-                lfsr_jump_padded[20] = ^(state & 32'h3c4ac50c);
-                lfsr_jump_padded[21] = ^(state & 32'h78958a18);
-                lfsr_jump_padded[22] = ^(state & 32'h8e1fcd36);
-                lfsr_jump_padded[23] = ^(state & 32'h1c3f9a6c);
-                lfsr_jump_padded[24] = ^(state & 32'h387f34d9);
-                lfsr_jump_padded[25] = ^(state & 32'h70fe69b2);
-                lfsr_jump_padded[26] = ^(state & 32'he1fcd364);
-                lfsr_jump_padded[27] = ^(state & 32'hc3f9a6c8);
-                lfsr_jump_padded[28] = ^(state & 32'h87f34d90);
-                lfsr_jump_padded[29] = ^(state & 32'h0fe69b20);
-                lfsr_jump_padded[30] = ^(state & 32'h1fcd3641);
-                lfsr_jump_padded[31] = ^(state & 32'h3f9a6c83);
-            end
             default: lfsr_jump_padded = state;
         endcase
     end

@@ -144,6 +144,18 @@ module sparse_loop_controller #(
 );
 
 `include "controller_states.vh"
+
+`ifndef SYNTHESIS
+    // K-related registers are hand-sized for the supported configuration:
+    // residual_blocks_total_q is 2 bits, LS row/col holds are 5 bits, and
+    // every S_PRIME arm slices k_active[5:0].  Raising MAX_K past 16 breaks
+    // these silently, so guard it at elaboration.
+    initial begin
+        if (MAX_K > 16)
+            $error("sparse_loop_controller: MAX_K=%0d exceeds the hand-sized K widths (K <= 16)", MAX_K);
+    end
+`endif
+
 localparam [3:0] OP_REFINE=4'd0, OP_CORR=4'd1, OP_IHT_UPDATE=4'd2, OP_RESID=4'd3, OP_PRUNE_X=4'd4, OP_MP_UPDATE=4'd5, OP_REFINE_SPARSE=4'd6, OP_GRAD_STEP=4'd7, OP_CORR_UPDATE=4'd8, OP_GP_PROJECT=4'd9, OP_GP_UPDATE=4'd10; // 9/10: isolated canonical GP project/update
 localparam [1:0] MESH_CTX_NONE=2'd0, MESH_CTX_UPDATE=2'd1, MESH_CTX_PRUNE=2'd2, MESH_CTX_RESID=2'd3;
 // Mesh tokens bypass the generic core-input register and advance through the
@@ -173,44 +185,49 @@ function [31:0] galois_step;
     end
 endfunction
 
+// Advance by a small per-lane constant step count.  All callers pass a
+// compile-time constant <= COLS (per-lane offsets in S_CORR_SCAN/LATCH and
+// the fixed COLS block advance), so every elaborated instance is at most
+// COLS galois steps and the cone no longer grows with MAX_N.  Do not call
+// with a runtime-variable or large step count: route those through
+// lfsr_jump_padded in sparse_loop_lfsr_jump.vh instead.
 function [31:0] lfsr_advance;
     input [31:0] state;
     input [IDX_W:0] steps;
     integer adv_i;
     begin
         lfsr_advance = state;
-        for (adv_i = 0; adv_i < MAX_N; adv_i = adv_i + 1) begin
+        for (adv_i = 0; adv_i < COLS; adv_i = adv_i + 1) begin
             if (adv_i < steps)
                 lfsr_advance = galois_step(lfsr_advance);
         end
     end
 endfunction
 
-function [31:0] lfsr_advance16;
-    input [31:0] state;
-    input [4:0] steps;
-    integer adv16_i;
-    begin
-        lfsr_advance16 = state;
-        for (adv16_i = 0; adv16_i < 16; adv16_i = adv16_i + 1) begin
-            if (adv16_i < steps)
-                lfsr_advance16 = galois_step(lfsr_advance16);
-        end
-    end
-endfunction
+// Phi-scan window advance: callers pass constant windows <= 32 steps.
+`include "sparse_loop_lfsr_jump.vh"
+
+// The direct-Phi scan uses offsets inside a 32-column window.  The previous
+// implementation serialized all 32 Galois steps in one combinational cone.
+// Use the generated 8-step jump matrix for the aligned prefix and keep only
+// the at-most-seven-step remainder in RTL.  This is cycle- and bit-exact, but
+// replaces a 32-deep feedback chain with one parity network plus a short tail.
 function [31:0] lfsr_advance32;
     input [31:0] state;
     input [5:0] steps;
     integer adv32_i;
+    reg [31:0] aligned_state;
+    reg [5:0] aligned_steps;
     begin
-        lfsr_advance32 = state;
-        for (adv32_i = 0; adv32_i < 32; adv32_i = adv32_i + 1) begin
-            if (adv32_i < steps)
+        aligned_steps = {steps[5:3], 3'b000};
+        aligned_state = lfsr_jump_padded(state, aligned_steps);
+        lfsr_advance32 = aligned_state;
+        for (adv32_i = 0; adv32_i < 8; adv32_i = adv32_i + 1) begin
+            if (adv32_i < steps[2:0])
                 lfsr_advance32 = galois_step(lfsr_advance32);
         end
     end
 endfunction
-`include "sparse_loop_lfsr_jump.vh"
 
 function signed [DATA_W-1:0] phi_from_lfsr_state;
     input [31:0] state;
@@ -334,6 +351,28 @@ reg signed [63:0] ge_mul_a;
 reg signed [63:0] ge_mul_b;
 reg signed [63:0] ge_mul_c;
 reg signed [127:0] ge_mul_p;
+// Keep declarations ahead of the combinational LS/back-solve boundary.  Some
+// Verilog elaborators create an implicit net when a signal is first used in a
+// net declaration, which can turn these width-sensitive paths into errors.
+reg [5:0] back_i;
+reg [5:0] back_j;
+reg [4:0] ldlt_p_base_q;
+reg [5:0] rhs_block_base;
+reg [5:0] acc_j;
+reg signed [DATA_W-1:0] phi_cache [0:MAX_K-1];
+wire signed [GE_MAT_W-1:0] ls_rdata_a_w;
+wire [5:0] active_k_count = active_k_count_q;
+wire [5:0] active_k_last = (active_k_count == 6'd0) ? 6'd0 : (active_k_count - 1'b1);
+wire ls_rhs4_active = (state == S_ACC_PE_WAIT) ||
+                      (state == S_ACC_PE_WAIT2) ||
+                      (state == S_ACC_PE_WAIT3) ||
+                      (state == S_ACC_RHS);
+wire ls_gram4_active = (state == S_GRAM_PE_WAIT) ||
+                       (state == S_GRAM_PE_WAIT2) ||
+                       (state == S_ACC_GRAM);
+wire ls_batch4_active = busy &&
+                        ((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) &&
+                        (ls_rhs4_active || ls_gram4_active);
 wire signed [63:0] back_mul_a_w = {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w};
 wire signed [63:0] back_mul_b_w = ge_x[back_j];
 (* use_dsp = "no" *) wire signed [127:0] back_mul_p_w = $signed(back_mul_a_w) * $signed(back_mul_b_w);
@@ -371,7 +410,6 @@ wire [4:0] ls_row_a_w = back_read4_fast_start_w ? ldlt_p_base_q : ls_row_a_q;
 wire [4:0] ls_col_a_w = back_read4_fast_start_w ? back_i : ls_col_a_q;
 wire [4:0] ls_row_b_w = back_read4_fast_start_w ? ldlt_p_base_q : ls_row_b_q;
 wire [4:0] ls_col_b_w = back_read4_fast_start_w ? back_i : ls_col_b_q;
-wire signed [GE_MAT_W-1:0] ls_rdata_a_w;
 wire signed [GE_MAT_W-1:0] ls_rdata_b_w;
 wire signed [4*GE_MAT_W-1:0] ls_read4_rdata_w;
 wire signed [GE_MAT_W-1:0] ls_update_value_w;
@@ -483,7 +521,6 @@ generate
 endgenerate
 reg [4:0] ldlt_k_q;
 reg [4:0] ldlt_i_base_q;
-reg [4:0] ldlt_p_base_q;
 reg [2:0] ldlt_lane_q;
 reg [3:0] ldlt_lane_valid_q;
 reg signed [63:0] ldlt_diag_a_q;
@@ -595,17 +632,6 @@ wire signed [127:0] ldlt_wide_q16_sum =
     ($signed(wide_mul_result_flat[1*128 +: 128]) >>> 16) +
     ($signed(wide_mul_result_flat[2*128 +: 128]) >>> 16) +
     ($signed(wide_mul_result_flat[3*128 +: 128]) >>> 16);
-
-wire ls_rhs4_active = (state == S_ACC_PE_WAIT) ||
-                       (state == S_ACC_PE_WAIT2) ||
-                       (state == S_ACC_PE_WAIT3) ||
-                       (state == S_ACC_RHS);
-wire ls_gram4_active = (state == S_GRAM_PE_WAIT) ||
-                       (state == S_GRAM_PE_WAIT2) ||
-                       (state == S_ACC_GRAM);
-wire ls_batch4_active = busy &&
-                        ((active_op == OP_REFINE) || (active_op == OP_REFINE_SPARSE)) &&
-                        (ls_rhs4_active || ls_gram4_active);
 
 wire [COLS*64-1:0] rhs4_product_bus;
 assign ls_acc4_product_q_bus = wide_mul_captured_flat;
@@ -1005,9 +1031,6 @@ wire ldlt_shared_tail_last_w = (ldlt_lane_q == 3) ||
                                 {3'b000, ldlt_lane_q} + 1'b1 >=
                                 ldlt_shared_tail_limit_w);
 reg [4:0] acc_i;
-reg [5:0] acc_j;
-reg [5:0] back_i;
-reg [5:0] back_j;
 reg signed [127:0] residual_acc;
 // A residual block contains at most eight signed 24x24 products. The exact
 // block sum needs at most 51 signed bits, so keep the PE-row reduction at
@@ -1038,7 +1061,6 @@ reg residual_stream_issue_q;
 reg residual_ingress_valid_q;
 reg signed [COLS*DATA_W-1:0] residual_ingress_phi_q;
 reg signed [COLS*DATA_W-1:0] residual_ingress_coeff_q;
-reg signed [DATA_W-1:0] phi_cache [0:MAX_K-1];
 reg [IDX_W-1:0] support_cache [0:MAX_K-1];
 // Coherent sparse view of the dense x bank. LS coefficients remain resident
 // as (index,value) tuples; writeback touches only dropped and new support
@@ -1119,7 +1141,6 @@ reg [3:0] mesh_ctx_shift_block;
 reg [3:0] mesh_ctx_wait_count;
 wire [COLS*DATA_W-1:0] pe_update_block_w = mesh_ctx_commit_data;
 reg [5:0] load_i;
-reg [5:0] rhs_block_base;
 reg [1:0] corr_drain_wait_q;
 reg [IDX_W-1:0] load_support_q;
 reg [IDX_W-1:0] load_support_next_q;
@@ -1286,8 +1307,6 @@ always @(*) begin
         end
     end
 end
-wire [5:0] active_k_count = active_k_count_q;
-wire [5:0] active_k_last = (active_k_count == 6'd0) ? 6'd0 : (active_k_count - 6'd1);
 wire residual_stream_prepare_w = (state == S_RESID_PE_WAIT) && residual_stream_issue_q;
 // residual_ingress_valid_q is the registered transaction token.  Use it as
 // the datapath select as well as the issue qualifier, so the controller state
@@ -1617,6 +1636,60 @@ always @(*) begin
     wr_en = row3_wr_en;
 end
 
+// Keep the LDLT payload memories in clock-only processes.  They are payload
+// caches, not control state: their contents are only consumed after the
+// corresponding valid/phase token has been issued.  Keeping the writes out of
+// the large asynchronously-reset controller process lets Vivado infer the
+// intended distributed-RAM implementation instead of treating the arrays as
+// asynchronously reset registers.
+wire ldlt_border_preload_we = (state == S_LDL_ROW_P_WAIT) && ls_done_w;
+wire [4:0] ldlt_border_preload_addr = ldlt_p_base_q;
+wire [4*GE_MAT_W-1:0] ldlt_border_lip_wdata = {
+    ((ldlt_i_base_q + 3 < active_k_count) ?
+        ls_read4_rdata_w[3*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}}),
+    ((ldlt_i_base_q + 2 < active_k_count) ?
+        ls_read4_rdata_w[2*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}}),
+    ((ldlt_i_base_q + 1 < active_k_count) ?
+        ls_read4_rdata_w[1*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}}),
+    ((ldlt_i_base_q < active_k_count) ?
+        ls_read4_rdata_w[0*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}})
+};
+wire [GE_MAT_W-1:0] ldlt_border_lkp_wdata = ls_rdata_b_w;
+
+wire ldlt_border_mul1_cache_we =
+    ((state == S_LDL_ROW_MUL1) || (state == S_LDL_ROW_MUL2)) &&
+    border_done_q && !border_done_phase_q;
+wire [4:0] ldlt_border_mul1_cache_addr = border_done_tag_q;
+wire [4*64-1:0] ldlt_border_mul1_cache_wdata = {
+    border_result_bank3_q[border_done_tag_q[1:0]][0 +: 64],
+    border_result_bank2_q[border_done_tag_q[1:0]][0 +: 64],
+    border_result_bank1_q[border_done_tag_q[1:0]][0 +: 64],
+    border_result_bank0_q[border_done_tag_q[1:0]][0 +: 64]
+};
+
+wire ldlt_inv_d_we = (state == S_LDL_INV_DONE);
+wire [1:0] ldlt_inv_d_bank_sel = ldlt_k_q[1:0];
+wire [2:0] ldlt_inv_d_addr = ldlt_k_q[4:2];
+wire signed [63:0] ldlt_inv_d_wdata = div_result;
+
+always @(posedge clk) begin
+    if (ldlt_border_preload_we) begin
+        ldlt_border_lip_cache_q[ldlt_border_preload_addr] <= ldlt_border_lip_wdata;
+        ldlt_border_lkp_cache_q[ldlt_border_preload_addr] <= ldlt_border_lkp_wdata;
+    end
+    if (ldlt_border_mul1_cache_we)
+        ldlt_border_mul1_cache_q[ldlt_border_mul1_cache_addr] <=
+            ldlt_border_mul1_cache_wdata;
+    if (ldlt_inv_d_we) begin
+        case (ldlt_inv_d_bank_sel)
+            2'd0: ldlt_inv_d_bank0[ldlt_inv_d_addr] <= ldlt_inv_d_wdata;
+            2'd1: ldlt_inv_d_bank1[ldlt_inv_d_addr] <= ldlt_inv_d_wdata;
+            2'd2: ldlt_inv_d_bank2[ldlt_inv_d_addr] <= ldlt_inv_d_wdata;
+            default: ldlt_inv_d_bank3[ldlt_inv_d_addr] <= ldlt_inv_d_wdata;
+        endcase
+    end
+end
+
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
 rd_addr <= {MEM_AW{1'b0}};
@@ -1902,23 +1975,24 @@ case (state)
             end
             S_FACTOR_CHECK_DONE: begin
                 request_support_fingerprint_q <= factor_check_fingerprint_q;
-                if (support_relation_reuse_enable_w) begin
+                if (support_relation_border_clear_w) begin
+                    factor_k_q <= factor_k_q - 1'b1;
+                    for (gi = 0; gi < MAX_K; gi = gi + 1) begin
+                        if (gi != (factor_k_q - 1'b1))
+                            support_cache[gi] <=
+                                fc_norm_support_bus[gi*IDX_W +: IDX_W];
+                    end
+                    support_cache[factor_k_q - 1'b1] <=
+                        factor_check_unmatched_value_q;
+                    factor_border_clear_q <= 1'b1;
+                end else if (support_relation_reuse_enable_w) begin
                     factor_reuse_mode_q <= support_relation_reuse_mode_w;
                     // Commit the scanner's normalized view (config-match
                     // preload plus unmatched appends) in one shot.
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         support_cache[gi] <=
                             fc_norm_support_bus[gi*IDX_W +: IDX_W];
-                end
-                if (support_relation_border_clear_w) begin
-                    factor_k_q <= factor_k_q - 1'b1;
-                    for (gi = 0; gi < MAX_K; gi = gi + 1)
-                        support_cache[gi] <=
-                            fc_norm_support_bus[gi*IDX_W +: IDX_W];
-                    support_cache[factor_k_q - 1'b1] <=
-                        factor_check_unmatched_value_q;
-                    factor_border_clear_q <= 1'b1;
-                end else if (!support_relation_reuse_enable_w) begin
+                end else begin
                     factor_reuse_mode_q <= FACTOR_REUSE_NONE;
                     for (gi = 0; gi < MAX_K; gi = gi + 1)
                         support_cache[gi] <=
@@ -2633,12 +2707,6 @@ case (state)
                 // Keep inv(D) in the factor cache so an exact support hit can
                 // enter the solve without rerunning the divider/factor states.
                 ge_x[ldlt_k_q] <= div_result;
-                case (ldlt_k_q[1:0])
-                    2'd0: ldlt_inv_d_bank0[ldlt_k_q[4:2]] <= div_result;
-                    2'd1: ldlt_inv_d_bank1[ldlt_k_q[4:2]] <= div_result;
-                    2'd2: ldlt_inv_d_bank2[ldlt_k_q[4:2]] <= div_result;
-                    default: ldlt_inv_d_bank3[ldlt_k_q[4:2]] <= div_result;
-                endcase
                 if (ldlt_k_q + 1'b1 < active_k_count) begin
                     ldlt_i_base_q <= ldlt_k_q + 1'b1;
                     state <= S_LDL_ROW_INIT;
@@ -2703,19 +2771,6 @@ case (state)
             end
             S_LDL_ROW_P_WAIT: begin
                 if (ls_done_w) begin
-                    // Whole-word writes let Vivado map the preload cache to
-                    // distributed RAM instead of four independent FF banks.
-                    ldlt_border_lip_cache_q[ldlt_p_base_q] <= {
-                        ((ldlt_i_base_q + 3 < active_k_count) ?
-                            ls_read4_rdata_w[3*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}}),
-                        ((ldlt_i_base_q + 2 < active_k_count) ?
-                            ls_read4_rdata_w[2*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}}),
-                        ((ldlt_i_base_q + 1 < active_k_count) ?
-                            ls_read4_rdata_w[1*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}}),
-                        ((ldlt_i_base_q < active_k_count) ?
-                            ls_read4_rdata_w[0*GE_MAT_W +: GE_MAT_W] : {GE_MAT_W{1'b0}})};
-                    ldlt_border_lkp_cache_q[ldlt_p_base_q] <=
-                        ls_rdata_b_w;
                     if (ldlt_p_base_q + 1'b1 < ldlt_k_q) begin
                         ldlt_p_base_q <= ldlt_p_base_q + 1'b1;
                         // Chain p+1 from p's completion pulse.  Only one LS
@@ -2758,11 +2813,6 @@ case (state)
                     end
                 end
                 if (border_done_q && !border_done_phase_q) begin
-                    ldlt_border_mul1_cache_q[border_done_tag_q] <= {
-                        border_result_bank3_q[border_done_tag_q[1:0]][0 +: 64],
-                        border_result_bank2_q[border_done_tag_q[1:0]][0 +: 64],
-                        border_result_bank1_q[border_done_tag_q[1:0]][0 +: 64],
-                        border_result_bank0_q[border_done_tag_q[1:0]][0 +: 64]};
                     ldlt_border_mul1_complete_q <= ldlt_border_mul1_complete_q + 1'b1;
                     if (border_done_tag_q + 5'd4 >= ldlt_k_q)
                         ldlt_border_mul1_slot_ready_q[border_done_tag_q[1:0]] <= 1'b1;
@@ -2781,11 +2831,6 @@ case (state)
                     if (!border_done_phase_q) begin
                         // Late MUL1 completions are classified by their
                         // registered phase tag even after MUL2 issue begins.
-                        ldlt_border_mul1_cache_q[border_done_tag_q] <= {
-                            border_result_bank3_q[border_done_tag_q[1:0]][0 +: 64],
-                            border_result_bank2_q[border_done_tag_q[1:0]][0 +: 64],
-                            border_result_bank1_q[border_done_tag_q[1:0]][0 +: 64],
-                            border_result_bank0_q[border_done_tag_q[1:0]][0 +: 64]};
                         ldlt_border_mul1_complete_q <= ldlt_border_mul1_complete_q + 1'b1;
                         if (border_done_tag_q + 5'd4 >= ldlt_k_q)
                             ldlt_border_mul1_slot_ready_q[border_done_tag_q[1:0]] <= 1'b1;
@@ -3690,16 +3735,6 @@ case (state)
     end
 end
 endmodule
-
-
-
-
-
-
-
-
-
-
 
 
 

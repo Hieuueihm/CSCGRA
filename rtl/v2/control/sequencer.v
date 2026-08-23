@@ -1,7 +1,8 @@
 module sequencer #(
     parameter integer CTX_W  = 64,
     parameter integer CTX_AW = 6,
-    parameter integer IDX_W  = 10
+    parameter integer IDX_W  = 10,
+    parameter integer NCTX   = 64
 )(
     input  wire                 clk,
     input  wire                 rst_n,
@@ -78,11 +79,21 @@ module sequencer #(
     reg [CTX_AW-1:0] pc;
     reg [CTX_AW:0] prog_len_q;
     reg [7:0] loop_counter [0:3];
-    wire [3:0] current_uop = ctx_rdata[59:56];
+    // Two views of the fetched word.  fetched_uop reads the configmem output
+    // register (ctx_rdata) and is only valid in S_DECODE, the cycle ctx_word
+    // captures it; issued_uop reads the registered ctx_word from S_ISSUE
+    // onward.  They are identical because ctx_addr is held until S_RETIRE and
+    // configmem has a single-cycle read latency.  The S_ISSUE assertion below
+    // verifies the invariant; changing the fetch pipeline depth requires
+    // revisiting both views.
+    wire [3:0] fetched_uop = ctx_rdata[59:56];
+    wire [3:0] issued_uop = ctx_word[59:56];
     wire [3:0] current_next_ctrl = ctx_word[47:44];
     wire [CTX_AW:0] pc_offset = {1'b0, (pc - prog_base)};
     wire normal_pc_ok = (pc >= prog_base) && (pc_offset < prog_len_q) && (prog_len_q != 0);
     wire normal_pc_last = ((pc_offset + 1'b1) >= prog_len_q);
+    wire [CTX_AW:0] prog_end = {1'b0, prog_base} + prog_len;
+    wire prog_range_ok = (prog_len != 0) && (prog_end <= NCTX);
 
     wire [3:0] ctrl_op = ctx_word[43:40];
     wire [CTX_AW-1:0] ctrl_abs_pc = ctx_word[39:34];
@@ -163,17 +174,25 @@ module sequencer #(
                     S_IDLE: begin
                         busy <= 1'b0;
                         if (start) begin
-                            pc <= prog_base;
-                            prog_len_q <= prog_len;
-                            pc_dbg <= prog_base;
-                            error <= 1'b0;
-                            error_code <= ERR_NONE;
-                            converged <= 1'b0;
-                            busy <= 1'b1;
-                            for (loop_i = 0; loop_i < 4; loop_i = loop_i + 1)
-                                loop_counter[loop_i] <= 8'd0;
-                            ctx_addr <= prog_base;
-                            state <= S_FETCH_WAIT;
+                            if (!prog_range_ok) begin
+                                error <= 1'b1;
+                                error_code <= ERR_PC_RANGE;
+                                busy <= 1'b0;
+                                irq <= 1'b1;
+                                state <= S_ERROR;
+                            end else begin
+                                pc <= prog_base;
+                                prog_len_q <= prog_len;
+                                pc_dbg <= prog_base;
+                                error <= 1'b0;
+                                error_code <= ERR_NONE;
+                                converged <= 1'b0;
+                                busy <= 1'b1;
+                                for (loop_i = 0; loop_i < 4; loop_i = loop_i + 1)
+                                    loop_counter[loop_i] <= 8'd0;
+                                ctx_addr <= prog_base;
+                                state <= S_FETCH_WAIT;
+                            end
                         end
                     end
                     S_FETCH: begin
@@ -196,7 +215,7 @@ module sequencer #(
                             error <= 1'b1;
                             error_code <= ERR_CTX_VER;
                             state <= S_ERROR;
-                        end else if (current_uop == UOP_ARGMAX) begin
+                        end else if (fetched_uop == UOP_ARGMAX) begin
                             state <= S_CLEAR;
                         end else begin
                             state <= S_ISSUE;
@@ -207,7 +226,7 @@ module sequencer #(
                         state <= S_ISSUE;
                     end
                     S_ISSUE: begin
-                        if (ctx_word[59:56] == UOP_CTRL) begin
+                        if (issued_uop == UOP_CTRL) begin
                             state <= S_RETIRE;
                         end else begin
                             ctx_valid <= 1'b1;
@@ -221,7 +240,7 @@ module sequencer #(
                         end
                     end
                     S_RETIRE: begin
-                        if (ctx_word[59:56] == UOP_CTRL) begin
+                        if (issued_uop == UOP_CTRL) begin
                             if (ctrl_op == CF_LOOP) begin
                                 if (ctrl_loop_take)
                                     loop_counter[ctrl_loop_id] <= ctrl_loop_work_count - 1'b1;
@@ -279,6 +298,17 @@ module sequencer #(
             end
         end
     end
+
+`ifndef SYNTHESIS
+    // S_DECODE decides on the configmem output view while S_ISSUE/S_RETIRE
+    // decide on the registered view.  Fail loudly if a fetch-pipeline change
+    // ever breaks their equality instead of silently mis-stepping.
+    always @(posedge clk) begin
+        if (rst_n && (state == S_ISSUE) && (fetched_uop != issued_uop))
+            $error("sequencer fetch views diverged at S_ISSUE: ctx_rdata uop=%h ctx_word uop=%h",
+                   fetched_uop, issued_uop);
+    end
+`endif
 
 endmodule
 

@@ -241,6 +241,16 @@ module wide_mul_sequencer #(
                 wide_mul_issue_token_iq <= 1'b0;
                 wide_mul_issue_part1_token_iq <= 1'b0;
             end
+            default: begin
+                // Recover from an illegal/X state instead of retaining a
+                // dead FSM state with stale issue tokens asserted.
+                wide_mul_state_iq <= WIDE_MUL_IDLE;
+                wide_mul_vertical_iq <= 1'b0;
+                wide_mul_active_token_iq <= 1'b0;
+                wide_mul_vertical_token_iq <= 1'b0;
+                wide_mul_issue_token_iq <= 1'b0;
+                wide_mul_issue_part1_token_iq <= 1'b0;
+            end
             endcase
         end
     end
