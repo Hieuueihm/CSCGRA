@@ -70,8 +70,8 @@ module pe_core #(
     // its product here.  Both the local accumulator and the external wide
     // collectors consume this registered value, so controller/state decode,
     // operand selection and the 24x24 multiplier can never share a capture
-    // edge with residual/Gram/LDLT completion arithmetic.  The register has no
-    // reset intentionally; validity/control is reset and guards observation.
+    // edge with residual/Gram/LDLT completion arithmetic.  The product data is
+    // reset to zero; validity/control still guards observation.
     reg signed [ACC_W-1:0] mac_product_q;
     reg                    mac_valid_q;
     reg                    mac_clear_q;
@@ -182,23 +182,10 @@ module pe_core #(
     assign mul_product_out = mac_product_q;
     wire signed [ACC_W:0] acc_add_wide =
         {acc[ACC_W-1], acc} + {mac_product_q[ACC_W-1], mac_product_q};
-    wire signed [ACC_W:0] prod_round_ext = {prod_ext[ACC_W-1], prod_ext} + (prod_ext[ACC_W-1] ? -($signed(1) <<< (Q_FRAC_W-1)) : ($signed(1) <<< (Q_FRAC_W-1)));
-    wire signed [ACC_W-1:0] prod_q_ext = prod_round_ext >>> Q_FRAC_W;
-    wire signed [ACC_W:0] mul_q_wide = {prod_q_ext[ACC_W-1], prod_q_ext};
-    wire signed [ACC_W:0] acc_macabs_wide = {acc[ACC_W-1], acc} + {prod_ext[ACC_W-1], prod_ext};
-
-    wire signed [ACC_W-1:0] abs_a_acc_q = $signed({{(ACC_W-DATA_W){1'b0}}, abs_a_s}) <<< Q_FRAC_W;
-    wire signed [ACC_W:0] acc_norm1_wide = {acc[ACC_W-1], acc} + {abs_a_acc_q[ACC_W-1], abs_a_acc_q};
-    wire signed [ACC_W:0] acc_clear_mac_wide    =
+    wire signed [ACC_W:0] acc_clear_mac_wide =
         {mac_product_q[ACC_W-1], mac_product_q};
-    wire signed [ACC_W:0] acc_clear_macabs_wide = {prod_ext[ACC_W-1], prod_ext};
-    wire signed [ACC_W:0] acc_clear_norm1_wide  = {abs_a_acc_q[ACC_W-1], abs_a_acc_q};
-    wire [ACC_W-1:0] acc_mac_next          = sat_acc(acc_add_wide);
-    wire [ACC_W-1:0] acc_macabs_next       = sat_acc(acc_macabs_wide);
-    wire [ACC_W-1:0] acc_norm1_next        = sat_acc(acc_norm1_wide);
-    wire [ACC_W-1:0] acc_mac_clear_next    = sat_acc(acc_clear_mac_wide);
-    wire [ACC_W-1:0] acc_macabs_clear_next = sat_acc(acc_clear_macabs_wide);
-    wire [ACC_W-1:0] acc_norm1_clear_next  = sat_acc(acc_clear_norm1_wide);
+    wire [ACC_W-1:0] acc_mac_next       = sat_acc(acc_add_wide);
+    wire [ACC_W-1:0] acc_mac_clear_next = sat_acc(acc_clear_mac_wide);
 
     wire [4:0] shift_amt = imm16[4:0];
     wire       shift_right = imm16[5];
@@ -244,14 +231,10 @@ module pe_core #(
 
     // --- Combinational output mux ---
     reg [DATA_W-1:0]  comb_out;
-    reg [ACC_W-1:0]   comb_acc_next;
-    reg               comb_acc_override;
     reg [IDX_W-1:0]   comb_idx;
     reg [DATA_W-1:0]  mac_out_pipe;
 
     always @(*) begin
-        comb_acc_override = 1'b0;
-        comb_acc_next     = {ACC_W{1'b0}};
         comb_idx          = idx_a;
         mesh_ctx_result_out = {DATA_W{1'b0}};
         case (pe_op)
@@ -306,6 +289,7 @@ module pe_core #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             acc    <= {ACC_W{1'b0}};
+            mac_product_q <= {ACC_W{1'b0}};
             mac_valid_q <= 1'b0;
             mac_clear_q <= 1'b0;
             pe_out <= {DATA_W{1'b0}};
@@ -328,11 +312,8 @@ module pe_core #(
             // or multiplier is present on this accumulator feedback edge.
             if (mac_valid_q) begin
                 acc <= mac_clear_q ? acc_mac_clear_next : acc_mac_next;
-            end else if (ce) begin
-                if (acc_clear)
-                    acc <= {ACC_W{1'b0}};
-                else if (comb_acc_override)
-                    acc <= comb_acc_next;
+            end else if (ce && acc_clear) begin
+                acc <= {ACC_W{1'b0}};
             end
 
             if (ce) begin

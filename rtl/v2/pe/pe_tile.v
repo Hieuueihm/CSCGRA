@@ -250,6 +250,13 @@ module pe_tile #(
     wire [DATA_W-1:0] core_mesh_ctx_x_i = mesh_ctx_ingress_active ? mesh_ctx_x : core_mesh_ctx_x;
     wire [DATA_W-1:0] core_mesh_ctx_delta_i = mesh_ctx_ingress_active ? mesh_ctx_delta : core_mesh_ctx_delta;
     wire core_mesh_ctx_keep_i = mesh_ctx_ingress_active ? mesh_ctx_keep : core_mesh_ctx_keep;
+    // The RF write token follows the same rule as the accumulator token
+    // above: during the single-hop vertical bypass the registered copy
+    // belongs to the instruction frozen before the bypass, and ce is high
+    // every bypass clock, so the stale token would replay an RF write of the
+    // mesh/corr result on every beat.  Take the live decode instead.
+    wire [1:0] core_rf_wr_addr_i = vertical_ingress_active ? rf_wr_addr : core_rf_wr_addr;
+    wire core_rf_wr_en_i = vertical_ingress_active ? rf_wr_en : core_rf_wr_en;
     // Once correlation uses the combinational wavefront bypass, its registered
     // acc_en copy must not replay the last owner token during pipeline drain.
     wire core_acc_clear_i = vertical_ingress_active ? acc_clear : core_acc_clear;
@@ -265,7 +272,7 @@ module pe_tile #(
         .src_a(core_src_a_i), .src_b(core_src_b_i), .pe_op(core_pe_op_i), .imm16(core_imm16_i),
         .mesh_ctx_mode(core_mesh_ctx_mode_i),
         .mesh_ctx_base_idx(core_mesh_ctx_base_idx_i), .mesh_ctx_limit(core_mesh_ctx_limit_i), .mesh_ctx_threshold(core_mesh_ctx_threshold_i), .mesh_ctx_shift(core_mesh_ctx_shift_i), .mesh_ctx_x(core_mesh_ctx_x_i), .mesh_ctx_delta(core_mesh_ctx_delta_i), .mesh_ctx_keep(core_mesh_ctx_keep_i),
-        .rf_rd_addr(core_rf_rd_addr), .rf_wr_addr(core_rf_wr_addr), .rf_wr_en(core_rf_wr_en),
+        .rf_rd_addr(core_rf_rd_addr), .rf_wr_addr(core_rf_wr_addr_i), .rf_wr_en(core_rf_wr_en_i),
         .acc_clear(core_acc_clear_i), .acc_en(core_acc_en_i),
         .idx_a(core_idx_a), .idx_b(core_idx_b), .idx_out(idx_out),
         .pe_out(core_out), .mesh_ctx_result_out(core_mesh_ctx_result), .acc_out(acc_out), .mul_product_out(mul_product_out), .rf_rd_data(rf_rd_data)

@@ -10,7 +10,10 @@ module pe_cluster_4x4 #(
     parameter integer TOTAL_COLS = 8,
     parameter integer COL_OFFSET = 0,
     parameter integer DATA_W = 24,
-    parameter integer ACC_W = 48,
+    // Architectural constant matching pearray: the sparse product buses are
+    // fixed 64-bit.  This module is instantiated only by pearray, which
+    // passes ACC_W explicitly; the default mirrors the supported value.
+    parameter integer ACC_W = 64,
     parameter integer IDX_W = 10,
     parameter integer MAX_K = 16,
     parameter integer Q_FRAC_W = DATA_W - 8,
@@ -906,12 +909,32 @@ module pe_cluster_4x4 #(
                                                                (r == 1) ? mesh_keep_r1_q :
                                                                (r == 2) ? mesh_keep_r2_q : mesh_keep_r3_q;
                 wire [IDX_W-1:0] idx_self = base_idx + GLOBAL_C[IDX_W-1:0];
-                assign inN[CELL] = (r == 0) ? {DATA_W{1'b0}} : outS[(r-1)*CLUSTER_COLS+lc];
-                assign inS[CELL] = (r == ROWS-1) ? {DATA_W{1'b0}} : outN[(r+1)*CLUSTER_COLS+lc];
-                assign inE[CELL] = (lc == CLUSTER_COLS-1) ? east_boundary_data_i[r*DATA_W +: DATA_W] : outW[r*CLUSTER_COLS+(lc+1)];
-                assign inW[CELL] = (lc == 0) ? west_boundary_data_i[r*DATA_W +: DATA_W] : outE[r*CLUSTER_COLS+(lc-1)];
-                wire [IDX_W-1:0] idxE_in = (lc == CLUSTER_COLS-1) ? east_boundary_idx_i[r*IDX_W +: IDX_W] : idxW_out[r*CLUSTER_COLS+(lc+1)];
-                wire [IDX_W-1:0] idxW_in = (lc == 0) ? west_boundary_idx_i[r*IDX_W +: IDX_W] : idxE_out[r*CLUSTER_COLS+(lc-1)];
+                if (r == 0) begin : gen_n_boundary
+                    assign inN[CELL] = {DATA_W{1'b0}};
+                end else begin : gen_n_inner
+                    assign inN[CELL] = outS[(r-1)*CLUSTER_COLS+lc];
+                end
+                if (r == ROWS-1) begin : gen_s_boundary
+                    assign inS[CELL] = {DATA_W{1'b0}};
+                end else begin : gen_s_inner
+                    assign inS[CELL] = outN[(r+1)*CLUSTER_COLS+lc];
+                end
+                wire [IDX_W-1:0] idxE_in;
+                wire [IDX_W-1:0] idxW_in;
+                if (lc == CLUSTER_COLS-1) begin : gen_e_boundary
+                    assign inE[CELL] = east_boundary_data_i[r*DATA_W +: DATA_W];
+                    assign idxE_in = east_boundary_idx_i[r*IDX_W +: IDX_W];
+                end else begin : gen_e_inner
+                    assign inE[CELL] = outW[r*CLUSTER_COLS+(lc+1)];
+                    assign idxE_in = idxW_out[r*CLUSTER_COLS+(lc+1)];
+                end
+                if (lc == 0) begin : gen_w_boundary
+                    assign inW[CELL] = west_boundary_data_i[r*DATA_W +: DATA_W];
+                    assign idxW_in = west_boundary_idx_i[r*IDX_W +: IDX_W];
+                end else begin : gen_w_inner
+                    assign inW[CELL] = outE[r*CLUSTER_COLS+(lc-1)];
+                    assign idxW_in = idxE_out[r*CLUSTER_COLS+(lc-1)];
+                end
                 // Correlation is striped across all four physical rows.  Each
                 // row owns one sample slot modulo four and keeps an independent
                 // full-precision partial sum, so the stream accepts one sample

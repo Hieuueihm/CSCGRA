@@ -2,7 +2,10 @@ module pearray #(
     parameter integer ROWS   = 4,
     parameter integer COLS   = 8,
     parameter integer DATA_W = 24,
-    parameter integer ACC_W  = 48,
+    // Architectural constant: the corr_acc_bus/sparse_rhs_product_bus
+    // packing below slices [63:0] directly and the sparse kernel engine
+    // consumes fixed 64-bit products.  See the guard after the localparams.
+    parameter integer ACC_W  = 64,
     parameter integer CTX_W  = 64,
     parameter integer SCALAR_W = 56,
     parameter integer MEM_AW = 10,
@@ -115,6 +118,17 @@ module pearray #(
     localparam CLUSTER_COUNT = 2;
     localparam CC_WEST_COL = CLUSTER_COLS - 1;
     localparam CC_EAST_COL = CLUSTER_COLS;
+
+`ifndef SYNTHESIS
+    // ACC_W is not a free knob: the 64-bit correlation/sparse product bus
+    // contract is hard-coded in this module's output packing and in the
+    // sparse kernel engine.  The stale 48-bit CGRA-era default never worked;
+    // fail loudly on any future misconfiguration instead of slicing x's.
+    initial begin
+        if (ACC_W != 64)
+            $error("pearray ACC_W must be 64 (64-bit corr/product bus contract), got %0d", ACC_W);
+    end
+`endif
 
     wire [DATA_W-1:0] inN  [0:CELLS-1];
     wire [DATA_W-1:0] inS  [0:CELLS-1];
@@ -395,6 +409,20 @@ module pearray #(
             wire signed [65:0] corr_sum_all =
                 $signed({corr_sum01[64], corr_sum01}) +
                 $signed({corr_sum23[64], corr_sum23});
+            // The four-row correlation sum needs 66 bits; the controller
+            // consumes a 64-bit word.  The truncation is exact for every
+            // supported configuration (Q16 products of 24-bit operands
+            // accumulated over M <= 64 samples stay far inside 64 bits), and
+            // saturating here would only lengthen this output cone.  The
+            // simulation check below guards the assumption instead.
+`ifndef SYNTHESIS
+            always @(posedge clk) begin
+                if (rst_n && ((corr_sum_all[65] != corr_sum_all[63]) ||
+                              (corr_sum_all[64] != corr_sum_all[63])))
+                    $error("pearray: corr_sum_all overflowed 64 bits for column %0d (sum=%h)",
+                           c, corr_sum_all);
+            end
+`endif
             assign reduce_data[c*DATA_W +: DATA_W] = tile_out[(ROWS-1)*COLS+c];
             assign acc_data[c*ACC_W +: ACC_W]      = tile_acc[(ROWS-1)*COLS+c];
             assign sparse_rhs_product_bus[c*64 +: 64] = (sparse_op == 4'd3) ?
@@ -407,7 +435,13 @@ module pearray #(
 
     generate
         for (c = 0; c < COLS; c = c + 1) begin : gen_mesh_ctx_commit_data
-            assign mesh_ctx_commit_data[c*DATA_W +: DATA_W] = (c < CLUSTER_COLS) ? cluster0_mesh_ctx_data_bus[(3*CLUSTER_COLS+c)*DATA_W +: DATA_W] : cluster1_mesh_ctx_data_bus[(3*CLUSTER_COLS+(c-CLUSTER_COLS))*DATA_W +: DATA_W];
+            if (c < CLUSTER_COLS) begin : gen_mesh_commit_cluster0
+                assign mesh_ctx_commit_data[c*DATA_W +: DATA_W] =
+                    cluster0_mesh_ctx_data_bus[(3*CLUSTER_COLS+c)*DATA_W +: DATA_W];
+            end else begin : gen_mesh_commit_cluster1
+                assign mesh_ctx_commit_data[c*DATA_W +: DATA_W] =
+                    cluster1_mesh_ctx_data_bus[(3*CLUSTER_COLS+(c-CLUSTER_COLS))*DATA_W +: DATA_W];
+            end
         end
     endgenerate
     // v3 result latch: argmax tree lands at column 0 of last row
