@@ -1,8 +1,8 @@
 param(
     [ValidateSet("v1", "v2")]
     [string]$RtlVersion = "v2",
-    [int[]]$Cases = @(0, 1, 2, 3, 4, 5, 6, 7),
-    [int[]]$Algorithms = @(),
+    [string]$Cases = "0,1,2,3,4,5,6,7",
+    [string]$Algorithms = "",
     [switch]$ProfileStates,
     [switch]$PhaseTrace,
     [switch]$PerIteration,
@@ -19,6 +19,11 @@ Set-StrictMode -Version Latest
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $configPath = Join-Path $repoRoot "config\rtl-$RtlVersion.json"
 $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+# Parse into NEW variables: assigning an array back into the [string]-typed
+# $Cases/$Algorithms parameters coerces it to a string on Windows PowerShell
+# 5.1 (e.g. @(1) becomes "1"), which corrupts the run selector.
+$caseList = @($Cases -split '[,;\s]+' | Where-Object { $_ -ne "" } | ForEach-Object { [int]$_ })
+$algorithmFilter = @($Algorithms -split '[,;\s]+' | Where-Object { $_ -ne "" } | ForEach-Object { [int]$_ })
 $rtlFileList = Join-Path $repoRoot ($config.rtl_filelist -replace "/", "\")
 $rtlRoot = Split-Path -Parent $rtlFileList
 $verificationRoot = Join-Path $repoRoot ($config.verification_root -replace "/", "\")
@@ -73,8 +78,8 @@ $metadata = [ordered]@{
     run_id = $RunId
     git_commit = $gitCommit
     testbench = $config.default_testbench
-    cases = @($Cases)
-    algorithms = @($Algorithms)
+    cases = @($caseList)
+    algorithms = @($algorithmFilter)
     profile_states = $ProfileStates.IsPresent
     phase_trace = $PhaseTrace.IsPresent
     per_iteration = $PerIteration.IsPresent
@@ -123,8 +128,8 @@ try {
     }
 
     $rows = @()
-    foreach ($case in $Cases) {
-        $algorithmList = if ($Algorithms.Count -eq 0) { @(-1) } else { $Algorithms }
+    foreach ($case in $caseList) {
+        $algorithmList = if (@($algorithmFilter).Count -eq 0) { @(-1) } else { @($algorithmFilter) }
         foreach ($algorithm in $algorithmList) {
             $allAlgorithms = $algorithm -eq -1
             $suffix = if ($allAlgorithms) { "all" } else { "alg$algorithm" }
