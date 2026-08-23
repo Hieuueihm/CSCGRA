@@ -3,6 +3,7 @@ module csr_regs #(
     parameter integer AXIL_DW = 32,
     parameter integer CTX_W   = 64,
     parameter integer CTX_AW  = 6,
+    parameter integer NCTX    = 64,
     parameter integer IDX_W   = 10,
     parameter integer DATA_W  = 24,
     parameter integer Q_FRAC_W = DATA_W - 8
@@ -69,6 +70,7 @@ module csr_regs #(
     output reg  [CTX_AW-1:0]    cfg_wr_addr,
     output reg                  cfg_wr_word,
     output reg  [AXIL_DW-1:0]   cfg_wr_data,
+    output reg  [AXIL_DW/8-1:0] cfg_wr_strb,
 
     output reg                  cfg_dbg_rd_en,
     output reg  [CTX_AW-1:0]    cfg_dbg_rd_addr,
@@ -109,21 +111,47 @@ module csr_regs #(
     localparam [AXIL_AW-1:0] A_DENSE_DAMP = 12'h06C;
     localparam [AXIL_AW-1:0] A_MU_SHIFT   = 12'h070;
     localparam [AXIL_AW-1:0] A_CTX_BASE   = 12'h100;
+    localparam integer CTX_WINDOW_BYTES = NCTX * 8;
     localparam [DATA_W-1:0] Q_ONE  = {{(DATA_W-Q_FRAC_W-1){1'b0}}, 1'b1, {Q_FRAC_W{1'b0}}};
     localparam [DATA_W-1:0] Q_HALF = {{(DATA_W-Q_FRAC_W){1'b0}}, 1'b1, {(Q_FRAC_W-1){1'b0}}};
 
-    assign s_axi_awready = !s_axi_bvalid;
-    assign s_axi_wready  = !s_axi_bvalid;
+    // AXI-Lite address and write-data channels are independent.  Keep one
+    // pending item per channel so a master may present AW and W in different
+    // cycles without losing either half of the transaction.
+    reg                  aw_pending_q;
+    reg [AXIL_AW-1:0]    awaddr_q;
+    reg                  w_pending_q;
+    reg [AXIL_DW-1:0]    wdata_q;
+    reg [AXIL_DW/8-1:0]  wstrb_q;
+    wire aw_fire = s_axi_awvalid && s_axi_awready;
+    wire w_fire  = s_axi_wvalid  && s_axi_wready;
+    wire wr_have_aw = aw_pending_q || aw_fire;
+    wire wr_have_w  = w_pending_q  || w_fire;
+    wire wr_commit  = !s_axi_bvalid && wr_have_aw && wr_have_w;
+    wire [AXIL_AW-1:0] wr_addr_eff = aw_pending_q ? awaddr_q : s_axi_awaddr;
+    wire [AXIL_DW-1:0] wr_data_eff = w_pending_q ? wdata_q : s_axi_wdata;
+    wire [AXIL_DW/8-1:0] wr_strb_eff = w_pending_q ? wstrb_q : s_axi_wstrb;
+
+    reg                  ctx_rd_pending_q;
+    reg [1:0]            ctx_rd_wait_q;
+    reg                  ctx_rd_word_q;
+
+    assign s_axi_awready = !s_axi_bvalid && !aw_pending_q;
+    assign s_axi_wready  = !s_axi_bvalid && !w_pending_q;
     assign s_axi_bresp   = 2'b00;
-    assign s_axi_arready = !s_axi_rvalid;
+    assign s_axi_arready = !s_axi_rvalid && !ctx_rd_pending_q;
     assign s_axi_rresp   = 2'b00;
 
-    wire wr_fire = s_axi_awvalid && s_axi_wvalid && s_axi_awready && s_axi_wready;
     wire rd_fire = s_axi_arvalid && s_axi_arready;
-    wire ctx_addr_hit_wr = (s_axi_awaddr >= A_CTX_BASE);
-    wire ctx_addr_hit_rd = (s_axi_araddr >= A_CTX_BASE);
-    wire [CTX_AW-1:0] ctx_wr_index = (s_axi_awaddr - A_CTX_BASE) >> 3;
-    wire ctx_wr_word = s_axi_awaddr[2];
+    // Context entries are two 32-bit words and must be naturally aligned.
+    wire ctx_addr_hit_wr = (wr_addr_eff >= A_CTX_BASE) &&
+                           (wr_addr_eff < (A_CTX_BASE + CTX_WINDOW_BYTES)) &&
+                           (wr_addr_eff[1:0] == 2'b00);
+    wire ctx_addr_hit_rd = (s_axi_araddr >= A_CTX_BASE) &&
+                           (s_axi_araddr < (A_CTX_BASE + CTX_WINDOW_BYTES)) &&
+                           (s_axi_araddr[1:0] == 2'b00);
+    wire [CTX_AW-1:0] ctx_wr_index = (wr_addr_eff - A_CTX_BASE) >> 3;
+    wire ctx_wr_word = wr_addr_eff[2];
     wire [CTX_AW-1:0] ctx_rd_index = (s_axi_araddr - A_CTX_BASE) >> 3;
     wire ctx_rd_word = s_axi_araddr[2];
 
@@ -158,8 +186,17 @@ module csr_regs #(
             cfg_wr_addr <= {CTX_AW{1'b0}};
             cfg_wr_word <= 1'b0;
             cfg_wr_data <= {AXIL_DW{1'b0}};
+            cfg_wr_strb <= {(AXIL_DW/8){1'b0}};
             cfg_dbg_rd_en <= 1'b0;
             cfg_dbg_rd_addr <= {CTX_AW{1'b0}};
+            aw_pending_q <= 1'b0;
+            awaddr_q <= {AXIL_AW{1'b0}};
+            w_pending_q <= 1'b0;
+            wdata_q <= {AXIL_DW{1'b0}};
+            wstrb_q <= {(AXIL_DW/8){1'b0}};
+            ctx_rd_pending_q <= 1'b0;
+            ctx_rd_wait_q <= 2'd0;
+            ctx_rd_word_q <= 1'b0;
             s_axi_bvalid <= 1'b0;
             s_axi_rvalid <= 1'b0;
             s_axi_rdata <= {AXIL_DW{1'b0}};
@@ -184,60 +221,71 @@ module csr_regs #(
             if (s_axi_rvalid && s_axi_rready)
                 s_axi_rvalid <= 1'b0;
 
-            if (wr_fire) begin
+            if (wr_commit) begin
                 s_axi_bvalid <= 1'b1;
+                aw_pending_q <= 1'b0;
+                w_pending_q <= 1'b0;
                 if (ctx_addr_hit_wr) begin
                     cfg_wr_en <= 1'b1;
                     cfg_wr_addr <= ctx_wr_index;
                     cfg_wr_word <= ctx_wr_word;
-                    cfg_wr_data <= s_axi_wdata;
+                    cfg_wr_data <= wr_data_eff;
+                    cfg_wr_strb <= wr_strb_eff;
                 end else begin
-                    case (s_axi_awaddr)
+                    case (wr_addr_eff)
                         A_CTRL: begin
-                            start_pulse <= s_axi_wdata[0];
-                            soft_reset_pulse <= s_axi_wdata[1];
-                            clear_error_pulse <= s_axi_wdata[2];
-                            if (s_axi_wdata[0] || s_axi_wdata[2]) begin
+                            start_pulse <= wr_data_eff[0];
+                            soft_reset_pulse <= wr_data_eff[1];
+                            clear_error_pulse <= wr_data_eff[2];
+                            if (wr_data_eff[0] || wr_data_eff[2]) begin
                                 done_latched <= 1'b0;
                                 error_latched <= 1'b0;
                                 error_code_latched <= 4'd0;
                             end
                         end
-                        A_M_SIZE:     m_size <= s_axi_wdata[IDX_W-1:0];
-                        A_N_SIZE:     n_size <= s_axi_wdata[IDX_W-1:0];
-                        A_K_PARAM:    k_param <= s_axi_wdata[7:0];
-                        A_Y_DDR:      y_ddr_addr <= s_axi_wdata;
-                        A_X_DDR:      x_ddr_addr <= s_axi_wdata;
-                        A_SEED:       seed <= s_axi_wdata;
-                        A_PHI_SCALE:  phi_scale_q8_8 <= s_axi_wdata[DATA_W-1:0];
-                        A_MAX_ITER:   max_iter <= s_axi_wdata[15:0];
-                        A_TOL:        tol_sq_q16_16 <= s_axi_wdata;
-                        A_FLAGS:      flags <= s_axi_wdata;
-                        A_DENSE_STEP: dense_step_q16_16 <= s_axi_wdata;
-                        A_DENSE_LAMBDA: dense_lambda_q8_8 <= s_axi_wdata[DATA_W-1:0];
-                        A_DENSE_RHO:  dense_rho_q8_8 <= s_axi_wdata[DATA_W-1:0];
-                        A_DENSE_THETA: dense_theta_q8_8 <= s_axi_wdata[DATA_W-1:0];
-                        A_DENSE_DAMP: dense_damp_q8_8 <= s_axi_wdata[DATA_W-1:0];
-                        A_MU_SHIFT:   mu_shift_cfg <= s_axi_wdata[3:0];
-                        A_PROG_BASE:  prog_base <= s_axi_wdata[CTX_AW-1:0];
-                        A_PROG_LEN:   prog_len <= s_axi_wdata[CTX_AW:0];
+                        A_M_SIZE:     m_size <= wr_data_eff[IDX_W-1:0];
+                        A_N_SIZE:     n_size <= wr_data_eff[IDX_W-1:0];
+                        A_K_PARAM:    k_param <= wr_data_eff[7:0];
+                        A_Y_DDR:      y_ddr_addr <= wr_data_eff;
+                        A_X_DDR:      x_ddr_addr <= wr_data_eff;
+                        A_SEED:       seed <= wr_data_eff;
+                        A_PHI_SCALE:  phi_scale_q8_8 <= wr_data_eff[DATA_W-1:0];
+                        A_MAX_ITER:   max_iter <= wr_data_eff[15:0];
+                        A_TOL:        tol_sq_q16_16 <= wr_data_eff;
+                        A_FLAGS:      flags <= wr_data_eff;
+                        A_DENSE_STEP: dense_step_q16_16 <= wr_data_eff;
+                        A_DENSE_LAMBDA: dense_lambda_q8_8 <= wr_data_eff[DATA_W-1:0];
+                        A_DENSE_RHO:  dense_rho_q8_8 <= wr_data_eff[DATA_W-1:0];
+                        A_DENSE_THETA: dense_theta_q8_8 <= wr_data_eff[DATA_W-1:0];
+                        A_DENSE_DAMP: dense_damp_q8_8 <= wr_data_eff[DATA_W-1:0];
+                        A_MU_SHIFT:   mu_shift_cfg <= wr_data_eff[3:0];
+                        A_PROG_BASE:  prog_base <= wr_data_eff[CTX_AW-1:0];
+                        A_PROG_LEN:   prog_len <= wr_data_eff[CTX_AW:0];
                         default: begin
                         end
                     endcase
                 end
+            end else begin
+                if (aw_fire) begin
+                    aw_pending_q <= 1'b1;
+                    awaddr_q <= s_axi_awaddr;
+                end
+                if (w_fire) begin
+                    w_pending_q <= 1'b1;
+                    wdata_q <= s_axi_wdata;
+                    wstrb_q <= s_axi_wstrb;
+                end
             end
 
             if (rd_fire) begin
-                s_axi_rvalid <= 1'b1;
                 if (ctx_addr_hit_rd) begin
                     cfg_dbg_rd_en <= 1'b1;
                     cfg_dbg_rd_addr <= ctx_rd_index;
-                    case (ctx_rd_word)
-                        1'b0: s_axi_rdata <= cfg_dbg_rd_data[31:0];
-                        1'b1: s_axi_rdata <= cfg_dbg_rd_data[63:32];
-                        default: s_axi_rdata <= 32'd0;
-                    endcase
+                    ctx_rd_word_q <= ctx_rd_word;
+                    ctx_rd_pending_q <= 1'b1;
+                    ctx_rd_wait_q <= 2'd2;
                 end else begin
+                    s_axi_rvalid <= 1'b1;
                     case (s_axi_araddr)
                         A_STATUS: s_axi_rdata <= {24'd0, error_code_latched, error_latched, converged, busy, done_latched};
                         A_RESERVED_008: s_axi_rdata <= 32'd0;
@@ -273,6 +321,25 @@ module csr_regs #(
                         A_PHASE_VECTOR: s_axi_rdata <= phase_cycle_vector;
                         default: s_axi_rdata <= 32'd0;
                     endcase
+                end
+            end
+
+            // configmem has a registered synchronous debug read.  The read
+            // request is observed by configmem one cycle after cfg_dbg_rd_en
+            // is asserted, so wait one additional cycle before forming the
+            // AXI-Lite response from cfg_dbg_rd_data.
+            if (ctx_rd_pending_q) begin
+                if (ctx_rd_wait_q != 0)
+                    ctx_rd_wait_q <= ctx_rd_wait_q - 1'b1;
+                if (ctx_rd_wait_q == 1) begin
+                    s_axi_rvalid <= 1'b1;
+                    case (ctx_rd_word_q)
+                        1'b0: s_axi_rdata <= cfg_dbg_rd_data[31:0];
+                        1'b1: s_axi_rdata <= cfg_dbg_rd_data[63:32];
+                        default: s_axi_rdata <= 32'd0;
+                    endcase
+                    ctx_rd_pending_q <= 1'b0;
+                    ctx_rd_wait_q <= 2'd0;
                 end
             end
         end

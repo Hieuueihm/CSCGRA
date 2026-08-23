@@ -10,6 +10,7 @@ module configmem #(
     input  wire [CTX_AW-1:0]    wr_addr,
     input  wire                 wr_word,
     input  wire [31:0]          wr_data,
+    input  wire [3:0]           wr_strb,
 
     input  wire [CTX_AW-1:0]    seq_addr,
     output wire [CTX_W-1:0]     seq_ctx,
@@ -25,10 +26,17 @@ module configmem #(
 
     always @(posedge clk) begin
         if (wr_en) begin
-            if (wr_word)
-                mem_hi[wr_addr] <= wr_data;
-            else
-                mem_lo[wr_addr] <= wr_data;
+            if (wr_word) begin
+                if (wr_strb[0]) mem_hi[wr_addr][7:0]   <= wr_data[7:0];
+                if (wr_strb[1]) mem_hi[wr_addr][15:8]  <= wr_data[15:8];
+                if (wr_strb[2]) mem_hi[wr_addr][23:16] <= wr_data[23:16];
+                if (wr_strb[3]) mem_hi[wr_addr][31:24] <= wr_data[31:24];
+            end else begin
+                if (wr_strb[0]) mem_lo[wr_addr][7:0]   <= wr_data[7:0];
+                if (wr_strb[1]) mem_lo[wr_addr][15:8]  <= wr_data[15:8];
+                if (wr_strb[2]) mem_lo[wr_addr][23:16] <= wr_data[23:16];
+                if (wr_strb[3]) mem_lo[wr_addr][31:24] <= wr_data[31:24];
+            end
         end
 
         seq_ctx_q <= {mem_hi[seq_addr], mem_lo[seq_addr]};
