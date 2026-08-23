@@ -62,6 +62,12 @@ module sequencer #(
     localparam [3:0] ERR_PC_RANGE = 4'd2;
     localparam [3:0] ERR_DMA      = 4'd3;
     localparam [3:0] ERR_SCALAR   = 4'd4;
+    localparam [3:0] ERR_TIMEOUT  = 4'd5;
+    // S_WAIT watchdog bound.  The longest legitimate single context op is an
+    // LDLT factorization at K16 (~5e4 clocks); 2**26 clocks at 100 MHz is
+    // >0.6 s, far beyond any legal wait, so firing can only mean a lost
+    // completion pulse or a wedged engine.
+    localparam [26:0] WAIT_TIMEOUT_LIMIT = 27'h400_0000;
 
     localparam [3:0] UOP_ARGMAX    = 4'd5;
     localparam [3:0] UOP_CTRL      = 4'd9;
@@ -76,6 +82,8 @@ module sequencer #(
     localparam [3:0] CF_COND_JUMP_REL  = 4'd6;
 
     reg [3:0] state;
+    // Counts consecutive S_WAIT clocks; see WAIT_TIMEOUT_LIMIT.
+    reg [26:0] wait_timeout_cnt;
     reg [CTX_AW-1:0] pc;
     reg [CTX_AW:0] prog_len_q;
     reg [7:0] loop_counter [0:3];
@@ -152,6 +160,7 @@ module sequencer #(
             converged <= 1'b0;
             error <= 1'b0;
             error_code <= ERR_NONE;
+            wait_timeout_cnt <= 27'd0;
             pc_dbg <= {CTX_AW{1'b0}};
             for (loop_i = 0; loop_i < 4; loop_i = loop_i + 1)
                 loop_counter[loop_i] <= 8'd0;
@@ -173,6 +182,7 @@ module sequencer #(
                 case (state)
                     S_IDLE: begin
                         busy <= 1'b0;
+                        wait_timeout_cnt <= 27'd0;
                         if (start) begin
                             if (!prog_range_ok) begin
                                 error <= 1'b1;
@@ -235,7 +245,18 @@ module sequencer #(
                         end
                     end
                     S_WAIT: begin
-                        if (ctx_done) begin
+                        // Watchdog: a lost completion pulse or a wedged
+                        // engine would otherwise hang the program forever.
+                        // Any legal op finishes orders of magnitude below
+                        // WAIT_TIMEOUT_LIMIT, so this never fires in a
+                        // healthy run and the cycle schedule is unchanged.
+                        wait_timeout_cnt <= wait_timeout_cnt + 1'b1;
+                        if (wait_timeout_cnt >= WAIT_TIMEOUT_LIMIT) begin
+                            error <= 1'b1;
+                            error_code <= ERR_TIMEOUT;
+                            state <= S_ERROR;
+                        end else if (ctx_done) begin
+                            wait_timeout_cnt <= 27'd0;
                             state <= S_RETIRE;
                         end
                     end
