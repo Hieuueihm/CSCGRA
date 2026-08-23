@@ -50,6 +50,9 @@ module pearray #(
     input  wire [COLS*DATA_W-1:0]     spm_a_rdata,
     input  wire [COLS*DATA_W-1:0]     spm_b_rdata,
     input  wire [COLS*DATA_W-1:0]     phi_bus,
+    // Pair-mode second-half correlation Phi lanes (16-column super-blocks);
+    // registered down to PE rows 2/3 inside each cluster.
+    input  wire [COLS*DATA_W-1:0]     phi2_bus,
     input  wire [COLS*DATA_W-1:0]     scalar_bus,
 
     input  wire                       sparse_active,
@@ -57,6 +60,12 @@ module pearray #(
     input  wire                       sparse_clear,
     input  wire                       corr_acc_clear,
     input  wire                       corr_acc_en,
+    // corr_pair_mode: rows {0,1} own super-block columns 0-7 and rows {2,3}
+    // own columns 8-15, sample ownership by slot parity.  corr_half_sel
+    // picks which half's sums corr_acc_bus exposes during the two-phase
+    // super-block drain.  Both are stable while a correlation block runs.
+    input  wire                       corr_pair_mode,
+    input  wire                       corr_half_sel,
     input  wire [3:0]                 sparse_op,
     input  wire [7:0]                 sparse_k_active,
     input  wire                       ls_wide_mul_active,
@@ -252,9 +261,10 @@ module pearray #(
         .spm_a_rdata(spm_a_rdata[0 +: CLUSTER_COLS*DATA_W]),
         .spm_b_rdata(spm_b_rdata[0 +: CLUSTER_COLS*DATA_W]),
         .phi_bus(phi_bus[0 +: CLUSTER_COLS*DATA_W]),
+        .phi2_bus(phi2_bus[0 +: CLUSTER_COLS*DATA_W]),
         .scalar_bus(scalar_bus[0 +: CLUSTER_COLS*DATA_W]),
         .sparse_active(sparse_active), .sparse_step_active(sparse_step_active), .sparse_op(sparse_op), .sparse_k_active(sparse_k_active),
-        .corr_acc_clear(corr_acc_clear), .corr_acc_en(corr_acc_en), .corr_slot(corr_slot_q),
+        .corr_acc_clear(corr_acc_clear), .corr_acc_en(corr_acc_en), .corr_slot(corr_slot_q), .corr_pair_mode(corr_pair_mode),
         .ls_wide_mul_active(ls_wide_mul_active),
         .ls_wide_operand_valid(ls_wide_operand_valid),
         .ls_wide_vertical_active(ls_wide_vertical_active),
@@ -302,9 +312,10 @@ module pearray #(
         .spm_a_rdata(spm_a_rdata[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W]),
         .spm_b_rdata(spm_b_rdata[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W]),
         .phi_bus(phi_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W]),
+        .phi2_bus(phi2_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W]),
         .scalar_bus(scalar_bus[CLUSTER_COLS*DATA_W +: CLUSTER_COLS*DATA_W]),
         .sparse_active(sparse_active), .sparse_step_active(sparse_step_active), .sparse_op(sparse_op), .sparse_k_active(sparse_k_active),
-        .corr_acc_clear(corr_acc_clear), .corr_acc_en(corr_acc_en), .corr_slot(corr_slot_q),
+        .corr_acc_clear(corr_acc_clear), .corr_acc_en(corr_acc_en), .corr_slot(corr_slot_q), .corr_pair_mode(corr_pair_mode),
         .ls_wide_mul_active(ls_wide_mul_active),
         .ls_wide_operand_valid(ls_wide_operand_valid),
         .ls_wide_vertical_active(ls_wide_vertical_active),
@@ -409,6 +420,12 @@ module pearray #(
             wire signed [65:0] corr_sum_all =
                 $signed({corr_sum01[64], corr_sum01}) +
                 $signed({corr_sum23[64], corr_sum23});
+            // Classic mode sums all four sample-mod-4 partials.  Pair mode
+            // reads one half at a time: rows {0,1} hold the first eight
+            // super-block columns (split by sample parity) and rows {2,3}
+            // the second eight, so each half needs a single 64-bit add.
+            wire signed [64:0] corr_half_sel_sum =
+                corr_half_sel ? corr_sum23 : corr_sum01;
             // The four-row correlation sum needs 66 bits; the controller
             // consumes a 64-bit word.  The truncation is exact for every
             // supported configuration (Q16 products of 24-bit operands
@@ -427,7 +444,8 @@ module pearray #(
             assign acc_data[c*ACC_W +: ACC_W]      = tile_acc[(ROWS-1)*COLS+c];
             assign sparse_rhs_product_bus[c*64 +: 64] = (sparse_op == 4'd3) ?
                 sparse_product_comb_bus[c*ACC_W +: 64] : tile_acc[c][63:0];
-            assign corr_acc_bus[c*64 +: 64] = corr_sum_all[63:0];
+            assign corr_acc_bus[c*64 +: 64] = corr_pair_mode ? corr_half_sel_sum[63:0] :
+                                                               corr_sum_all[63:0];
             assign spm_wdata[c*DATA_W +: DATA_W]   = tile_out[(ROWS-1)*COLS+c];
             assign spm_wen[c] = ctx_valid && spm_wr_en && lane_valid[c];
         end

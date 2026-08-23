@@ -51,6 +51,11 @@ module sparse_loop_controller #(
     input wire [IDX_W-1:0] last_result_idx,
     output reg [COLS*DATA_W-1:0] pe_rhs_phi_bus,
     output reg [COLS*DATA_W-1:0] pe_rhs_y_bus,
+    // Pair-mode correlation extensions: second-half Phi lanes and the
+    // run-stable pair/super-block handshake to the PE array.
+    output reg [COLS*DATA_W-1:0] pe_rhs_phi2_bus,
+    output wire corr_pair_mode,
+    output wire corr_half_sel,
     output reg pe_rhs_active,
     output wire pe_sparse_clear,
     output reg pe_corr_acc_clear,
@@ -1069,6 +1074,8 @@ reg [IDX_W-1:0] corr_row;
 reg [IDX_W-1:0] corr_scan_col;
 reg signed [63:0] corr_acc;
 reg [COLS*DATA_W-1:0] corr_phi_lane;
+// Second-half Phi lanes for pair-mode 16-column super-blocks.
+reg [COLS*DATA_W-1:0] corr_phi2_lane;
 reg [COLS*DATA_W-1:0] corr_y_block;
 reg [COLS*DATA_W-1:0] corr_y_next_block;
 reg corr_stream_valid_q;
@@ -1080,6 +1087,10 @@ reg [5:0] refine_stream_count_q;
 reg [31:0] corr_block_state;
 reg [31:0] corr_row_state;
 reg [31:0] corr_row_next_state;
+// LFSR state of the next sample at super-block column corr_col+COLS; always
+// the eight-column jump of corr_row_next_state and advanced by the same
+// per-sample row jump (Galois jumps commute).
+reg [31:0] corr_row_next2_state;
 reg signed [DATA_W-1:0] iht_x_value;
 reg keep_x;
 reg [COLS*DATA_W-1:0] mesh_ctx_x_block;
@@ -1117,6 +1128,11 @@ reg [COLS-1:0] row2_prune_keep_mask;
 wire [MAX_K*IDX_W-1:0] row2_support_flat_w;
 wire corr_active_op_w = (active_op == OP_CORR) ||
                         (active_op == OP_CORR_UPDATE);
+// Pure correlation runs stream scores to top-K and use 16-column pair-mode
+// super-blocks (two row pairs).  The fused score+update opcode keeps the
+// classic eight-column mesh schedule.
+wire corr_super_w = (active_op == OP_CORR);
+wire [IDX_W-1:0] corr_stride_w = corr_super_w ? (COLS*2) : COLS;
 wire corr_request_op_w = (op_sel == OP_CORR) ||
                          (op_sel == OP_CORR_UPDATE);
 wire corr_pe_state_w = (state == S_PRIME) ||
@@ -1125,14 +1141,16 @@ wire corr_pe_state_w = (state == S_PRIME) ||
                        (state == S_CORR_LATCH) ||
                        (state == S_CORR_ACC) ||
                        (state == S_CORR_PE_WAIT) ||
-                       (state == S_CORR_WRITE);
+                       (state == S_CORR_WRITE) ||
+                       (state == S_CORR_WRITE_H1);
 reg [IDX_W-1:0] wx_target_idx_q;
 reg [DATA_W-1:0] wx_value_q;
 reg [DATA_W-1:0] row3_selected_value;
 reg [COLS*MEM_AW-1:0] row3_wr_addr;
 reg [COLS*DATA_W-1:0] row3_wr_data;
 reg [COLS-1:0] row3_wr_en;
-wire row3_corr_mode_w = corr_active_op_w && (state == S_CORR_WRITE);
+wire row3_corr_mode_w = corr_active_op_w && ((state == S_CORR_WRITE) ||
+                                             (state == S_CORR_WRITE_H1));
 wire row3_scalar_write_en_w = ((state == S_WX) || (state == S_WX_COMMIT) ||
                                    (state == S_WX_CLEAR) ||
                                    (state == S_WR_MESH_COMMIT) ||
@@ -1415,6 +1433,10 @@ assign corr_stream_valid = corr_stream_valid_q;
 assign corr_stream_done = corr_stream_done_q;
 assign corr_stream_base_idx = corr_stream_base_idx_q;
 assign corr_stream_lane_valid = corr_stream_lane_valid_q;
+// Pair-mode handshake: active for whole pure-OP_CORR runs; the half select
+// steers the pearray output mux during the two-phase super-block drain.
+assign corr_pair_mode = corr_super_w;
+assign corr_half_sel = (state == S_CORR_WRITE_H1);
 assign corr_stream_data = corr_stream_data_q;
 
 
@@ -1426,7 +1448,11 @@ always @(*) begin
     // not insert a bubble in the one-row-per-clock stream.
     pe_corr_acc_clear = (start && corr_request_op_w) ||
                         (busy && corr_active_op_w &&
-                         ((state == S_CORR_INIT) || (state == S_CORR_WRITE)));
+                         ((state == S_CORR_INIT) ||
+                          // In pair mode the accumulators must survive the
+                          // half-0 write; clear on the final half-1 write.
+                          ((state == S_CORR_WRITE) && !corr_super_w) ||
+                          (state == S_CORR_WRITE_H1)));
     // Correlation accepts one row per clock in S_CORR_ACC.  Four PE rows own
     // round-robin partial sums; S_CORR_PE_WAIT is only the final pipe drain.
     pe_corr_acc_en = busy && corr_active_op_w && (state == S_CORR_ACC);
@@ -1444,6 +1470,7 @@ always @(*) begin
                      (corr_active_op_w && (state == S_CORR_ACC)));
     pe_rhs_phi_bus = {COLS*DATA_W{1'b0}};
     pe_rhs_y_bus = {COLS*DATA_W{1'b0}};
+    pe_rhs_phi2_bus = {COLS*DATA_W{1'b0}};
     for (rhs_lane = 0; rhs_lane < COLS; rhs_lane = rhs_lane + 1) begin
         pe_rhs_phi_bus[rhs_lane*DATA_W +: DATA_W] =
             residual_ingress_valid_q ?
@@ -1451,6 +1478,9 @@ always @(*) begin
             (corr_active_op_w ? corr_phi_lane[rhs_lane*DATA_W +: DATA_W] :
                 (((rhs_block_base + rhs_lane) < active_k_count) ?
                     phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}));
+        pe_rhs_phi2_bus[rhs_lane*DATA_W +: DATA_W] =
+            corr_active_op_w ? corr_phi2_lane[rhs_lane*DATA_W +: DATA_W] :
+                               {DATA_W{1'b0}};
         pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] =
             (residual_ingress_valid_q ?
                 residual_ingress_coeff_q[rhs_lane*DATA_W +: DATA_W] :
@@ -1970,11 +2000,14 @@ case (state)
                     corr_scan_col <= {IDX_W{1'b0}};
                     corr_acc <= 64'sd0;
                     corr_phi_lane <= {COLS*DATA_W{1'b0}};
+                    corr_phi2_lane <= {COLS*DATA_W{1'b0}};
                     rd_addr <= 10'h080;
                     phi_state_q <= (|seed) ? seed : DEFAULT_SEED;
                     corr_block_state <= (|seed) ? seed : DEFAULT_SEED;
                     corr_row_state <= (|seed) ? seed : DEFAULT_SEED;
                     corr_row_next_state <= lfsr_jump_padded((|seed) ? seed : DEFAULT_SEED, ((n_size + 7) >> 3) << 3);
+                    corr_row_next2_state <= lfsr_jump_padded(
+                        lfsr_jump_padded((|seed) ? seed : DEFAULT_SEED, ((n_size + 7) >> 3) << 3), 11'd8);
                     padded_n_q <= ((n_size + 7) >> 3) << 3;
                     state <= S_CORR_SCAN;
                 end else if (((active_op == OP_IHT_UPDATE) || (active_op == OP_GRAD_STEP)) && (n_size != 0)) begin
@@ -3154,12 +3187,15 @@ case (state)
                 corr_scan_col <= {IDX_W{1'b0}};
                 corr_acc <= 64'sd0;
                 corr_phi_lane <= {COLS*DATA_W{1'b0}};
+                corr_phi2_lane <= {COLS*DATA_W{1'b0}};
                 corr_y_block <= {COLS*DATA_W{1'b0}};
                 corr_y_next_block <= {COLS*DATA_W{1'b0}};
                 rd_addr <= 10'h080;
                 phi_state_q <= corr_block_state;
                 corr_row_state <= corr_block_state;
                 corr_row_next_state <= lfsr_jump_padded(corr_block_state, padded_n_q);
+                corr_row_next2_state <= lfsr_jump_padded(
+                    lfsr_jump_padded(corr_block_state, padded_n_q), 11'd8);
                 state <= S_CORR_SCAN;
             end
             S_CORR_SCAN: begin
@@ -3168,6 +3204,12 @@ case (state)
                         corr_phi_lane[corr_lane*DATA_W +: DATA_W] <= phi_from_lfsr_state(lfsr_advance(corr_row_state, corr_lane[IDX_W-1:0] + 1'b1));
                     else
                         corr_phi_lane[corr_lane*DATA_W +: DATA_W] <= {DATA_W{1'b0}};
+                    if ((corr_col + COLS[IDX_W-1:0] + corr_lane[IDX_W-1:0]) < n_size)
+                        corr_phi2_lane[corr_lane*DATA_W +: DATA_W] <= phi_from_lfsr_state(
+                            lfsr_advance(lfsr_jump_padded(corr_row_state, 11'd8),
+                                         corr_lane[IDX_W-1:0] + 1'b1));
+                    else
+                        corr_phi2_lane[corr_lane*DATA_W +: DATA_W] <= {DATA_W{1'b0}};
                 end
                 phi_state_q <= corr_row_next_state;
                 corr_scan_col <= {IDX_W{1'b0}};
@@ -3198,6 +3240,11 @@ case (state)
                             corr_phi_lane[corr_lane*DATA_W +: DATA_W] <= phi_from_lfsr_state(lfsr_advance(corr_row_next_state, corr_lane[IDX_W-1:0] + 1'b1));
                         else
                             corr_phi_lane[corr_lane*DATA_W +: DATA_W] <= {DATA_W{1'b0}};
+                        if ((corr_col + COLS[IDX_W-1:0] + corr_lane[IDX_W-1:0]) < n_size)
+                            corr_phi2_lane[corr_lane*DATA_W +: DATA_W] <= phi_from_lfsr_state(
+                                lfsr_advance(corr_row_next2_state, corr_lane[IDX_W-1:0] + 1'b1));
+                        else
+                            corr_phi2_lane[corr_lane*DATA_W +: DATA_W] <= {DATA_W{1'b0}};
                     end
                     phi_state_q <= lfsr_jump_padded(corr_row_next_state, padded_n_q);
                     corr_scan_col <= {IDX_W{1'b0}};
@@ -3218,6 +3265,7 @@ case (state)
                     corr_row <= corr_row + 1'b1;
                     corr_row_state <= corr_row_next_state;
                     corr_row_next_state <= lfsr_jump_padded(corr_row_next_state, padded_n_q);
+                    corr_row_next2_state <= lfsr_jump_padded(corr_row_next2_state, padded_n_q);
                     state <= S_CORR_ACC;
                 end
             end
@@ -3259,12 +3307,42 @@ case (state)
                     mesh_ctx_shift_block <= mu_shift_eff;
                     mesh_ctx_wait_count <= MESH_CTX_WAIT_CYCLES;
                     state <= S_FUSED_UPDATE_CAPTURE;
-                end else if (corr_col + COLS[IDX_W-1:0] >= n_size) begin
+                end else if (corr_super_w && (corr_col + COLS[IDX_W-1:0] < n_size)) begin
+                    // Pair mode: the second eight columns drain through a
+                    // second write/stream transaction before the loop ends.
+                    write_idx <= corr_col + COLS[IDX_W-1:0];
+                    state <= S_CORR_WRITE_H1;
+                end else if (corr_col + corr_stride_w >= n_size) begin
                     state <= S_DONE;
                 end else begin
-                    corr_col <= corr_col + COLS[IDX_W-1:0];
-                    corr_block_state <= lfsr_advance(corr_block_state, COLS);
+                    corr_col <= corr_col + corr_stride_w;
+                    corr_block_state <= corr_super_w ?
+                        lfsr_jump_padded(corr_block_state, 11'd16) :
+                        lfsr_advance(corr_block_state, COLS);
                     state <= S_CORR_INIT;
+                end
+            end
+            S_CORR_WRITE_H1: begin
+                // Second half of a pair-mode super-block.  The half-0 stream
+                // transaction must be accepted before its payload slot is
+                // reused; the SPM word write uses write_idx preset to
+                // corr_col+COLS and the pearray half select steered here.
+                if (!corr_stream_active || !corr_stream_valid_q || corr_stream_ready) begin
+                    corr_stream_valid_q <= busy && corr_stream_active;
+                    corr_stream_done_q <= corr_stream_active &&
+                                          (corr_col + corr_stride_w >= n_size);
+                    corr_stream_base_idx_q <= corr_col + COLS[IDX_W-1:0];
+                    for (corr_lane = 0; corr_lane < COLS; corr_lane = corr_lane + 1) begin
+                        corr_stream_lane_valid_q[corr_lane] <= ((corr_col + COLS[IDX_W-1:0] + corr_lane[IDX_W-1:0]) < n_size);
+                        corr_stream_data_q[corr_lane*DATA_W +: DATA_W] <= row3_wr_data[corr_lane*DATA_W +: DATA_W];
+                    end
+                    if (corr_col + corr_stride_w >= n_size) begin
+                        state <= S_DONE;
+                    end else begin
+                        corr_col <= corr_col + corr_stride_w;
+                        corr_block_state <= lfsr_jump_padded(corr_block_state, 11'd16);
+                        state <= S_CORR_INIT;
+                    end
                 end
             end
             S_FUSED_UPDATE_CAPTURE: begin

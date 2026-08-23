@@ -50,6 +50,7 @@ module pe_cluster_4x4 #(
     input  wire [CLUSTER_COLS*DATA_W-1:0] spm_a_rdata,
     input  wire [CLUSTER_COLS*DATA_W-1:0] spm_b_rdata,
     input  wire [CLUSTER_COLS*DATA_W-1:0] phi_bus,
+    input  wire [CLUSTER_COLS*DATA_W-1:0] phi2_bus,
     input  wire [CLUSTER_COLS*DATA_W-1:0] scalar_bus,
     input  wire sparse_active,
     input  wire sparse_step_active,
@@ -58,6 +59,12 @@ module pe_cluster_4x4 #(
     input  wire corr_acc_clear,
     input  wire corr_acc_en,
     input  wire [1:0] corr_slot,
+    // Pair mode serves 16-column correlation super-blocks: rows {0,1} own
+    // the first eight columns and rows {2,3} the second eight, with sample
+    // ownership by slot parity instead of slot mod 4.  phi2_bus carries the
+    // second half's Phi lanes, registered down to rows 2-3 by the normal
+    // token pipeline.  The mode is stable for a whole correlation run.
+    input  wire corr_pair_mode,
     input  wire ls_wide_mul_active,
     input  wire ls_wide_operand_valid,
     input  wire ls_wide_vertical_active,
@@ -154,9 +161,13 @@ module pe_cluster_4x4 #(
     reg [CLUSTER_COLS*DATA_W-1:0] sparse_scalar_r1_q, sparse_scalar_r2_q, sparse_scalar_r3_q;
     reg sparse_valid_r1_q, sparse_valid_r2_q, sparse_valid_r3_q;
     reg [CLUSTER_COLS*DATA_W-1:0] corr_phi_r1_q, corr_phi_r2_q, corr_phi_r3_q;
+    // Pair-mode second-half Phi pipeline: phi2 enters at row 0 and reaches
+    // rows 2/3 after the same two/three registered hops as the token.
+    reg [CLUSTER_COLS*DATA_W-1:0] corr_phi2_r1_q;
     reg [CLUSTER_COLS*DATA_W-1:0] corr_scalar_r1_q, corr_scalar_r2_q, corr_scalar_r3_q;
     reg [1:0] corr_slot_r1_q, corr_slot_r2_q, corr_slot_r3_q;
     reg corr_valid_r1_q, corr_valid_r2_q, corr_valid_r3_q;
+    reg corr_pair_r1_q, corr_pair_r2_q, corr_pair_r3_q;
     reg ls_wide_vertical_r1_q, ls_wide_vertical_r2_q, ls_wide_vertical_r3_q;
     reg [4:0] ls_wide_tag_r1_q, ls_wide_tag_r2_q, ls_wide_tag_r3_q;
     reg [ROWS*CLUSTER_COLS*DATA_W-1:0] ls_wide_a_r1_q, ls_wide_a_r2_q, ls_wide_a_r3_q;
@@ -482,6 +493,7 @@ module pe_cluster_4x4 #(
             sparse_valid_r2_q <= 1'b0;
             sparse_valid_r3_q <= 1'b0;
             corr_phi_r1_q <= {(CLUSTER_COLS*DATA_W){1'b0}};
+            corr_phi2_r1_q <= {(CLUSTER_COLS*DATA_W){1'b0}};
             corr_phi_r2_q <= {(CLUSTER_COLS*DATA_W){1'b0}};
             corr_phi_r3_q <= {(CLUSTER_COLS*DATA_W){1'b0}};
             corr_scalar_r1_q <= {(CLUSTER_COLS*DATA_W){1'b0}};
@@ -493,6 +505,9 @@ module pe_cluster_4x4 #(
             corr_valid_r1_q <= 1'b0;
             corr_valid_r2_q <= 1'b0;
             corr_valid_r3_q <= 1'b0;
+            corr_pair_r1_q <= 1'b0;
+            corr_pair_r2_q <= 1'b0;
+            corr_pair_r3_q <= 1'b0;
             ls_wide_vertical_r1_q <= 1'b0;
             ls_wide_vertical_r2_q <= 1'b0;
             ls_wide_vertical_r3_q <= 1'b0;
@@ -560,7 +575,12 @@ module pe_cluster_4x4 #(
             sparse_valid_r2_q <= sparse_valid_r1_q;
             sparse_valid_r3_q <= sparse_valid_r2_q;
             corr_phi_r1_q <= phi_bus;
-            corr_phi_r2_q <= corr_phi_r1_q;
+            corr_phi2_r1_q <= phi2_bus;
+            // Rows 2/3 follow the first-half Phi chain in classic mode and
+            // the second-half chain in pair mode; the mode is stable for a
+            // whole run, so the chain selects on the live mode and each
+            // register still lands at its exact two/three-cycle depth.
+            corr_phi_r2_q <= corr_pair_mode ? corr_phi2_r1_q : corr_phi_r1_q;
             corr_phi_r3_q <= corr_phi_r2_q;
             corr_scalar_r1_q <= scalar_bus;
             corr_scalar_r2_q <= corr_scalar_r1_q;
@@ -571,6 +591,9 @@ module pe_cluster_4x4 #(
             corr_valid_r1_q <= corr_acc_en;
             corr_valid_r2_q <= corr_valid_r1_q;
             corr_valid_r3_q <= corr_valid_r2_q;
+            corr_pair_r1_q <= corr_pair_mode;
+            corr_pair_r2_q <= corr_pair_r1_q;
+            corr_pair_r3_q <= corr_pair_r2_q;
             ls_wide_vertical_r1_q <= ls_wide_vertical_active;
             ls_wide_vertical_r2_q <= ls_wide_vertical_r1_q;
             ls_wide_vertical_r3_q <= ls_wide_vertical_r2_q;
@@ -833,7 +856,9 @@ module pe_cluster_4x4 #(
             corr_assert_prev_slot1_q <= corr_slot_r1_q;
             corr_assert_prev_slot2_q <= corr_slot_r2_q;
             corr_assert_prev_phi0_q <= phi_bus;
-            corr_assert_prev_phi1_q <= corr_phi_r1_q;
+            // Row 2's Phi operand follows the pair-mode second-half chain and
+            // the classic first-half chain otherwise.
+            corr_assert_prev_phi1_q <= corr_pair_mode ? corr_phi2_r1_q : corr_phi_r1_q;
             corr_assert_prev_phi2_q <= corr_phi_r2_q;
             corr_assert_prev_scalar0_q <= scalar_bus;
             corr_assert_prev_scalar1_q <= corr_scalar_r1_q;
@@ -935,10 +960,13 @@ module pe_cluster_4x4 #(
                     assign inW[CELL] = outE[r*CLUSTER_COLS+(lc-1)];
                     assign idxW_in = idxE_out[r*CLUSTER_COLS+(lc-1)];
                 end
-                // Correlation is striped across all four physical rows.  Each
-                // row owns one sample slot modulo four and keeps an independent
-                // full-precision partial sum, so the stream accepts one sample
-                // every clock while all rows perform useful MAC work.
+                // Correlation is striped across all four physical rows.  In
+                // the classic mode each row owns one sample slot modulo four
+                // and keeps an independent full-precision partial sum.  In
+                // pair mode (16-column super-blocks) rows {0,1} accumulate
+                // the first eight columns and rows {2,3} the second eight,
+                // each owning the samples of its slot parity, so every row
+                // performs useful MAC work on half the tokens.
                 wire corr_mode_active = sparse_active && (sparse_op == 4'd1);
                 wire phys_refine_pe_active = sparse_active && (sparse_op == 4'd0) &&
                                              (r < ROWS-1) && (sparse_k_active > GLOBAL_C);
@@ -969,8 +997,13 @@ module pe_cluster_4x4 #(
                 wire [1:0] corr_token_slot = (r == 0) ? corr_slot :
                                              (r == 1) ? corr_slot_r1_q :
                                              (r == 2) ? corr_slot_r2_q : corr_slot_r3_q;
+                wire corr_token_pair = (r == 0) ? corr_pair_mode :
+                                       (r == 1) ? corr_pair_r1_q :
+                                       (r == 2) ? corr_pair_r2_q : corr_pair_r3_q;
                 wire corr_row_owner = corr_token_active &&
-                                      (corr_token_slot == ROW_SLOT);
+                                      (corr_token_pair ?
+                                       (corr_token_slot[0] == ROW_SLOT[0]) :
+                                       (corr_token_slot == ROW_SLOT));
                 wire ls_wide_vertical_row_active = (r == 0) ? ls_wide_vertical_active :
                                                    (r == 1) ? ls_wide_vertical_r1_q :
                                                    (r == 2) ? ls_wide_vertical_r2_q :
