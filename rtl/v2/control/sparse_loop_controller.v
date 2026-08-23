@@ -261,30 +261,6 @@ function signed [DATA_W-1:0] sat_s24;
     end
 endfunction
 
-function [IDX_W-1:0] support_at;
-    input [4:0] rank;
-    begin
-        case (rank)
-            0: support_at = support0;
-            1: support_at = support1;
-            2: support_at = support2;
-            3: support_at = support3;
-            4: support_at = support4;
-            5: support_at = support5;
-            6: support_at = support6;
-            7: support_at = support7;
-            8: support_at = support8;
-            9: support_at = support9;
-            10: support_at = support10;
-            11: support_at = support11;
-            12: support_at = support12;
-            13: support_at = support13;
-            14: support_at = support14;
-            default: support_at = support15;
-        endcase
-    end
-endfunction
-
 
 
 wire ctx_sparse_uop = ctx_valid && (ctx_word[63:60] == 4'h1) && (ctx_word[59:56] == 4'd8) && (ctx_word[27:24] == 4'h8);
@@ -299,11 +275,6 @@ reg [DATA_W-1:0] write_value;
 reg phase_residual;
 integer lane;
 reg [MEM_AW-1:0] base_addr;
-reg signed [63:0] acc_num;
-reg signed [63:0] acc_den;
-reg signed [63:0] acc_num1;
-reg signed [63:0] acc_den01;
-reg signed [63:0] acc_den11;
 reg signed [63:0] gp_num_acc_q;
 reg signed [63:0] gp_den_acc_q;
 reg signed [63:0] gp_alpha_q;
@@ -314,16 +285,7 @@ reg gp_update_support_q;
 reg signed [63:0] gp_update_product_q;
 reg signed [63:0] gp_update_sum_q;
 reg signed [DATA_W-1:0] gp_update_value_q;
-reg signed [DATA_W-1:0] y_cur;
-reg signed [DATA_W-1:0] phi_cur;
-reg signed [DATA_W-1:0] phi1_cur;
 reg signed [DATA_W-1:0] write_value_now;
-reg signed [127:0] k2_a00;
-reg signed [127:0] k2_a01;
-reg signed [127:0] k2_a11;
-reg signed [127:0] k2_b0;
-reg signed [127:0] k2_b1;
-reg signed [127:0] k2_det;
 reg [7:0] active_k;
 // Stable, local fan-out source for the LS/residual datapaths.  KEEP prevents
 // Vivado from merging this timing-isolation register back into the support-set
@@ -341,16 +303,9 @@ reg [COLS*64-1:0] rhs4_product_q;
 reg signed [DATA_W-1:0] coeff_mem [0:MAX_K-1];
 localparam integer GE_MAT_W = 56;
 reg signed [63:0] ge_x [0:MAX_K-1];
-reg signed [63:0] ge_factor;
 reg signed [63:0] ge_acc;
-reg signed [63:0] ge_diag;
-reg signed [63:0] ge_value;
 reg signed [63:0] ge_div_num;
 reg signed [63:0] ge_div_den;
-reg signed [63:0] ge_mul_a;
-reg signed [63:0] ge_mul_b;
-reg signed [63:0] ge_mul_c;
-reg signed [127:0] ge_mul_p;
 // Keep declarations ahead of the combinational LS/back-solve boundary.  Some
 // Verilog elaborators create an implicit net when a signal is first used in a
 // net declaration, which can turn these width-sensitive paths into errors.
@@ -1098,7 +1053,6 @@ wire [IDX_W-1:0] factor_check_unmatched_value_q;
 wire fc_scan_done_w;
 wire [MAX_K*IDX_W-1:0] fc_norm_support_bus;
 reg factor_border_clear_q;
-reg [7:0] refine_prime_k_eff;
 reg [31:0] phi_state_q;
 reg [IDX_W-1:0] padded_n_q;
 reg [IDX_W-1:0] phi_scan_col_q;
@@ -1110,11 +1064,9 @@ wire [31:0] phi_scan_state32_w = lfsr_jump_padded(phi_scan_state_q, 10'd32);
 wire [31:0] phi_scan_state64_w = lfsr_jump_padded(phi_scan_state_q, 10'd64);
 wire [31:0] phi_scan_state96_w = lfsr_jump_padded(phi_scan_state_q, 10'd96);
 wire [31:0] phi_scan_state128_w = lfsr_jump_padded(phi_scan_state_q, 10'd128);
-reg scan_is_last_col;
 reg [IDX_W-1:0] corr_col;
 reg [IDX_W-1:0] corr_row;
 reg [IDX_W-1:0] corr_scan_col;
-reg signed [DATA_W-1:0] corr_phi;
 reg signed [63:0] corr_acc;
 reg [COLS*DATA_W-1:0] corr_phi_lane;
 reg [COLS*DATA_W-1:0] corr_y_block;
@@ -1125,11 +1077,9 @@ reg [IDX_W-1:0] corr_stream_base_idx_q;
 reg [COLS-1:0] corr_stream_lane_valid_q;
 reg [COLS*DATA_W-1:0] corr_stream_data_q;
 reg [5:0] refine_stream_count_q;
-reg [31:0] corr_block_seq;
 reg [31:0] corr_block_state;
 reg [31:0] corr_row_state;
 reg [31:0] corr_row_next_state;
-reg [COLS*DATA_W-1:0] iht_x_block;
 reg signed [DATA_W-1:0] iht_x_value;
 reg keep_x;
 reg [COLS*DATA_W-1:0] mesh_ctx_x_block;
@@ -1176,7 +1126,6 @@ wire corr_pe_state_w = (state == S_PRIME) ||
                        (state == S_CORR_ACC) ||
                        (state == S_CORR_PE_WAIT) ||
                        (state == S_CORR_WRITE);
-reg [IDX_W-1:0] sparse_target_idx;
 reg [IDX_W-1:0] wx_target_idx_q;
 reg [DATA_W-1:0] wx_value_q;
 reg [DATA_W-1:0] row3_selected_value;
@@ -1395,7 +1344,6 @@ wire factor_swap_last_hit_w = factor_config_match_w &&
     (factor_check_unmatched_count_q == 1) &&
     ({1'b0, factor_check_unmatched_tag_q} + 1'b1 == request_k_eff_w);
 
-wire [2:0] support_relation_opcode_w;
 wire [1:0] support_relation_reuse_mode_w;
 wire support_relation_border_clear_w;
 wire support_relation_reuse_enable_w;
@@ -1404,7 +1352,7 @@ support_relation_unit u_support_relation_unit (
     .prefix_hit(factor_prefix_hit_w),
     .truncate_hit(factor_truncate_hit_w),
     .swap_last_hit(factor_swap_last_hit_w),
-    .relation_opcode(support_relation_opcode_w),
+    .relation_opcode(),
     .reuse_mode(support_relation_reuse_mode_w),
     .border_clear(support_relation_border_clear_w),
     .reuse_enable(support_relation_reuse_enable_w)
@@ -1461,32 +1409,6 @@ always @(*) begin
             x_support_has_drop_w = 1'b1;
     end
 end
-function [7:0] ge_lower_idx;
-    input [4:0] row;
-    input [4:0] col;
-    reg [7:0] base;
-    begin
-        case (row[3:0])
-            4'd0:  base = 8'd0;
-            4'd1:  base = 8'd1;
-            4'd2:  base = 8'd3;
-            4'd3:  base = 8'd6;
-            4'd4:  base = 8'd10;
-            4'd5:  base = 8'd15;
-            4'd6:  base = 8'd21;
-            4'd7:  base = 8'd28;
-            4'd8:  base = 8'd36;
-            4'd9:  base = 8'd45;
-            4'd10: base = 8'd55;
-            4'd11: base = 8'd66;
-            4'd12: base = 8'd78;
-            4'd13: base = 8'd91;
-            4'd14: base = 8'd105;
-            default: base = 8'd120;
-        endcase
-        ge_lower_idx = base + {4'd0, col[3:0]};
-    end
-endfunction
 
 
 assign corr_stream_valid = corr_stream_valid_q;
@@ -1494,10 +1416,6 @@ assign corr_stream_done = corr_stream_done_q;
 assign corr_stream_base_idx = corr_stream_base_idx_q;
 assign corr_stream_lane_valid = corr_stream_lane_valid_q;
 assign corr_stream_data = corr_stream_data_q;
-
-always @(*) begin
-    refine_prime_k_eff = (support_depth0 < k_active[5:0]) ? {2'b00, support_depth0} : k_active;
-end
 
 
 always @(*) begin
@@ -1557,7 +1475,6 @@ always @(*) begin
 end
 
 always @(*) begin
-    sparse_target_idx = support_cached_at(write_idx[4:0]);
     if (phase_residual)
         base_addr = 10'h080 + write_idx[IDX_W-1:3];
     else if (row3_corr_mode_w)
@@ -1744,11 +1661,9 @@ active_op <= OP_REFINE;
         phi_scan_col_q <= {IDX_W{1'b0}};
         phi_scan_state_q <= DEFAULT_SEED;
         padded_n_q <= {IDX_W{1'b0}};
-        scan_is_last_col <= 1'b0;
         corr_col <= {IDX_W{1'b0}};
         corr_row <= {IDX_W{1'b0}};
         corr_scan_col <= {IDX_W{1'b0}};
-        corr_phi <= {DATA_W{1'b0}};
         corr_acc <= 64'sd0;
         corr_y_block <= {COLS*DATA_W{1'b0}};
         corr_y_next_block <= {COLS*DATA_W{1'b0}};
@@ -1758,12 +1673,7 @@ active_op <= OP_REFINE;
         corr_stream_lane_valid_q <= {COLS{1'b0}};
         corr_stream_data_q <= {COLS*DATA_W{1'b0}};
         refine_stream_count_q <= 6'd0;
-        iht_x_block <= {COLS*DATA_W{1'b0}};
         load_i <= 5'd0;
-        ge_mul_a <= 64'sd0;
-        ge_mul_b <= 64'sd0;
-        ge_mul_c <= 64'sd0;
-        ge_mul_p <= 128'sd0;
         ls_start_q <= 1'b0;
         ls_op_q <= LS_OP_CLEAR;
         ls_row_a_q <= 5'd0;
@@ -2034,11 +1944,6 @@ case (state)
                     rd_addr <= 10'h100;
                     phi_state_q <= (|seed) ? seed : DEFAULT_SEED;
                                 padded_n_q <= ((n_size + 7) >> 3) << 3;
-                                acc_num <= 64'sd0;
-                    acc_den <= 64'sd0;
-                    acc_num1 <= 64'sd0;
-                    acc_den01 <= 64'sd0;
-                    acc_den11 <= 64'sd0;
                     for (gi = 0; gi < MAX_K; gi = gi + 1) begin
                         rhs[gi] <= 64'sd0;
                         coeff_mem[gi] <= {DATA_W{1'b0}};
@@ -2287,12 +2192,6 @@ case (state)
                     end
                 end
             end
-            S_CACHE_BUILD: begin
-                state <= S_SOLVE_INIT;
-            end
-            S_CACHE_BUILD_STEP: begin
-                state <= S_SOLVE_INIT;
-            end
             S_WX_COMMIT: begin
                 write_value <= row3_commit_value_w;
                 if (corr_stream_active && corr_stream_post_refine_support &&
@@ -2404,9 +2303,6 @@ case (state)
                 end
             end
             S_WR: begin
-                y_cur <= rd_data[write_idx[2:0]*DATA_W +: DATA_W];
-                phi_cur <= phi_cache[0];
-                phi1_cur <= phi_cache[1];
                 write_value <= row3_commit_value_w;
                 if (active_op == OP_GP_PROJECT) begin
                     // The four-row residual wavefront has reduced c=A*d for
@@ -2936,57 +2832,6 @@ case (state)
                     end
                 end
             end
-            S_SOLVE_SYM_READ: begin
-                if (solve_i >= active_k_count) begin
-                    solve_i <= 5'd0;
-                    solve_j <= 5'd1;
-                    solve_k <= 5'd0;
-                    state <= S_ELIM_START;
-                end else if (solve_i > solve_j) begin
-                    if (solve_j + 5'd1 >= active_k_count) begin
-                        solve_j <= 5'd0;
-                        solve_i <= solve_i + 5'd1;
-                    end else begin
-                        solve_j <= solve_j + 5'd1;
-                    end
-                end else begin
-                    ls_start_q <= 1'b1;
-                    ls_op_q <= LS_OP_READ2;
-                    if (solve_i == solve_j) begin
-                        ls_row_a_q <= solve_i;
-                        ls_col_a_q <= solve_i;
-                    end else begin
-                        ls_row_a_q <= solve_j;
-                        ls_col_a_q <= solve_i;
-                    end
-                    ls_row_b_q <= 5'd0;
-                    ls_col_b_q <= 5'd0;
-                    state <= S_SOLVE_SYM_WAIT;
-                end
-            end
-            S_SOLVE_SYM_WAIT: begin
-                if (ls_done_w)
-                    state <= S_SOLVE_SYM_WRITE;
-            end
-            S_SOLVE_SYM_WRITE: begin
-                ls_start_q <= 1'b1;
-                ls_op_q <= LS_OP_WRITE;
-                ls_row_a_q <= solve_i;
-                ls_col_a_q <= solve_j;
-                ls_wdata_q <= ls_rdata_a_w + ((solve_i == solve_j) ? {{(GE_MAT_W-1){1'b0}}, 1'b1} : {GE_MAT_W{1'b0}});
-                state <= S_SOLVE_SYM_WRITE_WAIT;
-            end
-            S_SOLVE_SYM_WRITE_WAIT: begin
-                if (ls_done_w) begin
-                    if (solve_j + 5'd1 >= active_k_count) begin
-                        solve_j <= 5'd0;
-                        solve_i <= solve_i + 5'd1;
-                    end else begin
-                        solve_j <= solve_j + 5'd1;
-                    end
-                    state <= S_SOLVE_SYM_READ;
-                end
-            end
             S_ELIM_START: begin
                 if (solve_i >= active_k_count) begin
                     ldlt_i_base_q <= 5'd0;
@@ -3050,31 +2895,6 @@ case (state)
                     rhs[solve_i] <= rhs[solve_i] - ge_acc - ldlt_wide_q16_sum;
                     solve_i <= solve_i + 1'b1;
                     state <= S_ELIM_START;
-                end
-            end
-            S_ELIM_UPDATE_WAIT: begin
-                if (ls_done_w) begin
-                    if (solve_k + LS_ROW_UPDATE_STRIDE >= active_k_count) begin
-                        ls_start_q <= 1'b1;
-                        ls_op_q <= LS_OP_RHS_UPDATE;
-                        ls_row_a_q <= solve_j;
-                        ls_row_b_q <= solve_i;
-                        ls_factor_q <= ge_factor;
-                        ls_row_update_block_q <= 1'b0;
-                        state <= S_ELIM_RHS_UPDATE_WAIT;
-                    end else begin
-                        solve_k <= solve_k + LS_ROW_UPDATE_STRIDE;
-                        state <= S_ELIM_UPDATE;
-                    end
-                end
-            end
-            S_ELIM_ROW_WAIT: begin
-                state <= S_ELIM_UPDATE;
-            end
-            S_ELIM_RHS_UPDATE_WAIT: begin
-                if (ls_done_w) begin
-                    solve_j <= solve_j + 5'd1;
-                    state <= S_ELIM_ROW;
                 end
             end
             S_BACK_INIT: begin
@@ -3158,15 +2978,6 @@ case (state)
                     state <= S_BACK_RHS_READ;
                 end
             end
-            S_BACK_PREP_READ: begin
-                if (ls_done_w) begin
-                    ge_div_den <= (ls_rdata_a_w != 0) ? {{(64-GE_MAT_W){ls_rdata_a_w[GE_MAT_W-1]}}, ls_rdata_a_w} : 64'sd1;
-                    ls_start_q <= 1'b1;
-                    ls_op_q <= LS_OP_RHS_READ;
-                    ls_row_a_q <= back_i;
-                    state <= S_BACK_RHS_READ_WAIT;
-                end
-            end
             S_BACK_RHS_READ: begin
                 // L(j+r,i) is a four-row banked column read; each returned
                 // coefficient feeds the matching physical PE row.  The
@@ -3186,9 +2997,6 @@ case (state)
                     end
                     state <= S_BACK_MUL;
                 end
-            end
-            S_BACK_DIV: begin
-                state <= S_BACK_MUL;
             end
             S_DIV_INIT: begin
                 div_neg <= ge_div_num[63] ^ ge_div_den[63];
@@ -3252,14 +3060,7 @@ case (state)
                 end
             end
             S_ELIM_DIV_DONE: begin
-                ge_factor <= div_result;
                 state <= S_ELIM_UPDATE;
-            end
-            S_ELIM_RHS_READ_WAIT: begin
-                if (ls_done_w) begin
-                    ge_mul_c <= ls_rhs_rdata_w;
-                    state <= S_ELIM_UPDATE;
-                end
             end
             S_BACK_DIV_DONE: begin
                 ge_x[back_i] <= div_result;
@@ -3272,9 +3073,6 @@ case (state)
                 end
             end
             S_MP_X_READ: begin
-                state <= S_MP_SCORE_CAP;
-            end
-            S_MP_X_WAIT: begin
                 state <= S_MP_SCORE_CAP;
             end
             S_MP_SCORE_CAP: begin
@@ -3450,7 +3248,6 @@ case (state)
                         corr_stream_data_q[corr_lane*DATA_W +: DATA_W] <= row3_wr_data[corr_lane*DATA_W +: DATA_W];
                     end
                 end
-                corr_block_seq <= corr_block_seq + 1'b1;
                 if (active_op == OP_CORR_UPDATE) begin
                     // Score writeback occurs on this clock.  In parallel,
                     // capture its full block as the update delta; the x block
@@ -3566,9 +3363,6 @@ case (state)
             S_LOAD_COEFF_READ: begin
                 state <= S_LOAD_COEFF_CAP;
             end
-            S_LOAD_COEFF_WAIT: begin
-                state <= S_LOAD_COEFF_CAP;
-            end
             S_LOAD_COEFF_CAP: begin
                 coeff_mem[load_i] <= rd_data[load_support_q[2:0]*DATA_W +: DATA_W];
                 if (load_i + 5'd1 >= active_k_count) begin
@@ -3624,13 +3418,6 @@ case (state)
                     rd_addr <= 10'h000 + ((write_idx + COLS[IDX_W-1:0]) >> 3);
                     state <= S_PRUNE_X_READ;
                 end
-            end
-            S_SCAN_DIRECT: begin
-                phi_scan_col_q <= {IDX_W{1'b0}};
-                phi_scan_state_q <= phi_state_q;
-                for (gi = 0; gi < MAX_K; gi = gi + 1)
-                    phi_cache[gi] <= {DATA_W{1'b0}};
-                state <= S_SCAN_DIRECT_STEP;
             end
             S_SCAN_DIRECT_STEP: begin
                 if (padded_n_q <= 10'd64) begin
