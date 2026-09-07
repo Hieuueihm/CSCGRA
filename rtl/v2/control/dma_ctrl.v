@@ -247,10 +247,12 @@ module dma_ctrl #(
                             // EXOKAY both carry valid data.
                             error <= 1'b1;
                             error_code <= ERR_READ;
-                            if (m_axi_rlast)
+                            if (m_axi_rlast) begin
+                                m_axi_rready <= 1'b0;
                                 state <= S_DONE;
-                            else
+                            end else begin
                                 rd_err_drain_q <= 1'b1;
+                            end
                         end else if ((burst_left == 1) && !m_axi_rlast) begin
                             // The slave must terminate an ARLEN+1-beat burst
                             // with rlast and has not.  Latch the error and
@@ -318,6 +320,7 @@ module dma_ctrl #(
                         burst_left <= burst_left - 1'b1;
                         m_axi_wvalid <= 1'b0;
                         if (burst_left == 1) begin
+                            m_axi_wlast <= 1'b0;
                             m_axi_bready <= 1'b1;
                             state <= S_B;
                         end else begin
@@ -349,6 +352,51 @@ module dma_ctrl #(
             endcase
         end
     end
+
+`ifdef FORMAL
+    // AXI-channel safety and internal counter invariants. Environment
+    // fairness/liveness assumptions belong in verification/formal.
+    reg                  f_w_stalled_q;
+    reg [AXI_DW-1:0]     f_wdata_q;
+    reg [AXI_DW/8-1:0]   f_wstrb_q;
+    reg                  f_wlast_q;
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            f_w_stalled_q <= 1'b0;
+            f_wdata_q <= {AXI_DW{1'b0}};
+            f_wstrb_q <= {(AXI_DW/8){1'b0}};
+            f_wlast_q <= 1'b0;
+        end else begin
+            assert(state <= S_DONE);
+            assert(busy == (state != S_IDLE));
+            assert(burst_left <= 9'd256);
+            assert(!(m_axi_arvalid && m_axi_awvalid));
+            assert(!m_axi_arvalid || (state == S_AR));
+            assert(!m_axi_awvalid || (state == S_AW));
+            assert(!m_axi_rready || (state == S_R));
+            assert(!m_axi_wvalid || (state == S_W));
+            assert(!m_axi_wlast || m_axi_wvalid);
+            assert(!m_axi_bready || (state == S_B));
+            if ((state == S_R) || (state == S_W))
+                assert(burst_left != 0);
+            if ((state == S_W) && m_axi_wvalid)
+                assert(m_axi_wlast == (burst_left == 1));
+
+            // AXI requires the complete W payload to remain stable while
+            // VALID is asserted and READY is low.
+            if (f_w_stalled_q) begin
+                assert(m_axi_wvalid);
+                assert(m_axi_wdata == f_wdata_q);
+                assert(m_axi_wstrb == f_wstrb_q);
+                assert(m_axi_wlast == f_wlast_q);
+            end
+            f_w_stalled_q <= m_axi_wvalid && !m_axi_wready;
+            f_wdata_q <= m_axi_wdata;
+            f_wstrb_q <= m_axi_wstrb;
+            f_wlast_q <= m_axi_wlast;
+        end
+    end
+`endif
 
 endmodule
 

@@ -32,14 +32,14 @@ set_property target_language Verilog [current_project]
 set_property include_dirs $include_dirs [current_fileset]
 read_verilog $rtl_files
 synth_design -top $top_name -part $part_name -mode out_of_context \
-    -flatten_hierarchy rebuilt -directive RuntimeOptimized
+    -flatten_hierarchy rebuilt
 create_clock -period $clock_period_ns -name clk [get_ports clk]
-opt_design -directive Explore
-place_design -directive Explore
+opt_design
+place_design
 report_timing_summary -file [file join $log_dir "${top_name}_post_place_timing.rpt"] \
     -delay_type max -max_paths 20 -report_unconstrained
-phys_opt_design -directive Explore
-route_design -directive Explore
+phys_opt_design
+route_design
 report_route_status -file [file join $log_dir "${top_name}_route_status.rpt"]
 report_utilization -file [file join $log_dir "${top_name}_impl_utilization.rpt"] -hierarchical
 report_timing_summary -file [file join $log_dir "${top_name}_impl_timing.rpt"] \

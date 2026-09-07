@@ -1,15 +1,23 @@
 {
   "version": "v2",
-  "description": "Factor-reuse optimization baseline",
+  "schema_version": 1,
+  "active": true,
+  "description": "Canonical active four-row strict-PE0 architecture",
   "rtl_filelist": "rtl/v2/files.f",
   "verification_root": "verification/v2",
   "default_testbench": "verification/v2/run1/tb_run1_k_sweep.v",
   "default_top": "cgra_top",
   "part": "xczu7ev-ffvc1156-2-e",
   "clock_period_ns": 10.0,
-  "baseline": {
-    "commit": "741c0f2b5a01f8e3da6b2765170f2e7870d8cd79",
-    "wns_ns": 3.001,
-    "omp_m64_n256_k16_cycles": 110785
+  "architecture": {
+    "rows": 4,
+    "cols": 8,
+    "data_width": 24,
+    "max_k": 16,
+    "max_n": 256
+  },
+  "provenance": {
+    "current_status": "reports/v2/CURRENT_STATUS.md",
+    "formal_manifest": "verification/formal/formal.sby"
   }
 }

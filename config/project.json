@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "active_rtl_version": "v2",
+  "active_config": "config/rtl-v2.json",
+  "current_status": "reports/v2/CURRENT_STATUS.md",
+  "development_rtl_version": "v3",
+  "development_config": "config/rtl-v3.json",
+  "development_status": "reports/v3/GOLDEN_STATUS.md",
+  "formal_manifest": "verification/formal/formal.sby",
+  "release_gates": {
+    "full_regression_passes": 348,
+    "full_regression_failures": 0,
+    "expected_capacity_skips": [
+      "CoSaMP K16",
+      "SP K16"
+    ],
+    "minimum_ooc_wns_ns": 0.2,
+    "minimum_routed_wns_ns": 0.2,
+    "maximum_tns_ns": 0.0,
+    "require_zero_routing_errors": true,
+    "require_formal_proofs": true
+  }
+}

@@ -103,9 +103,10 @@ CoSaMP/SP K16 remain outside the current 16-entry candidate/LS capacity. They
 must remain explicit capacity variants unless that storage/LS dimension is
 expanded and revalidated.
 
-The latest end-to-end result is recorded in
-`reports/v2/reference_contract_signoff_20260820.md`: exact regression passes,
-OOC synthesis passes, and routed setup timing remains open at WNS -0.356 ns.
+The active checkout status is recorded only in
+[`reports/v2/CURRENT_STATUS.md`](../reports/v2/CURRENT_STATUS.md). Dated
+sign-off reports preserve historical checkpoints and are valid only when their
+source identity matches the run being discussed.
 
 ## Required checks
 
@@ -113,5 +114,7 @@ OOC synthesis passes, and routed setup timing remains open at WNS -0.356 ns.
 python scripts/maintenance/check_reference_contract.py
 python models/reference/hardware.py --check --c-output sw/v2/src/cscgra_k_sweep_golden.h
 python models/golden/audit_algorithm_semantics.py --output models/golden/canonical_audit.md
+.\scripts\run.ps1 -Flow check
 .\scripts\run.ps1 -Flow sim -RtlVersion v2
+.\scripts\run.ps1 -Flow formal
 ```

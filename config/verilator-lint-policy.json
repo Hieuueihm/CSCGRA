@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "description": "Maximum warning backlog for active rtl/v2; new categories or count increases fail the consistency gate.",
+  "allowed_max": {
+    "WIDTHEXPAND": 307,
+    "UNUSEDSIGNAL": 175,
+    "WIDTHTRUNC": 132,
+    "UNUSEDPARAM": 25,
+    "PINCONNECTEMPTY": 12,
+    "BLKSEQ": 11,
+    "CMPCONST": 1,
+    "SYNCASYNCNET": 1
+  },
+  "always_fatal": [
+    "LATCH",
+    "MULTIDRIVEN",
+    "UNDRIVEN",
+    "UNOPTFLAT",
+    "CASEINCOMPLETE"
+  ]
+}

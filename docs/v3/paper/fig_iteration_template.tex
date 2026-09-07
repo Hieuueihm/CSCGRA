@@ -1,0 +1,109 @@
+% Fig. 2 -- Shared iteration template with three concrete instantiations.
+% Two-column span (figure*): the six-stage pipeline does not fit one column.
+% Requires in preamble:
+%   \usepackage{amsmath}
+%   \usepackage{amssymb}
+%   \usepackage{tikz}
+%   \usetikzlibrary{arrows.meta,positioning,calc}
+% Include from the main text with: \input{fig_iteration_template}
+
+\begin{figure*}[t]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[
+      font=\scriptsize,
+      kern/.style={draw, rounded corners=2pt, fill=blue!6, align=center,
+                   minimum height=8mm, minimum width=25mm, inner sep=2pt},
+      cell/.style={draw=black!55, rounded corners=1pt, fill=white,
+                   align=center, minimum height=7mm, minimum width=25mm,
+                   inner sep=2pt, font=\tiny},
+      skip/.style={draw=black!35, dashed, rounded corners=1pt, fill=gray!6,
+                   align=center, minimum height=7mm, minimum width=25mm,
+                   inner sep=2pt, font=\tiny, text=black!50},
+      rowlab/.style={anchor=east, align=right, font=\scriptsize\bfseries},
+      gen/.style={draw, rounded corners=2pt, fill=orange!12, align=center,
+                  inner sep=2.5pt, font=\tiny},
+      dat/.style={font=\tiny, text=black!60, above, inner sep=1pt},
+      flow/.style={-{Latex[length=1.6mm]}, thick},
+      loop/.style={-{Latex[length=1.6mm]}, thick, black!60}
+    ]
+
+    % ---- column x positions ---------------------------------------------
+    \def\dx{2.95}
+
+    % ---- template row -----------------------------------------------------
+    \node[rowlab] at (-1.6,0) {template};
+    \node[kern] (t1) at (0,0)        {correlation\\$g=\Phi^{T}r$};
+    \node[kern] (t2) at (\dx,0)      {selection\\top-$|{\cdot}|$};
+    \node[kern] (t3) at (2*\dx,0)    {support\\mutation};
+    \node[kern] (t4) at (3*\dx,0)    {restricted LS\\refinement};
+    \node[kern] (t5) at (4*\dx,0)    {residual\\update};
+    \node[kern] (t6) at (5*\dx,0)    {stop check /\\certificate};
+
+    \draw[flow] (t1) -- (t2) node[dat, midway]{$g$};
+    \draw[flow] (t2) -- (t3) node[dat, midway]{$\Lambda$};
+    \draw[flow] (t3) -- (t4) node[dat, midway]{$S$};
+    \draw[flow] (t4) -- (t5) node[dat, midway]{$\hat{x}_{S}$};
+    \draw[flow] (t5) -- (t6) node[dat, midway]{$r$};
+    \draw[loop] (t6.north) -- ++(0,4.5mm) -| (t1.north)
+      node[pos=0.25, above, black!60, font=\tiny]{next iteration};
+
+    % ---- generated Phi feed ----------------------------------------------
+    \node[gen, anchor=east] (phi) at (-1.1,1.15)
+      {$\Phi$ entries generated\\on demand (keyed PRNG)};
+    \draw[flow, orange!60!black] (phi.east) -| (t1.70);
+    \draw[flow, orange!60!black]
+      (phi.east) -- ++(2mm,0) |- ($(t5.north)+(0,2.2mm)$) -- (t5.north);
+
+    % ---- OMP row ----------------------------------------------------------
+    \node[rowlab] at (-1.6,-1.35) {OMP};
+    \node[cell] at (0,-1.35)      {$g=\Phi^{T}r$};
+    \node[cell] at (\dx,-1.35)    {$j=\arg\max|g|$\\(1 atom)};
+    \node[cell] at (2*\dx,-1.35)  {$S\leftarrow S\cup\{j\}$};
+    \node[cell] at (3*\dx,-1.35)  {$\hat{x}_{S}=\mathrm{LS}(\Phi_{S},y)$\\$|S|\le K$};
+    \node[cell] at (4*\dx,-1.35)  {$r=y-\Phi_{S}\hat{x}_{S}$};
+    \node[cell] at (5*\dx,-1.35)  {$\|r\|\le\varepsilon$\\or $|S|=K$};
+
+    % ---- CoSaMP row --------------------------------------------------------
+    \node[rowlab] at (-1.6,-2.30) {CoSaMP};
+    \node[cell] at (0,-2.30)      {$g=\Phi^{T}r$};
+    \node[cell] at (\dx,-2.30)    {$\Lambda=\text{top-}2K\,|g|$};
+    \node[cell] at (2*\dx,-2.30)  {$T=S\cup\Lambda$\\$|T|\le 3K$};
+    \node[cell] at (3*\dx,-2.30)  {$\hat{x}_{T}=\mathrm{LS}(\Phi_{T},y)$;\\prune $S=\text{top-}K$};
+    \node[cell] at (4*\dx,-2.30)  {$r=y-\Phi_{S}\hat{x}_{S}$};
+    \node[cell] at (5*\dx,-2.30)  {support stable\\or budget};
+
+    % ---- IHT row -----------------------------------------------------------
+    \node[rowlab] at (-1.6,-3.25) {IHT};
+    \node[cell] at (0,-3.25)      {$g=\Phi^{T}r$};
+    \node[cell] at (\dx,-3.25)    {$x'=x+\mu g$;\\keep top-$K$};
+    \node[cell] at (2*\dx,-3.25)  {$S=\mathrm{supp}(x')$};
+    \node[skip] at (3*\dx,-3.25)  {skipped\\(gradient step only)};
+    \node[cell] at (4*\dx,-3.25)  {$r=y-\Phi x'$};
+    \node[cell] at (5*\dx,-3.25)  {iteration budget\\or $\|r\|\le\varepsilon$};
+
+    % ---- takeaway ----------------------------------------------------------
+    \node[align=left, anchor=north west, font=\tiny, text=black!65,
+          text width=157mm] at (-2.9,-3.95)
+      {Data types are shared: $g\in\mathbb{R}^{N}$, $r\in\mathbb{R}^{M}$,
+       $|S|\le 3K$. Each row is one \emph{compiled context program} executing
+       on the same fabric: the stages, their hardware owners, and the data
+       widths are identical; only selection width, support discipline, and
+       the use of restricted LS differ. gOMP follows the OMP row with $L$
+       atoms; SP follows CoSaMP with $K$ candidates and re-estimation; HTP
+       follows IHT plus the LS stage; GP and MP follow OMP with the LS stage
+       replaced by a line-search or projection step.};
+
+  \end{tikzpicture}%
+  }
+  \caption{One iteration template (top row) covers all eight recovery
+  algorithms, shown instantiated for one representative of each major
+  family: OMP (sequential greedy), CoSaMP (candidate expansion and pruning),
+  and IHT (iterative thresholding). Vertical alignment makes the claim
+  precise: every algorithm sequences the same kernels over the same data
+  types, differing only in selection width, support discipline, and whether
+  restricted least-squares refinement is used. The sensing matrix is
+  generated on demand and feeds both matrix--vector kernels; each row
+  corresponds to one compiled context program on the same fabric.}
+  \label{fig:iteration}
+\end{figure*}

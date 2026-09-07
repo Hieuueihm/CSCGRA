@@ -1,0 +1,956 @@
+{
+  "schema": "cscgra-v3-brainweb-sweep-manifest-v1",
+  "selection": {
+    "fields": [
+      "rf0",
+      "rf20",
+      "rf40"
+    ],
+    "fixed_blocks_per_volume": 1,
+    "fixed_slices": [
+      90
+    ],
+    "modalities": [
+      "T1",
+      "T2",
+      "PD"
+    ],
+    "models": [
+      "normal",
+      "ms"
+    ],
+    "noises": [
+      "pn0",
+      "pn3",
+      "pn9"
+    ],
+    "slice_thickness": "1mm",
+    "source_slices": [
+      45,
+      67,
+      90,
+      112,
+      135
+    ]
+  },
+  "volumes": {
+    "ms_pd_1mm_pn0_rf0": {
+      "alias": "PD AI msles2 1mm pn0 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_pd_1mm_pn0_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "bb11eb75de76a4a167eaa5028c49edfb4e3ce476592b98c0ed586de35c2c441f",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_pd_1mm_pn0_rf20": {
+      "alias": "PD AI msles2 1mm pn0 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_pd_1mm_pn0_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "e6907d541770b183c9045f8836340f0870b6111c73b8cfe26ea3ab16925fdefb",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_pd_1mm_pn0_rf40": {
+      "alias": "PD AI msles2 1mm pn0 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_pd_1mm_pn0_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "1e83a5f864e9d4500dcb8c93a0dc2ad32aacfea2f71df5f3a6f9ffe826a78dba",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_pd_1mm_pn3_rf0": {
+      "alias": "PD AI msles2 1mm pn3 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_pd_1mm_pn3_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "b18ae7c9e4968898406407153a2a44ea31c1265b1480d49d621509fbd0cd7263",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_pd_1mm_pn3_rf20": {
+      "alias": "PD AI msles2 1mm pn3 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_pd_1mm_pn3_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "cdb7f02b2a460ee89cdf90ca9f52b94b492bd99fddef504c82a68cab608d8d05",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_pd_1mm_pn3_rf40": {
+      "alias": "PD AI msles2 1mm pn3 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_pd_1mm_pn3_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "eead0b6fec0cac96405a4961889962a88d09fbe8968fe573dd1e9084b24e08d9",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_pd_1mm_pn9_rf0": {
+      "alias": "PD AI msles2 1mm pn9 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_pd_1mm_pn9_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "de365295562dc5273abaf3d4152968fb9094db0802d49e8db349d99c738c4602",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_pd_1mm_pn9_rf20": {
+      "alias": "PD AI msles2 1mm pn9 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_pd_1mm_pn9_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "b0e1409cd6d238e6cc8f47014f5eb9816a25cb0c5c339112af8f25b55980d209",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_pd_1mm_pn9_rf40": {
+      "alias": "PD AI msles2 1mm pn9 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_pd_1mm_pn9_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "ddd9137ceb7e791c85994f5bdcd3c7b4fde7b00d0409ef00330394a78aedc471",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t1_1mm_pn0_rf0": {
+      "alias": "T1 AI msles2 1mm pn0 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t1_1mm_pn0_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "634b64e40a5812ff18b9219d286e1555c119e54b2778e166d72febc6445cf0be",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t1_1mm_pn0_rf20": {
+      "alias": "T1 AI msles2 1mm pn0 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t1_1mm_pn0_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "cfdff5b2a03124de063444d33730dc84d678d4ca6eaed2e65e96b347a56d8700",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t1_1mm_pn0_rf40": {
+      "alias": "T1 AI msles2 1mm pn0 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t1_1mm_pn0_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "e94236702deacfd337a5e7f8abe74f408b6607474fba0260a8e647b3c2726947",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t1_1mm_pn3_rf0": {
+      "alias": "T1 AI msles2 1mm pn3 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t1_1mm_pn3_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "141a2b533b5d2247b54dafb7936b4654bc9c1681fa6cd13d219f18e6ce4b8155",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t1_1mm_pn3_rf20": {
+      "alias": "T1 AI msles2 1mm pn3 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t1_1mm_pn3_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "2bed9c96ba777d1dcd8735019c703b622cf23a5e579fc40de810968668b2c0c9",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t1_1mm_pn3_rf40": {
+      "alias": "T1 AI msles2 1mm pn3 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t1_1mm_pn3_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "0e011627ab9eccae6643ff6af25f7d095645a70cb6a96068c68554c45bc9e326",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t1_1mm_pn9_rf0": {
+      "alias": "T1 AI msles2 1mm pn9 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t1_1mm_pn9_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "433aed0931a4e8413f93e87b90bb62e6c35e5bc9b83d6274cc07d9cd448a24f9",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t1_1mm_pn9_rf20": {
+      "alias": "T1 AI msles2 1mm pn9 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t1_1mm_pn9_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "1c560d68410c30a242d7a87c38f1eca0728c0e9eec1ab47754ffb9cab3b103be",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t1_1mm_pn9_rf40": {
+      "alias": "T1 AI msles2 1mm pn9 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t1_1mm_pn9_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "d09c02bf769384f3d0c8ad4ed1e8c3d0cfdc7f88c7bffa6fd470549fd094d3b3",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t2_1mm_pn0_rf0": {
+      "alias": "T2 AI msles2 1mm pn0 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t2_1mm_pn0_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "fd9c0bee83f16dd5d4441606b0f2248109116842742611074b8e3ddfd6fd69b2",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t2_1mm_pn0_rf20": {
+      "alias": "T2 AI msles2 1mm pn0 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t2_1mm_pn0_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "9eb5bf2adf735694604deac82dc99b1ba4af4fe156d2eb9f0be6a7117a8a31d8",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t2_1mm_pn0_rf40": {
+      "alias": "T2 AI msles2 1mm pn0 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t2_1mm_pn0_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "f245c823ef017820c0e487a31775812a442ae69ce2e9b32eff05435e2e3b6572",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t2_1mm_pn3_rf0": {
+      "alias": "T2 AI msles2 1mm pn3 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t2_1mm_pn3_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "895c508bd23edc5596aaf7cd8da257e5c8a568cf451b1f97385ebe87f7b85430",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t2_1mm_pn3_rf20": {
+      "alias": "T2 AI msles2 1mm pn3 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t2_1mm_pn3_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "eeada4e6e66a13258fa59eedf6e12303045609f7298371bbae94668de3891000",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t2_1mm_pn3_rf40": {
+      "alias": "T2 AI msles2 1mm pn3 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t2_1mm_pn3_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "7f5ebd06947e9dd053aae4239f19d859dbb2c57b5c5f2c8eac486a6c5ec4bce7",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t2_1mm_pn9_rf0": {
+      "alias": "T2 AI msles2 1mm pn9 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t2_1mm_pn9_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "7f5bbd6bcfc8c8a2b716e848b9c0f7ca23abdd5dde9b073e288e182c6f884948",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t2_1mm_pn9_rf20": {
+      "alias": "T2 AI msles2 1mm pn9 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t2_1mm_pn9_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "37ce381aa3e17447ee0f57f4a959488b39076f3fe5e47c21d2bb3ad7e59a1386",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "ms_t2_1mm_pn9_rf40": {
+      "alias": "T2 AI msles2 1mm pn9 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb2",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\ms_t2_1mm_pn9_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "0fc8ac62ad1b9c0fa2b23f3da46e590f60361f445b356c66daa699d9c3e7de6b",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_pd_1mm_pn0_rf0": {
+      "alias": "PD ICBM normal 1mm pn0 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_pd_1mm_pn0_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "3f11a5d5fbbd9d45632f7455d81a36222e2823c5fc0139f589d1f0d2e8d829a9",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_pd_1mm_pn0_rf20": {
+      "alias": "PD ICBM normal 1mm pn0 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_pd_1mm_pn0_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "b61dcbb47b0f4a675052bed3bb0c7a62f39a0ced80592dfe63d27b4ccf2da834",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_pd_1mm_pn0_rf40": {
+      "alias": "PD ICBM normal 1mm pn0 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_pd_1mm_pn0_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "29aea6f229cd6c6390b016de5fdd62c7e6974ea87a3377d65020141fce7543e7",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_pd_1mm_pn3_rf0": {
+      "alias": "PD ICBM normal 1mm pn3 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_pd_1mm_pn3_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "22d60335c08807d6770859708c0c43c7ecb1e1d2c8c7b030fc1114e7245b8093",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_pd_1mm_pn3_rf20": {
+      "alias": "PD ICBM normal 1mm pn3 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_pd_1mm_pn3_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "4591fe5848b39ce521178b3daacbe11f9119d248846a9d8dafc55ce67a293f4d",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_pd_1mm_pn3_rf40": {
+      "alias": "PD ICBM normal 1mm pn3 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_pd_1mm_pn3_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "14f7229373ea16fd75b1637d0e51815d6a9478788f1148b5e0d20535cdcaba42",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_pd_1mm_pn9_rf0": {
+      "alias": "PD ICBM normal 1mm pn9 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_pd_1mm_pn9_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "061a2d54171e734fb37d9a2d90c060a1d5c8cbadb3a59b5484b305e958759493",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_pd_1mm_pn9_rf20": {
+      "alias": "PD ICBM normal 1mm pn9 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_pd_1mm_pn9_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "1d0f55f1b584f44ebc65bb37c941a8c00e3ad7d752c70feaf550c2a2a1b9de48",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_pd_1mm_pn9_rf40": {
+      "alias": "PD ICBM normal 1mm pn9 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_pd_1mm_pn9_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "1b7b76f0d258e1030f6259b67638b6405422e57a5deae3e0edc5cc7b57d46763",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t1_1mm_pn0_rf0": {
+      "alias": "T1 ICBM normal 1mm pn0 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t1_1mm_pn0_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "a3e49104f9f2378a521dca2030e8e2e4cb201fd43fc16928e3a28c271335d761",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t1_1mm_pn0_rf20": {
+      "alias": "T1 ICBM normal 1mm pn0 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t1_1mm_pn0_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "9d69685e40ea8a25cec89b762b054722f0c0f9b46ccdd307741fec49cde34e33",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t1_1mm_pn0_rf40": {
+      "alias": "T1 ICBM normal 1mm pn0 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t1_1mm_pn0_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "ba8edc4676d56b32e8e7ba657959464262e1163433898bd12312b162e4327f67",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t1_1mm_pn3_rf0": {
+      "alias": "T1 ICBM normal 1mm pn3 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t1_1mm_pn3_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "a80b07f845cead7ff31fe9406d4a175af2f0ceb0bccc45eb9dbe2cc51ac465ca",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t1_1mm_pn3_rf20": {
+      "alias": "T1 ICBM normal 1mm pn3 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t1_1mm_pn3_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "73c918e4f7ae56521e16054c77bd811d691b3ba6220bc9b1f48f953250f982c0",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t1_1mm_pn3_rf40": {
+      "alias": "T1 ICBM normal 1mm pn3 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t1_1mm_pn3_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "79cc6c5cda08a28433a516afb4f4d926e8322ff78a4450e1897e5782ff0ee680",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t1_1mm_pn9_rf0": {
+      "alias": "T1 ICBM normal 1mm pn9 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t1_1mm_pn9_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "df7b1ea33113f9287fd37a90e32decbcbfa39272534d9e09cab5f3c8f6fb3dd1",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t1_1mm_pn9_rf20": {
+      "alias": "T1 ICBM normal 1mm pn9 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t1_1mm_pn9_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "23c72f03ee38e79f6777ede36d67507572ad056498c940d52ef44d5b1911d7e3",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t1_1mm_pn9_rf40": {
+      "alias": "T1 ICBM normal 1mm pn9 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t1_1mm_pn9_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "d1c41391d60d8fc353d16dd81a7eb4cc9138d725056c3738b9c317c38265ed34",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t2_1mm_pn0_rf0": {
+      "alias": "T2 ICBM normal 1mm pn0 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t2_1mm_pn0_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "29ccf50de463ed6941d5b8c56b70cffa6ef833a1bf23d00d38d553465d4498ae",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t2_1mm_pn0_rf20": {
+      "alias": "T2 ICBM normal 1mm pn0 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t2_1mm_pn0_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "6d9a5ace88dbe82502230110742a24b5a5c261aa716ff56d8203d18c238c1925",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t2_1mm_pn0_rf40": {
+      "alias": "T2 ICBM normal 1mm pn0 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t2_1mm_pn0_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "1a46d3b7a4862314373f13ecb7b015f4e2170c4dcec85e8e345783765be461da",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t2_1mm_pn3_rf0": {
+      "alias": "T2 ICBM normal 1mm pn3 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t2_1mm_pn3_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "e141064a9e0fd6539b2526ac62dcbe9e3bd77d59e84b792b9f46bcc13c4bc3ce",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t2_1mm_pn3_rf20": {
+      "alias": "T2 ICBM normal 1mm pn3 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t2_1mm_pn3_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "bf7de30e850a9c79cd3442b2dd1673f5869f278d26b8b95e7d162772029a1dd5",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t2_1mm_pn3_rf40": {
+      "alias": "T2 ICBM normal 1mm pn3 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t2_1mm_pn3_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "b8d0888d87098a8b324f93ef8e3ad7064d6cf28c95a8eb23e4e1cc17e6b3588b",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t2_1mm_pn9_rf0": {
+      "alias": "T2 ICBM normal 1mm pn9 rf0",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t2_1mm_pn9_rf0.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "f020b4ba916794b9e5a76e78e3867aadc3da21c7d0926f7224419c3626746a5f",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t2_1mm_pn9_rf20": {
+      "alias": "T2 ICBM normal 1mm pn9 rf20",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t2_1mm_pn9_rf20.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "3fd349dcbe79dd9263df27e635ac5eb99564a6807ca6288410b50d699f927ea0",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    },
+    "normal_t2_1mm_pn9_rf40": {
+      "alias": "T2 ICBM normal 1mm pn9 rf40",
+      "byte_order": "little",
+      "endpoint": "https://brainweb.bic.mni.mcgill.ca/cgi/brainweb1",
+      "file": "reports\\v3\\datasets\\brainweb_sweep\\normal_t2_1mm_pn9_rf40.raws.gz",
+      "intensity_range": [
+        0,
+        4095
+      ],
+      "provider": "BrainWeb Simulated Brain Database, McGill University",
+      "sha256": "3031a9ecc18a2d3d15c73b0e6fbcc81b286221518d9dbb826bc3119085f83daf",
+      "shape": [
+        181,
+        217,
+        181
+      ]
+    }
+  }
+}

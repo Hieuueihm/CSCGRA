@@ -1,7 +1,8 @@
 # RTL v2 verification
 
 This directory contains version-matched testbenches and compiled golden data
-for `rtl/v2`.
+for `rtl/v2`. The checkout's validation state is maintained only in
+[CURRENT_STATUS.md](../../reports/v2/CURRENT_STATUS.md).
 
 ## Canonical regression
 
@@ -68,3 +69,6 @@ Use `-CanonicalAll` for an audit-only comparison of every valid algorithm
 against the canonical include. The current audit passes OMP, IHT, HTP, SP,
 GP, gOMP, and MP for every valid case. CoSaMP has 10 mismatches in case 1 and
 16 mismatches in case 3; this remains an explicit hardware variant.
+
+Formal safety checks live in `verification/formal`; they complement, and do
+not replace, this bit-exact functional regression.

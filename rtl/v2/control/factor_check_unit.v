@@ -65,8 +65,10 @@ module factor_check_unit #(
         (factor_check_word_w << 10) ^ (factor_check_word_w << 20) ^
         32'h9e3779b9;
     wire factor_pipe_resp_any_match_w = |resp_match_mask;
+    wire factor_pipe_resp_tag_in_range_w = ({1'b0, resp_tag} < MAX_K);
     wire factor_pipe_resp_ordered_match_w =
-        ({1'b0, resp_tag} >= cached_k) || resp_match_mask[resp_tag];
+        ({1'b0, resp_tag} >= cached_k) ||
+        (factor_pipe_resp_tag_in_range_w && resp_match_mask[resp_tag]);
 
     assign scan_done = scan_active_q && resp_valid &&
                        ({1'b0, resp_tag} + 1'b1 >= request_k);
@@ -78,8 +80,6 @@ module factor_check_unit #(
     assign unmatched_count_q = factor_check_unmatched_count_q;
     assign unmatched_tag_q = factor_check_unmatched_tag_q;
     assign unmatched_value_q = factor_check_unmatched_value_q;
-
-    integer gi;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -139,7 +139,7 @@ module factor_check_unit #(
                     end
                 end
 
-                if (resp_valid) begin
+                if (resp_valid && factor_pipe_resp_tag_in_range_w) begin
                     factor_check_seen_mask_q <= factor_check_seen_mask_q |
                                                 resp_match_mask;
                     factor_check_ordered_match_q <=
@@ -169,5 +169,25 @@ module factor_check_unit #(
             end
         end
     end
+
+`ifdef FORMAL
+    // Interface contracts prevent every variable part-select/index in this
+    // scanner from escaping the configured support capacity.
+    always @(posedge clk) begin
+        if (rst_n) begin
+            if (start) begin
+                assert(request_k <= MAX_K);
+                assert(cached_k <= MAX_K);
+            end
+            if (resp_valid) begin
+                assert(factor_pipe_resp_tag_in_range_w);
+                assert({1'b0, resp_tag} < request_k);
+            end
+            if (pipe_valid)
+                assert({1'b0, pipe_tag} < request_k);
+            assert(factor_check_append_rank_q <= MAX_K);
+        end
+    end
+`endif
 
 endmodule

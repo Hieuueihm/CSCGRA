@@ -1,0 +1,102 @@
+% Fig. 1 -- Algorithm/application landscape and the runtime operating envelope.
+% Requires in preamble:
+%   \usepackage{tikz}
+%   \usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds}
+% Include from the main text with: \input{fig_algorithm_landscape}
+
+\begin{figure}[t]
+  \centering
+  \resizebox{\columnwidth}{!}{%
+  \begin{tikzpicture}[
+      font=\scriptsize,
+      alg/.style={circle, draw=black, fill=white, minimum size=5.5pt,
+                  inner sep=0pt},
+      alglabel/.style={inner sep=1pt},
+      app/.style={draw=gray!70, fill=gray!8, rounded corners=1pt,
+                  inner sep=2pt, text=black!75, align=center},
+      appline/.style={gray!70, shorten >=1.5pt},
+      traj/.style={-{Latex[length=2mm]}, very thick, red!70!black, dashed},
+      >={Latex[length=1.6mm]}
+    ]
+
+    % ---- axes ----------------------------------------------------------
+    \draw[->] (0,0) -- (8.6,0);
+    \node[anchor=north east] at (8.6,-0.12)
+      {Per-iteration cost (compute, LS work, state)};
+    \draw[->] (0,0) -- (0,5.4);
+    \node[rotate=90, anchor=south] at (-0.25,2.7)
+      {Empirical recovery robustness under noise};
+
+    % ---- algorithm points ----------------------------------------------
+    \node[alg] (mp)     at (1.0,1.0) {};
+      \node[alglabel, above left=0pt of mp]{MP};
+    \node[alg] (iht)    at (1.5,2.1) {};
+      \node[alglabel, above left=0pt of iht]{IHT};
+    \node[alg] (gp)     at (2.5,2.5) {};
+      \node[alglabel, below right=0pt of gp]{GP};
+    \node[alg] (gomp)   at (3.3,3.6) {};
+      \node[alglabel, above left=0pt of gomp]{gOMP};
+    \node[alg] (omp)    at (4.0,3.1) {};
+      \node[alglabel, below right=0pt of omp]{OMP};
+    \node[alg] (htp)    at (5.0,3.8) {};
+      \node[alglabel, below right=0pt of htp]{HTP};
+    \node[alg] (sp)     at (6.3,4.3) {};
+      \node[alglabel, above left=0pt of sp]{SP};
+    \node[alg] (cosamp) at (7.3,4.6) {};
+      \node[alglabel, below right=2pt and 1pt of cosamp]{CoSaMP};
+
+    % ---- application anchors -------------------------------------------
+    \node[app, anchor=west] (a_wear) at (2.1,0.75)
+      {wearable / implantable telemetry};
+    \draw[appline] (a_wear.west) -- (mp);
+    \draw[appline] (a_wear.north west) -- (iht);
+
+    \node[app, anchor=west, align=left] (a_mri) at (0.6,4.35)
+      {CS-MRI:\\volumes (IHT)\\dynamic (OMP)};
+    \draw[appline] (a_mri.south) -- (iht);
+    \draw[appline] (a_mri.east) -- (omp);
+
+    \node[app] (a_mmw) at (4.6,1.5)
+      {one-bit mmWave\\massive MIMO};
+    \draw[appline] (a_mmw.west) -- (gp);
+
+    \node[app] (a_ofdm) at (7.1,2.7)
+      {low-SNR OFDM\\channel tracking};
+    \draw[appline] (a_ofdm.north) -- (sp);
+    \draw[appline] (a_ofdm.north east) -- (cosamp);
+
+    % ---- runtime trajectory of one receiver ----------------------------
+    \draw[traj] (cosamp) to[bend right=12] (omp);
+    \draw[traj] (omp) to[bend right=10] (iht);
+    \node[red!70!black, align=left, anchor=south west] at (2.9,5.05)
+      {one deployed receiver at run time:
+       SNR $\downarrow$ / battery $\downarrow$ $\Rightarrow$ cheaper program};
+
+    % ---- unified-fabric contour ----------------------------------------
+    \begin{scope}[on background layer]
+      \node[draw=blue!60, dashed, rounded corners=6pt, thick,
+            fit=(mp)(iht)(gp)(omp)(gomp)(htp)(sp)(cosamp),
+            inner sep=8pt] (fabric) {};
+    \end{scope}
+    \node[blue!60!black, align=center, anchor=north] (fablabel)
+      at (4.3,-0.55)
+      {this work: all eight are compiled context programs on one CGRA
+       fabric,\\switched per solve --- no bitstream reconfiguration, no
+       resynthesis};
+    \draw[blue!60, thick, -{Latex[length=1.8mm]}]
+      ($(fablabel.north)+(-1.6,0)$) -- ($(fabric.south)+(-1.9,0)$);
+
+  \end{tikzpicture}%
+  }
+  \caption{Sparse recovery algorithms occupy different points on the
+  robustness--cost trade-off, and applications anchor to different points.
+  Positions are ordinal rather than to scale: per-iteration cost follows the
+  kernel inventory of Table~\ref{tab:kernels} and the per-iteration cycle
+  measurements of Section~\ref{sec:results}; robustness follows published
+  empirical comparisons \cite{marques2019review} and the measured
+  reconstruction SNR of Section~\ref{sec:results}. Because a single deployed
+  system also moves across operating points at run time (dashed trajectory),
+  algorithm choice is a runtime decision. CSR maps the entire portfolio onto
+  one context-programmed fabric.}
+  \label{fig:landscape}
+\end{figure}

@@ -43,6 +43,14 @@ work/*
 !work/README.md
 logs/*
 !logs/README.md
+tmp/*
+!tmp/README.md
+.claude-flow/*
+!.claude-flow/README.md
+.claude/*
+!.claude/README.md
+.swarm/*
+.mcp.json
 
 # Python/cache
 __pycache__/
@@ -66,3 +74,11 @@ golden_model/
 CSCGRA_opt_architecture/
 CSCGRA_opt_architecture_opt2/
 bd_release_optarch_20260706/
+
+# Ruflo local secrets and runtime data
+.env
+.env.local
+.env.*.local
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/

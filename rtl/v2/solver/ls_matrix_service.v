@@ -1,5 +1,3 @@
-`timescale 1ns/1ps
-
 // Eight row banks hold the regularized Cholesky LDLT matrix. READ4/WRITE4 use
 // four distinct row banks. ACC4 captures the products from all four physical
 // PE rows once, then drains the four Gram columns into the row banks while the
@@ -121,9 +119,13 @@ module ls_matrix_service #(
         input signed [GE_W-1:0] cur;
         input signed [63:0] addend;
         reg signed [63:0] cur_ext;
+        reg signed [63:0] sum_ext;
         begin
             cur_ext = {{(64-GE_W){cur[GE_W-1]}},cur};
-            add_to_ge = cur_ext + addend;
+            // Matrix arithmetic intentionally wraps to GE_W. Slice it
+            // explicitly so the numerical contract is visible to tools.
+            sum_ext = cur_ext + addend;
+            add_to_ge = sum_ext[GE_W-1:0];
         end
     endfunction
 
@@ -266,8 +268,15 @@ module ls_matrix_service #(
                             // Gaussian row/RHS update hardware is intentionally
                             // absent.  The retained solver is Cholesky LDLT.
                             OP_ROW_UPDATE: begin update_value <= {GE_W{1'b0}}; state <= S_DONE; end
-                            OP_RHS_WRITE: begin rhs_mem[row_a] <= rhs_wdata; state <= S_DONE; end
-                            OP_RHS_READ: begin rhs_rdata <= rhs_mem[row_a]; state <= S_DONE; end
+                            OP_RHS_WRITE: begin
+                                if (row_a < MAX_K)
+                                    rhs_mem[row_a] <= rhs_wdata;
+                                state <= S_DONE;
+                            end
+                            OP_RHS_READ: begin
+                                rhs_rdata <= (row_a < MAX_K) ? rhs_mem[row_a] : {RHS_W{1'b0}};
+                                state <= S_DONE;
+                            end
                             OP_RHS_UPDATE: state <= S_DONE;
                             OP_ACC4: begin
                                 acc4_drain_col_q <= 2'd0;
@@ -311,4 +320,46 @@ module ls_matrix_service #(
             endcase
         end
     end
+
+`ifdef FORMAL
+    // Prove callers obey the fixed-capacity matrix and RHS contract.
+    always @(posedge clk) begin
+        if (rst_n) begin
+            assert(state <= S_ACC4);
+            assert(!(busy && done));
+            if (start && (state == S_IDLE)) begin
+                case (op)
+                    OP_WRITE, OP_ACC_BLOCK: begin
+                        assert(row_a < MAX_K);
+                        assert(col_a < MAX_K);
+                    end
+                    OP_READ2: begin
+                        assert(row_a < MAX_K);
+                        assert(col_a < MAX_K);
+                        assert(row_b < MAX_K);
+                        assert(col_b < MAX_K);
+                    end
+                    OP_READ4: begin
+                        assert(({1'b0, row_a} + 6'd3) < MAX_K);
+                        assert(col_a < MAX_K);
+                        assert(row_b < MAX_K);
+                        assert(col_b < MAX_K);
+                    end
+                    OP_WRITE4: begin
+                        assert(({1'b0, row_a} + 6'd3) < MAX_K);
+                        assert(col_a < MAX_K);
+                    end
+                    OP_RHS_WRITE, OP_RHS_READ: assert(row_a < MAX_K);
+                    OP_ACC4: begin
+                        assert(({1'b0, row_base} + 6'd3) < MAX_K);
+                        assert(({1'b0, col_a} + 6'd3) < MAX_K);
+                    end
+                    OP_CLEAR_ROW: assert(row_a < MAX_K);
+                    default: begin end
+                endcase
+            end
+        end
+    end
+`endif
+
 endmodule

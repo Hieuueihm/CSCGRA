@@ -16,12 +16,13 @@ The active correctness contract is:
 canonical Python -> hardware Python (Q16/LDLT) -> exact RTL golden -> RTL v2
 ```
 
-The current working checkpoint passes 348 checks with 0 failures; CoSaMP and
-SP at K16 are explicit capacity exclusions. OOC synthesis passes at +0.374 ns,
-but routed WNS is -0.356 ns, so it is not yet the 100 MHz timing sign-off.
-See [docs/REFERENCE_FLOW.md](docs/REFERENCE_FLOW.md) for the ownership rules and
-[reports/v2/reference_contract_signoff_20260820.md](reports/v2/reference_contract_signoff_20260820.md)
-for exact correctness, cycle, resource, and routed-timing evidence.
+The active checkout is currently **UNVALIDATED** because the RTL has changed
+after the retained implementation reports. Do not copy a metric from a dated
+report and call it current. The single authoritative status is
+[reports/v2/CURRENT_STATUS.md](reports/v2/CURRENT_STATUS.md); canonical runs
+record Git HEAD, dirty state, and SHA-256 identities for RTL and verification.
+
+See [docs/REFERENCE_FLOW.md](docs/REFERENCE_FLOW.md) for the ownership rules.
 
 Start with [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for the complete
 implemented-optimization inventory, rejected-trial list, ownership map, and
@@ -64,6 +65,24 @@ Run out-of-context synthesis:
 
 ```powershell
 .\scripts\run.ps1 -Flow synth -RtlVersion v2 -Top cgra_top
+```
+
+Run consistency and formal-syntax gates:
+
+```powershell
+.\scripts\run.ps1 -Flow check
+```
+
+Run formal proofs when SymbiYosys/Yosys/Boolector are installed:
+
+```powershell
+.\scripts\run.ps1 -Flow formal -RunId current-formal
+```
+
+Remove disposable tool state while preserving source and reviewed reports:
+
+```powershell
+.\scripts\clean.ps1
 ```
 
 Every invocation creates an isolated directory under `work/` and stores raw

@@ -1,0 +1,12 @@
+{
+  "entries": [],
+  "paper_coverage_policy": {
+    "minimum_files": 20,
+    "minimum_slices": 100,
+    "required_anatomies": [
+      "brain",
+      "knee"
+    ]
+  },
+  "schema": "cscgra-v3-fastmri-source-manifest-v1"
+}

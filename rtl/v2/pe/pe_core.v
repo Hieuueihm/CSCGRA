@@ -105,8 +105,10 @@ module pe_core #(
 
     wire signed [DATA_W-1:0] imm_s = imm16_to_q(imm16);
 
-    wire signed [ACC_W-1:0] a_ext = $signed(src_a);
-    wire signed [ACC_W-1:0] b_ext = $signed(src_b);
+    wire signed [ACC_W-1:0] a_ext =
+        {{(ACC_W-DATA_W){src_a[DATA_W-1]}}, src_a};
+    wire signed [ACC_W-1:0] b_ext =
+        {{(ACC_W-DATA_W){src_b[DATA_W-1]}}, src_b};
 
     wire signed [ACC_W:0] add_wide     = {a_ext[ACC_W-1], a_ext} + {b_ext[ACC_W-1], b_ext};
     wire signed [ACC_W:0] sub_wide     = {a_ext[ACC_W-1], a_ext} - {b_ext[ACC_W-1], b_ext};
@@ -178,7 +180,8 @@ module pe_core #(
     wire signed [DATA_W-1:0] mul_a_s = a_s;
     wire signed [DATA_W-1:0] mul_b_s = b_s;
     wire signed [(2*DATA_W)-1:0] prod_full = mul_a_s * mul_b_s;
-    wire signed [ACC_W-1:0]      prod_ext  = $signed(prod_full);
+    wire signed [ACC_W-1:0]      prod_ext  =
+        {{(ACC_W-(2*DATA_W)){prod_full[(2*DATA_W)-1]}}, prod_full};
     assign mul_product_out = mac_product_q;
     wire signed [ACC_W:0] acc_add_wide =
         {acc[ACC_W-1], acc} + {mac_product_q[ACC_W-1], mac_product_q};

@@ -17,6 +17,7 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+. (Join-Path $repoRoot "scripts\common\project_context.ps1")
 $configPath = Join-Path $repoRoot "config\rtl-$RtlVersion.json"
 $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
 # Parse into NEW variables: assigning an array back into the [string]-typed
@@ -70,13 +71,14 @@ $includeDirs = @(
 )
 $snapshot = "tb_${RtlVersion}_regression"
 $failurePattern = "X_MISM|FAIL irq|FAIL golden|FAIL pc|FAIL nonzero|FAIL ctx|FAIL cf_loop|FAIL done|TIMEOUT|FATAL|ERROR:"
-$gitCommit = (& git -C $repoRoot rev-parse HEAD).Trim()
+$sourceIdentity = Get-ProjectSourceIdentity -RepoRoot $repoRoot `
+    -RtlVersion $RtlVersion -IncludeVerification
 
 $metadata = [ordered]@{
     flow = "sim"
     rtl_version = $RtlVersion
     run_id = $RunId
-    git_commit = $gitCommit
+    source_identity = $sourceIdentity
     testbench = $config.default_testbench
     cases = @($caseList)
     algorithms = @($algorithmFilter)
@@ -90,7 +92,7 @@ $metadata = [ordered]@{
     work_dir = $workDir
     log_dir = $logDir
 }
-$metadata | ConvertTo-Json -Depth 4 |
+$metadata | ConvertTo-Json -Depth 6 |
     Set-Content -LiteralPath (Join-Path $logDir "metadata.json")
 
 Push-Location $workDir

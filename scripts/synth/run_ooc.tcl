@@ -41,7 +41,7 @@ set_property target_language Verilog [current_project]
 set_property include_dirs $include_dirs [current_fileset]
 read_verilog $rtl_files
 synth_design -top $top_name -part $part_name -mode out_of_context \
-    -flatten_hierarchy rebuilt -directive RuntimeOptimized
+    -flatten_hierarchy rebuilt
 create_clock -period $clock_period_ns -name clk [get_ports clk]
 report_utilization -file [file join $log_dir "${top_name}_utilization.rpt"] \
     -hierarchical

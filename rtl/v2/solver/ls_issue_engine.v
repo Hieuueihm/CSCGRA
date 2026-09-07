@@ -1,5 +1,3 @@
-`timescale 1ns/1ps
-
 // One-request LS issue boundary.
 //
 // The controller still owns the phase schedule, but the matrix service is no

@@ -59,7 +59,7 @@ module wide_mul_sequencer #(
     reg [3:0] wide_product_part1_q;
     reg [127:0] wide_partial_sum [0:3];
 
-    integer wide_row, wide_col, wide_part, wide_a_limb, wide_b_limb, wide_shift;
+    integer wide_row;
     integer red_row, red_col, red_part, red_a_limb, red_b_limb, red_shift;
 
     assign wide_mul_state_q = wide_mul_state_iq;
@@ -85,6 +85,12 @@ module wide_mul_sequencer #(
     // flag selects the upper limb window; each limb pair is shifted to its
     // Q32 position and accumulated into the row partial sum.
     always @(*) begin
+        // Combinational reduction indices; defaults prevent inferred latches
+        // when no row/product is valid.
+        red_part = 0;
+        red_a_limb = 0;
+        red_b_limb = 0;
+        red_shift = 0;
         for (red_row = 0; red_row < 4; red_row = red_row + 1)
             wide_partial_sum[red_row] = 128'd0;
         for (red_row = 0; red_row < 4; red_row = red_row + 1) begin
@@ -254,5 +260,22 @@ module wide_mul_sequencer #(
             endcase
         end
     end
+
+`ifdef FORMAL
+    // Control-safety properties. The formal harness leaves datapath values
+    // arbitrary and proves that token/state sequencing stays consistent.
+    always @(posedge clk) begin
+        if (rst_n) begin
+            assert(wide_mul_state_iq <= WIDE_MUL_FINISH);
+            assert(!wide_mul_issue_part1_token_iq || wide_mul_issue_token_iq);
+            assert(!wide_mul_issue_token_iq || wide_mul_active_token_iq);
+            assert(!wide_mul_vertical_token_iq || wide_mul_active_token_iq);
+            assert(!wide_mul_vertical_done_iq || wide_mul_done_iq);
+            assert(!wide_mul_done_iq || (wide_mul_state_iq == WIDE_MUL_IDLE));
+            if (wide_mul_state_iq == WIDE_MUL_IDLE)
+                assert(!wide_mul_issue_token_iq);
+        end
+    end
+`endif
 
 endmodule

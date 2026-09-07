@@ -621,7 +621,7 @@ module cgra_top #(
         .mesh_ctx_base_idx(mesh_ctx_base_idx), .mesh_ctx_limit(mesh_ctx_limit), .mesh_ctx_threshold(mesh_ctx_threshold), .mesh_ctx_shift(mesh_ctx_shift), .mesh_ctx_x_bus(mesh_ctx_x_bus), .mesh_ctx_delta_bus(mesh_ctx_delta_bus), .mesh_ctx_keep_bus(mesh_ctx_keep_bus),
         .lane_valid(pe_array_lane_valid), .base_idx(pe_array_base_idx), .first_in_phase(pe_array_first_in_phase),
         .spm_a_rdata(pe_spm_pa_rdata), .spm_b_rdata(pe_spm_pb_rdata), .phi_bus(ls_busy ? ls_pe_rhs_phi_bus : phi_bus), .scalar_bus(ls_busy ? ls_pe_rhs_y_bus : scalar_bus),
-        .phi2_bus(ls_busy ? ls_pe_rhs_phi2_bus : {COLS*DATA_W{1'b0}}), .corr_pair_mode(ls_corr_pair_mode), .corr_half_sel(ls_corr_half_sel),
+        .phi2_bus(ls_pe_rhs_phi2_bus), .corr_pair_mode(ls_corr_pair_mode), .corr_half_sel(ls_corr_half_sel),
         .sparse_active(ls_start || ls_busy), .sparse_step_active(ls_pe_rhs_active), .sparse_clear(ls_pe_sparse_clear), .corr_acc_clear(ls_pe_corr_acc_clear), .corr_acc_en(ls_pe_corr_acc_en), .sparse_op((ls_busy || ls_start) ? ls_pe_sparse_op : scalar_op[3:0]), .sparse_k_active(sparse_k_active),
         .ls_wide_mul_active(ls_wide_mul_active), .ls_wide_operand_valid(ls_wide_operand_valid), .ls_wide_vertical_active(ls_wide_vertical_active), .ls_wide_vertical_tag(ls_wide_vertical_tag),
         .ls_wide_a_row0_bus(ls_wide_a_row0_bus), .ls_wide_a_row1_bus(ls_wide_a_row1_bus), .ls_wide_a_row2_bus(ls_wide_a_row2_bus), .ls_wide_a_row3_bus(ls_wide_a_row3_bus),

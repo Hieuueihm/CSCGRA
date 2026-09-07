@@ -605,6 +605,11 @@ generate
 endgenerate
 
 always @(*) begin
+    // These are combinational loop temporaries. Explicit defaults keep lint
+    // and formal elaboration from interpreting them as state-holding latches.
+    wide_part = 0;
+    wide_a_limb = 0;
+    wide_b_limb = 0;
     ls_wide_mul_active = wide_mul_active_token_q ||
                          ls_batch4_active || ldlt_border_issue_active_w;
     ls_wide_a_full_bus = {4*COLS*DATA_W{1'b0}};
@@ -727,6 +732,11 @@ end
 // The wide-multiply sequencer FSM moved to u_wide_mul_sequencer.
 
 always @(*) begin
+    // Reduction-index temporaries are not architectural state.
+    border_part = 0;
+    border_a_limb = 0;
+    border_b_limb = 0;
+    border_shift = 0;
     border_ingress_neg = 4'd0;
     for (border_row = 0; border_row < 4; border_row = border_row + 1) begin
         if (!ldlt_border_issue_phase_q) begin
@@ -915,9 +925,9 @@ end
 // development without adding any synthesizable logic.
 function signed [127:0] border_reference_mul;
     input signed [63:0] lhs;
-    input signed [63:0] rhs;
+    input signed [63:0] rhs_operand;
     begin
-        border_reference_mul = lhs * rhs;
+        border_reference_mul = lhs * rhs_operand;
     end
 endfunction
 
@@ -1479,8 +1489,7 @@ always @(*) begin
                 (((rhs_block_base + rhs_lane) < active_k_count) ?
                     phi_cache[rhs_block_base + rhs_lane] : {DATA_W{1'b0}}));
         pe_rhs_phi2_bus[rhs_lane*DATA_W +: DATA_W] =
-            corr_active_op_w ? corr_phi2_lane[rhs_lane*DATA_W +: DATA_W] :
-                               {DATA_W{1'b0}};
+            corr_phi2_lane[rhs_lane*DATA_W +: DATA_W];
         pe_rhs_y_bus[rhs_lane*DATA_W +: DATA_W] =
             (residual_ingress_valid_q ?
                 residual_ingress_coeff_q[rhs_lane*DATA_W +: DATA_W] :
@@ -3600,9 +3609,6 @@ case (state)
     end
 end
 endmodule
-
-
-
 
 
 

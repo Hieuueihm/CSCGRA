@@ -105,9 +105,11 @@ module tb_dma_ctrl;
         end
     end
     integer ri;
-    always @(*) begin
+    // The production SPM is a synchronous block RAM.  Model the same
+    // registered read latency here so write-prefetch timing is exercised.
+    always @(posedge clk) begin
         for (ri = 0; ri < COLS; ri = ri + 1)
-            spm_rdata[ri*DATA_W +: DATA_W] =
+            spm_rdata[ri*DATA_W +: DATA_W] <=
                 spm_word[spm_addr[ri*MEM_AW +: MEM_AW]*COLS + ri];
     end
 
@@ -162,9 +164,20 @@ module tb_dma_ctrl;
     // ------------------------------------------------------------------
     wire w_fire = m_axi_wvalid && m_axi_wready;
     integer w_total = 0;
+    reg [AXI_DW-1:0] w_data_log [0:511];
+    reg              w_last_log [0:511];
+    reg              w_stall_enable = 0;
+    reg [2:0]        w_ready_phase = 0;
     reg [1:0] b_delay = 0;
     always @(posedge clk) begin
+        w_ready_phase <= w_ready_phase + 1'b1;
+        if (w_stall_enable)
+            m_axi_wready <= (w_ready_phase[1:0] != 2'b00);
+        else
+            m_axi_wready <= 1'b1;
         if (w_fire) begin
+            w_data_log[w_total] <= m_axi_wdata;
+            w_last_log[w_total] <= m_axi_wlast;
             w_total = w_total + 1;
             if (m_axi_wlast)
                 b_delay <= 2'd2;
@@ -187,11 +200,28 @@ module tb_dma_ctrl;
     // capture them on the done cycle itself.
     reg done_error_q = 0;
     reg [3:0] done_ecode_q = 0;
+    reg done_rready_q = 0;
+    reg stalled_w_q = 0;
+    reg [AXI_DW-1:0] stalled_wdata_q = 0;
+    reg [AXI_DW/8-1:0] stalled_wstrb_q = 0;
+    reg stalled_wlast_q = 0;
     always @(posedge clk) begin
         if (done_w) begin
             done_error_q <= error_w;
             done_ecode_q <= error_code_w;
+            done_rready_q <= m_axi_rready;
         end
+        if (stalled_w_q && (!m_axi_wvalid ||
+                            (m_axi_wdata !== stalled_wdata_q) ||
+                            (m_axi_wstrb !== stalled_wstrb_q) ||
+                            (m_axi_wlast !== stalled_wlast_q))) begin
+            $display("FAIL: AXI W payload changed under backpressure");
+            errors = errors + 1;
+        end
+        stalled_w_q <= m_axi_wvalid && !m_axi_wready;
+        stalled_wdata_q <= m_axi_wdata;
+        stalled_wstrb_q <= m_axi_wstrb;
+        stalled_wlast_q <= m_axi_wlast;
     end
 
     task clearspm;
@@ -239,6 +269,24 @@ module tb_dma_ctrl;
                 expw = i;
                 if (first_wr[i] !== expw) begin
                     $display("FAIL: word %0d = %h expected %0d", i, first_wr[i], i);
+                    errors = errors + 1;
+                end
+            end
+        end
+    endtask
+
+    task check_write_words(input integer n);
+        integer i;
+        begin
+            for (i = 0; i < n; i = i + 1) begin
+                if (w_data_log[i] !== i) begin
+                    $display("FAIL: AXI W word %0d = %h expected %0d",
+                             i, w_data_log[i], i);
+                    errors = errors + 1;
+                end
+                if (w_last_log[i] !== (((i & 255) == 255) || (i == n-1))) begin
+                    $display("FAIL: AXI WLAST at word %0d = %b expected %b",
+                             i, w_last_log[i], (((i & 255) == 255) || (i == n-1)));
                     errors = errors + 1;
                 end
             end
@@ -303,6 +351,7 @@ module tb_dma_ctrl;
         run_xfer(1'b1, 300, 32'h0000_4000);
         if (done_error_q) begin $display("FAIL t4: unexpected error"); errors = errors + 1; end
         if (w_total !== 300) begin $display("FAIL t4: w_total=%0d expected 300", w_total); errors = errors + 1; end
+        check_write_words(300);
         $display("TEST4 multi-burst write 300: done (w_total=%0d)", w_total);
 
         // Test 5: read length 256 (exactly one full burst).
@@ -313,6 +362,31 @@ module tb_dma_ctrl;
         if (wr_count != 256) begin $display("FAIL t5: wr_count=%0d expected 256", wr_count); errors = errors + 1; end
         check_words(256);
         $display("TEST5 exact-256 read: done (wr_count=%0d)", wr_count);
+
+        // Test 6: an error on the only/last beat must retire the R channel on
+        // the same edge. This is distinct from Test 3's multi-beat drain.
+        clearspm;
+        err_beat_cfg = 0;
+        run_xfer(1'b0, 1, 32'h0000_6000);
+        if (!done_error_q) begin $display("FAIL t6: error not flagged"); errors = errors + 1; end
+        if (done_ecode_q !== 4'd1) begin $display("FAIL t6: error_code=%0d expected 1", done_ecode_q); errors = errors + 1; end
+        if (done_rready_q) begin
+            $display("FAIL t6: rready remained asserted on the done cycle");
+            errors = errors + 1;
+        end
+        $display("TEST6 last-beat SLVERR retires R channel: done");
+
+        // Test 7: write while WREADY is periodically deasserted.  Payload,
+        // order and WLAST must remain stable across every stalled cycle.
+        clearspm;
+        err_beat_cfg = -1;
+        w_stall_enable = 1'b1;
+        run_xfer(1'b1, 31, 32'h0000_7000);
+        w_stall_enable = 1'b0;
+        if (done_error_q) begin $display("FAIL t7: unexpected error"); errors = errors + 1; end
+        if (w_total !== 31) begin $display("FAIL t7: w_total=%0d expected 31", w_total); errors = errors + 1; end
+        check_write_words(31);
+        $display("TEST7 stalled write 31: done (w_total=%0d)", w_total);
 
         if (errors == 0)
             $display("DMA-CTRL: ALL TESTS PASSED");

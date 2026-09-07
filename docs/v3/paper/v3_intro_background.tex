@@ -1,0 +1,309 @@
+% =========================================================================
+% CSR v3 journal draft -- Section I (Introduction) and Section II (Background)
+% Direction B (docs/v3/22_V3_PAPER_PLAN.md): v3 CGRA story, journal register.
+% Cite keys follow docs/v3/paper/v3_additions.bib; map legacy v2 keys as noted.
+% Honesty rules: no result numbers appear in these two sections; every
+% architectural claim here is leaf-evidenced (M1-M7) or clearly scoped.
+% =========================================================================
+
+\section{Introduction}
+\label{sec:introduction}
+
+Compressive sensing (CS) acquires sparse or compressible signals from far
+fewer measurements than Nyquist sampling requires
+\cite{donoho2006compressed, candes2008introduction}. The price of the reduced
+acquisition cost is paid at the receiver: sparse recovery is an iterative,
+numerically delicate optimization whose complexity dominates the overall
+system energy and latency budget. This asymmetry matters most precisely where
+CS is most attractive---edge sensing, implantable and wearable biomedical
+interfaces, and embedded communication receivers---where the reconstruction
+engine must operate under tight power and real-time constraints rather than
+on a workstation.
+
+\input{fig_algorithm_landscape}
+
+No single recovery algorithm serves all of these applications, because the
+established methods occupy genuinely different points on a
+guarantee--cost--robustness trade-off, and each application domain anchors
+to its own point, as illustrated in Fig.~\ref{fig:landscape}. In magnetic resonance imaging, orthogonal matching pursuit
+(OMP) \cite{tropp2007omp} is adopted for dynamic reconstruction because its
+one-atom-per-iteration refinement delivers high per-frame quality at a
+computational cost compatible with gated acquisition \cite{usman2011omp_mri},
+while transform-domain CS-MRI favors iterative hard thresholding (IHT)
+\cite{blumensath2009iht}, whose constant, least-squares-free iteration cost
+is predictable for large image volumes \cite{qu2010iht_mri}. In wireless
+receivers the constraints invert: sparse multipath channels must be tracked
+under low and rapidly varying SNR, so OFDM channel estimators employ
+subspace pursuit (SP) \cite{dai2009sp} and CoSaMP \cite{needell2009cosamp},
+whose candidate-expansion-and-pruning structure provides noise-robust
+support recovery with RIP-backed guarantees \cite{wu2010sp_ofdm}; when the
+number of channel taps is only loosely known, generalized OMP (gOMP)
+\cite{wang2012gomp} shortens the iteration count by admitting several atoms
+per pass. At millimeter-wave frequencies with one-bit converters, gradient
+pursuit (GP) \cite{blumensath2008gp} is preferred precisely because it
+replaces repeated least-squares solves with a line search, keeping the
+per-iteration cost tractable at massive-MIMO dimensions
+\cite{kim2019gp_mmwave}. At the resource-constrained extreme---coarse
+telemetry from wearable or implantable nodes---matching pursuit (MP)
+\cite{mallat1993mp} and IHT remain relevant simply because they are the
+cheapest iterations available, and hard-thresholding pursuit (HTP)
+\cite{foucart2011htp} recovers much of the lost accuracy at a modest
+least-squares cost when the energy budget allows it.
+
+The decisive observation is that this choice is not fixed even within a
+single deployed system (dashed trajectory in Fig.~\ref{fig:landscape}). A CS
+receiver crosses operating points at run time:
+channel SNR swings between the regime where candidate-pruning methods are
+worth their cost and the regime where cheap thresholding suffices; effective
+sparsity drifts with the environment; battery state trades reconstruction
+quality against energy per solve; and a medical imaging pipeline moves
+between real-time preview and offline high-fidelity modes. Algorithm
+selection is therefore a \emph{runtime} decision, not a design-time one. A
+hardware accelerator that freezes one algorithm freezes the entire operating
+envelope; provisioning one dedicated accelerator per algorithm multiplies
+silicon and memory cost by the size of the algorithm portfolio; and falling
+back to software surrenders the energy advantage that motivated CS
+acquisition in the first place. What such systems need is one fabric on
+which \emph{any} of the eight algorithms can be invoked per solve---switched
+by loading a compiled program image in microseconds, with no
+reconfiguration of the FPGA bitstream and no resynthesis---at a silicon
+cost bounded by the algorithms' shared kernel structure rather than by
+their number.
+
+Existing FPGA and ASIC recovery accelerators do not offer this flexibility.
+The dominant line of work hard-wires a single algorithm---most often
+OMP---and optimizes its least-squares (LS) stage with dedicated QR or
+Cholesky engines \cite{ge2019qr_omp, roy2020ge_omp}. These designs deliver
+excellent single-algorithm throughput, but their datapaths, solvers, and
+controllers encode one recovery flow. Multi-algorithm designs exist but
+support only small families of closely related methods \cite{bai2012omp_amp}.
+At the other extreme, software on embedded CPUs or GPUs offers full
+algorithmic freedom at an energy cost that defeats the purpose of CS in the
+first place.
+
+Between these extremes sits a well-studied middle ground: the coarse-grained
+reconfigurable architecture (CGRA), which time-multiplexes a small array of
+processing elements (PEs) under compiler-generated, cycle-by-cycle
+configuration contexts \cite{liu2019cgra_survey}. Statically
+modulo-scheduled CGRAs in the ADRES tradition \cite{mei2003adres} achieve
+high utilization on regular loop kernels; elastic fabrics such as STRELA
+\cite{strela2024} tolerate variable latency at the cost of per-PE handshake
+hardware; hybrid designs such as SNAFU \cite{gobieski2021snafu} and RipTide
+\cite{gobieski2022riptide} trade a restricted dataflow discipline for
+energy-minimal operation; and open frameworks including CGRA-ME
+\cite{ragheb2024cgrame2}, OpenCGRA \cite{tan2020opencgra}, Pillars
+\cite{guo2020pillars}, and Morpher \cite{wijerathne2022morpher,
+karunaratne2017hycube} provide retargetable compilation, RTL generation, and
+simulation. Sparse recovery is, on its face, an ideal CGRA workload: eight
+algorithms sharing a compact set of kernels---correlation, matrix--vector
+products, selection, residual update, and restricted LS refinement---mapped
+onto one fabric by changing programs instead of silicon.
+
+Three gaps, however, separate the published CGRA state of the art from a
+deployable multi-algorithm CS engine. First, \emph{commit semantics}:
+statically scheduled fabrics stall globally on any boundary backpressure,
+while elastic fabrics pay area and energy for handshakes that regular sparse
+kernels rarely need; neither exploits the compiler's ability to \emph{prove}
+which cycles cannot stall. Second, \emph{trust}: every framework above trusts
+its mapper absolutely---an image that references a missing resource, an
+illegal route, or an unimplemented operation is discovered, at best, in
+simulation and, at worst, silently misexecutes; none certifies configuration
+images against the hardware's actual capabilities at load time. Third,
+\emph{co-design of the operand stream}: CS recovery is dominated by products
+with a sensing matrix that need never be stored, yet no CGRA framework
+treats deterministic matrix generation, its numeric scaling, and the reuse
+of generated symbols as first-class, compiler-visible resources.
+
+This article presents CSR, a context-programmed CGRA for multi-algorithm
+compressive sensing recovery that closes these three gaps. Eight recovery
+algorithms---MP, OMP, gOMP, CoSaMP, SP, IHT, HTP, and GP---are compiled into
+context programs executed by a dual-cluster, homogeneous $4{\times}4{\times}2$
+PE fabric with a single shared program counter; the fabric never decodes an
+algorithm identity. The specific contributions are:
+
+\begin{enumerate}
+  \item \textbf{A guaranteed-commit elastic--static execution model.} The
+  fabric is statically modulo-scheduled, with valid/ready elasticity confined
+  to stream and shared-resource boundaries. For every context the compiler
+  can prove free of stall dependencies it sets a \emph{guaranteed-commit}
+  attribute; the sequencer bypasses the elastic commit join for such
+  contexts, and an embedded assertion layer falsifies incorrect proofs. This
+  occupies a previously unexplored point between fully static
+  \cite{mei2003adres, ragheb2024cgrame2} and fully elastic \cite{strela2024}
+  execution.
+  \item \textbf{Load-time certified context execution.} Every context image
+  is checked \emph{at write time}, field by field, against masks generated
+  from the same single-source architecture description that generates the
+  RTL parameters and the compiler's resource graph; images are finalized by
+  an explicit control-flow-closure scan before they become launchable, and
+  operations without an implemented hardware owner fail closed instead of
+  silently no-operating. Runtime execution therefore carries no legality
+  logic on its critical path.
+  \item \textbf{A generated sensing-matrix subsystem with symbol capture.}
+  Sensing-matrix entries are produced on demand by a counter-based Threefry
+  keyed permutation \cite{salmon2011random}, scaled by a runtime register
+  rather than a hard-wired constant, and never stored as a full matrix.
+  Symbols observed during selection are captured and promoted into a support
+  cache, eliminating the dedicated matrix-fill passes of stored-matrix and
+  LFSR-based designs \cite{george2014lfsr}.
+  \item \textbf{A certified fixed-point refinement contract.} Restricted
+  least-squares refinement is performed by a matrix-free conjugate-gradient
+  recurrence with an explicit post-quantization certificate, replacing the
+  Gaussian-elimination solvers of prior recovery accelerators
+  \cite{roy2020ge_omp}; the fixed-point formats (18-bit data, 27-bit solver,
+  62-bit accumulation) were selected by a systematic width sweep rather than
+  ad hoc choice, and support-set mutation is transactional with atomic
+  commit and rollback.
+  \item \textbf{A single-source architecture authority.} One machine-readable
+  architecture description generates the RTL parameter headers, the
+  modulo-routing resource graph used by the mapper, the certifier masks, and
+  a cycle-accurate simulator, and records per-operation timing provenance as
+  measured, modeled, or unimplemented---so the compiler cannot schedule
+  against hardware that does not exist.
+\end{enumerate}
+
+A preliminary version of this architecture appeared in our earlier
+conference work \cite{csr_v2}, which mapped the same eight algorithms onto a
+24-bit fixed-point PE array with LFSR-generated matrices and a
+Gaussian-elimination LS stage. The present design is a ground-up revision:
+it introduces the guaranteed-commit context machine, load-time
+certification, the Threefry-based generated-matrix subsystem with symbol
+capture, the certified matrix-free refinement contract with
+systematically selected numeric formats, and a compiler chain built on typed
+static single assignment and modulo-routing-graph mapping, and it scales the
+reconstruction problem from $(N,M,K)=(256,64,16)$ to $(1024,128,32)$.
+
+The remainder of this article is organized as follows.
+Section~\ref{sec:background} reviews compressive sensing, the eight recovery
+algorithms and their shared kernels, and the CGRA execution models this work
+builds on. Section~\ref{sec:architecture} details the CSR architecture;
+Section~\ref{sec:compiler} presents the compiler and certification chain;
+Section~\ref{sec:numeric} defines the numeric and refinement contract;
+Section~\ref{sec:results} reports implementation results;
+Section~\ref{sec:related} positions CSR against prior accelerators and CGRA
+frameworks; and Section~\ref{sec:conclusion} concludes.
+
+% =========================================================================
+
+\section{Background}
+\label{sec:background}
+
+\subsection{Compressive Sensing}
+\label{sec:background_cs}
+
+Let $x \in \mathbb{R}^{N}$ be a $K$-sparse or compressible signal and let
+$\Phi \in \mathbb{R}^{M \times N}$, $M < N$, be the sensing matrix. The
+measurements are
+\begin{equation}
+  y = \Phi x + n,
+  \label{eq:cs_model}
+\end{equation}
+where $n$ models measurement noise. Recovering $x$ from the underdetermined
+system \eqref{eq:cs_model} exploits sparsity
+\cite{donoho2006compressed, candes2008introduction}. Recovery guarantees for
+the algorithms considered here are stated in terms of the restricted isometry
+property (RIP) of $\Phi$. Random sign (Rademacher) ensembles of the kind
+generated on the fly in this work satisfy the RIP \emph{with high
+probability} for the problem sizes of interest; as in all
+generated-matrix designs, a deployed seed is additionally qualified
+empirically rather than claimed to satisfy the RIP deterministically.
+
+\subsection{Sparse Recovery Algorithms and Shared Kernels}
+\label{sec:background_algorithms}
+
+This work targets greedy and thresholding-based recovery because their
+iterative structure suits hardware acceleration \cite{marques2019review}.
+The eight supported algorithms fall into four families with distinct
+support-management disciplines:
+
+\begin{itemize}
+  \item \emph{Sequential greedy selection.} MP updates one coefficient per
+  iteration by projection; OMP adds one support index per iteration and
+  re-solves a restricted LS problem; gOMP generalizes the selection to a
+  group of indices per iteration, shortening the iteration count.
+  \item \emph{Candidate expansion and pruning.} CoSaMP and SP speculatively
+  admit $2K$ (respectively $K$) candidates, solve a restricted LS problem on
+  the enlarged support (up to $3K$ and $2K$ entries, respectively), and prune
+  back to $K$; they differ in how the pruned support is re-estimated.
+  \item \emph{Iterative thresholding.} IHT takes a gradient step and applies
+  a hard threshold; HTP uses the thresholded support but re-estimates the
+  retained coefficients by restricted LS.
+  \item \emph{Gradient pursuit.} GP advances along the restricted gradient
+  direction with an exact line search, avoiding repeated full LS solves.
+\end{itemize}
+
+\input{fig_iteration_template}
+
+Despite these differences, the families draw on one compact kernel set,
+summarized in Table~\ref{tab:kernels} and visualized as a single iteration
+template in Fig.~\ref{fig:iteration}: forward projection $\Phi x$,
+correlation $\Phi^{T} r$, residual update, support selection (a top-$|{\cdot}|$
+reduction with deterministic tie-breaking), support-set mutation
+(append, union, prune, rollback), restricted LS refinement, and---specific
+to generated-matrix architectures---on-demand production of the $\Phi$
+entries themselves. Two structural observations drive the architecture in
+this article. First, every kernel is either a streaming
+multiply--accumulate over $\Phi$ rows or columns, or a compact reduction and
+bookkeeping operation over at most $3K$ scalars; none requires storing
+$\Phi$, provided its entries can be regenerated deterministically. Second,
+as Fig.~\ref{fig:iteration} makes explicit, the kernels compose into
+algorithms purely through \emph{control sequencing}---which kernel runs
+next, at what selection width, on which support view, under which
+convergence predicate---which is exactly the part of the computation that a
+context-programmed machine can replay from a compiled image instead of
+encoding in fixed-function control logic.
+
+% Table~\ref{tab:kernels}: upgrade of the conference Table I. Columns:
+% forward, correlation, residual, selection, support mutation, restricted LS,
+% pruning, generated-Phi. Rows grouped by the four families above.
+% (Table body to be filled from docs/v3/02_ALGORITHM_CONTRACT.md.)
+
+The candidate-expansion methods bound the live state: SP solves restricted
+problems of size at most $2K$ and CoSaMP of size at most $3K$ before
+pruning. These bounds, not $N$, size the on-fabric support workspace, which
+is what allows a fixed hardware configuration to scale to
+$(N,M,K)=(1024,128,32)$.
+
+\subsection{CGRA Execution Models}
+\label{sec:background_cgra}
+
+A CGRA exposes an array of word-level PEs whose operations and
+interconnections are set by configuration contexts
+\cite{liu2019cgra_survey}. Two axes of the design space matter for this
+work.
+
+\emph{Spatial versus spatio-temporal mapping.} Spatial-only fabrics pin each
+dataflow-graph node to one PE for the duration of a kernel, which suits
+small kernels and low power but caps the graph size at the array size.
+Spatio-temporal fabrics reconfigure every cycle from a context memory,
+time-multiplexing large graphs onto a small array under modulo scheduling
+with an initiation interval (II) \cite{mei2003adres}; the compiler maps
+operations onto a time-unrolled modulo routing resource graph (MRRG)
+\cite{ragheb2024cgrame2, wijerathne2022morpher}. CS recovery graphs are far
+larger than any practical array, so CSR is spatio-temporal.
+
+\emph{Static versus elastic timing.} Fully static fabrics assume every
+latency is compile-time known; any unpredictable boundary event (a memory
+bank conflict, a variable-latency divider, DMA interference) must stall the
+whole array atomically. Fully elastic fabrics insert valid/ready handshakes
+throughout the interconnect \cite{strela2024}, tolerating unknown latencies
+at a per-PE hardware cost that regular kernels do not repay; hybrid
+disciplines such as ordered dataflow in SNAFU \cite{gobieski2021snafu}
+restrict the dynamism to what irregular workloads actually need. CS
+recovery kernels are regular, but their \emph{boundaries}---streamed
+scratchpad access, a shared divider, generated-matrix delivery---are not.
+CSR therefore keeps the fabric statically scheduled, terminates all
+elasticity in stream and shared-resource interfaces, and lets the compiler
+discharge the residual cost: contexts proven independent of any elastic
+boundary commit unconditionally (Section~\ref{sec:architecture}).
+
+One further property separates this design from the frameworks above. In
+CGRA-ME, OpenCGRA, Pillars, and Morpher, the mapper's output is trusted: no
+runtime mechanism checks a configuration image against the fabric's actual
+capabilities. For an accelerator that hosts eight algorithm programs,
+accepts field updates of those programs, and shares resources among them,
+CSR instead treats the architecture description as a single generated
+authority and enforces it twice---once at compile time in the mapper, and
+once at image-load time in hardware---so that the executing array never
+carries legality checks on its cycle-critical path, yet no uncertified
+context can commit architectural state.

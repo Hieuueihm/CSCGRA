@@ -1,0 +1,954 @@
+{
+  "schema": "cscgra-v3-architecture-configuration-v5",
+  "architecture_revision": 3,
+  "rtl_minor_revision": 38,
+  "context_format_revision": 9,
+  "numeric_profiles": {
+    "active": "production",
+    "closure_candidate": "quality_d22",
+    "profiles": [
+      {
+        "id": 1,
+        "name": "production",
+        "data_width": 18,
+        "data_fraction_bits": 14,
+        "solver_width": 27,
+        "solver_fraction_bits": 19,
+        "accumulator_width": 62,
+        "scalar_divide_latency": 15,
+        "strict_normal_residual_shift": 14,
+        "status": "active"
+      },
+      {
+        "id": 2,
+        "name": "quality_d22",
+        "data_width": 22,
+        "data_fraction_bits": 18,
+        "solver_width": 31,
+        "solver_fraction_bits": 23,
+        "accumulator_width": 70,
+        "scalar_divide_latency": 17,
+        "strict_normal_residual_shift": 16,
+        "status": "closure_candidate"
+      }
+    ]
+  },
+  "topology": {
+    "cluster_count": 2,
+    "rows_per_cluster": 4,
+    "columns_per_cluster": 4,
+    "shared_array_context_pc": true,
+    "interconnect": "registered_nearest_neighbor_mesh",
+    "intercluster_column_connectors": 1,
+    "intercluster_connector_lanes": 4,
+    "intercluster_connector_latency": 1,
+    "wraparound": false,
+    "express_links_enabled": false,
+    "route_capacity_per_direction": 1
+  },
+  "context_storage": {
+    "context_depth": 256,
+    "image_banks": 2,
+    "tile_context_width": 36,
+    "array_control_context_width": 36,
+    "stream_context_width": 36,
+    "resource_context_width": 36,
+    "phase_instruction_width": 36,
+    "tile_pair_plane_count": 8,
+    "array_stream_plane_count": 1,
+    "resource_phase_plane_count": 1,
+    "array_context_commit_plane": 8,
+    "phase_instruction_commit_plane": 10,
+    "require_contiguous_plane_programming": true,
+    "array_context_programming_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      9,
+      8
+    ]
+  },
+  "memory": {
+    "vector_bank_count": 8,
+    "vector_bank_depth": 512,
+    "vector_bank_word_width": 72,
+    "memory_configuration_count": 64,
+    "memory_configuration_width": 64,
+    "memory_configuration_read_ports": 4,
+    "memory_configuration_read_latency": 1,
+    "memory_configuration_ram_copies": 2,
+    "memory_configuration_bram36_count": 4,
+    "axi_data_width": 128
+  },
+  "execution_context": {
+    "selection": "active_finalized_image",
+    "phase_entry_pc": 0,
+    "hardware_algorithm_decode": false,
+    "software_defines_context": true,
+    "status": "implemented",
+    "rtl_owner": "reconstruction_phase_controller",
+    "evidence": "reports/v3/m3_vivado/reconstruction_phase_controller/summary.txt"
+  },
+  "matrix_modes": [
+    {
+      "code": 0,
+      "name": "DENSE_RADEMACHER",
+      "status": "implemented",
+      "rtl_owner": "phi_symbol_generator",
+      "evidence": "reports/v3/m7_vivado/phi_symbol_generator/summary.txt"
+    },
+    {
+      "code": 1,
+      "name": "FIXED_COLUMN_WEIGHT_EXPERIMENTAL",
+      "status": "planned",
+      "rtl_owner": null,
+      "evidence": null
+    }
+  ],
+  "tile_operations": [
+    {
+      "code": 0,
+      "name": "NOP",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 1,
+      "name": "PASS",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 2,
+      "name": "ADD",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 3,
+      "name": "SUB",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 4,
+      "name": "ABS",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 5,
+      "name": "MIN",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 6,
+      "name": "MAX",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 7,
+      "name": "COMPARE_EQ",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 8,
+      "name": "COMPARE_LT",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 9,
+      "name": "COMPARE_LE",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 10,
+      "name": "SELECT",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 11,
+      "name": "SHIFT",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 12,
+      "name": "BIT_AND",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 13,
+      "name": "BIT_OR",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 14,
+      "name": "BIT_XOR",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 15,
+      "name": "PHI_ACCUMULATE",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 17,
+      "name": "ACCUMULATOR_READ",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 18,
+      "name": "SATURATING_ADD",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 19,
+      "name": "SATURATING_SUB",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 20,
+      "name": "PHI_SIGN_SCALE",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 21,
+      "name": "ACCUMULATOR_CLEAR",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 22,
+      "name": "PHI_ACCUMULATOR_CAPTURE",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m6_vivado/pe_tile/summary.txt"
+    },
+    {
+      "code": 23,
+      "name": "PHI_RESIDUAL_CAPTURE",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "modeled",
+      "timing_evidence": null
+    },
+    {
+      "code": 24,
+      "name": "PHI_DATA_ACCUMULATE",
+      "latency": 1,
+      "initiation_interval": 1,
+      "status": "implemented",
+      "rtl_owner": "pe_alu",
+      "evidence": "reports/v3/m6_vivado/pe_tile/summary.txt",
+      "timing_status": "modeled",
+      "timing_evidence": null
+    }
+  ],
+  "resource_operations": [
+    {
+      "code": 0,
+      "name": "NOP",
+      "latency": 1,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "array_resource_router",
+      "evidence": "reports/v3/m5_vivado/array_resource_router/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m5_vivado/array_resource_router/summary.txt"
+    },
+    {
+      "code": 1,
+      "name": "REDUCE_SUM",
+      "latency": 5,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "global_reduction_merge",
+      "evidence": "reports/v3/m5_vivado/global_reduction_merge/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m5_vivado/global_reduction_merge/summary.txt"
+    },
+    {
+      "code": 2,
+      "name": "REDUCE_NORM_SQ",
+      "latency": 5,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "global_reduction_merge",
+      "evidence": "reports/v3/m5_vivado/global_reduction_merge/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m5_vivado/global_reduction_merge/summary.txt"
+    },
+    {
+      "code": 3,
+      "name": "REDUCE_MAX_ABS",
+      "latency": 5,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "global_reduction_merge",
+      "evidence": "reports/v3/m5_vivado/global_reduction_merge/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m5_vivado/global_reduction_merge/summary.txt"
+    },
+    {
+      "code": 4,
+      "name": "ARGMAX",
+      "latency": 6,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "planned",
+      "rtl_owner": null,
+      "evidence": null,
+      "timing_status": "modeled",
+      "timing_evidence": null
+    },
+    {
+      "code": 5,
+      "name": "TOPK_PUSH",
+      "latency": 2,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "topk_selection_unit",
+      "evidence": "reports/v3/m9a_vivado/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m9a_vivado/summary.txt"
+    },
+    {
+      "code": 6,
+      "name": "TOPK_COMMIT",
+      "latency": 1,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "topk_selection_unit",
+      "evidence": "reports/v3/m9a_vivado/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m9a_vivado/summary.txt"
+    },
+    {
+      "code": 7,
+      "name": "SUPPORT_CLEAR",
+      "latency": 1,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "support_state_manager",
+      "evidence": "reports/v3/M9B_SUPPORT_MANAGEMENT_STATUS.md",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m9b_vivado/m9b_n3_integration/summary.txt"
+    },
+    {
+      "code": 8,
+      "name": "SUPPORT_APPEND",
+      "latency": 2,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "support_state_manager",
+      "evidence": "reports/v3/M9B_SUPPORT_MANAGEMENT_STATUS.md",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m9b_vivado/m9b_n3_integration/summary.txt"
+    },
+    {
+      "code": 9,
+      "name": "SUPPORT_UNION",
+      "latency": 0,
+      "initiation_interval": 1,
+      "variable_latency": true,
+      "status": "implemented",
+      "rtl_owner": "support_state_manager",
+      "evidence": "reports/v3/M9B_SUPPORT_MANAGEMENT_STATUS.md",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m9b_vivado/m9b_n3_integration/summary.txt"
+    },
+    {
+      "code": 10,
+      "name": "SUPPORT_MEMBERSHIP",
+      "latency": 1,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "support_state_manager",
+      "evidence": "reports/v3/M9B_SUPPORT_MANAGEMENT_STATUS.md",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m9b_vivado/m9b_n3_integration/summary.txt"
+    },
+    {
+      "code": 11,
+      "name": "SUPPORT_GATHER",
+      "latency": 0,
+      "initiation_interval": 1,
+      "variable_latency": true,
+      "status": "implemented",
+      "rtl_owner": "support_state_manager",
+      "evidence": "reports/v3/M9B_SUPPORT_MANAGEMENT_STATUS.md",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m9b_vivado/m9b_n3_integration/summary.txt"
+    },
+    {
+      "code": 12,
+      "name": "SUPPORT_SCATTER",
+      "latency": 0,
+      "initiation_interval": 1,
+      "variable_latency": true,
+      "status": "implemented",
+      "rtl_owner": "support_state_manager",
+      "evidence": "reports/v3/M9B_SUPPORT_MANAGEMENT_STATUS.md",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m9b_vivado/m9b_n3_integration/summary.txt"
+    },
+    {
+      "code": 13,
+      "name": "SUPPORT_COMMIT",
+      "latency": 1,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "support_state_manager",
+      "evidence": "reports/v3/M9B_SUPPORT_MANAGEMENT_STATUS.md",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m9b_vivado/m9b_n3_integration/summary.txt"
+    },
+    {
+      "code": 14,
+      "name": "SUPPORT_ROLLBACK",
+      "latency": 1,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "support_state_manager",
+      "evidence": "reports/v3/M9B_SUPPORT_MANAGEMENT_STATUS.md",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m9b_vivado/m9b_n3_integration/summary.txt"
+    },
+    {
+      "code": 15,
+      "name": "SCALAR_RECIPROCAL",
+      "latency": 1,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "reserved",
+      "rtl_owner": null,
+      "evidence": null,
+      "timing_status": "unimplemented",
+      "timing_evidence": null
+    },
+    {
+      "code": 16,
+      "name": "SCALAR_DIVIDE",
+      "latency": 15,
+      "initiation_interval": 15,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "scalar_function_unit",
+      "evidence": "reports/v3/m5_vivado/scalar_function_unit/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/rtl_cycle_optimization_20260903/summary.md"
+    },
+    {
+      "code": 17,
+      "name": "SCALAR_SQRT",
+      "latency": 1,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "reserved",
+      "rtl_owner": null,
+      "evidence": null,
+      "timing_status": "unimplemented",
+      "timing_evidence": null
+    },
+    {
+      "code": 18,
+      "name": "DMA_PREFETCH",
+      "latency": 0,
+      "initiation_interval": 1,
+      "variable_latency": true,
+      "status": "planned",
+      "rtl_owner": null,
+      "evidence": null,
+      "timing_status": "modeled",
+      "timing_evidence": null
+    },
+    {
+      "code": 19,
+      "name": "DMA_DRAIN",
+      "latency": 0,
+      "initiation_interval": 1,
+      "variable_latency": true,
+      "status": "planned",
+      "rtl_owner": null,
+      "evidence": null,
+      "timing_status": "modeled",
+      "timing_evidence": null
+    },
+    {
+      "code": 20,
+      "name": "SHARED_VECTOR_DOT",
+      "latency": 6,
+      "initiation_interval": 2,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "shared_vector_arithmetic_unit",
+      "evidence": "reports/v3/m5_vivado/shared_vector_arithmetic_unit/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m5_vivado/shared_vector_arithmetic_unit/summary.txt"
+    },
+    {
+      "code": 21,
+      "name": "SHARED_VECTOR_NORM_SQ",
+      "latency": 6,
+      "initiation_interval": 2,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "shared_vector_arithmetic_unit",
+      "evidence": "reports/v3/m5_vivado/shared_vector_arithmetic_unit/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m5_vivado/shared_vector_arithmetic_unit/summary.txt"
+    },
+    {
+      "code": 22,
+      "name": "SHARED_VECTOR_SCALE",
+      "latency": 4,
+      "initiation_interval": 2,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "shared_vector_arithmetic_unit",
+      "evidence": "reports/v3/m5_vivado/shared_vector_arithmetic_unit/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m5_vivado/shared_vector_arithmetic_unit/summary.txt"
+    },
+    {
+      "code": 23,
+      "name": "SHARED_VECTOR_AXPY",
+      "latency": 4,
+      "initiation_interval": 2,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "shared_vector_arithmetic_unit",
+      "evidence": "reports/v3/m5_vivado/shared_vector_arithmetic_unit/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m5_vivado/shared_vector_arithmetic_unit/summary.txt"
+    },
+    {
+      "code": 24,
+      "name": "SHARED_VECTOR_COPY",
+      "latency": 2,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "shared_vector_arithmetic_unit",
+      "evidence": "reports/v3/m5_vivado/shared_vector_arithmetic_unit/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m5_vivado/shared_vector_arithmetic_unit/summary.txt"
+    },
+    {
+      "code": 25,
+      "name": "REFINEMENT_CHECK",
+      "latency": 1,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "normal_residual_checker",
+      "evidence": "reports/v3/m10_vivado/m8_resource_dispatcher/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m10_vivado/m8_resource_dispatcher/summary.txt"
+    }
+  ],
+  "compiler_operations": [
+    {
+      "name": "LOAD_VECTOR",
+      "latency": 2,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "vector_stream_engine",
+      "evidence": "reports/v3/m4_vivado/vector_stream_engine/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m4_vivado/vector_stream_engine/summary.txt"
+    },
+    {
+      "name": "STORE_VECTOR",
+      "latency": 1,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "vector_stream_engine",
+      "evidence": "reports/v3/m4_vivado/vector_stream_engine/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m4_vivado/vector_stream_engine/summary.txt"
+    },
+    {
+      "name": "PHI_SIGN_WORD",
+      "latency": 21,
+      "initiation_interval": 2,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "phi_symbol_generator",
+      "evidence": "reports/v3/m7_vivado/phi_symbol_generator/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m7_vivado/phi_symbol_generator/summary.txt"
+    },
+    {
+      "name": "PHI_NORMALIZE",
+      "latency": 4,
+      "initiation_interval": 1,
+      "variable_latency": false,
+      "status": "implemented",
+      "rtl_owner": "phi_operator_normalizer",
+      "evidence": "reports/v3/m7_vivado/phi_operator_normalizer/summary.txt",
+      "timing_status": "measured",
+      "timing_evidence": "reports/v3/m7_vivado/phi_operator_normalizer/summary.txt"
+    }
+  ],
+  "physical_resources": [
+    {
+      "id": "paired_context_tile",
+      "kind": "paired_context_tile",
+      "count": 16,
+      "operations": [
+        "NOP",
+        "PASS",
+        "ADD",
+        "SUB",
+        "ABS",
+        "MIN",
+        "MAX",
+        "COMPARE_EQ",
+        "COMPARE_LT",
+        "COMPARE_LE",
+        "SELECT",
+        "SHIFT",
+        "BIT_AND",
+        "BIT_OR",
+        "BIT_XOR",
+        "PHI_ACCUMULATE",
+        "ACCUMULATOR_READ",
+        "SATURATING_ADD",
+        "SATURATING_SUB",
+        "PHI_SIGN_SCALE",
+        "ACCUMULATOR_CLEAR",
+        "PHI_ACCUMULATOR_CAPTURE",
+        "PHI_RESIDUAL_CAPTURE",
+        "PHI_DATA_ACCUMULATE"
+      ],
+      "connection_planes": [
+        "registered_mesh",
+        "intercluster_column_connector",
+        "memory_row",
+        "phi_broadcast",
+        "reduction_up",
+        "scalar_broadcast"
+      ],
+      "context_coupling": "same_word_for_corresponding_tiles"
+    },
+    {
+      "id": "vector_read_port",
+      "kind": "memory_port",
+      "count": 2,
+      "operations": [
+        "LOAD_VECTOR"
+      ],
+      "connection_planes": [
+        "memory_row"
+      ],
+      "context_coupling": "all_eight_banks_stripe"
+    },
+    {
+      "id": "vector_write_port",
+      "kind": "memory_port",
+      "count": 1,
+      "operations": [
+        "STORE_VECTOR"
+      ],
+      "connection_planes": [
+        "memory_row"
+      ],
+      "context_coupling": "all_eight_banks_stripe"
+    },
+    {
+      "id": "phi_generator",
+      "kind": "stream_generator",
+      "count": 1,
+      "operations": [
+        "PHI_SIGN_WORD"
+      ],
+      "connection_planes": [
+        "phi_broadcast"
+      ],
+      "context_coupling": "one_request_two_cluster_words"
+    },
+    {
+      "id": "phi_operator_normalizer",
+      "kind": "fixed_route_pipeline",
+      "count": 1,
+      "operations": [
+        "PHI_NORMALIZE"
+      ],
+      "connection_planes": [
+        "normalized_result"
+      ],
+      "context_coupling": "configured_by_reduction_destination"
+    },
+    {
+      "id": "reduction_pipeline",
+      "kind": "shared_resource",
+      "count": 1,
+      "operations": [
+        "REDUCE_SUM",
+        "REDUCE_NORM_SQ",
+        "REDUCE_MAX_ABS"
+      ],
+      "connection_planes": [
+        "reduction_up",
+        "scalar_broadcast"
+      ],
+      "context_coupling": "two_cluster_reduce_then_global_merge"
+    },
+    {
+      "id": "selection_unit",
+      "kind": "shared_resource",
+      "count": 1,
+      "operations": [
+        "ARGMAX",
+        "TOPK_PUSH",
+        "TOPK_COMMIT"
+      ],
+      "connection_planes": [
+        "resource_request",
+        "resource_result"
+      ],
+      "context_coupling": "global_shared"
+    },
+    {
+      "id": "support_set_unit",
+      "kind": "shared_resource",
+      "count": 1,
+      "operations": [
+        "SUPPORT_CLEAR",
+        "SUPPORT_APPEND",
+        "SUPPORT_UNION",
+        "SUPPORT_MEMBERSHIP",
+        "SUPPORT_GATHER",
+        "SUPPORT_SCATTER",
+        "SUPPORT_COMMIT",
+        "SUPPORT_ROLLBACK"
+      ],
+      "connection_planes": [
+        "resource_request",
+        "resource_result"
+      ],
+      "context_coupling": "global_shared"
+    },
+    {
+      "id": "scalar_function_unit",
+      "kind": "shared_resource",
+      "count": 1,
+      "operations": [
+        "SCALAR_DIVIDE"
+      ],
+      "connection_planes": [
+        "resource_request",
+        "scalar_broadcast"
+      ],
+      "context_coupling": "global_shared"
+    },
+    {
+      "id": "memory_dma_engine",
+      "kind": "shared_resource",
+      "count": 1,
+      "operations": [
+        "DMA_PREFETCH",
+        "DMA_DRAIN"
+      ],
+      "connection_planes": [
+        "resource_request",
+        "memory_row"
+      ],
+      "context_coupling": "global_shared"
+    },
+    {
+      "id": "shared_vector_arithmetic_unit",
+      "kind": "shared_resource",
+      "count": 1,
+      "operations": [
+        "SHARED_VECTOR_DOT",
+        "SHARED_VECTOR_NORM_SQ",
+        "SHARED_VECTOR_SCALE",
+        "SHARED_VECTOR_AXPY",
+        "SHARED_VECTOR_COPY"
+      ],
+      "connection_planes": [
+        "resource_request",
+        "resource_result",
+        "scalar_broadcast"
+      ],
+      "context_coupling": "global_shared"
+    },
+    {
+      "id": "refinement_checker",
+      "kind": "shared_resource",
+      "count": 1,
+      "operations": [
+        "REFINEMENT_CHECK"
+      ],
+      "connection_planes": [
+        "resource_request",
+        "resource_result"
+      ],
+      "context_coupling": "global_shared"
+    }
+  ],
+  "reservation_guard": {
+    "enabled": true,
+    "reject_express_route": true,
+    "reject_active_bank_write": true,
+    "error_codes": {
+      "array_control": 96,
+      "tile_operation": 97,
+      "route_capacity": 98,
+      "stream_contract": 99,
+      "resource_contract": 100,
+      "guaranteed_commit": 101,
+      "phase_instruction": 102,
+      "memory_configuration": 103,
+      "image_write": 105,
+      "image_unavailable": 104
+    }
+  }
+}

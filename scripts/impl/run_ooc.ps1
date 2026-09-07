@@ -10,6 +10,7 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+. (Join-Path $repoRoot "scripts\common\project_context.ps1")
 if ([string]::IsNullOrWhiteSpace($RunId)) { $RunId = Get-Date -Format "yyyyMMdd-HHmmss" }
 if ($RunId -notmatch "^[A-Za-z0-9._-]+$") { throw "RunId may contain only letters, digits, dot, underscore, and dash" }
 
@@ -20,18 +21,19 @@ $workDir = Join-Path $repoRoot "work\impl\$RtlVersion\$RunId"
 $logDir = Join-Path $repoRoot "logs\impl\$RtlVersion\$RunId"
 New-Item -ItemType Directory -Force -Path $workDir, $logDir | Out-Null
 $tcl = Join-Path $PSScriptRoot "run_ooc.tcl"
+$sourceIdentity = Get-ProjectSourceIdentity -RepoRoot $repoRoot -RtlVersion $RtlVersion
 
 $metadata = [ordered]@{
     flow = "impl"
     rtl_version = $RtlVersion
     run_id = $RunId
-    git_commit = (& git -C $repoRoot rev-parse HEAD).Trim()
+    source_identity = $sourceIdentity
     top = $Top
     started_at = (Get-Date).ToString("o")
     work_dir = $workDir
     log_dir = $logDir
 }
-$metadata | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $logDir "metadata.json")
+$metadata | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $logDir "metadata.json")
 
 Push-Location $workDir
 try {

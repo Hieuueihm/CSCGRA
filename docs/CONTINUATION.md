@@ -1,5 +1,9 @@
 # Repository refactor continuation log
 
+> Historical chronology only. It contains checkpoint-specific values and must
+> not be used as current status. See
+> [CURRENT_STATUS.md](../reports/v2/CURRENT_STATUS.md).
+
 Last updated: 2026-08-22 (Asia/Saigon)
 
 ## 2026-08-22 checkpoint: batch replay + controller decomposition (R0-R2)

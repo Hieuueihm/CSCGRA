@@ -1,0 +1,14 @@
+% Local preview wrapper for the two introduction/background figures.
+% Not part of the journal source; compile with:
+%   pdflatex fig_preview.tex
+\documentclass[10pt]{article}
+\usepackage[margin=1cm, paperwidth=24cm, paperheight=22cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds}
+\pagestyle{empty}
+\begin{document}
+\input{fig_algorithm_landscape}
+\input{fig_iteration_template}
+\end{document}

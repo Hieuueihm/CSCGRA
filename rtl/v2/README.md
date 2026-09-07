@@ -1,8 +1,8 @@
 # RTL v2: active optimized architecture
 
 This directory is the synthesizable source of truth for the current design.
-Use `files.f` for compile order. Current sign-off is checkpoint `88f9411`:
-348 PASS / 0 FAIL, 1,313,368 full-sweep cycles, and +0.850 ns OOC WNS.
+Use `files.f` for compile order. Validation is not inferred from source age or
+a dated report; see [CURRENT_STATUS.md](../../reports/v2/CURRENT_STATUS.md).
 
 ## Directory ownership
 

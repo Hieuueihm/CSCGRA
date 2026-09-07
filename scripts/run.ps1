@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("sim", "synth", "impl")]
+    [ValidateSet("check", "formal", "sim", "synth", "impl")]
     [string]$Flow,
 
     [ValidateSet("v1", "v2")]
@@ -18,6 +18,18 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 switch ($Flow) {
+    "check" {
+        & python (Join-Path $PSScriptRoot "maintenance\check_project_consistency.py")
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        & (Join-Path $PSScriptRoot "maintenance\check_layout.ps1")
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        & (Join-Path $PSScriptRoot "maintenance\lint_rtl.ps1") -RunId $RunId
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        & (Join-Path $PSScriptRoot "formal\run_formal.ps1") -Task all -LintOnly -RunId $RunId
+    }
+    "formal" {
+        & (Join-Path $PSScriptRoot "formal\run_formal.ps1") -Task all -RunId $RunId
+    }
     "sim" {
         & (Join-Path $PSScriptRoot "sim\run_regression.ps1") `
             -RtlVersion $RtlVersion `

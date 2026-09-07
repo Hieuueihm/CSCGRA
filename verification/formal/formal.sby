@@ -1,0 +1,33 @@
+[tasks]
+dma
+factor
+matrix
+wide
+
+[options]
+mode prove
+depth 40
+multiclock on
+
+[engines]
+smtbmc boolector
+
+[script]
+dma: read -formal -sv dma_ctrl.v dma_ctrl_formal.sv
+dma: prep -top dma_ctrl_formal
+factor: read -formal -sv factor_check_unit.v factor_check_unit_formal.sv
+factor: prep -top factor_check_unit_formal
+matrix: read -formal -sv ls_matrix_service.v ls_matrix_service_formal.sv
+matrix: prep -top ls_matrix_service_formal
+wide: read -formal -sv wide_mul_sequencer.v wide_mul_sequencer_formal.sv
+wide: prep -top wide_mul_sequencer_formal
+
+[files]
+dma_ctrl.v ../../rtl/v2/control/dma_ctrl.v
+factor_check_unit.v ../../rtl/v2/control/factor_check_unit.v
+ls_matrix_service.v ../../rtl/v2/solver/ls_matrix_service.v
+wide_mul_sequencer.v ../../rtl/v2/control/wide_mul_sequencer.v
+dma_ctrl_formal.sv
+factor_check_unit_formal.sv
+ls_matrix_service_formal.sv
+wide_mul_sequencer_formal.sv
