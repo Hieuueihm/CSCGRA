@@ -1,0 +1,23 @@
+flowchart TB
+  subgraph resident["Separate resident GEMV reference: 32 PEs, one feeder"]
+    HOST["Verified context image + descriptor configuration"] --> ENGINE["resident_engine"]
+    ENGINE --> CONTEXT["context_engine\nloader / store / one PC sequencer"]
+    CONTEXT -->|ADDRESS + tile64 words| OP["operator_controller\ndescriptor cursors / response ownership"]
+    OP -->|coordinates + identity| MEMORY["resident_operands"]
+    subgraph stores["Live resident stores and operand path"]
+      PHIGEN["phi_sign_generator"] --> PHICACHE["phi_sign_cache\n8 sign banks"]
+      PHICACHE --> PHIREAD["phi_reader\ncaptured read envelope"]
+      BCACHE["support_matrix_cache\none dense B copy"] --> READER["operand_reader\noperand_plan + one operand_feeder"]
+      VECTOR["vector_store"] --> READER
+      PHIREAD --> READER
+    end
+    MEMORY --> stores
+    READER -->|expanded 32-lane frame| OP
+    OP --> FABRIC["frame_fabric\nno feeder"]
+    FABRIC --> A0["pe_array 0: 16 PEs"]
+    FABRIC --> A1["pe_array 1: 16 PEs"]
+    A0 -->|atomic shared retirement| SINK["Indexed candidate STORE stream\nbackpressure; no outer commit"]
+    A1 --> SINK
+  end
+  REF["cgra_fabric: separate raw-bundle reference root\nits feeder/arrays are not extra target resources"]
+  NOTE["The LSQR target uses operator_memory + kernel_engine; see lsqr.mmd\nFull csr_top/recovery and board qualification remain pending"]

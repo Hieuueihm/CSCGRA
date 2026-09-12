@@ -1,0 +1,14 @@
+flowchart LR
+  PC["PC: prepare A / context / benchmark"] --> CPU
+  subgraph PS["ZCU106 processing system"]
+    CPU["Arm CPU: buffers and jobs"] <--> DDR["PS DDR: inputs, images, outputs"]
+    HP["S_AXI_HP0_FPD"] <--> DDR
+  end
+  subgraph PL["Programmable logic: proposed 100 MHz domain"]
+    CTRL["AXI-Lite job control"] --> CORE["csr_top: two 4x4 PE arrays"]
+    DMA["128-bit AXI master / DMA"] <--> RAM["Resident A / transpose A; vector and context stores"]
+    RAM <--> CORE
+  end
+  CPU -->|"HPM control path"| CTRL
+  DMA <-->|"preload and result transfer"| HP
+  CORE -->|"done / fault interrupt"| CPU

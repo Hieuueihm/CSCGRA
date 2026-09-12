@@ -1,0 +1,8 @@
+part=xczu7ev-ffvc1156-2-e
+top=csr_top
+clock_ns=10.0
+stage=impl
+mode=out_of_context
+directives=Vivado defaults
+interface_timing=not constrained; internal-clock baseline only
+bitstream=not requested

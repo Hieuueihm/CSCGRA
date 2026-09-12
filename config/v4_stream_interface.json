@@ -1,0 +1,153 @@
+{
+  "revision": 1,
+  "status": "frozen_first_stream_slice_contract_not_production_or_legacy_ABI",
+  "scope": "CALL/HALT program plus independently loadable 32-lane contexts; MAC/DOT/vector slice, not full recovery or legacy tile64/control256/service128.",
+  "limits": {
+    "program_words": 256,
+    "templates": 16,
+    "pe_count": 32,
+    "arrays": 2,
+    "array_rows": 4,
+    "array_columns": 4,
+    "context_bits": 64,
+    "descriptor_bits": 32,
+    "word_bits": 128,
+    "frame_count_min": 1,
+    "frame_count_max": 32,
+    "lanes": 32,
+    "vector_bits": 27,
+    "coefficient_bits": 18,
+    "accumulator_bits": 64,
+    "memory_blocks": 512,
+    "public_blocks": 480,
+    "scratch_base": 480,
+    "scratch_blocks": 32,
+    "block_address_bits": 9
+  },
+  "program_fields": {
+    "kind": 8,
+    "template": 4,
+    "src_a": 9,
+    "src_b": 9,
+    "dst": 9,
+    "frame_count": 8,
+    "tail_mask": 32,
+    "reserved": 49
+  },
+  "context_fields": {
+    "op": 5,
+    "mode": 1,
+    "src_a": 2,
+    "src_b": 2,
+    "immediate": 27,
+    "reserved": 27
+  },
+  "descriptor_fields": {
+    "inc_a": 1,
+    "inc_b": 1,
+    "inc_dst": 1,
+    "output_kind": 2,
+    "shift": 6,
+    "reserved": 21
+  },
+  "packing": "fields in JSON order, least-significant field first; unsigned words carry two's-complement signed immediates",
+  "kinds": {
+    "CALL": 1,
+    "HALT": 2
+  },
+  "context_ops": {
+    "MOV": 1,
+    "ADD": 2,
+    "SUB": 3,
+    "MUL": 8,
+    "MAC": 9
+  },
+  "context_op_authority": "config/v4_pe_interface.json; these numeric PE opcode values are reused, stream context64 remains a new ABI.",
+  "sources": {
+    "A": 0,
+    "B": 1,
+    "IMM": 2,
+    "ZERO": 3
+  },
+  "outputs": {
+    "EACH": 0,
+    "LAST_ACC": 1,
+    "SUM_ACC": 2
+  },
+  "control_faults": {
+    "NONE": 0,
+    "LOAD": 1,
+    "IMAGE": 2,
+    "PROGRAM": 3,
+    "RANGE": 4,
+    "KERNEL": 5,
+    "IDENTITY": 6,
+    "FORMAT": 7
+  },
+  "pe_faults": {
+    "NONE": 0,
+    "CONFIG": 1,
+    "COEFF": 2,
+    "RANGE": 3,
+    "ACC": 4,
+    "FORMAT": 5
+  },
+  "execution_faults": {
+    "NONE": 0,
+    "DESCRIPTOR": 1,
+    "MEMORY": 2,
+    "FABRIC": 3,
+    "RANGE": 4,
+    "INVALID_SOURCE": 5,
+    "IDENTITY": 6
+  },
+  "numeric": {
+    "format": 1,
+    "scalar_fraction": 22,
+    "coefficient_fraction": 16,
+    "rounding": "nearest ties away from zero",
+    "narrow_overflow": "fault, never successful clipped result",
+    "accumulator": "zero-initialized signed64 checked prefix; includes earlier lanes even when last frame masks them",
+    "mac_coefficient_operand": "selected B operand must sign-extend C18 in mode0",
+    "full_product": "signedS27 times signedS27, decomposed unsignedlow17 + signedhigh10 through one27x18 multiplier perPE",
+    "last_acc": "raw lane totals rounded once by descriptor shift to S27; allcontextsMAC",
+    "sum_acc": "sum all32 raw lane totals checked signed64; descriptor shift must0; allcontextsMAC; scalar response",
+    "each": "MOV/ADD/SUB/MUL only; descriptor shift0, peroperation native rounding"
+  },
+  "loader": {
+    "order": "begin, all program words, then each template descriptor at lane0 and contexts at lanes1..32; only final template context has last",
+    "complete": "image_valid only after complete validated package; load_status held; references validated before CALL dispatch",
+    "hash": "trusted host verification, not RTL SHA256",
+    "partial_load": "image invalidated at accepted begin; START blocked until package complete and load_status consumed",
+    "cancel": "flush pending run/done/services; preserve previously completed image only; incomplete image invalid",
+    "reset": "clear image/control metadata; RAM module retains bits but top validity resets"
+  },
+  "memory": {
+    "organization": "16 physical TDP banks with two logical lanes perbank, 1024x36 geometry27bits used",
+    "mapping": "bank=lane%16;port=lane/16;word=(lane/16)*512+block",
+    "grant": "one32element read ORwrite grant perclock; two read credits countRAMstage+responseFIFO; writes noresponse",
+    "read_latency": "response firstvalid after second edge counting accepted request edge as first",
+    "ownership": "top sole memory client while program running; host idle only; scratch blocks480..511 inaccessible to host/program references"
+  },
+  "command": {
+    "scope": "one CALL outstanding, multiple frames in compute; vector destination publishes only after fullCALL succeeds",
+    "cancel": "silent flush; failed/cancelled vectorCALL invalidates all lanes of affected destination blocks; earlierCALLs outside those blocks stay valid; no wholeprogramrollback claim",
+    "alias": "all outputs staged in32scratch blocks; reads finish beforedestinationcopy; destination invalidduringcopy untilcomplete",
+    "generation": "program immutable duringrun; job/tag/fmt captured; responseidentitychecked; cancelflushesallendpoints",
+    "each_destination": "dst+frame wheninc_dst1, same dst wheninc_dst0; copies inframeorder,lastactivewritewins; replaceblockvaliditywithunionofCALLwritemasks",
+    "tail": "fullmask except finalframetailmask; LAST_ACC maskunionofacceptedframes; SUM_ACC includesallpreviousactivepartials"
+  },
+  "capabilities": {
+    "per_pe_context": true,
+    "full_local_rf": false,
+    "mesh_routes": false,
+    "algorithm_branch": false,
+    "host_runtime_step_decisions": false,
+    "complete_recovery_algorithms": false,
+    "dedicated_extra_multipliers": false,
+    "first_slice_operator": "explicit frame vectors in sharedRAM; livePhi/B frontend integration is later"
+  },
+  "header": "rtl/v4/include/stream_interface.vh",
+  "compiler": "compiler/v4/stream_program.py",
+  "contract": "docs/v4/architecture/STREAM_RTL_CONTRACT.md"
+}

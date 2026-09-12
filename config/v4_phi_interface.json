@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "revision": "phi_stream_cache_v2_elastic",
+  "scope": "sign_generator_cache_only_not_numeric_or_context_ABI",
+  "word_bits": 32,
+  "banks": 8,
+  "family": 1,
+  "generator_revision": 2,
+  "job_tag_bits": 16,
+  "op_tag_bits": 16,
+  "format_tag_bits": 8,
+  "generation_bits": 32,
+  "key_bits": 128,
+  "read_tag_bits": 16,
+  "fault_bits": 4,
+  "fault_codes": {
+    "NONE": 0,
+    "DESCRIPTOR": 1,
+    "FILL": 2,
+    "READ": 3
+  },
+  "cache_transport": {
+    "response_credits": 1,
+    "potential_read_initiation_interval_cycles": 1,
+    "simultaneous_response_consume_and_read": true,
+    "data": "registered synchronous output from the existing eight banks",
+    "replacement": "begin requires no held cache response; fill excludes reads",
+    "abort": "invalidate/reset flush the response and image validity"
+  },
+  "reader_transport": {
+    "command_response_credits": 2,
+    "ordered_faults": true,
+    "held_output": true,
+    "abort": "cancel/reset flush all credits; owner must also flush/invalidate the cache before reuse"
+  }
+}

@@ -1,0 +1,320 @@
+{
+  "top": "factor_panel_service",
+  "mode": "out_of_context",
+  "part": "xczu7ev-ffvc1156-2-e",
+  "clock_ns": 10,
+  "directives": "Vivado defaults",
+  "qualification": "reports/v4/panel_mux_20260912/replay/evidence.json",
+  "qualification_sha256": "84bed941c5343cac72aca7fe458c8ed6f15ddd195d45d7242e52b96dc0eab754",
+  "replay_runs": 40,
+  "snapshot_matches_replay": true,
+  "sources": {
+    "arithmetic_service.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\services\\arithmetic_service.sv",
+      "sha256": "78dc4a6377fbb4d0e0bbb325dfb1203e3c531d017f4b382e0e77fe8a7ecbf548"
+    },
+    "builder_defs.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh",
+      "sha256": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1"
+    },
+    "cgra_fabric.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\cgra_fabric.sv",
+      "sha256": "41abad6f3f783d6bdcd4fe6c428739f1707a20811ae55f5ec59d0fa2880a75cc"
+    },
+    "commit_controller.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\commit_controller.sv",
+      "sha256": "39475c781c1b6fc07547724fe99c3c9ac3cd27711858518e16b87a911cda3fcc"
+    },
+    "commit_interface.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh",
+      "sha256": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9"
+    },
+    "context_decode.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\context_decode.sv",
+      "sha256": "575b1a46ddb94d01a353ca776550eebc2b45d0995ffceb809894f26c7c7b383a"
+    },
+    "context_defs.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh",
+      "sha256": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7"
+    },
+    "context_engine.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\context_engine.sv",
+      "sha256": "5c640623c65a98f09e5278c99582904b82ed04e3fec30405b3e0d83118b77f67"
+    },
+    "context_loader.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\context_loader.sv",
+      "sha256": "b0f4d51b599095a97175925bad193883b07353782406b7b9445b96ebf229a571"
+    },
+    "context_sequencer.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\context_sequencer.sv",
+      "sha256": "f93375b468404e89586a4c60297398dff4ada474f475d1a21312d8b65a896ba9"
+    },
+    "context_store.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\context_store.sv",
+      "sha256": "6c8bdcfb3b2aad315799541725bd86f7a43b0df85e485705ec3445f08583d97b"
+    },
+    "control_decode.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\control_decode.sv",
+      "sha256": "fbe72a02cca8557a765614fc9ed793b05869456ed62680c5de26328b41a75f9e"
+    },
+    "control_defs.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh",
+      "sha256": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0"
+    },
+    "csr_top.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\top\\csr_top.sv",
+      "sha256": "ea8267796b1ebdd771b9a793195b4fc2b52daccce55286855fa679c47444fb8c"
+    },
+    "factor_panel_service.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+      "sha256": "ca8e2b71a2879991c4a8b217393de71f244f90a7b600b3e0cbd3bc15277e8d69"
+    },
+    "factor_service.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+      "sha256": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b"
+    },
+    "factor_store.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+      "sha256": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c"
+    },
+    "feeder_interface.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh",
+      "sha256": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05"
+    },
+    "frame_fabric.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\frame_fabric.sv",
+      "sha256": "51d6ef949c4696a95a3f4d873e5d045a24a082cb9cb0ccbfd5abb0b976640b6c"
+    },
+    "host_command_bridge.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\host\\host_command_bridge.sv",
+      "sha256": "6cf8e8ff348ef06e4147764a586a2bdca8bbda9249287e7b6adf87cec35134b7"
+    },
+    "host_registers.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh",
+      "sha256": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e"
+    },
+    "kernel_engine.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\kernel_engine.sv",
+      "sha256": "8953b8f605aa75a07575bae26f59e23699b23068f9370e06450f8155acae3665"
+    },
+    "kernel_fabric.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\kernel_fabric.sv",
+      "sha256": "6687a018cae39755d80b3cf5cacc92cee6d354de7d38aba48d048b07991ad963"
+    },
+    "kernel_interface.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh",
+      "sha256": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a"
+    },
+    "live_operator_memory.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv",
+      "sha256": "0d194909bc6b868603c698f5428f98ff55ef4ab796c89460e1d9072578e4942e"
+    },
+    "lsqr_engine.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\lsqr_engine.sv",
+      "sha256": "9b1a52aed59adcc18dc9c39463a35a5dbe54d5dce9e10e5d546e3286b949fd41"
+    },
+    "measurement_loader.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\measurement_loader.sv",
+      "sha256": "d7326c22b1055deb0920021fc75d57a1c44cb598039fa4b1e51342c965946d7b"
+    },
+    "memory_defs.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh",
+      "sha256": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139"
+    },
+    "mesh_router.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\mesh_router.sv",
+      "sha256": "ba4ca94dec18bb6b4c1d376d393a0503d10e9b8e2cc0844e1f678549f9291e2c"
+    },
+    "operand_feeder.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\operand_feeder.sv",
+      "sha256": "3897e33357b36428196fba3d1340193a1d5745956bb6e237e72ae36ed61d4be6"
+    },
+    "operand_plan.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\operand_plan.sv",
+      "sha256": "5e0b02c265c81d1d1e7b5468f89bc553d90ba6dbe6048ef49e913e37b25833de"
+    },
+    "operand_reader.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\operand_reader.sv",
+      "sha256": "ea16a6f276ccd587d8cafb0b6a26dc732b4706a22d82abfc8e722d1adecbce93"
+    },
+    "operator_controller.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\operator_controller.sv",
+      "sha256": "92dbe47cbe8ddac8671755e7290a904b5b072a6cb1f1435cf6ec36c57798153f"
+    },
+    "operator_defs.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh",
+      "sha256": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f"
+    },
+    "operator_frame_feeder.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv",
+      "sha256": "6060ebf90b1c0bfd9bd2a3b89d4f83670de869ae245f65489d5352eeee2b0668"
+    },
+    "operator_memory.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\memory\\operator_memory.sv",
+      "sha256": "93cf055b962b56bb85c3400feeb880d3be2d9c7b1606004705f6b27fa9e2cb6d"
+    },
+    "paired_support_store.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv",
+      "sha256": "73a688ff3bc24e34aac4e04302ee17e69dd85d24a62e61e2b6aa332d8e17aedf"
+    },
+    "payload_dma_engine.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\host\\payload_dma_engine.sv",
+      "sha256": "5fc83d964164e4a876a1141b1e3088774925c96c2e175ccf05834f6ffac62417"
+    },
+    "payload_dma_regs.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh",
+      "sha256": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b"
+    },
+    "pe_alu.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\pe_alu.sv",
+      "sha256": "5e61a025a2262d4502a9ec273bd402e104ef59a1397088718359582c1a8aa108"
+    },
+    "pe_array.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\pe_array.sv",
+      "sha256": "3f082836d846e25751d875aa709f16311ad1ea6ca30cf8bf71db2f878b10a1fd"
+    },
+    "pe_context.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\pe_context.sv",
+      "sha256": "d80a632e6d442456ce9722da9f8a44ba120a780cac132543c0228b308a08d30b"
+    },
+    "pe_interface.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh",
+      "sha256": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee"
+    },
+    "pe_operand.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\pe_operand.sv",
+      "sha256": "223a5797884a455265a74d05a99049291f56ce98a5774dcae8ae3f34b846c809"
+    },
+    "pe_tile.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\pe_tile.sv",
+      "sha256": "3a27f24dfb66ab55e36321ff0a73ffd4476dd2e4d3152cc00bbf1720da29b6e7"
+    },
+    "phi_interface.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh",
+      "sha256": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9"
+    },
+    "phi_reader.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv",
+      "sha256": "26ba84d1f0ad3a879e0b18d8d3782ca13a7afb3c22b6f490d39cee8187e32863"
+    },
+    "phi_sign_cache.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv",
+      "sha256": "b59073646d2c506bab1b1ed061cf5299ada2bed3fb3f5c8f0a0527a6525e8808"
+    },
+    "phi_sign_generator.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv",
+      "sha256": "395aec4b89b0ca18ccd2d1ca486b71188a624acb66df6635fbca57f5c3babe3e"
+    },
+    "program_interface.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh",
+      "sha256": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67"
+    },
+    "program_sequencer.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\program_sequencer.sv",
+      "sha256": "ec1120f656696b657d3580b8291833af853a3904acb72a38ca914d1e4fc7d455"
+    },
+    "range_reader.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv",
+      "sha256": "4c5133633e577ecaf5228b5a8c649d55673c35d00e3312c4e95cffabd6972d62"
+    },
+    "recovery_engine.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\recovery_engine.sv",
+      "sha256": "a1fb181b248f2e4e682c7abf9a5db2753054d7cb39241c4aa9654c64f4341b87"
+    },
+    "recovery_interface.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh",
+      "sha256": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941"
+    },
+    "resident_engine.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\resident_engine.sv",
+      "sha256": "3727eb672dc97a327d2b99f860eca75b860055d413c69960cf8675bfa446a8d8"
+    },
+    "resident_operands.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\resident_operands.sv",
+      "sha256": "90d114bef5fe9a579293d050ffd0719999fcbafcdd8d3ef54b9eedd20dd95d59"
+    },
+    "result_store.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\memory\\result_store.sv",
+      "sha256": "97887f8af5673bc32467d675b6feba18cf619dc937b738f498ac237cbc3420b1"
+    },
+    "result_writeback.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\result_writeback.sv",
+      "sha256": "8d986d5c3cff9813cdaa3a96012a037e646aab485cb4ffde4ef9fd30eb61d61f"
+    },
+    "scalar_interface.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh",
+      "sha256": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98"
+    },
+    "scalar_service.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\services\\scalar_service.sv",
+      "sha256": "305b763d44f14ecc66c76c937a677b91666c99909eae32e3bd8eeeae477920ad"
+    },
+    "solver_interface.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh",
+      "sha256": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8"
+    },
+    "solver_sequencer.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\solver_sequencer.sv",
+      "sha256": "bb707fd6b2bc4b131df8242ec33ea4b6814966470ad5120ae5faef3cb352151a"
+    },
+    "stream_array.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv",
+      "sha256": "811e078870f77d51637bf7a7d6255ccd9276f5c230bcfcc30586020d5b88e399"
+    },
+    "stream_engine.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\stream_engine.sv",
+      "sha256": "8f82b963338a29f4d425eb5beecd15ec3de7df441e092cd3226a49fd484fdd16"
+    },
+    "stream_fabric.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv",
+      "sha256": "ed1207d9beb6b745bd5b9741e8f16f59d3ec800e921ad0aee0eb021eec2edad1"
+    },
+    "stream_interface.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh",
+      "sha256": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc"
+    },
+    "stream_kernel.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv",
+      "sha256": "0a88d278646ff2e8027ff1c046b7fa966ce06d98880657b141b52aa21dd9d70b"
+    },
+    "stream_pe.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv",
+      "sha256": "0eaf9dc6b70369ff3ec96b3a89894fd6fc3e4489ae20984ce378054661622589"
+    },
+    "stream_program_control.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\control\\stream_program_control.sv",
+      "sha256": "d2a73507b1394879942f9499a44ca3d209a9665280f6b515e4fd1461dd340c41"
+    },
+    "stream_vector_store.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv",
+      "sha256": "7c5e6842682173713e777f4c8e7d2d168a8738fac60d78003fc18085137f8b65"
+    },
+    "support_builder.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv",
+      "sha256": "8365de592657062c96a0fc68130aa75e4bff8c76a8f463344f4ce334d8d0df67"
+    },
+    "support_matrix_cache.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\memory\\support_matrix_cache.sv",
+      "sha256": "304c8dcf34c333e26f85b1261e38191facea701cd9184615bdeb737000ace2ab"
+    },
+    "support_service.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv",
+      "sha256": "9c694c18d223bbf6be048b2de81b17065f9e3c46bbce10656947ec4fd939404c"
+    },
+    "tile_interface.vh": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh",
+      "sha256": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+    },
+    "vector_store.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\memory\\vector_store.sv",
+      "sha256": "9bc4f173b210acbf5bb462239987782eccbae7eba507328264199036ddbad15f"
+    },
+    "vector_workspace.sv": {
+      "source": "D:\\vivado_pj\\rtl\\v4\\memory\\vector_workspace.sv",
+      "sha256": "c2d1e39fbc8de60f03e7d86c5d8f22b3602478ae8a2592287636d9f6eb3f77b2"
+    }
+  },
+  "script_sha256": "0caaba1cbe93b58a26e64d10944e6769c826ec23159244d5d106c8a6fa8072fb",
+  "xdc_sha256": "574b9cce991b84fa5895dd73635eecb0418a2a40eedc732f08e23ad8acd9da37",
+  "config_sha256": "d1b65dd9c58d21e9f7bc17fa1b3cb57175b4596369e99e7e13c91cca50e3cfca"
+}

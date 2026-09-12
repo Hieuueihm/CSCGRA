@@ -1,0 +1,435 @@
+#-----------------------------------------------------------
+# Vivado v2018.1 (64-bit)
+# SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018
+# IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018
+# Start of session at: Fri Sep 11 10:06:50 2026
+# Process ID: 25364
+# Current directory: D:/vivado_pj
+# Command line: vivado.exe -mode batch -source scripts/v4/run_synth_impl.tcl -log work/payload_benchmark_physical.log -journal work/payload_benchmark_physical.jou -tclargs -stage impl -clock_ns 10.0 -out_dir work/v4_impl_payload_20260911
+# Log file: D:/vivado_pj/work/payload_benchmark_physical.log
+# Journal file: D:/vivado_pj\work/payload_benchmark_physical.jou
+#-----------------------------------------------------------
+source scripts/v4/run_synth_impl.tcl
+# set repo_root [file normalize [file join [file dirname [info script]] ../..]]
+# set part xczu7ev-ffvc1156-2-e
+# set clock_ns 10.0
+# set stage impl
+# set out_dir ""
+# set check_only 0
+# for {set index 0} {$index < $argc} {incr index} {
+#     set argument [lindex $argv $index]
+#     if {$argument in {-help --help}} {
+#         puts "Usage: vivado -mode batch -source scripts/v4/run_synth_impl.tcl -tclargs ?-stage synth|impl? ?-part PART? ?-clock_ns 10.0? ?-out_dir work/v4_impl_NAME? ?-check_only?"
+#         exit 0
+#     }
+#     if {$argument eq "-check_only"} { set check_only 1; continue }
+#     if {$argument ni {-stage -part -clock_ns -out_dir}} { error "Unknown argument: $argument" }
+#     incr index
+#     if {$index >= $argc} { error "Missing value for $argument" }
+#     set value [lindex $argv $index]
+#     switch -- $argument {
+#         -stage { set stage $value }
+#         -part { set part $value }
+#         -clock_ns { set clock_ns $value }
+#         -out_dir { set out_dir $value }
+#     }
+# }
+# if {$stage ni {synth impl}} { error "-stage must be synth or impl" }
+# if {![string is double -strict $clock_ns] || !($clock_ns > 0 && $clock_ns < 1000000)} {
+#     error "-clock_ns must be a positive finite period below 1000000 ns"
+# }
+# if {[llength [get_parts -quiet $part]] != 1} { error "Part not installed or not unique: $part" }
+# set work_dir [file join $repo_root work]
+# if {$out_dir eq ""} {
+#     set out_dir [file join $work_dir "v4_impl_[clock format [clock seconds] -format %Y%m%d_%H%M%S]"]
+# }
+# if {[file pathtype $out_dir] ne "absolute"} { set out_dir [file join $repo_root $out_dir] }
+# set out_dir [file normalize $out_dir]
+# if {[file dirname $out_dir] ne $work_dir || ![string match v4_impl_* [file tail $out_dir]]} {
+#     error "Output must be a new direct child of work named v4_impl_*"
+# }
+# if {[file exists $out_dir]} { error "Refusing existing output directory: $out_dir" }
+# set source_files {}
+# set include_dirs {}
+# set filelist [open [file join $repo_root rtl v4 files.f] r]
+# set filelist_text [read $filelist]
+# close $filelist
+# foreach raw_line [split $filelist_text "\n"] {
+#     regsub {#.*$} $raw_line {} line
+#     foreach token [regexp -all -inline {\S+} $line] {
+#         if {[string first +incdir+ $token] == 0} {
+#             foreach directory [split [string range $token 8 end] +] {
+#                 set directory [file normalize [file join $repo_root $directory]]
+#                 if {![file isdirectory $directory]} { error "Missing include directory: $directory" }
+#                 lappend include_dirs $directory
+#             }
+#         } elseif {[file extension $token] in {.sv .v}} {
+#             set source [file normalize [file join $repo_root $token]]
+#             if {![file isfile $source]} { error "Missing RTL: $source" }
+#             lappend source_files $source
+#         } else {
+#             error "Unsupported file-list token: $token"
+#         }
+#     }
+# }
+# if {[llength $source_files] == 0} { error "Empty source file list" }
+# if {$check_only} {
+#     puts "PREFLIGHT PASS: part=$part top=csr_top clock_ns=$clock_ns stage=$stage sources=[llength $source_files]"
+#     puts "No synthesis, implementation or output directory created."
+#     exit 0
+# }
+# file mkdir $out_dir
+# set snapshot_dir [file join $out_dir source_snapshot]
+# file mkdir $snapshot_dir
+# set snapshot_sources {}
+# foreach source $source_files {
+#     set target [file join $snapshot_dir [file tail $source]]
+#     if {[file exists $target]} { error "Duplicate source basename: $source" }
+#     file copy $source $target
+#     lappend snapshot_sources $target
+# }
+# foreach directory $include_dirs {
+#     foreach header [glob -nocomplain -directory $directory *.vh *.svh] {
+#         set target [file join $snapshot_dir [file tail $header]]
+#         if {[file exists $target]} { error "Duplicate header basename: $header" }
+#         file copy $header $target
+#     }
+# }
+# file copy [info script] [file join $out_dir run_synth_impl.tcl]
+# set constraints [file join $out_dir csr_top_ooc.xdc]
+# set channel [open $constraints w]
+# puts $channel "create_clock -name s_axi_aclk -period $clock_ns \[get_ports s_axi_aclk\]"
+# close $channel
+# set channel [open [file join $out_dir run_config.txt] w]
+# puts $channel "part=$part\ntop=csr_top\nclock_ns=$clock_ns\nstage=$stage\nmode=out_of_context\ndirectives=Vivado defaults\ninterface_timing=not constrained; internal-clock baseline only\nbitstream=not requested"
+# close $channel
+# create_project -in_memory -part $part
+# set_property include_dirs [list $snapshot_dir] [current_fileset]
+# read_verilog -sv $snapshot_sources
+# read_xdc $constraints
+# synth_design -top csr_top -part $part -mode out_of_context
+Command: synth_design -top csr_top -part xczu7ev-ffvc1156-2-e -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: Launching helper process for spawning children vivado processes
+INFO: Helper process launched with PID 23976 
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 419.949 ; gain = 107.047
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'csr_top' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/csr_top.sv:4]
+	Parameter AXI_OKAY bound to: 2'b00 
+	Parameter AXI_SLVERR bound to: 2'b10 
+INFO: [Synth 8-6157] synthesizing module 'host_command_bridge' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/host_command_bridge.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'host_command_bridge' (1#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/host_command_bridge.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'payload_dma_engine' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/payload_dma_engine.sv:1]
+	Parameter IDLE bound to: 4'b0000 
+	Parameter BLOCK bound to: 4'b0001 
+	Parameter AR_PREP bound to: 4'b0010 
+	Parameter AR_SEND bound to: 4'b0011 
+	Parameter R_DATA bound to: 4'b0100 
+	Parameter HOST_SEND bound to: 4'b0101 
+	Parameter HOST_WAIT bound to: 4'b0110 
+	Parameter READ_SEND bound to: 4'b0111 
+	Parameter READ_WAIT bound to: 4'b1000 
+	Parameter AW_PREP bound to: 4'b1001 
+	Parameter AW_SEND bound to: 4'b1010 
+	Parameter W_DATA bound to: 4'b1011 
+	Parameter B_WAIT bound to: 4'b1100 
+	Parameter FINISH bound to: 4'b1101 
+INFO: [Synth 8-6155] done synthesizing module 'payload_dma_engine' (2#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/payload_dma_engine.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'recovery_engine' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/recovery_engine.sv:2]
+	Parameter IDLE bound to: 5'b00000 
+	Parameter LAUNCH bound to: 5'b00001 
+	Parameter RUN bound to: 5'b00010 
+	Parameter COLLECT_READ bound to: 5'b00011 
+	Parameter COLLECT_WAIT bound to: 5'b00100 
+	Parameter COLLECT_WORD bound to: 5'b00101 
+	Parameter BUILD_REQUEST bound to: 5'b00110 
+	Parameter BUILD_WAIT bound to: 5'b00111 
+	Parameter BUILD_RETURN bound to: 5'b01000 
+	Parameter RESULT_BEGIN bound to: 5'b01001 
+	Parameter RESULT_READ bound to: 5'b01010 
+	Parameter RESULT_WAIT bound to: 5'b01011 
+	Parameter RESULT_FILL bound to: 5'b01100 
+	Parameter RESULT_APPROVE bound to: 5'b01101 
+	Parameter RESULT_STATUS bound to: 5'b01110 
+	Parameter ABORT bound to: 5'b01111 
+	Parameter DONE bound to: 5'b10000 
+INFO: [Synth 8-6157] synthesizing module 'program_sequencer' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/program_sequencer.sv:3]
+	Parameter RETIRE_TIME_FETCH bound to: 1'b1 
+	Parameter IDLE bound to: 0 - type: integer 
+	Parameter LOAD bound to: 1 - type: integer 
+	Parameter FETCH bound to: 2 - type: integer 
+	Parameter EXEC bound to: 3 - type: integer 
+	Parameter KREQ bound to: 4 - type: integer 
+	Parameter KWAIT bound to: 5 - type: integer 
+	Parameter SREQ bound to: 6 - type: integer 
+	Parameter SWAIT bound to: 7 - type: integer 
+	Parameter BREQ bound to: 8 - type: integer 
+	Parameter BWAIT bound to: 9 - type: integer 
+	Parameter CERTIFY bound to: 10 - type: integer 
+	Parameter DONE bound to: 11 - type: integer 
+WARNING: [Synth 8-6014] Unused sequential element tid_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/program_sequencer.sv:467]
+WARNING: [Synth 8-6014] Unused sequential element lane_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/program_sequencer.sv:467]
+WARNING: [Synth 8-6014] Unused sequential element e_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/program_sequencer.sv:540]
+INFO: [Synth 8-6155] done synthesizing module 'program_sequencer' (3#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/program_sequencer.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'stream_kernel' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_kernel.sv:3]
+	Parameter RESIDENT_WRITEBACK bound to: 1 - type: integer 
+	Parameter GEMV_GROUP_PREFETCH bound to: 1 - type: integer 
+	Parameter IDLE bound to: 6'b000000 
+	Parameter CHECK bound to: 6'b000001 
+	Parameter CONFIG bound to: 6'b000010 
+	Parameter CONFIG_WAIT bound to: 6'b000011 
+	Parameter LAUNCH bound to: 6'b000100 
+	Parameter RUN bound to: 6'b000101 
+	Parameter INVALIDATE bound to: 6'b000111 
+	Parameter COPY_READ bound to: 6'b001000 
+	Parameter COPY_WAIT bound to: 6'b001001 
+	Parameter COPY_WRITE bound to: 6'b001010 
+	Parameter PUBLISH bound to: 6'b001011 
+	Parameter FAIL bound to: 6'b001100 
+	Parameter RESPONSE bound to: 6'b001101 
+	Parameter LAST_WRITE bound to: 6'b001110 
+	Parameter GEMV_REQ bound to: 6'b001111 
+	Parameter GEMV_WAIT bound to: 6'b010000 
+	Parameter REMAP bound to: 6'b010001 
+	Parameter GEMV_WRITE bound to: 6'b010010 
+	Parameter SUPPORT_START bound to: 6'b010011 
+	Parameter SUPPORT_WAIT bound to: 6'b010100 
+	Parameter SUPPORT_VALIDATE bound to: 6'b010101 
+	Parameter AFFINE_WRITE bound to: 6'b010110 
+	Parameter AFFINE_WAIT bound to: 6'b010111 
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "distributed" *) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_kernel.sv:270]
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "distributed" *) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_kernel.sv:271]
+INFO: [Synth 8-6157] synthesizing module 'range_reader' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/range_reader.sv:5]
+	Parameter IDLE bound to: 2'b00 
+	Parameter ISSUE bound to: 2'b01 
+	Parameter WAIT bound to: 2'b10 
+	Parameter DONE bound to: 2'b11 
+	Parameter FAULT_NONE bound to: 2'b00 
+	Parameter FAULT_RANGE bound to: 2'b01 
+	Parameter FAULT_PROVIDER bound to: 2'b10 
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "distributed" *) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/range_reader.sv:51]
+INFO: [Synth 8-226] default block is never used [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/range_reader.sv:168]
+INFO: [Synth 8-6155] done synthesizing module 'range_reader' (4#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/range_reader.sv:5]
+INFO: [Synth 8-6157] synthesizing module 'stream_vector_store' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_vector_store.sv:4]
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "block" *) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_vector_store.sv:38]
+INFO: [Synth 8-6155] done synthesizing module 'stream_vector_store' (5#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_vector_store.sv:4]
+INFO: [Synth 8-6157] synthesizing module 'stream_fabric' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_fabric.sv:3]
+	Parameter TERMINAL_ENABLE bound to: 1 - type: integer 
+	Parameter CASCADE_ENABLE bound to: 1 - type: integer 
+	Parameter IDLE bound to: 2'b00 
+	Parameter RUN bound to: 2'b01 
+	Parameter DONE bound to: 2'b10 
+	Parameter TERMINAL bound to: 2'b11 
+	Parameter FLOW_PARALLEL bound to: 2'b00 
+	Parameter FLOW_CASCADE16 bound to: 2'b01 
+INFO: [Synth 8-6157] synthesizing module 'stream_array' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_array.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'stream_pe' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_pe.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'stream_pe' (6#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_pe.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'stream_array' (7#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_array.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'stream_fabric' (8#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_fabric.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'operator_frame_feeder' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/operator_frame_feeder.sv:4]
+WARNING: [Synth 8-6014] Unused sequential element accepted_frames_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/operator_frame_feeder.sv:353]
+WARNING: [Synth 8-6014] Unused sequential element matrix_grants_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/operator_frame_feeder.sv:353]
+WARNING: [Synth 8-6014] Unused sequential element vector_grants_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/operator_frame_feeder.sv:353]
+WARNING: [Synth 8-6014] Unused sequential element cache_hits_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/operator_frame_feeder.sv:353]
+WARNING: [Synth 8-6014] Unused sequential element peak_occupancy_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/operator_frame_feeder.sv:353]
+WARNING: [Synth 8-6014] Unused sequential element hit_count_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/operator_frame_feeder.sv:380]
+INFO: [Synth 8-6155] done synthesizing module 'operator_frame_feeder' (9#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/operator_frame_feeder.sv:4]
+INFO: [Synth 8-6157] synthesizing module 'support_service' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/support_service.sv:4]
+	Parameter BITMAP_ENUM_ENABLE bound to: 1 - type: integer 
+	Parameter IDLE bound to: 5'b00000 
+	Parameter LIST_START bound to: 5'b00001 
+	Parameter LIST_WORD bound to: 5'b00010 
+	Parameter DISPATCH bound to: 5'b00011 
+	Parameter READ_REQ bound to: 5'b00100 
+	Parameter READ_WAIT bound to: 5'b00101 
+	Parameter TOP_START bound to: 5'b00110 
+	Parameter TOP_LOAD bound to: 5'b00111 
+	Parameter TREE bound to: 5'b01000 
+	Parameter TOP_BLOCK bound to: 5'b01001 
+	Parameter SORT bound to: 5'b01010 
+	Parameter PACK bound to: 5'b01011 
+	Parameter WRITE bound to: 5'b01100 
+	Parameter DENSE bound to: 5'b01101 
+	Parameter APPLY bound to: 5'b01110 
+	Parameter SCALAR_READ bound to: 5'b01111 
+	Parameter SCALAR_VALUE bound to: 5'b10000 
+	Parameter DONE bound to: 5'b10001 
+	Parameter RANGE_WORD bound to: 5'b10010 
+	Parameter RANGE_LOADED bound to: 5'b10011 
+	Parameter RANGE_ASSEMBLE bound to: 5'b10100 
+	Parameter TOP_GLOBAL_LOAD bound to: 5'b10101 
+	Parameter TOP_REFRESH bound to: 5'b10110 
+	Parameter RANGE_PROVIDER bound to: 5'b10111 
+WARNING: [Synth 8-6014] Unused sequential element raw_index_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/support_service.sv:595]
+WARNING: [Synth 8-6014] Unused sequential element pair_index_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/support_service.sv:665]
+WARNING: [Synth 8-6014] Unused sequential element required_mask_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/support_service.sv:794]
+WARNING: [Synth 8-6014] Unused sequential element raw_value_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/support_service.sv:854]
+INFO: [Synth 8-6155] done synthesizing module 'support_service' (10#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/support_service.sv:4]
+INFO: [Synth 8-6157] synthesizing module 'factor_service' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_service.sv:3]
+	Parameter ENABLE_PANEL_BRIDGE bound to: 1 - type: integer 
+	Parameter IDLE bound to: 4'b0000 
+	Parameter CHECK bound to: 4'b0001 
+	Parameter BEGIN_STORE bound to: 4'b0010 
+	Parameter MAT_REQ bound to: 4'b0011 
+	Parameter MAT_WAIT bound to: 4'b0100 
+	Parameter FILL bound to: 4'b0101 
+	Parameter LOAD_WAIT bound to: 4'b0110 
+	Parameter POOL_REQ bound to: 4'b0111 
+	Parameter POOL_WAIT bound to: 4'b1000 
+	Parameter STORE_REQ bound to: 4'b1001 
+	Parameter STORE_WAIT bound to: 4'b1010 
+	Parameter EMIT bound to: 4'b1011 
+	Parameter FAILED bound to: 4'b1100 
+	Parameter DONE bound to: 4'b1101 
+INFO: [Synth 8-6157] synthesizing module 'factor_store' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_store.sv:4]
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "block" *) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_store.sv:95]
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[0].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[0].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[1].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[1].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[2].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[2].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[3].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[3].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[4].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[4].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[5].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[5].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[6].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[6].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[7].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[7].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[8].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[8].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[9].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[9].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[10].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[10].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[11].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[11].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[12].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[12].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[13].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[13].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[14].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[14].ram_reg" dissolved into registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'banks[15].ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: RAM has multiple writes via different ports in same process. If RAM inferencing intended, write to one port per process. 
+	2: Unable to determine number of words or word size in RAM. 
+	3: No valid read/write found for RAM. 
+RAM "banks[15].ram_reg" dissolved into registers
+INFO: [Synth 8-6155] done synthesizing module 'factor_store' (11#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_store.sv:4]
+WARNING: [Synth 8-6014] Unused sequential element panel_data_hold_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_service.sv:197]
+WARNING: [Synth 8-6014] Unused sequential element read_r_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_service.sv:273]
+WARNING: [Synth 8-6014] Unused sequential element read_c_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_service.sv:274]
+WARNING: [Synth 8-6014] Unused sequential element read_bank_reg was removed.  [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_service.sv:275]
+INFO: [Synth 8-6155] done synthesizing module 'factor_service' (12#1) [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_service.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'factor_panel_service' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_panel_service.sv:5]
+	Parameter NARROW_PANEL_MAPPING bound to: 1'b1 
+	Parameter PROJECT_DOT_SPLIT_ENABLE bound to: 1'b1 
+	Parameter PROJECT_DOT_SPLIT_MIN_ROWS bound to: 11'b00000011000 
+	Parameter IDLE bound to: 6'b000000 
+	Parameter CHECK bound to: 6'b000001 
+	Parameter A_REQ bound to: 6'b000010 
+	Parameter A_WAIT bound to: 6'b000011 
+	Parameter B_REQ bound to: 6'b000100 
+	Parameter B_WAIT bound to: 6'b000101 
+	Parameter CONFIG bound to: 6'b000110 
+	Parameter CONFIG_WAIT bound to: 6'b000111 
+	Parameter LAUNCH bound to: 6'b001000 
+	Parameter RUN bound to: 6'b001001 
+	Parameter CANDIDATE bound to: 6'b001010 
+	Parameter FAILED bound to: 6'b001011 
+	Parameter DONE bound to: 6'b001100 
+	Parameter EMPTY bound to: 3'b000 
+	Parameter READ_PENDING bound to: 3'b001 
+	Parameter READY bound to: 3'b010 
+	Parameter PE_PENDING bound to: 3'b011 
+	Parameter RESULT bound to: 3'b100 
+	Parameter WRITE_PENDING bound to: 3'b101 
+	Parameter PROJECT_DOT bound to: 2'b00 
+	Parameter PROJECT_SCALE bound to: 2'b01 
+	Parameter PROJECT_RANK bound to: 2'b10 
+	Parameter PROJECT_DOT_CONTEXT bound to: 64'b0000000000000000000000000000000000000000000000000000000100101001 
+	Parameter PROJECT_SCALE_CONTEXT bound to: 64'b0000000000000000000000000000000000000000000000000000000100101000 
+	Parameter PROJECT_RANK_CONTEXT bound to: 64'b0000000000000000000000000000000000000000000000000000000100100011 
+	Parameter PROJECT_PADDING_CONTEXT bound to: 64'b0000000000000000000000000000000000000000000000000000000000000000 
+ERROR: [Synth 8-524] part-select [890:864] out of range of prefix 'fabric_out_data' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_panel_service.sv:340]
+ERROR: [Synth 8-6156] failed synthesizing module 'factor_panel_service' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/factor_panel_service.sv:5]
+ERROR: [Synth 8-6156] failed synthesizing module 'stream_kernel' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/stream_kernel.sv:3]
+ERROR: [Synth 8-6156] failed synthesizing module 'recovery_engine' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/recovery_engine.sv:2]
+ERROR: [Synth 8-6156] failed synthesizing module 'csr_top' [D:/vivado_pj/work/v4_impl_payload_20260911/source_snapshot/csr_top.sv:4]
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:01:21 ; elapsed = 00:01:28 . Memory (MB): peak = 3369.445 ; gain = 3056.543
+---------------------------------------------------------------------------------
+RTL Elaboration failed
+INFO: [Common 17-83] Releasing license: Synthesis
+36 Infos, 33 Warnings, 0 Critical Warnings and 6 Errors encountered.
+synth_design failed
+ERROR: [Common 17-69] Command failed: Synthesis failed - please see the console or run log file for details
+INFO: [Common 17-206] Exiting Vivado at Fri Sep 11 10:08:34 2026...

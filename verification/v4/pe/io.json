@@ -1,0 +1,76 @@
+{
+  "alu": {
+    "inputs": {
+      "rst": 1,
+      "cancel": 1,
+      "req_valid": 1,
+      "req_op": 5,
+      "req_mode": 1,
+      "req_a": 27,
+      "req_b": 27,
+      "req_acc": 64,
+      "req_sel": 1,
+      "req_lane": 1,
+      "req_exec": 1,
+      "req_job": 16,
+      "req_tag": 16,
+      "req_fmt": 8,
+      "req_last": 1,
+      "rsp_ready": 1
+    },
+    "outputs": {
+      "req_ready": 1,
+      "rsp_valid": 1,
+      "rsp_data": 27,
+      "rsp_acc": 64,
+      "rsp_cmp": 3,
+      "rsp_fault": 4,
+      "rsp_job": 16,
+      "rsp_tag": 16,
+      "rsp_fmt": 8,
+      "rsp_last": 1,
+      "rsp_lane": 1,
+      "rsp_exec": 1,
+      "state_acc": 64,
+      "state_mode": 1
+    }
+  },
+  "router": {
+    "inputs": {
+      "rst": 1,
+      "cancel": 1,
+      "req_valid": 1,
+      "req_routes": 12,
+      "req_val": 64,
+      "req_acc": 64,
+      "req_res": 64,
+      "req_src": 3,
+      "req_lane": 1,
+      "req_exec": 1,
+      "req_job": 16,
+      "req_tag": 16,
+      "req_fmt": 8,
+      "req_last": 1,
+      "out_ready": 4,
+      "rsp_ready": 1
+    },
+    "outputs": {
+      "req_ready": 1,
+      "out_valid": 4,
+      "out_data": 256,
+      "out_sel": 12,
+      "out_job": 16,
+      "out_tag": 16,
+      "out_fmt": 8,
+      "out_last": 1,
+      "rsp_valid": 1,
+      "rsp_fault": 4,
+      "rsp_job": 16,
+      "rsp_tag": 16,
+      "rsp_fmt": 8,
+      "rsp_last": 1,
+      "rsp_lane": 1,
+      "rsp_exec": 1
+    }
+  }
+}

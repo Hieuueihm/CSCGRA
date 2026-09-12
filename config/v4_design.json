@@ -1,0 +1,564 @@
+{
+  "schema_version": 1,
+  "status": "partial_system_RTL_with_bounded_LSQR_and_certified_commit; see_source_bound_evidence",
+  "architecture_decision": {
+    "revision": "lfsr32_generated_cache_lsqr_20260908",
+    "document": "docs/v4/architecture/BASELINE.md",
+    "status": "selected_target_partial_RTL_and_bounded_numeric_calibration_full_program_and_board_gates_open",
+    "main_operator": "generated_sign_Phi_with_same_PE_Psi_and_adjoint_programs",
+    "generator_selection": {
+      "first_candidate": "LFSR32_Galois_rightshift_v2_taps0x80200003",
+      "comparison_candidate": "Threefry2x32_20_reference_ablation",
+      "selected": "LFSR32_Galois_rightshift_v2_taps0x80200003",
+      "frozen": true,
+      "selection_rule": "user_frozen_LFSR32_for_v4; Threefry_retained_reference_ablation; no_superiority_claim",
+      "implementation_boundary": "one_selected_generator_per_build_start_fill_descriptor_to_tagged_sign_word_stream",
+      "hardware_arbitrary_coordinate_generation_required": false,
+      "reason": "full_Phi_cache_serves_all_random_A_AT_support_reads_after_fill",
+      "descriptor_family_must_match_build": true,
+      "encoder_and_decoder_operator_must_match": true,
+      "selected_family": "LFSR32_Galois_rightshift_v2",
+      "taps_hex": "0x80200003",
+      "seed_width_bits": 32,
+      "zero_seed_substitution_hex": "0xDEADBEEF",
+      "output_order": "emit_current_state_lsb_then_step",
+      "stream_index": "column*M+row",
+      "tail_policy": "emit_valid_rows_only; padding_does_not_consume_stream",
+      "full_cache_fill": "sequential_stream_unchanged",
+      "indexed_jumpahead_model_only": true,
+      "default_phi_scale_before_coefficient_quantization": "1/sqrt(M)"
+    },
+    "first_executable_profile": "Psi_identity",
+    "main_matrix_storage": "one_full_compact_sign_cache_8_banks",
+    "fill_policy": "generate_on_operator_key_change_publish_after_complete_reuse_across_iterations_and_jobs",
+    "full_dense_A_in_baseline_bitstream": false,
+    "support_matrix": "one_copy_dense_B_always_in_ordered_support_slots",
+    "support_update": "full_rebuild_then_publish_before_LS",
+    "solver_implementation_target": "LSQR_on_shared_32_PE",
+    "shared_scalar_operations": [
+      "DIV",
+      "SQRT"
+    ],
+    "existing_software_solver_reference": "CGLS",
+    "alternative_build_or_ablations": [
+      "dense_single_copy_A",
+      "packed_sign_B",
+      "uncached_regeneration"
+    ],
+    "partial_bram36_survey": {
+      "main_sign_cache_conservative": 8,
+      "dense_B_cache_conservative_at_C18": 32,
+      "context_reference_depth_256": 36,
+      "subtotal_only": 76,
+      "full_resource_or_timing_proof": false,
+      "scope": "historical_resident_tile_context_reference_not_current_solver_resource_total"
+    },
+    "numeric_profile_frozen": false,
+    "generated_numerical_model_implemented": true,
+    "generated_RTL_backend_implemented": true,
+    "generated_RTL_backend_scope": "Psi_identity_shared_Phi_B_builder_bounded_LSQR_and_X24_commit; no_transform_or_full_recovery",
+    "current_RTL_evidence": "reports/v4/RTL_CORRECTNESS.md",
+    "fixed_LSQR_implemented": true,
+    "fixed_LSQR_qualification": "583_actual_support_LS_calls_passed_bounded_application_calibration; no_heldout_or_RTL_qualification",
+    "numerical_evidence": "reports/v4/LFSR_APPLICATION_TUNING.md",
+    "precision_calibration_evidence": "reports/v4/LFSR_NUMERICAL_CONTRACT.md",
+    "input_scale_candidate": "power_of_two_before_quantization_with_explicit_exponent_and_output_undo_not_frozen",
+    "numeric_contract_document": "docs/v4/architecture/NUMERIC_CONTRACT.md",
+    "solver_RTL_contract": "docs/v4/architecture/LSQR_INTEGRATION.md",
+    "solver_RTL_scope": "bounded_M128_S96_generic_service_program_same_32_PE_no_host_AXI",
+    "solver_RTL_acceptance": "see_source_bound_current_RTL_evidence"
+  },
+  "target": {
+    "board": "ZCU106",
+    "part": "xczu7ev-ffvc1156-2-e",
+    "clock_period_ns": 10.0,
+    "required_deployment_board": true,
+    "board_contract": "docs/v4/architecture/ZCU106.md",
+    "board_validation_status": "not_implemented_or_tested_on_board",
+    "shell_proposal": {
+      "bulk_memory": "PS_DDR",
+      "ps_pl_bulk_port": "S_AXI_HP0_FPD",
+      "axi_data_width_bits": 128,
+      "control": "PS_HPM_to_AXI_Lite",
+      "completion": "PL_to_PS_done_or_fault_interrupt",
+      "pl_clock_source": "PS_pl_clk0_100MHz",
+      "pl_ddr_mig_required": false,
+      "buffer_coherency": "noncoherent_HP_with_explicit_driver_DMA_synchronization",
+      "matrix_served_from_resident_banked_memory_during_compute": true
+    }
+  },
+  "limits": {
+    "m": 128,
+    "n": 1024,
+    "k": 32,
+    "working_support": 96
+  },
+  "programs": {
+    "greedy_and_hard_threshold": [
+      "MP",
+      "OMP",
+      "GOMP",
+      "CoSaMP",
+      "SP",
+      "IHT",
+      "HTP",
+      "GP"
+    ],
+    "lasso": [
+      "FISTA",
+      "PDHG"
+    ],
+    "conditional_research_extension": [
+      "AMP"
+    ],
+    "pdhg_future_application_profile": "anisotropic_TV_reconstruction_numerical_model_and_halo_schedule_not_yet_implemented",
+    "lasso_output_may_be_dense": true,
+    "ista_is_a_baseline_for_fista_not_an_additional_family": true,
+    "active_round2_programs": [
+      "MP",
+      "OMP",
+      "GOMP",
+      "CoSaMP",
+      "SP",
+      "IHT",
+      "HTP",
+      "GP",
+      "FISTA",
+      "PDHG"
+    ],
+    "historical_reference_programs": {
+      "ADMM": {
+        "status": "reference_only_not_active_round2",
+        "round2_quality_status": "STOPPED_BY_SCOPE",
+        "reason": "prior native calibration archive is retained without a new round-two quality PASS",
+        "reference_archive": "reports/v4/quality_admm64_m64_20260909"
+      }
+    }
+  },
+  "array": {
+    "clusters": 2,
+    "rows": 4,
+    "columns": 4,
+    "full_processing_elements": 32,
+    "global_issue_controller": 1,
+    "distinct_tile_contexts_per_issue": 32,
+    "neighbor_link_latency_cycles": 1,
+    "reduction_lanes_candidates": [
+      1,
+      4
+    ],
+    "inter_array_neighbor_links": false,
+    "independent_cluster_program_counters": false,
+    "local_registers_per_pe": 8,
+    "local_predicate_operations": [
+      "compare_signed",
+      "compare_unsigned",
+      "predicate_boolean_update",
+      "predicated_select"
+    ],
+    "selection_predicate_bits_per_pe_min": 3
+  },
+  "context": {
+    "status": "candidate_packer_loader_PC_and_bounded_resident_GEMV_execution; full_recovery_programs_unqualified",
+    "active_images": 1,
+    "issue_depth": 256,
+    "tile_slot_bits": 64,
+    "tile_slots_per_issue": 32,
+    "control_bits_per_issue": 256,
+    "tile_payload_bytes": 65536,
+    "control_payload_bytes": 8192,
+    "total_payload_bytes": 73728,
+    "read_latency_cycles": 1,
+    "taken_unprefetched_branch_bubbles_min": 1,
+    "program_capacity_validated": false,
+    "all_eleven_programs_simultaneously_resident": false,
+    "reload_only_while_idle": true,
+    "overflow_policy": "reject_program_image_above_256_issue_words",
+    "isa_revision_candidate": 1,
+    "isa_authority": "compiler/v4/context_image.py",
+    "template_execution_status": "legacy_context_image_GEMV_templates_NOT_EXECUTED_NOT_PROVEN",
+    "resident_execution_candidate": {
+      "authority": "compiler/v4/resident_program.py",
+      "contract": "docs/v4/architecture/RESIDENT_RTL_CONTRACT.md",
+      "r1_issue_words": 7,
+      "r4_issue_words": 12,
+      "scope": "nested_loop_GEMV_Phi_and_dense_B_candidate_STORE_stream_only"
+    }
+  },
+  "memory": {
+    "legacy_fields_scope": "existing_dense_reference_models_not_selected_baseline_hardware_see_architecture_decision",
+    "coefficient_banks_per_orientation": 32,
+    "resident_orientations": [
+      "A",
+      "transpose_A"
+    ],
+    "bank_formula": "(output_index + 8 * reduction_index) % 32",
+    "address_formula": "(output_index // 32) * reduction_length + reduction_index",
+    "coefficient_read_words_per_cycle": 32,
+    "coefficient_read_latency_cycles": 1,
+    "vector_planes": 3,
+    "vector_banks_per_plane": 32,
+    "vector_elements_per_plane": 4096,
+    "vector_memory_implementation_target": "distributed_RAM_128_words_per_bank",
+    "matrix_memory_implementation_target": "block_RAM_synchronous_read",
+    "matrix_pack_time_included_in_job_latency": true,
+    "matrix_pack_cost_status": "required_accounting_policy_not_implemented_in_mapping_model",
+    "dma_data_width_bits_proposed": 128,
+    "matrix_image_status": "dense_once_quantized_dual_orientation_export_import_validated",
+    "matrix_image_authority": "compiler/v4/matrix_image.py",
+    "layout_decision_status": "reopened_before_RTL_freeze_generated_when_domain_allows_single_copy_for_general_dense",
+    "reference_backend": "dual_orientation_swizzled_images",
+    "leading_candidate": {
+      "scope": "general_dense_operator_only",
+      "backend": "single_copy_diagonal_banks",
+      "physical_matrix_copies": 1,
+      "banks": 32,
+      "bank_formula": "(row+column)%32",
+      "address_formula": "row*ceil(N/32)+floor(column/32)",
+      "r4_reduction_index": "32*block+8*lane+u; lane=0..3,u=0..7",
+      "authority": "compiler/v4/single_matrix.py",
+      "decision_document": "docs/v4/architecture/MATRIX_TRADEOFF.md",
+      "execution_compatibility": "requires_new_feeder_descriptors_and_context_schedules",
+      "rtl_pipeline_equivalence_proven": false
+    },
+    "operator_family_proposal": {
+      "decision_document": "docs/v4/architecture/GENERATED_OPERATOR.md",
+      "status": "LFSR32_generator_cache_and_Psi_identity_resident_RTL_available_Threefry_reference_ablation_no_transform_kernels",
+      "preferred_when_measurement_domain_allows": "sequential_LFSR_full_cache_fill_with_compact_cache_reuse",
+      "families": [
+        "direct_generated_sign_A",
+        "generated_Phi_with_explicit_Psi_and_adjoint",
+        "general_dense_A_single_copy"
+      ],
+      "generator_reference": "v2_LFSR32_Galois_rightshift_taps0x80200003",
+      "generator_ablation": "v3_Threefry2x32_20_coordinate_mapping",
+      "full_sign_cache_m128_n1024_payload_bytes": 16384,
+      "full_sign_cache_candidate_banks": 8,
+      "full_sign_cache_candidate_words_per_bank": 512,
+      "full_sign_cache_candidate_word_bits": 32,
+      "full_sign_cache_candidate_bram18": 8,
+      "full_sign_cache_physical_mapping_proven": false,
+      "required_operator_key": [
+        "family",
+        "generator_revision",
+        "seed",
+        "scale",
+        "shape",
+        "domain",
+        "transform_revision",
+        "numeric_profile"
+      ],
+      "support_cache_key_addition": "ordered_support",
+      "quality_gate": "same_measurement_model_multiple_seeds_and_new_fixed_operator_calibration",
+      "existing_dense_image_ABI_unchanged": true
+    }
+  },
+  "mapping_model": {
+    "status": "executable_integer_replay_and_predicted_compute_schedule",
+    "physical_pe_mac_initiation_interval_assumed": 1,
+    "accumulator_feedback_latency_assumed": 1,
+    "matrix_read_latency_cycles": 1,
+    "formula_r1": "ceil(O/32)*(K+2)",
+    "formula_r4": "ceil(O/8)*(ceil(K/4)+7)",
+    "implemented_mode_choice": "minimum_predicted_resident_compute_cycles",
+    "target_mode_choice": "minimum_total_job_cost_including_layout_preparation",
+    "excluded_costs": [
+      "DMA",
+      "matrix_or_support_packing",
+      "context_load_or_branch_bubbles",
+      "backpressure",
+      "numeric_normalization"
+    ],
+    "rtl_measured_cycles": null
+  },
+  "support_gather": {
+    "legacy_fields_scope": "two_pass_dense_reference_only_selected_baseline_uses_full_rebuild_single_copy_B",
+    "status": "legacy_two_pass_reference; selected_single_copy_Psi_identity_support_builder_RTL_available",
+    "selected_builder": {
+      "contract": "docs/v4/architecture/SUPPORT_BUILDER_RTL_CONTRACT.md",
+      "owner": "support_builder",
+      "scope": "standalone_full_rebuild_from_live_Phi_cache_to_one_dense_B; ownership_arbitration_with_resident_engine_pending",
+      "no_stall_cycles": "support_count+2+4*support_count*ceil(M/32)",
+      "no_stall_example_m128_s96": 1634,
+      "full_job_throughput_qualified": false
+    },
+    "cache_key": [
+      "matrix_generation",
+      "ordered_support",
+      "orientation",
+      "numeric_profile"
+    ],
+    "source_and_destination_are_separate_physical_stores": true,
+    "overlap_with_compute_on_same_store": false,
+    "forward_words_per_payload_issue": 32,
+    "transpose_words_per_payload_issue": 4,
+    "forward_payload_issue_cycles": "S*ceil(M/32)",
+    "transpose_payload_issue_cycles": "S*ceil(M/4)",
+    "payload_example_m128_s8": 288,
+    "extra_latency_to_model": [
+      "synchronous_startup_and_drain",
+      "support_index_reads",
+      "context_or_control_bubbles",
+      "arbitration"
+    ],
+    "direct_forward_plus_packed_transpose_required_ablation": true,
+    "cache_break_even": "reuse_count*(C_direct-C_packed)>=P_with_positive_delta_and_full_preparation_cost_P",
+    "incremental_update": "deferred_until_equivalence_and_cost_model",
+    "single_copy_candidate": {
+      "status": "address_proof_only_no_gather_pipeline_or_RTL",
+      "physical_support_matrix_copies": 1,
+      "payload_issues": "S*ceil(M/32)",
+      "payload_example_m128_s8": 32,
+      "reference_two_pass_model_unchanged": true
+    }
+  },
+  "selection": {
+    "status": "frozen_baseline_algorithm_and_planned_cycle_contract_no_rtl_or_cycle_model",
+    "magnitude_algorithm": "repeated_passes_32_PE_local_maxima_then_32_winner_scalar_merge",
+    "normalized_algorithm": "exact_rational_scalar_repeated_max_fallback",
+    "max_candidate_vector_length": 1024,
+    "max_output_ranks": 96,
+    "stored_candidates": 1024,
+    "pe_preparation_tile_lanes": 32,
+    "pe_local_maxima": 32,
+    "selection_rf_words_per_pe": 3,
+    "score_and_bitmap_bank_formula": "logical_index%32",
+    "score_and_bitmap_address_formula": "logical_index//32",
+    "selected_bitmap_banks": 32,
+    "excluded_bitmap_banks": 32,
+    "capture_winner_buffer_entries": 32,
+    "capture_winner_payload_bits_per_entry": "state_width+10+1",
+    "scalar_live_candidates": 2,
+    "score_buffer_width_bits": "2*state_width_for_exact_squared_numerator",
+    "column_norm_width_bits": "2*coefficient_width+ceil(log2(M))",
+    "tie_break": "ascending_logical_index_in_input_ranking_vector_before_atom_remap",
+    "exclude_previously_selected_within_call": true,
+    "external_exclusion_bitmap_from_program": true,
+    "zero_score_is_eligible_unless_explicitly_excluded": true,
+    "insufficient_candidates": "return_min_eligible_requested_count_and_explicit_status_no_padding",
+    "magnitude_compare_cycles": 1,
+    "magnitude_per_pass_local_initialize_cycles": 3,
+    "magnitude_stripe_instructions": [
+      "request_score_and_bitmap",
+      "capture_score_and_hold_index_mask",
+      "unsigned_compare",
+      "local_predicate_boolean_update",
+      "select_write_best_score",
+      "select_write_best_index",
+      "commit_best_valid_and_release_stripe"
+    ],
+    "magnitude_stripe_cycles_assumed": 7,
+    "magnitude_local_winner_capture_cycles": 4,
+    "magnitude_scalar_merge_cycles": 32,
+    "magnitude_global_winner_commit_cycles": 1,
+    "magnitude_prepare_cycles": "4*ceil(L/32)",
+    "magnitude_pass_cycles": "40+7*ceil(L/32)",
+    "magnitude_total_cycles": "4*ceil(L/32)+min(E,Q)*(40+7*ceil(L/32))",
+    "magnitude_l1024_q64_e1024_total_cycles_predicted": 17024,
+    "normalized_comparison": "exact_cross_products_with_one_unsigned_shift_add_engine",
+    "normalized_compare_cycles": "2*column_norm_width_bits+1",
+    "normalized_entry_read_issue_cycles": 1,
+    "normalized_entry_response_and_mask_check_cycles": 1,
+    "normalized_pass_initialize_cycles": 1,
+    "normalized_pass_winner_commit_cycles": 1,
+    "normalized_pass_cycles": "2+2*L+max(E_p-1,0)*Tcmp_norm",
+    "normalized_preparation_cost": "separate_profile_dependent_PE_exact_squared_score_program",
+    "scalar_per_element_magnitude_scan": "ablation_only_not_selected_baseline",
+    "dedicated_parallel_local_topk_lists_or_sorter": "not_in_baseline"
+  },
+  "numerical": {
+    "selected_profile": null,
+    "normalization_contract": {
+      "revision": 1,
+      "input": "finite_measurement_before_D_quantization",
+      "gain": "2^e",
+      "normalized_peak_interval": "(0.25,0.5] except all-zero input",
+      "zero_input_exponent": 0,
+      "exponent_min": -31,
+      "exponent_max": 31,
+      "out_of_range": "reject_no_silent_clip",
+      "persistent_domain": "all_job_vectors_and_solution_X_remain_normalized",
+      "host_output": "decode_X(raw_x)*2^-e",
+      "absolute_residual_atol": "original_atol*2^e",
+      "lasso_lambda": "original_lambda*2^e_for_objective_half_residual_squared_plus_lambda_L1",
+      "model_implemented": true,
+      "descriptor_RTL_implemented": true,
+      "descriptor_RTL_scope": "bounded_lsqr_start_and_committed_exponent; normalization_itself_is_host_responsibility"
+    },
+    "solution_storage_contract": {
+      "separate_from_input_D": true,
+      "model_option": "fixed_LSQR_solution_format",
+      "store": "S_round_to_X_then_exact_embed_into_S",
+      "certificate_and_outer_use_same_X": true,
+      "final_implicit_D_rounding": false,
+      "raw_output_has_explicit_X_format_and_job_exponent": true,
+      "proximal_reference_has_independent_X_option": false
+    },
+    "working_shortlist_not_production": {
+      "data": {
+        "width": 18,
+        "frac": 14
+      },
+      "coefficient": {
+        "width": 18,
+        "frac": 16
+      },
+      "state": {
+        "width": 27,
+        "frac": 22
+      },
+      "solution": {
+        "width": 24,
+        "frac": 20
+      },
+      "accumulator_width": 64,
+      "LS_normal_rtol": 1e-05,
+      "LS_max_iterations": 128,
+      "qualification": "32_isolated_LFSR_LS_cases_and_65_selected_application_cases_pass; 583_actual_support_LS_diagnostics_pass; 12_ECG_rows_unqualified_under_shared_policy; no_heldout_or_RTL_qualification"
+    },
+    "rounding": "nearest_ties_away_from_zero",
+    "overflow": "saturate_and_fail_job",
+    "coefficient_width_candidates": [
+      14,
+      16,
+      18
+    ],
+    "data_width_candidates": [
+      14,
+      16,
+      18,
+      20,
+      24
+    ],
+    "state_width_candidates": [
+      24,
+      27,
+      32
+    ],
+    "accumulator_width": "derived_from_full_signed_range_and_max_reduction_length",
+    "max_snr_loss_db": 0.5,
+    "max_nmse_ratio": 1.1,
+    "application_absolute_floors": "user_selected_reconstruction_SNR_min_20dB; application_specific_secondary_metrics_remain_to_be_frozen_before_heldout",
+    "application_quality": {
+      "revision": "user_SNR20_20260908",
+      "absolute_snr_min_db": 20.0,
+      "metric": "10*log10(sum(original_signal_squared)/sum(reconstruction_error_squared))",
+      "domain": "full_original_signal_after_inverse_transform_and_normalization_undo",
+      "require_float_and_fixed_floor": true,
+      "relative_gates_also_required": true,
+      "no_numeric_fault_also_required": true,
+      "centered_snr": "report_separately_as_diagnostic_no_implicit_20dB_gate",
+      "image_psnr": "secondary_metric_not_a_substitute_for_reconstruction_SNR",
+      "case_policy": "evaluate_each_case_keep_failures_no_pooled_mean_substitution",
+      "latest_calibration_evidence": "reports/v4/LFSR_APPLICATION_TUNING.md",
+      "previous_calibration_reassessment": "reports/v4/LFSR_SNR20_REASSESSMENT.md",
+      "zero_energy_truth": "not_SNR_qualifiable_requires_separate_absolute_error_policy",
+      "heldout_qualified": false
+    },
+    "application_profiles_candidate": {
+      "document": "docs/v4/architecture/APPLICATION_PROFILES.md",
+      "policy_authority": "selected_policies in reports/v4/lfsr_application_float_tuning.json and reports/v4/lfsr_wavelet_float_tuning.json",
+      "precision_changed_by_application_tuning": false,
+      "M": 128,
+      "N": 256,
+      "measurement_noise_snr_db": 30,
+      "encoder_domain": "full_transform_coefficients_before_LFSR_sensing_no_best_K_sparsification",
+      "transforms_location_in_study": "host_float_analysis_and_synthesis",
+      "mean_scale_side_information": "host_float_cost_and_quantization_not_yet_qualified",
+      "synthetic_identity": {
+        "seeds": [
+          23,
+          47,
+          101
+        ],
+        "algorithms_qualified_in_calibration": 11,
+        "fixed_pass_rows": 33
+      },
+      "ecg": {
+        "basis": "db4",
+        "level": 5,
+        "boundary": "periodization",
+        "source_windows": 2,
+        "qualified_shared_algorithms": [
+          "GOMP",
+          "CoSaMP",
+          "SP",
+          "FISTA",
+          "ADMM"
+        ],
+        "fixed_pass_rows": 10,
+        "unqualified_shared_algorithms": [
+          "MP",
+          "OMP",
+          "IHT",
+          "HTP",
+          "GP",
+          "PDHG"
+        ]
+      },
+      "camera": {
+        "basis": "haar",
+        "level": 4,
+        "boundary": "periodization",
+        "source_windows": 2,
+        "algorithms_qualified_in_calibration": 11,
+        "fixed_pass_rows": 22
+      },
+      "all_selected_fixed_pass_rows": 65,
+      "full_domain_algorithm_case_grid": 77,
+      "all_77_rows_qualified": false,
+      "distinct_source_heldout_qualified": false,
+      "raw_signal_PhiPsi_operator_or_RTL_qualified": false
+    },
+    "least_squares": "unregularized_LSQR_opt_in_CGLS_default_reference_both_post_storage_normal_residual_check",
+    "ls_qualification_status": "open_post_storage_normal_certificate_does_not_bound_coefficient_error_without_conditioning",
+    "ls_solver_decision": {
+      "selected_implementation_target": "LSQR_see_architecture_decision",
+      "implemented_reference": "CGLS",
+      "leading_comparison_candidate": "LSQR",
+      "rank_aware_oracle_and_conditional_alternative": "QR_COD_SVD",
+      "objective": "minimum_total_job_cycles_subject_to_same_accuracy_failure_policy_and_ZCU106_resource_limits",
+      "decision_document": "docs/v4/architecture/LS_SOLVER_DECISION.md",
+      "fixed_LSQR_implemented": true,
+      "scalar_extension_under_study": "shared_DIV_SQRT_with_generic_scalar_RF_and_bounded_LSQR_program; source_acceptance_see_current_evidence",
+      "scalar_RTL_contract": "docs/v4/architecture/SCALAR_RTL_CONTRACT.md",
+      "scalar_local_latency_cycles": {
+        "DIV": 87,
+        "SQRT": 33
+      },
+      "scalar_local_minimum_II_cycles": {
+        "DIV": 89,
+        "SQRT": 35
+      },
+      "scalar_full_solver_throughput_qualified": false
+    }
+  },
+  "stage_gates": {
+    "float_independent_oracle": "required",
+    "fixed_point_application_quality": "required_before_precision_freeze",
+    "rtl_exact_phase_and_end_to_end": "required_before_synthesis",
+    "synthesis": "not_started",
+    "implementation": "not_started"
+  },
+  "rtl_implementation": {
+    "status": "bounded_LSQR_builder_scalar_kernel_writeback_commit_integration; full_recovery_and_board_pending",
+    "preferred_models": [
+      "gpt-6-astra"
+    ],
+    "coding_reasoning_effort": "medium",
+    "coordination_reasoning_effort": "ultra",
+    "review_existing_RTL_and_TB_before_continuation": true,
+    "preserve_passing_implementations": true,
+    "rtl_simulator": "Vivado_xsim_only",
+    "rtl_test_flow": [
+      "xvlog",
+      "xelab",
+      "xsim"
+    ],
+    "python_role": "stimulus_generation_integer_oracle_and_test_orchestration",
+    "baseline_audit": "reports/v4/rtl_baseline_audit_20260909/evidence.json",
+    "current_evidence": "reports/v4/RTL_CORRECTNESS.md",
+    "module_authority": "config/v4_modules.json",
+    "naming": "functional_module_names_CSR_macro_namespace_version_only_in_directory"
+  }
+}

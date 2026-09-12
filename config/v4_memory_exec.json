@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "revision": "memory_path_candidate_v1",
+  "faults": {"NONE": 0, "SHAPE": 1, "STREAM": 2, "KEY": 3, "RANGE": 4, "PLANE": 5, "UNINIT": 6, "SOURCE": 7, "TAG": 8},
+  "scope": "resident_vector_dense_B_and_tagged_operand_read_path_not_job_commit_or_LSQR"
+}

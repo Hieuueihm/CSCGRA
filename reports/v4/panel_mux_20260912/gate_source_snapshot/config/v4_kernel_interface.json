@@ -1,0 +1,259 @@
+{
+  "revision": 10,
+  "scope": "Kernel feature revision 10; program image ABI revision remains 2. FACTOR_ENERGY_TAP (25) returns an unpatched factor range tap, raw factor-square SUM_ACC energy, and a tail-nonzero flag.",
+  "operations": {
+    "TEMPLATE": 0,
+    "GEMV": 1,
+    "NORMALIZE": 2,
+    "STORE": 3,
+    "SOFT": 4,
+    "TOPK": 5,
+    "APPLY_SUPPORT": 6,
+    "GATHER": 7,
+    "SCATTER": 8,
+    "UNION": 9,
+    "PICK": 10,
+    "SLICE": 11,
+    "REPLACE_RANGE": 12,
+    "FACTOR_INIT": 13,
+    "FACTOR_READ": 14,
+    "FACTOR_WRITE": 15,
+    "SCALAR_TEMPLATE": 16,
+    "FACTOR_MATVEC": 17,
+    "FACTOR_RANK1": 18,
+    "FACTOR_EXTEND": 19,
+    "FACTOR_PROJECT_UPDATE": 20,
+    "SCALAR_INSERT": 21,
+    "RANGE_TEMPLATE": 22,
+    "ROUNDED_AFFINE": 23,
+    "FACTOR_RANGE_TEMPLATE": 24,
+    "FACTOR_ENERGY_TAP": 25
+  },
+  "store_modes": {
+    "INTERNAL": 0,
+    "X24": 1,
+    "D18": 2
+  },
+  "request_ports": {
+    "op": 6,
+    "contexts": 2048,
+    "descriptor": 32,
+    "src_a": 9,
+    "src_b": 9,
+    "dst": 9,
+    "length": 11,
+    "rows": 8,
+    "cols": 11,
+    "matrix_dense": 1,
+    "trans": 1,
+    "r4": 1,
+    "scalar_a": 27,
+    "scalar_b": 27,
+    "scalar_bind_a": 32,
+    "scalar_bind_b": 32,
+    "shift": 6,
+    "k": 11,
+    "scale": 18,
+    "key": 128,
+    "generation": 32,
+    "job": 16,
+    "tag": 16,
+    "fmt": 8,
+    "frame_count": 8,
+    "tail_mask": 32,
+    "store_mode": 2,
+    "support_base": 9,
+    "aux_base": 9,
+    "support_length": 11,
+    "aux_length": 11,
+    "index": 11,
+    "flags": 8
+  },
+  "response_ports": {
+    "fault": 4,
+    "detail": 4,
+    "data": 64,
+    "nonzero": 1,
+    "count": 11,
+    "job": 16,
+    "tag": 16,
+    "fmt": 8
+  },
+  "support_encoding": "unscaled S27 integer indices, 0..1023; explicit lengths; deterministic ties use lower original index",
+  "flags": "support_flags are bit masks; all unassigned bits fault",
+  "support_flags": {
+    "TOPK": {
+      "EXCLUDE": 1,
+      "SORT": 2
+    },
+    "UNION": {
+      "ORDERED": 1
+    }
+  },
+  "support_details": {
+    "NONE": 0,
+    "INDEX": 1,
+    "DUPLICATE": 2,
+    "CAPACITY": 3,
+    "MASK": 4,
+    "TAG": 5
+  },
+  "support_response": {
+    "count": "support cardinality S for APPLY_SUPPORT/SCATTER; actual packed length for TOPK/UNION/GATHER; zero for PICK",
+    "length": "adjunct publication length: N for APPLY_SUPPORT/SCATTER, packed length for TOPK/UNION/GATHER, zero for PICK"
+  },
+  "transaction": "one accepted command; held response; speculative writes publish together; cancel flushes silently; host access only when host_enable and core idle",
+  "implemented_operations": [
+    "TEMPLATE",
+    "GEMV",
+    "NORMALIZE",
+    "STORE",
+    "SOFT",
+    "TOPK",
+    "APPLY_SUPPORT",
+    "GATHER",
+    "SCATTER",
+    "UNION",
+    "PICK",
+    "SLICE",
+    "REPLACE_RANGE",
+    "FACTOR_INIT",
+    "FACTOR_READ",
+    "FACTOR_WRITE",
+    "SCALAR_TEMPLATE",
+    "FACTOR_MATVEC",
+    "FACTOR_RANK1",
+    "FACTOR_EXTEND",
+    "FACTOR_PROJECT_UPDATE",
+    "SCALAR_INSERT",
+    "RANGE_TEMPLATE",
+    "ROUNDED_AFFINE",
+    "FACTOR_RANGE_TEMPLATE",
+    "FACTOR_ENERGY_TAP"
+  ],
+  "faults": {
+    "NONE": 0,
+    "COMMAND": 1,
+    "HOST": 2,
+    "FABRIC": 3,
+    "RANGE": 4,
+    "UNINITIALIZED": 5,
+    "IDENTITY": 6,
+    "OPERAND": 7
+  },
+  "numeric_rules": {
+    "NORMALIZE": "loaded MAC S27xS27, input A vector and input B scalar_a; raw product round_right(req_shift) once per element",
+    "GEMV": "loaded MAC C18 mode, input A vector B coefficient, R4 sum four raw lanes then round16 once",
+    "STORE": "loaded MOV A; INTERNAL identity, X24 round2 and checked24 then embed<<2, D18 round8 and checked18 then embed<<8",
+    "SOFT": "loaded SUB A/B; scalar_a nonnegative threshold, signed subtraction uses shared PEs then deadzone clamp",
+    "TEMPLATE": "exact revision-one descriptor/context semantics, optional scalar input binding masks; explicit frame_count/tail_mask",
+    "RANGE_TEMPLATE": "ordinary loaded TEMPLATE arithmetic over command-scoped source A/B element offsets; selected packed lanes only; product, partial ACC, terminal reduction, rounding and checked S27 semantics are identical to TEMPLATE",
+    "ROUNDED_AFFINE": "explicit loaded cascade16: high result C plus or minus the low MUL product rounded once to S27; no public intermediate publication",
+    "FACTOR_RANGE_TEMPLATE": "direct mode1 MAC S27 factor lane times public source A, SUM_ACC mode2 raw signed ACC64; no per-lane round or rescale; optional signed S27 patch replaces factor range head before MAC and candidate tap",
+    "FACTOR_ENERGY_TAP": "direct mode1 MAC S27 factor lane times itself, SUM_ACC mode2 raw signed ACC64; candidate tap preserves the unpatched factor range and count returns whether any tail lane is nonzero; no per-lane round or rescale"
+  },
+  "range_transport": {
+    "length": "full source A domain N in 1..1024",
+    "index": "start in 0..N; N permitted only when aux_length is zero",
+    "aux_length": "range length L in 0..N-start",
+    "SLICE": "packed A[start:start+L], output length and count L; empty range touches no output",
+    "REPLACE_RANGE": "full N output, A outside range and packed aux_base[0:L] inside; output length/count N",
+    "flags": "zero; support_base/support_length/k must be zero; src_b ignored; SLICE aux_base ignored",
+    "publication": "scratch only until complete; source/destination/aux aliases safe",
+    "SCALAR_INSERT": "full source A length N with exactly one lane index replaced by scalar_a S27F22; no auxiliary-pool read; result count/length N"
+  },
+  "factor_transport": {
+    "shape": "dense B rows1..128, cols1..96 with captured key/generation/job/fmt",
+    "FACTOR_INIT": "length=M, index=aux_length=flags=0, no pool publication; count=S",
+    "FACTOR_READ": "length=L1..128, index=fixed row/column, aux_length=range start, flags bit0 row, packed outputL",
+    "FACTOR_WRITE": "same coordinates, source A packedL, no pool publication; count=L",
+    "FACTOR_RANGE_TEMPLATE": "length=L1..128, index=fixed factor row/column, aux_length=common factor/public offset, flags bit0 row bit1 head-only tap bit2 patch-first; source A selected offset..offset+L; descriptor23 all MAC297 SUM_ACC mode2; candidate length/count L or1 and raw ACC64 response",
+    "FACTOR_ENERGY_TAP": "length=L1..128, index=fixed factor row/column, aux_length=range start, flags bit0 row; no public source; descriptor23 all MAC297 SUM_ACC mode2; unpatched packed candidate length L, raw ACC64 energy response and count tail-nonzero flag"
+  },
+  "scalar_template": {
+    "scope": "Single checked S27 result via existing PE lane0; no vector-memory transaction",
+    "length": 1,
+    "mode": 1,
+    "operations": [
+      "MOV",
+      "ADD",
+      "SUB",
+      "MUL"
+    ],
+    "sources": "Selected A/B buses must be scalar-bound; IMM/ZERO allowed; MOV ignores source B",
+    "descriptor": "EACH and shift0; increment bits ignored",
+    "result": "Sign-extended S27 to rsp_data, nonzero flag, count0",
+    "compatibility": "Additive opcode; original opcodes and program image revision2 retain semantics"
+  },
+  "factor_panel": {
+    "shape": "private dense factor image M1..128 by S1..96; immutable selected B identity and mutable factor image",
+    "coordinates": "length=row_count, aux_length=row_start, index=col_start, support_length=S; column_count=S-index",
+    "FACTOR_MATVEC": "source A packed row_count S27 values; q[c]=round22(sum increasing r factor[row_start+r,col_start+c]*A[r]); publishes packed S27 q length column_count",
+    "FACTOR_RANK1": "source A packed row_count S27 values and B packed column_count S27 values; private factor[r,c]=checked_S27(factor[r,c]-round22(A[r]*B[c])); no public vector publication",
+    "validation": "dense fmt1, nonempty in-range rectangle, exact key/generation/job/format, every source block validated before any mutation; cancel/fault invalidates factor image",
+    "panels": "MATVEC internal width<=32; RANK1 internal width<=16 through existing two-array cascade; no QR-specific state machine",
+    "FACTOR_PROJECT_UPDATE": "source A packed reflector V length=row_count; scalar_a alpha S27F22; q=round22(A^T V), q=round22(alpha*q), private factor[r,c]=checked_S27(factor[r,c]-round22(V[r]*q[c])); descriptor31 compact phase context; count/length zero and no public candidate",
+    "project_template": "descriptor31 kind3 increment A/B/destination with bind masks zero; contexts [direct MAC mode1 A/B, direct MUL mode1 A/B, direct SUB mode1 A/B, 29*zero]; accepted only by FACTOR_PROJECT_UPDATE feature5"
+  },
+  "factor_project_phase": {
+    "descriptor": 31,
+    "descriptor_kind": 3,
+    "dot_context": 297,
+    "scale_context": 296,
+    "rank_context": 291,
+    "padding_context": 0,
+    "context_words": 32,
+    "active_context_words": 3
+  },
+  "range_template": {
+    "operation": "RANGE_TEMPLATE",
+    "feature_revision": 7,
+    "length": "L1..1024 selected output elements; tail mask is contiguous L tail",
+    "offsets": "index is source A element offset and aux_length is source B element offset; both are unsigned RF values in0..1023 and are not output lengths",
+    "template": "ordinary loaded TEMPLATE descriptor with increment A/B/destination low3bits=7; EACH, LAST_ACC or SUM_ACC output kinds and existing context/shift/scalar rules",
+    "canonical_unused": "dense, transpose, r4, flags, store_mode, k, support descriptors/lengths, shift register and target are zero; unused support/aux raw buses are literal zero",
+    "validation": "selected source lanes only, widened offset plus highest selected lane plus one capacity arithmetic, unused RAM source offset0/no read, source/destination aliases retain pre-command mappings",
+    "transport": "command-scoped public logical-to-physical packed lane assembly; no persistent view/alias handle; vector output uses existing scratch, validity and atomic commit"
+  },
+  "rounded_affine": {
+    "operation": "ROUNDED_AFFINE",
+    "feature_revision": 8,
+    "formula": "Z[i] = C[i] plus or minus round_S27(X[i] times Y[i]); SUB order is C minus rounded product",
+    "shape": "length L1..1024; descriptor EACH with increment A/B/destination bits 0..2 set; two paired 16-lane cascade frames per logical block",
+    "sources": "src_a X; src_b optional vector Y or scalar_b through lower-half bindB; aux_base C with canonical aux_length zero and C span derived from length; destination Z",
+    "contexts": "low16 MUL mode1 A/B; high16 ADD or SUB mode1 A/B; lower scalar bindB exactly 16hffff for scalar Y and high bindB zero; all reserved/immediate words zero",
+    "canonical_unused": "support base/length, flags, k, index, matrix controls, store mode, shift, scalar A and response scalar/flag controls are zero",
+    "transaction": "all X/Y/C selected source masks validate before CONFIG; source aliases use pre-command maps; scratch/remap publishes only final Z; cancel/fault invalidates Z only",
+    "compatibility": "explicit opt-in opcode; prior calls and program ABI revision2 retain their publication semantics"
+  },
+  "factor_range_template": {
+    "operation": "FACTOR_RANGE_TEMPLATE",
+    "feature_revision": 9,
+    "shape": "length L1..128; factor rows M1..128, cols S1..96; index is fixed factor axis and aux_length is common factor/public offset",
+    "sources": "src_a public selected range [aux_length, aux_length+length); src_b raw zero; scalar_a signed S27 patch only when flags.patch_first; all unused source and scalar fields zero",
+    "flags": {
+      "ROW_AXIS": 1,
+      "HEAD_ONLY_TAP": 2,
+      "PATCH_FIRST": 4
+    },
+    "axis_bounds": "column: index<S and aux_length+length<=M; row: index<M and aux_length+length<=S; source A capacity covers aux_length+length before truncation",
+    "template": "descriptor23, all32 contexts MAC297 mode1 A/B, bind masks zero, SUM_ACC terminal mode2, shift0; raw terminal ACC64 no additional round",
+    "tap": "dst candidate tap has actual length/count length or one; full tap emits patched factor range, head-only emits selected head; raw scalar response is independent",
+    "transaction": "validate factor metadata/head/source range before fabric feed; retain at most four32-lane slots through validated raw DONE; drain candidate only on successful commit; cancel/fault/malformed reply publishes neither scalar nor partial tap",
+    "compatibility": "explicit feature9 opcode; prior operations and program ABI revision2 retain semantics"
+  },
+  "factor_energy_tap": {
+    "operation": "FACTOR_ENERGY_TAP",
+    "feature_revision": 10,
+    "shape": "length L1..128; factor rows M1..128, cols S1..96; index is fixed factor axis and aux_length is range start",
+    "sources": "no public input; raw src_a/src_b, support/aux bases, scalar A/B, bind masks, shift, k, matrix transport and response target are zero",
+    "flags": {
+      "ROW_AXIS": 1
+    },
+    "axis_bounds": "column: index<S and aux_length+length<=M; row: index<M and aux_length+length<=S; widened bounds before truncation",
+    "template": "descriptor23, all32 contexts MAC297 mode1 A/B, bind masks zero, SUM_ACC terminal mode2, shift0; raw terminal ACC64 no additional round",
+    "response": "dst candidate is the unpatched full factor range of exact length L; dst_s receives raw sum of signed factor squares; count is one iff any factor lane after the first is nonzero and is copied to flag_s with target count mode; dst_s and flag_s must be distinct nonzero RF destinations",
+    "transaction": "validate factor metadata/range before feed; retain at most four32-lane slots through raw DONE; publish candidate, raw scalar and tail flag together only on successful commit; cancel/fault/malformed reply publishes none",
+    "compatibility": "explicit feature10 opcode; prior operations and program ABI revision2 retain semantics"
+  }
+}

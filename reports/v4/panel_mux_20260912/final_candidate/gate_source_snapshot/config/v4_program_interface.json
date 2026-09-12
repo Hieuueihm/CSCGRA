@@ -1,0 +1,268 @@
+{
+  "revision": 2,
+  "scope": "generic loadable complete-recovery service programs with feature10 FACTOR_ENERGY_TAP; not legacy solver/stream ABI",
+  "fields": {
+    "kind": 5,
+    "kernel": 6,
+    "dst_v": 5,
+    "a_v": 5,
+    "b_v": 5,
+    "dst_s": 5,
+    "a_s": 5,
+    "b_s": 5,
+    "flag_s": 5,
+    "length_mode": 2,
+    "shift_s": 5,
+    "target": 10,
+    "immediate": 64,
+    "reserved": 1
+  },
+  "limits": {
+    "program_words": 1024,
+    "constants": 1024,
+    "templates": 16,
+    "vectors": 32,
+    "scalar_registers": 32,
+    "scalar_width": 64,
+    "return_stack": 4,
+    "public_blocks": 480
+  },
+  "kinds": {
+    "NOP": 0,
+    "KERNEL": 1,
+    "DIV": 2,
+    "SQRT": 3,
+    "SET": 4,
+    "MOV": 5,
+    "NEG": 6,
+    "RECIP_PREP": 7,
+    "BR_ZERO": 8,
+    "BR_NONZERO": 9,
+    "JUMP": 10,
+    "CERT": 11,
+    "INC": 12,
+    "BR_GE": 13,
+    "SUCCESS": 14,
+    "FAIL": 15,
+    "CALL": 16,
+    "RET": 17,
+    "CONST_LOAD": 18,
+    "BR_COMPARE": 19,
+    "HALT_STATUS": 20,
+    "BUILD_B": 21,
+    "ADD64": 22,
+    "SUB64": 23,
+    "RESCALE": 24
+  },
+  "scalar_operations": {
+    "DIV": 0,
+    "SQRT": 1,
+    "RESCALE": 2
+  },
+  "load_kinds": {
+    "PROGRAM": 0,
+    "TEMPLATE": 1,
+    "VECTOR": 2,
+    "CONSTANT": 3
+  },
+  "comparisons": {
+    "EQ": 0,
+    "NE": 1,
+    "LT": 2,
+    "LE": 3,
+    "GT": 4,
+    "GE": 5
+  },
+  "faults": {
+    "NONE": 0,
+    "LOAD": 1,
+    "MODE": 2,
+    "PROGRAM": 3,
+    "NUMERIC": 4,
+    "IDENTITY": 5,
+    "KERNEL": 6,
+    "SCALAR": 7,
+    "WATCHDOG": 8,
+    "STACK": 9,
+    "CERTIFICATE": 10,
+    "BUILD": 11
+  },
+  "statuses": {
+    "RESIDUAL_TOLERANCE": 0,
+    "MAX_ITERATIONS": 1,
+    "PAPER_ITERATION_LIMIT": 2,
+    "NO_NEW_ATOM": 3,
+    "STATIONARY": 4,
+    "RESIDUAL_NOT_DECREASED": 5,
+    "LS_NOT_CONVERGED": 6,
+    "INNER_NOT_CONVERGED": 7,
+    "NUMERIC_FAULT": 8
+  },
+  "length_modes": {
+    "ROWS": 0,
+    "COLUMNS": 1,
+    "IMMEDIATE": 2,
+    "REGISTER": 3
+  },
+  "service_immediate_fields": {
+    "transpose": 1,
+    "dense": 1,
+    "r4": 1,
+    "store_mode": 2,
+    "template": 4,
+    "flags": 8,
+    "support_v": 5,
+    "aux_v": 5,
+    "k_s": 5,
+    "support_length_s": 5,
+    "aux_length_s": 5,
+    "index_s": 5,
+    "length": 11,
+    "reserved": 6
+  },
+  "format": 1,
+  "scalar": {
+    "DIV": 0,
+    "SQRT": 1,
+    "div_source_fractions": [
+      0,
+      -10
+    ],
+    "sqrt_source_fraction": 44,
+    "state_width": 27,
+    "state_fraction": 22
+  },
+  "loader": "program sequential; template metadata(desc32/bindA32/bindB32/reserved32) then32context64; vector descriptor base9/capacity11; constants64; finalitem last only",
+  "output_convention": {
+    "result_vector": 0,
+    "residual_vector": 1,
+    "support_vector": 2,
+    "inner_counter": 25,
+    "outer_counter": 26,
+    "support_count_register": 29
+  },
+  "certificate": "CERT compares RF[a]*constant[immediate.low10] <= RF[b]*constant[immediate.bits19_10], exact unsigned128 products; nonnegative energies",
+  "header": "rtl/v4/include/program_interface.vh",
+  "allowed_fields": {
+    "NOP": [],
+    "KERNEL": [
+      "kernel",
+      "dst_v",
+      "a_v",
+      "b_v",
+      "dst_s",
+      "a_s",
+      "b_s",
+      "flag_s",
+      "length_mode",
+      "shift_s",
+      "target",
+      "immediate"
+    ],
+    "DIV": [
+      "dst_s",
+      "a_s",
+      "b_s",
+      "immediate"
+    ],
+    "SQRT": [
+      "dst_s",
+      "a_s"
+    ],
+    "SET": [
+      "dst_s",
+      "immediate"
+    ],
+    "MOV": [
+      "dst_s",
+      "a_s"
+    ],
+    "NEG": [
+      "dst_s",
+      "a_s"
+    ],
+    "RECIP_PREP": [
+      "dst_s",
+      "a_s",
+      "shift_s"
+    ],
+    "BR_ZERO": [
+      "a_s",
+      "target"
+    ],
+    "BR_NONZERO": [
+      "a_s",
+      "target"
+    ],
+    "JUMP": [
+      "target"
+    ],
+    "CERT": [
+      "dst_s",
+      "a_s",
+      "b_s",
+      "immediate"
+    ],
+    "INC": [
+      "dst_s",
+      "a_s"
+    ],
+    "BR_GE": [
+      "a_s",
+      "b_s",
+      "target"
+    ],
+    "SUCCESS": [],
+    "FAIL": [
+      "immediate"
+    ],
+    "CALL": [
+      "target"
+    ],
+    "RET": [],
+    "CONST_LOAD": [
+      "dst_s",
+      "a_s",
+      "immediate"
+    ],
+    "BR_COMPARE": [
+      "a_s",
+      "b_s",
+      "target",
+      "immediate"
+    ],
+    "HALT_STATUS": [
+      "dst_v",
+      "a_v",
+      "b_v",
+      "immediate"
+    ],
+    "BUILD_B": [
+      "a_v",
+      "a_s"
+    ],
+    "ADD64": [
+      "dst_s",
+      "a_s",
+      "b_s"
+    ],
+    "SUB64": [
+      "dst_s",
+      "a_s",
+      "b_s"
+    ],
+    "RESCALE": [
+      "dst_s",
+      "a_s"
+    ]
+  },
+  "kernel_features": {
+    "required_kernel_revision": 10,
+    "additive_operations": [
+      "ROUNDED_AFFINE",
+      "FACTOR_RANGE_TEMPLATE",
+      "FACTOR_ENERGY_TAP"
+    ],
+    "program_revision": 2
+  }
+}

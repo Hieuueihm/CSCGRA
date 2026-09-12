@@ -1,0 +1,19 @@
+flowchart TB
+  image["Loaded program image and contexts"] --> sequencer["program_sequencer"]
+  sequencer --> kernel["stream_kernel\ncaptured command, scratch/remap"]
+  kernel <--> pool["one public vector pool"]
+  kernel --> fabric["stream_fabric"]
+  fabric --> arrays["two 4×4 stream_array\nexactly 32 PE"]
+
+  sequencer <--> scalar["arithmetic_service\nDIV / SQRT / RESCALE"]
+  kernel <--> support["support_service\nTOPK / UNION, selected completed-bitmap SORT"]
+
+  factorStore["factor_store\nprivate factor image"] <--> factorService["factor_service"]
+  factorService <--> panel["factor_panel_service\n4 retained row slots"]
+  panel -->|"public range request; exclusive panel fabric ownership"| kernel
+
+  affine["opcode 23 ROUNDED_AFFINE\nMUL → round_S27 → ADD/SUB"] -.-> kernel
+  range["opcode 24 FACTOR_RANGE_TEMPLATE\npublic range + private factor, raw SUM_ACC"] -.-> panel
+
+  note["No extra PE or public-vector RAM\nstatus: steps 1–4 source-qualified and selected\nstep 5 measured/rejected: 0-cycle delta"]
+  kernel -.-> note

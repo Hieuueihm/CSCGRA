@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "revision": "tile64_execution_subset_v1",
+  "scope": "packed_tile_decoder_and_scalar_execution_not_control_word_or_array_routing",
+  "packed_isa_revision": 1,
+  "word_bits": 64,
+  "faults": {"WORD": 11, "EDGE": 12, "EXEC": 13, "REV": 14},
+  "latency_added_cycles": 0,
+  "scalar_sideband_routes": "ROUTING_0_rejects_ROUTES_use_ARRAY_RTL_CONTRACT_for_ROUTING_1",
+  "mul_sc_operands": "packed_A_is_C_and_B_is_S_swap_to_local_ALU_S_times_C",
+  "cmp_predicate": "destination_P0_P1_P2_write_less_than_unconditionally",
+  "select_predicate": "selection_guard_code_not_execution_guard",
+  "other_predicate": "execution_guard_code",
+  "mode": "explicit_ingress_product_mode_not_invented_from_format"
+}

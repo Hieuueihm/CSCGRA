@@ -1,0 +1,6 @@
+numpy>=1.24
+# Optional application calibration adapters:
+scipy>=1.10
+scikit-image>=0.20
+# Orthonormal Haar/db4/sym4 application calibration adapters:
+PyWavelets

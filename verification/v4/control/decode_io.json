@@ -1,0 +1,17 @@
+{
+  "inputs": {
+    "word": 256,
+    "rev": 8
+  },
+  "outputs": {
+    "kind": 4,
+    "count": 16,
+    "loop_target": 8,
+    "branch_target": 8,
+    "predicate": 3,
+    "address_mode": 3,
+    "address": 24,
+    "stride": 16,
+    "fault": 4
+  }
+}

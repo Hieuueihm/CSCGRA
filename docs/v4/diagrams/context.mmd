@@ -1,0 +1,14 @@
+flowchart TB
+  ALG["Algorithm mathematical program"] --> KG["Kernel graph + buffer lifetimes"]
+  KG --> MP["Mapping: R1/R4, ports, RF, legal routes"]
+  MP --> SC["Latency-aware schedule + loop templates"]
+  SC --> ISA["Candidate ISA fields: 32 tile words + control"]
+  ISA --> BIN["Pack binary image + disassembly + manifest"]
+  BIN --> VAL["Validate fields / capacity / checksums"]
+  VAL --> LD["Load when accelerator idle"]
+  LD --> CM["32 context banks and one control bank"]
+  CM --> SQ["Sequencer fetch / issue / retire"]
+  SQ --> PE["Each PE receives its own context slot"]
+  PE --> TR["Observed execution trace"]
+  TR --> EQ["Compare with scheduled integer reference"]
+  SC --> EQ

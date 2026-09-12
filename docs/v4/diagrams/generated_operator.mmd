@@ -1,0 +1,14 @@
+flowchart LR
+  H["Host: seed, scale, shape, operator revision"] --> G["Selected LFSR32 stream generator\ncolumn-major col*M+row; LSB then step"]
+  G --> C["Compact sign cache or prefetched tiles"]
+  C --> F["Direction-aware feeder: signs + vector operands"]
+  X["Vector/state memory"] --> F
+  F --> P["Two full 4x4 PE arrays"]
+  K["Context programs: sign GEMV, DOT, AXPY, LS"] --> P
+  T["Optional Psi / adjoint programs and coefficients"] -. "factorized operator only" .-> P
+  P --> X
+  P -. "construct selected A columns" .-> B["LS support cache: signs or dense coefficients"]
+  C -. "direct sign A: select support" .-> B
+  B --> F
+  D["Alternative: one-copy general dense A"] -.-> F
+  N["Threefry2x32-20: reference/ablation\nLFSR indexed jump-ahead is model-only"]

@@ -1,0 +1,14 @@
+flowchart LR
+  H["Host: seed, scale, profile, contexts, y"] --> J["Job + operator controller"]
+  J --> G["Selected LFSR32 Galois generator\ntaps 0x80200003; LSB then step"]
+  G --> C["One Phi sign cache: 8 banks / 16 KiB"]
+  C --> F["Sign / dense / vector feeder"]
+  F --> P["Two 4x4 full PE arrays"]
+  X["Vector/state memory"] <--> P
+  Q["32 tile contexts: GEMV, DOT, AXPY, LSQR, optional Psi/adjoint"] --> P
+  P <--> S["One shared scalar service: DIV / SQRT"]
+  C --> U["Support builder: full rebuild"]
+  P -. "Phi/Psi columns when qualified" .-> U
+  U --> B["One dense B cache: selected columns only"]
+  B --> F
+  P --> K["Post-storage check + atomic commit"]

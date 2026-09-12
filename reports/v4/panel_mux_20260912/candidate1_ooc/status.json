@@ -1,0 +1,8 @@
+{
+  "status": "ABORTED_BY_OPERATOR_NO_FINAL_REPORT",
+  "bit_exact": "PASS",
+  "note": "The operator stopped this probe after about 58 minutes while area optimization was still active. No final LUT, timing or runtime comparison can be inferred; this is not a functional failure.",
+  "source_sha256": "ca8e2b71a2879991c4a8b217393de71f244f90a7b600b3e0cbd3bc15277e8d69",
+  "session_id": 43898,
+  "run_directory": "D:\\vivado_pj\\work\\v4_ooc_panel_mux_20260912_0925"
+}

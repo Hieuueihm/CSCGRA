@@ -1,0 +1,140 @@
+diff --git "a/D:\\vivado_pj\\reports\\v4\\panel_mux_20260912\\baseline\\factor_panel_service.sv" "b/D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv"
+index 52afcd5..ae1ba9b 100644
+--- "a/D:\\vivado_pj\\reports\\v4\\panel_mux_20260912\\baseline\\factor_panel_service.sv"
++++ "b/D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv"
+@@ -135,6 +135,54 @@ wire scale_feed_valid=scale_phase&&!scale_fed;
+ // use the next issued row; writes use the result-owning slot row.
+ wire [10:0] row_position=request_write ? slot_row[request_slot] : issued_count;
+ wire [10:0] request_row=request_write ? slot_row[request_slot] : issued_count;
++wire [10:0] response_row=slot_row[response_slot];
++wire [4:0] response_offset=row_start[4:0]+(range_operation ? col_start[4:0] :
++    col_position[4:0]+(narrow_dot ? {2'b0,response_row[2:0]} :
++    narrow_rank ? {response_row[3],1'b0,response_row[2:0]} : response_row[4:0]));
++wire [4:0] request_offset=row_start[4:0]+col_position[4:0]+
++    (narrow_rank ? {request_row[3],1'b0,request_row[2:0]} : request_row[4:0]);
++wire [863:0] selected_result=slot_result[request_slot];
++wire [863:0] response_rotation[0:5],request_rotation[0:5];
++wire [863:0] response_ordered,request_banked;
++wire [4:0] cache_offset=col_position[4:0]-col_start[4:0];
++wire [863:0] vector_rotation[0:5],cache_rotation[0:5];
++wire [863:0] vector_ordered=vector_rotation[5],cache_ordered=cache_rotation[5];
++assign vector_rotation[0]=vec_rsp_data;
++assign cache_rotation[0]=dot_phase ? dot_result_data : fabric_out_data;
++assign response_rotation[0]=panel_rsp_data;
++assign request_banked=request_rotation[5];
++genvar rotate_stage,rotate_lane;
++generate
++    for(rotate_lane=0;rotate_lane<32;rotate_lane=rotate_lane+1)begin: rotation_lanes
++        if(rotate_lane<16)begin: rank_lane
++            assign request_rotation[0][rotate_lane*27+:27]=narrow_rank ?
++                selected_result[((rotate_lane%8)*2+rotate_lane/8)*27+:27] : selected_result[rotate_lane*27+:27];
++            assign response_ordered[rotate_lane*27+:27]=narrow_dot ?
++                response_rotation[5][((rotate_lane%4)*8+rotate_lane/4)*27+:27] : narrow_rank ?
++                response_rotation[5][((rotate_lane%2)*8+rotate_lane/2)*27+:27] : response_rotation[5][rotate_lane*27+:27];
++        end
++        else begin: upper_lane
++            assign request_rotation[0][rotate_lane*27+:27]=narrow_rank ? 27'b0 : selected_result[rotate_lane*27+:27];
++            assign response_ordered[rotate_lane*27+:27]=narrow_dot ?
++                response_rotation[5][((rotate_lane%4)*8+rotate_lane/4)*27+:27] : narrow_rank ? 27'b0 :
++                response_rotation[5][rotate_lane*27+:27];
++        end
++        for(rotate_stage=0;rotate_stage<5;rotate_stage=rotate_stage+1)begin: rotation_stages
++            assign vector_rotation[rotate_stage+1][rotate_lane*27+:27]=row_start[rotate_stage] ?
++                vector_rotation[rotate_stage][((rotate_lane+(1<<rotate_stage))%32)*27+:27] :
++                vector_rotation[rotate_stage][rotate_lane*27+:27];
++            assign cache_rotation[rotate_stage+1][rotate_lane*27+:27]=cache_offset[rotate_stage] ?
++                cache_rotation[rotate_stage][((rotate_lane+32-(1<<rotate_stage))%32)*27+:27] :
++                cache_rotation[rotate_stage][rotate_lane*27+:27];
++            assign response_rotation[rotate_stage+1][rotate_lane*27+:27]=response_offset[rotate_stage] ?
++                response_rotation[rotate_stage][((rotate_lane+(1<<rotate_stage))%32)*27+:27] :
++                response_rotation[rotate_stage][rotate_lane*27+:27];
++            assign request_rotation[rotate_stage+1][rotate_lane*27+:27]=request_offset[rotate_stage] ?
++                request_rotation[rotate_stage][((rotate_lane+32-(1<<rotate_stage))%32)*27+:27] :
++                request_rotation[rotate_stage][rotate_lane*27+:27];
++        end
++    end
++endgenerate
+ function automatic [31:0] tail(input [10:0] size,input [1:0] block);
+ integer n;
+ begin
+@@ -382,7 +430,7 @@ always @* begin
+             if(bank_offset<16&&request_lane<int'(rank_width)*2&&comb_relative<int'(row_count))begin
+                 panel_req_mask[comb_bank]=1;
+                 panel_req_addr[comb_bank*9+:9]=9'(3*comb_row+(comb_col>>5));
+-                if(request_write)panel_req_data[comb_bank*27+:27]=slot_result[request_slot][request_lane*27+:27];
++                if(request_write)panel_req_data[comb_bank*27+:27]=request_banked[comb_bank*27+:27];
+             end
+         end
+         else begin
+@@ -392,7 +440,7 @@ always @* begin
+             if(request_lane<int'(current_width))begin
+                 panel_req_mask[comb_bank]=1;
+                 panel_req_addr[comb_bank*9+:9]=9'(3*comb_row+(comb_col>>5));
+-                if(request_write)panel_req_data[comb_bank*27+:27]=slot_result[request_slot][request_lane*27+:27];
++                if(request_write)panel_req_data[comb_bank*27+:27]=request_banked[comb_bank*27+:27];
+             end
+         end
+     end
+@@ -522,7 +570,7 @@ always @(posedge clk)begin
+                             if(seq_lane+int'(row_start[4:0])>=int'(source_bundle)*32&&
+                                seq_lane+int'(row_start[4:0])<(int'(source_bundle)+1)*32&&
+                                source_mask[(seq_lane+int'(row_start[4:0]))&31])
+-                                a_cache[seq_lane]<=vec_rsp_data[((seq_lane+int'(row_start[4:0]))&31)*27+:27];
++                                a_cache[seq_lane]<=vector_ordered[(seq_lane&31)*27+:27];
+                         if(source_bundle+1>=range_source_blocks) state<=CONFIG;
+                         else begin
+                             source_bundle<=source_bundle+1'b1;
+@@ -622,30 +670,30 @@ always @(posedge clk)begin
+                                         seq_col=int'(col_start);
+                                     end
+                                     bank=(seq_row+seq_col)&31;
+-                                    if(row_value<int'(row_count))factor_response_data[lane*27+:27]=panel_rsp_data[bank*27+:27];
++                                    if(row_value<int'(row_count))factor_response_data[lane*27+:27]=response_ordered[lane*27+:27];
+                                     else factor_response_data[lane*27+:27]=0;
+-                                    if(factor_energy_tap&&row_value!=0&&row_value<int'(row_count)&&panel_rsp_data[bank*27+:27]!=0)
++                                    if(factor_energy_tap&&row_value!=0&&row_value<int'(row_count)&&response_ordered[lane*27+:27]!=0)
+                                         tail_nonzero_seen<=1;
+                                 end
+                                 else if(narrow_dot)begin
+                                     row_value=int'(row_start)+(int'(slot_row[response_slot]>>3)*32)+int'(slot_row[response_slot][2:0])+8*(lane&3);
+                                     col_value=int'(col_position)+(lane>>2);
+                                     bank=(row_value+col_value)&31;
+-                                    if(lane<int'(dot_width)*4&&row_value<int'(row_end))factor_response_data[lane*27+:27]=panel_rsp_data[bank*27+:27];
++                                    if(lane<int'(dot_width)*4&&row_value<int'(row_end))factor_response_data[lane*27+:27]=response_ordered[lane*27+:27];
+                                     else factor_response_data[lane*27+:27]=0;
+                                 end
+                                 else if(narrow_rank&&lane<16)begin
+                                     row_value=int'(row_start)+(int'(slot_row[response_slot]>>3)*16)+int'(slot_row[response_slot][2:0])+8*(lane&1);
+                                     col_value=int'(col_position)+(lane>>1);
+                                     bank=(row_value+col_value)&31;
+-                                    if(lane<int'(rank_width)*2&&row_value<int'(row_end))factor_response_data[lane*27+:27]=panel_rsp_data[bank*27+:27];
++                                    if(lane<int'(rank_width)*2&&row_value<int'(row_end))factor_response_data[lane*27+:27]=response_ordered[lane*27+:27];
+                                     else factor_response_data[lane*27+:27]=0;
+                                 end
+                                 else begin
+                                     row_value=int'(row_start)+int'(slot_row[response_slot]);
+                                     col_value=int'(col_position)+lane;
+                                     bank=(row_value+col_value)&31;
+-                                    if(lane<int'(current_width))factor_response_data[lane*27+:27]=panel_rsp_data[bank*27+:27];
++                                    if(lane<int'(current_width))factor_response_data[lane*27+:27]=response_ordered[lane*27+:27];
+                                     else factor_response_data[lane*27+:27]=0;
+                                 end
+                             end
+@@ -696,7 +744,7 @@ always @(posedge clk)begin
+                         else if(scale_phase) begin
+                             for(lane=0;lane<96;lane=lane+1)
+                                 if(lane>=int'(col_position-col_start)&&lane<int'(col_position-col_start)+int'(panel_width))
+-                                    b_cache[lane]<=fabric_out_data[((lane-int'(col_position-col_start))&31)*27+:27];
++                                    b_cache[lane]<=cache_ordered[(lane&31)*27+:27];
+                         end
+                         else if(rank_phase) begin
+                             slot_result[retired_count[1:0]]<=fabric_out_data;
+@@ -720,7 +768,7 @@ always @(posedge clk)begin
+                             if(project) begin
+                                 for(lane=0;lane<96;lane=lane+1)
+                                     if(lane>=int'(col_position-col_start)&&lane<int'(col_position-col_start)+int'(dot_width))
+-                                        b_cache[lane]<=dot_result_data[((lane-int'(col_position-col_start))&31)*27+:27];
++                                        b_cache[lane]<=cache_ordered[(lane&31)*27+:27];
+                                 if(col_position+dot_width==support_length) begin
+                                     project_phase<=PROJECT_SCALE;
+                                     col_position<=col_start;

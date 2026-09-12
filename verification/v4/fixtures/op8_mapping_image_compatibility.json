@@ -1,0 +1,242 @@
+{
+  "status": "PASS",
+  "scope": "Twenty current recovery-emitter fixtures compare installed and staged load-image fields (program, templates, vectors, constants and load records). Mapping metadata is deliberately excluded because this step labels a measured selection without changing the emitted mapping bit.",
+  "fixtures": [
+    {
+      "algorithm": "MP",
+      "image": "8a67eecc6c7846685de97d912afe417b05b902f4fbf9e5390b2e7af4764a0899",
+      "m": 32,
+      "n": 64,
+      "r4": null,
+      "selected": [
+        true,
+        false
+      ]
+    },
+    {
+      "algorithm": "GP",
+      "image": "115eac711dfed4175479daf81c061823e5b40f5800fd20aac030df5129860db2",
+      "m": 32,
+      "n": 64,
+      "r4": null,
+      "selected": [
+        true,
+        false,
+        false
+      ]
+    },
+    {
+      "algorithm": "IHT",
+      "image": "1884da56ddaf06161d6b62c89940216a83af391f77353fe69a00ac42c7be6221",
+      "m": 32,
+      "n": 64,
+      "r4": null,
+      "selected": [
+        true,
+        false
+      ]
+    },
+    {
+      "algorithm": "FISTA",
+      "image": "8762a6dad920560b05ae2c98c6afaf2b6e111ed64023b7ef69ea48eb135e7684",
+      "m": 32,
+      "n": 64,
+      "r4": null,
+      "selected": [
+        false,
+        true,
+        false
+      ]
+    },
+    {
+      "algorithm": "PDHG",
+      "image": "892a44ed3c0252c2e26741cb94f62dd608f5fd54f2725caa73561ce67035d9e6",
+      "m": 32,
+      "n": 64,
+      "r4": null,
+      "selected": [
+        false,
+        true,
+        false
+      ]
+    },
+    {
+      "algorithm": "MP",
+      "image": "6f90372efab072e72a72e8a9f07b88c48078a215145fd16fdc694f8ca36e096a",
+      "m": 32,
+      "n": 64,
+      "r4": true,
+      "selected": [
+        true,
+        true
+      ]
+    },
+    {
+      "algorithm": "GP",
+      "image": "838167302320251b13b4183bb5fc0aa6fa85e61ec9e7dd178bb9f420b90205bd",
+      "m": 32,
+      "n": 64,
+      "r4": true,
+      "selected": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "algorithm": "IHT",
+      "image": "3cb1667205a2552043e0ea40307361558e4cc9fd48bc1e06388ace28b86b8841",
+      "m": 32,
+      "n": 64,
+      "r4": true,
+      "selected": [
+        true,
+        true
+      ]
+    },
+    {
+      "algorithm": "FISTA",
+      "image": "54748e14cdbb74cc957748aa9020272276d5c9f5f93ac51796d6dba9837509e0",
+      "m": 32,
+      "n": 64,
+      "r4": true,
+      "selected": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "algorithm": "PDHG",
+      "image": "4d2e7096ae4bd8afd0b280ac2fb371c396e1a0f3b6b4fd381cd7a46100f239c0",
+      "m": 32,
+      "n": 64,
+      "r4": true,
+      "selected": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "algorithm": "MP",
+      "image": "b819c077208f849ffaec5cb4a7808cf5d14358f11ea32f7431742a095fd328cc",
+      "m": 64,
+      "n": 256,
+      "r4": null,
+      "selected": [
+        true,
+        false
+      ]
+    },
+    {
+      "algorithm": "GP",
+      "image": "0f84162ed00a27538a99172d80523ba8f96b458abdad7b2e9e1c0872ef6e2c25",
+      "m": 64,
+      "n": 256,
+      "r4": null,
+      "selected": [
+        true,
+        false,
+        false
+      ]
+    },
+    {
+      "algorithm": "IHT",
+      "image": "b851b4ffb6f99374dcbbf02b02754973c75499c445e835ae782be72929e7562c",
+      "m": 64,
+      "n": 256,
+      "r4": null,
+      "selected": [
+        true,
+        false
+      ]
+    },
+    {
+      "algorithm": "FISTA",
+      "image": "981409bca61d8be548d2441a4318edcea9c4f116f03324ac8c59436dd9212664",
+      "m": 64,
+      "n": 256,
+      "r4": null,
+      "selected": [
+        false,
+        true,
+        false
+      ]
+    },
+    {
+      "algorithm": "PDHG",
+      "image": "9b10c11f6d01230afc7cffad6145f6415c5af14c8ebfda5619f2e006f76bfa14",
+      "m": 64,
+      "n": 256,
+      "r4": null,
+      "selected": [
+        false,
+        true,
+        false
+      ]
+    },
+    {
+      "algorithm": "MP",
+      "image": "d55248ce2312b05b2d9a4f46ce9ed156e12b72ee2c5167ceb0ef9a800014fb3d",
+      "m": 64,
+      "n": 256,
+      "r4": true,
+      "selected": [
+        true,
+        true
+      ]
+    },
+    {
+      "algorithm": "GP",
+      "image": "844985481be16046f4972baa11e92ae4c6d0e9e9dfbf0b9dd3413db083d7fe9b",
+      "m": 64,
+      "n": 256,
+      "r4": true,
+      "selected": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "algorithm": "IHT",
+      "image": "f480187e0a64043ad21de712e96560ff0fd4a41b868159aed897e78e515f2359",
+      "m": 64,
+      "n": 256,
+      "r4": true,
+      "selected": [
+        true,
+        true
+      ]
+    },
+    {
+      "algorithm": "FISTA",
+      "image": "725359fb5f678ee104d82fa6c35da28ae5218fdb88e86c8731eb614788a63fc8",
+      "m": 64,
+      "n": 256,
+      "r4": true,
+      "selected": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "algorithm": "PDHG",
+      "image": "984ee4f7eea15d1f247094b0c61eb44a7d3413ff73cb9a44fc87e425835f67da",
+      "m": 64,
+      "n": 256,
+      "r4": true,
+      "selected": [
+        true,
+        true,
+        true
+      ]
+    }
+  ],
+  "staged_source_sha256": "58da0f17d6990a342be7f4e745afdf51bfd0feb6eca726843ef5311f43ead4cd",
+  "installed_source_sha256": "f9804191d6a43656ba486b68f9cd3bf957e51a8b103312371fc45b0629cfba72",
+  "test_source_sha256": "999756f8a4ae1797212ff1f7ac0b41e1d66aad3cec2efc197dff2030fd8778d8",
+  "result": "all_twenty_load_images_and_selected_mapping_bits_equal"
+}

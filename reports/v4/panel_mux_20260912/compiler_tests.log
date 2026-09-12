@@ -1,0 +1,23 @@
+test_calibration_matches_archived_xsim_evidence (verification.v4.test_live_mapping.LiveMappingTests.test_calibration_matches_archived_xsim_evidence) ... ok
+test_calibration_selection_and_stale_guard (verification.v4.test_live_mapping.LiveMappingTests.test_calibration_selection_and_stale_guard) ... ok
+test_complete_coefficient_coverage (verification.v4.test_live_mapping.LiveMappingTests.test_complete_coefficient_coverage) ... ok
+test_conflicting_requests_are_rejected (verification.v4.test_live_mapping.LiveMappingTests.test_conflicting_requests_are_rejected) ... ok
+test_dense_physical_pair_mapping (verification.v4.test_live_mapping.LiveMappingTests.test_dense_physical_pair_mapping) ... ok
+test_dense_tails_and_runtime_width (verification.v4.test_live_mapping.LiveMappingTests.test_dense_tails_and_runtime_width) ... ok
+test_invalid_shapes_types_and_empty_tail_step (verification.v4.test_live_mapping.LiveMappingTests.test_invalid_shapes_types_and_empty_tail_step) ... ok
+test_modes_and_conflicts_reject (verification.v4.test_live_mapping.LiveMappingTests.test_modes_and_conflicts_reject) ... ok
+test_phi_addresses_and_tail (verification.v4.test_live_mapping.LiveMappingTests.test_phi_addresses_and_tail) ... ok
+test_phi_all_orientations_and_broadcasts (verification.v4.test_live_mapping.LiveMappingTests.test_phi_all_orientations_and_broadcasts) ... ok
+test_physical_storage_is_injective_at_maximum_shape (verification.v4.test_live_mapping.LiveMappingTests.test_physical_storage_is_injective_at_maximum_shape) ... ok
+test_program_metadata_preserves_runtime_support_width (verification.v4.test_live_mapping.LiveMappingTests.test_program_metadata_preserves_runtime_support_width) ... ok
+test_stale_profile_rejected_but_explicit_override_available (verification.v4.test_live_mapping.LiveMappingTests.test_stale_profile_rejected_but_explicit_override_available) ... ok
+test_changed_or_missing_result_rejected (verification.v4.test_payload_benchmark.PayloadBenchmarkTests.test_changed_or_missing_result_rejected) ... ok
+test_early_stop_and_overlap_rejected (verification.v4.test_payload_benchmark.PayloadBenchmarkTests.test_early_stop_and_overlap_rejected) ... ok
+test_incomplete_and_duplicate_profiles_rejected (verification.v4.test_payload_benchmark.PayloadBenchmarkTests.test_incomplete_and_duplicate_profiles_rejected) ... ok
+test_native_fixture_rejects_fault_and_trailing_data (verification.v4.test_payload_benchmark.PayloadBenchmarkTests.test_native_fixture_rejects_fault_and_trailing_data) ... ok
+test_signed_outputs_and_disjoint_buckets (verification.v4.test_payload_benchmark.PayloadBenchmarkTests.test_signed_outputs_and_disjoint_buckets) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 2.041s
+
+OK

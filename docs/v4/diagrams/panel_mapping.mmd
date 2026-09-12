@@ -1,0 +1,13 @@
+flowchart TB
+    shape["Factor rectangle: L rows, C columns"] --> select{"Trailing width C <= 8?"}
+    select -- No --> wide["Existing mapping: one row per frame"]
+    select -- Yes --> dot["DOT: four rows per column, rows spaced by 8"]
+    dot --> acc["Four raw ACC64 values per column"]
+    acc --> r4["Existing R4 terminal: sum raw ACC, round once"]
+    r4 --> q["Complete all dot panels, then scale all q"]
+    q --> rank["RANK: two rows per column, rows spaced by 8"]
+    rank --> cascade["Low 16 PE: multiply and round; high 16 PE: subtract"]
+    cascade --> store["Checked private factor write, wait for all acknowledgments"]
+    wide --> store
+    bank["bank = (row + column) mod 32; distinct banks in each frame"] -.-> dot
+    bank -.-> rank

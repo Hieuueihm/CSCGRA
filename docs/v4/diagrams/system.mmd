@@ -1,0 +1,39 @@
+flowchart TB
+  H[Existing native job loading
+Host/AXI top planned] --> R[recovery_engine
+job, status and publication ownership]
+  R --> Q[program_sequencer
+loaded PC, branches, templates and scalar RF]
+  Q --> K[stream_kernel
+one vector pool and one stream_fabric]
+  K --> F[operator_frame_feeder
+four ordered frames and operand cache]
+  F --> M[live_operator_memory
+existing Phi/B ownership and read credits]
+  M --> S[Eight unchanged raw Phi sign banks]
+  S --> T[Round-2 qualified transport
+two command-local raw 32x8 tiles
+only favorable live-Phi modes]
+  M --> B[One unchanged B store: 16 paired banks]
+  B --> F
+  M -->|unfavorable live-Phi mode only| F
+  T --> F
+  K --> U[support_service
+per output 32-lane block: <=3 distinct providers
+one outstanding read; kernel scratch publication]
+  U --> V[shared vector pool
+480 public + 32 scratch blocks]
+  V --> F
+  F --> A[stream_fabric
+two 4x4 arrays: exactly 32 PEs]
+  A --> D[existing PEACC
+fixed registered reduction links]
+  D --> V
+  K --> W[kernel-owned scratch publication]
+  W --> R
+  R --> P[result_store
+recovery_engine-owned checked publication]
+  N[Round-2 source-clean xsim qualified
+22 fixed8 program rows; kernel16/support7/Phi boundary
+No timing, resource or fit conclusion] -.scope.-> T
+  N -.scope.-> U

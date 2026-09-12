@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "source_sha256": {
+    "rtl/v4/compute/stream_kernel.sv": "0a88d278646ff2e8027ff1c046b7fa966ce06d98880657b141b52aa21dd9d70b",
+    "rtl/v4/dataflow/support_service.sv": "9c694c18d223bbf6be048b2de81b17065f9e3c46bbce10656947ec4fd939404c",
+    "rtl/v4/dataflow/factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+    "rtl/v4/dataflow/factor_panel_service.sv": "ca8e2b71a2879991c4a8b217393de71f244f90a7b600b3e0cbd3bc15277e8d69",
+    "rtl/v4/memory/factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+    "rtl/v4/compute/stream_fabric.sv": "ed1207d9beb6b745bd5b9741e8f16f59d3ec800e921ad0aee0eb021eec2edad1",
+    "rtl/v4/compute/stream_array.sv": "811e078870f77d51637bf7a7d6255ccd9276f5c230bcfcc30586020d5b88e399",
+    "rtl/v4/compute/stream_pe.sv": "0eaf9dc6b70369ff3ec96b3a89894fd6fc3e4489ae20984ce378054661622589",
+    "rtl/v4/memory/stream_vector_store.sv": "7c5e6842682173713e777f4c8e7d2d168a8738fac60d78003fc18085137f8b65",
+    "rtl/v4/dataflow/operator_frame_feeder.sv": "6060ebf90b1c0bfd9bd2a3b89d4f83670de869ae245f65489d5352eeee2b0668",
+    "rtl/v4/dataflow/range_reader.sv": "4c5133633e577ecaf5228b5a8c649d55673c35d00e3312c4e95cffabd6972d62",
+    "rtl/v4/memory/live_operator_memory.sv": "0d194909bc6b868603c698f5428f98ff55ef4ab796c89460e1d9072578e4942e",
+    "rtl/v4/memory/paired_support_store.sv": "73a688ff3bc24e34aac4e04302ee17e69dd85d24a62e61e2b6aa332d8e17aedf",
+    "rtl/v4/operator/phi_sign_generator.sv": "395aec4b89b0ca18ccd2d1ca486b71188a624acb66df6635fbca57f5c3babe3e",
+    "rtl/v4/memory/phi_sign_cache.sv": "b59073646d2c506bab1b1ed061cf5299ada2bed3fb3f5c8f0a0527a6525e8808",
+    "rtl/v4/dataflow/phi_reader.sv": "26ba84d1f0ad3a879e0b18d8d3782ca13a7afb3c22b6f490d39cee8187e32863",
+    "rtl/v4/dataflow/support_builder.sv": "8365de592657062c96a0fc68130aa75e4bff8c76a8f463344f4ce334d8d0df67",
+    "verification/v4/stream/tb_stream_kernel_mapping_calibration.sv": "2fd6eb4c6e22210e2d2bcc2eb0a0b00573358fe251321c503de56c0613363a1f",
+    "verification/v4/test_stream_kernel_rtl.py": "ced8795bb16112da944a5908886d2ff20c1c6c8b2a7ce7a42c5efe767a21f224",
+    "verification/v4/stream/tb_stream_kernel_copy.sv": "11d770c39b979ddb59f744eeb7d2e137aee9a71df6f51147065e6fd6706846ef",
+    "docs/v4/architecture/RESIDENT_CHAIN.md": "beeb26f6d2f0656edab7bb74841b7bfaaed69e9df9ad3b4e179b9803eeaab788",
+    "docs/v4/architecture/SCALAR_INSERT.md": "3ac3f5f15272a431965b1c16e261df74ab71dce6bc236e759e44f72c513e9867",
+    "docs/v4/architecture/RANGE_TEMPLATE.md": "2b5abdeabab2d45a8763ace72f43dc8728da5db923cbb6b2bf4e4b00f31f7a0d",
+    "config/v4_kernel_interface.json": "9ad7fe779f1f462b97e9338fd586735ef4b5b00f6a882947a30a0ba23a079fbe",
+    "config/v4_program_interface.json": "4072eb62e62fe7039d06177fb9ee407ac334e74622364b06d83072ab6ef790e3",
+    "rtl/v4/include/kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+    "rtl/v4/include/program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+    "scripts/v4/xsim.py": "a28a7c625b7e90676ad399b9d95f7f40b3617664758d8e886a45eeec1f6961ed",
+    "docs/v4/architecture/STREAM_SYSTEM_CONTRACT.md": "ace212eba4783396b8ffdb4ec4877b756f3827e0bd9f4e2a0f02da8555d81391",
+    "docs/v4/architecture/FACTOR_SERVICE.md": "971bc62535f0a2ad7ee5222f4a5732b8c1d7550abbecc68da89d5b4174d70048",
+    "docs/v4/architecture/FACTOR_PANEL.md": "9dfe3ea303193dbeeba636766241594b0ce13a777516be91b470ebd952c2a947",
+    "verification/v4/test_gemv_mapping_calibration_rtl.py": "3af423df6d542c179bc5c57784493fc26d321286c0ef5b7cf2c6521bdabdfe9b",
+    "rtl/v4/include/builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+    "rtl/v4/include/commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+    "rtl/v4/include/context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+    "rtl/v4/include/control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+    "rtl/v4/include/feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+    "rtl/v4/include/host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+    "rtl/v4/include/memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+    "rtl/v4/include/operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+    "rtl/v4/include/pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+    "rtl/v4/include/phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+    "rtl/v4/include/recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+    "rtl/v4/include/scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+    "rtl/v4/include/solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+    "rtl/v4/include/stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+    "rtl/v4/include/tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+  },
+  "scope": "Exact stream-kernel command cycles under command-relative deterministic stalls; no interpolation, no whole-program cycle model",
+  "measurement_source": "reports/v4/panel_mux_20260912/calibration/qualification.json",
+  "measurement_sha256": "18c0accdc6a27228a7cb34022e6c50448af498104ca1c0f5dadc00fa87910d8e",
+  "entries": [
+    {
+      "shape": {
+        "rows": 32,
+        "columns": 64,
+        "dense": false,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 96,
+        "R4": 298
+      }
+    },
+    {
+      "shape": {
+        "rows": 32,
+        "columns": 64,
+        "dense": false,
+        "transpose": true
+      },
+      "cycles": {
+        "R1": 291,
+        "R4": 168
+      }
+    },
+    {
+      "shape": {
+        "rows": 64,
+        "columns": 256,
+        "dense": false,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 607,
+        "R4": 2117
+      }
+    },
+    {
+      "shape": {
+        "rows": 64,
+        "columns": 256,
+        "dense": false,
+        "transpose": true
+      },
+      "cycles": {
+        "R1": 2101,
+        "R4": 920
+      }
+    },
+    {
+      "shape": {
+        "rows": 32,
+        "columns": 1,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 26,
+        "R4": 62
+      }
+    },
+    {
+      "shape": {
+        "rows": 32,
+        "columns": 2,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 27,
+        "R4": 70
+      }
+    },
+    {
+      "shape": {
+        "rows": 32,
+        "columns": 4,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 32,
+        "R4": 74
+      }
+    },
+    {
+      "shape": {
+        "rows": 32,
+        "columns": 8,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 33,
+        "R4": 93
+      }
+    },
+    {
+      "shape": {
+        "rows": 32,
+        "columns": 16,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 43,
+        "R4": 93
+      }
+    },
+    {
+      "shape": {
+        "rows": 32,
+        "columns": 24,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 51,
+        "R4": 93
+      }
+    },
+    {
+      "shape": {
+        "rows": 64,
+        "columns": 1,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 36,
+        "R4": 109
+      }
+    },
+    {
+      "shape": {
+        "rows": 64,
+        "columns": 2,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 38,
+        "R4": 121
+      }
+    },
+    {
+      "shape": {
+        "rows": 64,
+        "columns": 4,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 45,
+        "R4": 133
+      }
+    },
+    {
+      "shape": {
+        "rows": 64,
+        "columns": 8,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 52,
+        "R4": 168
+      }
+    },
+    {
+      "shape": {
+        "rows": 64,
+        "columns": 16,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 71,
+        "R4": 168
+      }
+    },
+    {
+      "shape": {
+        "rows": 64,
+        "columns": 24,
+        "dense": true,
+        "transpose": false
+      },
+      "cycles": {
+        "R1": 90,
+        "R4": 168
+      }
+    }
+  ]
+}

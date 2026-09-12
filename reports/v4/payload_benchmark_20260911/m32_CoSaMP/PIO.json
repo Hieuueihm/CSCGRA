@@ -1,0 +1,33 @@
+{
+  "returncode": 0,
+  "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_a70ec7939f6df256/xsim_script.tcl\n# xsim {sim_a70ec7939f6df256} -testplusarg fixture=D:/vivado_pj/work/payload_benchmark_8xdpp5j_/m32_CoSaMP/input.txt -testplusarg trace=D:/vivado_pj/work/payload_benchmark_8xdpp5j_/m32_CoSaMP/PIO.trace -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS payload_benchmark mode=0 native=132429 total=167222\n$finish called at time : 1674390 ns : File \"D:/vivado_pj/verification/v4/host/tb_payload_benchmark.sv\" Line 729\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:34 . Memory (MB): peak = 228.594 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Fri Sep 11 09:55:00 2026...\n",
+  "stderr": "",
+  "commands": [
+    {
+      "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat\" \"sim_a70ec7939f6df256\" \"-runall\" \"-onerror\" \"quit\" \"-testplusarg\" \"fixture=D:/vivado_pj/work/payload_benchmark_8xdpp5j_/m32_CoSaMP/input.txt\" \"-testplusarg\" \"trace=D:/vivado_pj/work/payload_benchmark_8xdpp5j_/m32_CoSaMP/PIO.trace\"\"",
+      "argv": [
+        "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat",
+        "sim_a70ec7939f6df256",
+        "-runall",
+        "-onerror",
+        "quit",
+        "-testplusarg",
+        "fixture=D:/vivado_pj/work/payload_benchmark_8xdpp5j_/m32_CoSaMP/input.txt",
+        "-testplusarg",
+        "trace=D:/vivado_pj/work/payload_benchmark_8xdpp5j_/m32_CoSaMP/PIO.trace"
+      ],
+      "cwd": "D:\\vivado_pj\\work\\payload_benchmark_8xdpp5j_\\benchmark.xsim_7qk1ohqu",
+      "timeout_seconds": 900,
+      "invocation_id": "7f6d7c2bee0b44e9a8f6ab0ddd4e732a",
+      "execution": "executed",
+      "started_utc": "2026-09-11T02:54:22.438663+00:00",
+      "returncode": 0,
+      "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_a70ec7939f6df256/xsim_script.tcl\n# xsim {sim_a70ec7939f6df256} -testplusarg fixture=D:/vivado_pj/work/payload_benchmark_8xdpp5j_/m32_CoSaMP/input.txt -testplusarg trace=D:/vivado_pj/work/payload_benchmark_8xdpp5j_/m32_CoSaMP/PIO.trace -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS payload_benchmark mode=0 native=132429 total=167222\n$finish called at time : 1674390 ns : File \"D:/vivado_pj/verification/v4/host/tb_payload_benchmark.sv\" Line 729\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:34 . Memory (MB): peak = 228.594 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Fri Sep 11 09:55:00 2026...\n",
+      "stderr": "",
+      "logs": {
+        "xsim.log": "#-----------------------------------------------------------\n# xsim v2018.1 (64-bit)\n# SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n# IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n# Start of session at: Fri Sep 11 09:54:23 2026\n# Process ID: 25516\n# Current directory: D:/vivado_pj/work/payload_benchmark_8xdpp5j_/benchmark.xsim_7qk1ohqu\n# Command line: xsim.exe -mode tcl -source {xsim.dir/sim_a70ec7939f6df256/xsim_script.tcl}\n# Log file: D:/vivado_pj/work/payload_benchmark_8xdpp5j_/benchmark.xsim_7qk1ohqu/xsim.log\n# Journal file: D:/vivado_pj/work/payload_benchmark_8xdpp5j_/benchmark.xsim_7qk1ohqu\\xsim.jou\n#-----------------------------------------------------------\nsource xsim.dir/sim_a70ec7939f6df256/xsim_script.tcl\n# xsim {sim_a70ec7939f6df256} -testplusarg fixture=D:/vivado_pj/work/payload_benchmark_8xdpp5j_/m32_CoSaMP/input.txt -testplusarg trace=D:/vivado_pj/work/payload_benchmark_8xdpp5j_/m32_CoSaMP/PIO.trace -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS payload_benchmark mode=0 native=132429 total=167222\n$finish called at time : 1674390 ns : File \"D:/vivado_pj/verification/v4/host/tb_payload_benchmark.sv\" Line 729\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:34 . Memory (MB): peak = 228.594 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Fri Sep 11 09:55:00 2026...\n"
+      },
+      "compile_signature": "a70ec7939f6df25637d2a19fc08bb54dc64a1ff3e74f5b4e7316a1cd7f044013"
+    }
+  ]
+}

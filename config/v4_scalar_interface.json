@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "revision": "scalar_leaf_candidate_v1",
+  "scope": "one_outstanding_arithmetic_leaf_not_scalar_RF_or_context_ABI",
+  "operand_width": 64, "state_width": 27, "state_frac": 22,
+  "job_width": 16, "tag_width": 16, "fmt_width": 8,
+  "opcode_width": 2, "fault_width": 3, "frac_width": 8,
+  "format_id": 1, "div_source_frac": 0, "sqrt_source_frac": 44,
+  "ops": {"DIV": 0, "SQRT": 1},
+  "faults": {"NONE": 0, "MODE": 1, "ZERO": 2, "NEGATIVE": 3, "RANGE": 4},
+  "schedule": {"div_latency": 87, "sqrt_latency": 33, "fault_latency": 1,
+    "div_ii": 89, "sqrt_ii": 35, "fault_ii": 3,
+    "assumptions": "no_stalls; acceptance_edge_zero; no_same_edge_replacement"}
+}

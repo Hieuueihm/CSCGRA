@@ -1,0 +1,24 @@
+flowchart TB
+  program["Loaded QR program\ncompiler owns QR loops"]
+  builder["Build B from ordered support"]
+  init["FACTOR_INIT through factor_service\nvalidated B import bridge"]
+  factor["factor_store\nprivate S27 factors"]
+  bridge["factor_service bridge\nexisting private store"]
+  panel["factor_panel_service\nsource-qualified candidate ops17/18"]
+  kernel["stream_kernel\nexclusive panel fabric mux"]
+  fabric["stream_fabric\nexisting two 4x4 arrays = 32 PEs"]
+  cascade["cascade16: MUL16 then SUB16\nno new PE or multiplier"]
+  scalar["DIV / SQRT / RESCALE"]
+  cert["stored-X certificate"]
+  program --> builder --> init --> factor
+  program --> kernel
+  program --> panel
+  factor <--> bridge <--> panel
+  panel -->|exclusive fabric owner:\nMATVEC MAC32 / RANK1 cascade16| kernel --> fabric
+  fabric --> cascade
+  program <--> scalar
+  kernel --> cert --> program
+  status["Source-qualified Vivado candidate: 20 fixed8 active10 PASS\nCoSaMP M64 252684, M32 210512 cycles; 41.48% reduction\nsource installation tracked by promotion manifest; no PPA/timing/production-bit claim"]
+  panel -.-> status
+  legend["Legend: solid arrows are control/data ownership; factor_service is the only B-to-factor-store import bridge; dashed arrow is qualification status"]
+  legacy["ADMM and LSQR are historical references; no fallback"]

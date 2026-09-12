@@ -1,0 +1,42 @@
+flowchart TB
+  HOST["Host preload: service program, normalized D18 Y, matrix/support descriptor"]
+  TOP["lsqr_engine: job ownership, start/done and abort"]
+  MEM["operator_memory: exclusive load / build / compute read"]
+  PHI["LFSR32 + one 8-bank Phi sign cache"]
+  BUILD["support_builder: ordered Psi=I columns"]
+  B["One B cache: 128 x 96 C18, 32 banks"]
+  PC["solver_sequencer: one PC, 256 x 128 program, 32 x 64 scalar RF"]
+  K["kernel_engine: generic vector/matrix operations; atomic destination"]
+  WS["vector_workspace: 16 x 128 S27; 32 banks"]
+  READER["One operand_reader + feeder"]
+  FAB["kernel_fabric"]
+  A0["4 x 4 PE array: 16 PEs"]
+  A1["4 x 4 PE array: 16 PEs"]
+  SCALAR["One DIV / SQRT scalar_service"]
+  CERT["Stored-X certificate: r = y - B X; g = B^T r; energy(g) x 10^10 <= energy(B^T y)"]
+  COMMIT["commit_controller + result_writeback: two 96-entry candidate/committed banks"]
+  OUT["Committed X24 + support + exponent + tags"]
+  HOST --> TOP
+  TOP --> MEM
+  MEM --> PHI
+  PHI --> BUILD
+  BUILD --> B
+  TOP --> PC
+  PC --> K
+  PC --> SCALAR
+  K <--> WS
+  B --> READER
+  READER --> FAB
+  K --> FAB
+  FAB --> A0
+  FAB --> A1
+  A0 --> K
+  A1 --> K
+  K --> PC
+  SCALAR --> PC
+  PC --> CERT
+  CERT -->|"certified candidate slot"| TOP
+  WS -->|"exact stored candidate"| COMMIT
+  TOP -->|"explicit approval"| COMMIT
+  COMMIT --> OUT
+  NOTE["Scope: bounded LS solve. Resident GEMV is a separate reference. Full recovery/AXI top and board timing remain pending."]

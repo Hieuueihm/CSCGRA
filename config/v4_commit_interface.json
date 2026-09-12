@@ -1,0 +1,8 @@
+{
+  "revision": "stored_X_transaction_candidate_v1",
+  "scope": "two_bank_result_publication_not_vector_workspace",
+  "state_width": 27, "state_frac": 22, "x_width": 24, "x_frac": 20,
+  "lanes": 32, "capacity": 96, "index_width": 10, "format_id": 1,
+  "faults": {"NONE": 0, "MODE": 1, "SUPPORT": 2, "IDENTITY": 3,
+    "STREAM": 4, "NUMERIC": 5, "CERTIFICATE": 6, "CANCEL": 7, "READ": 8}
+}

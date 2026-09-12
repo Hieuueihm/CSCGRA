@@ -1,0 +1,9 @@
+test_exclusive_factor_bridge_identity_and_hold (verification.v4.test_factor_panel_service_rtl.FactorPanelRtl.test_exclusive_factor_bridge_identity_and_hold) ... ok
+test_panel_matvec_rank1_fault_and_stalls (verification.v4.test_factor_panel_service_rtl.FactorPanelRtl.test_panel_matvec_rank1_fault_and_stalls) ... ok
+D:\vivado_pj\work\factor_panel_rotation_kfk6bl28
+test_all_offsets_rows_slots_and_modes (verification.v4.test_factor_panel_rotation_rtl.FactorPanelRotationTests.test_all_offsets_rows_slots_and_modes) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 99.142s
+
+OK

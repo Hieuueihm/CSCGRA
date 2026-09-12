@@ -1,0 +1,13 @@
+D:\vivado_pj\work\factor_panel_bcache_e95ozxz4
+test_signed_windows_and_all_legal_feed_widths (verification.v4.test_factor_panel_bcache_rtl.FactorPanelBcacheTests.test_signed_windows_and_all_legal_feed_widths) ... ok
+test_exclusive_factor_bridge_identity_and_hold (verification.v4.test_factor_panel_service_rtl.FactorPanelRtl.test_exclusive_factor_bridge_identity_and_hold) ... ok
+test_panel_matvec_rank1_fault_and_stalls (verification.v4.test_factor_panel_service_rtl.FactorPanelRtl.test_panel_matvec_rank1_fault_and_stalls) ... ok
+D:\vivado_pj\work\factor_panel_rotation_danc1tmu
+test_all_offsets_rows_slots_and_modes (verification.v4.test_factor_panel_rotation_rtl.FactorPanelRotationTests.test_all_offsets_rows_slots_and_modes) ... ok
+test_all_source_lanes_and_valid_widths (verification.v4.test_factor_panel_slice_guard_rtl.FactorPanelSliceGuardTests.test_all_source_lanes_and_valid_widths) ... ok
+D:\vivado_pj\work\factor_panel_slice_4irlu_lc
+
+----------------------------------------------------------------------
+Ran 5 tests in 123.509s
+
+OK

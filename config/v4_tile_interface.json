@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "revision": "decoded_tile_v1",
+  "scope": "RF8_predicates_operand_selection_ALU_not_packed_context_decoder",
+  "rf_words": 8,
+  "predicate_bits": 3,
+  "source_bits": 4,
+  "reg_bits": 3,
+  "guard_bits": 3,
+  "pred_dst_bits": 2,
+  "immediate_bits": 16,
+  "guards": {"ALWAYS": 0, "P0": 1, "P1": 2, "P2": 3, "NOT_P0": 4, "NOT_P1": 5, "NOT_P2": 6, "NEVER": 7},
+  "pred_sources": {"DATA": 0, "LT": 1, "EQ": 2, "GT": 3, "NOT_DATA": 4, "ZERO": 5, "ONE": 6},
+  "faults": {"SOURCE": 6, "UNINIT": 7, "PRED": 8, "LINK": 9, "ACC_RANGE": 10},
+  "unused_sources": "not_read_not_validated",
+  "select_sources": "both_validated_when_enabled",
+  "rf_reset": "zero_data_invalid_until_successful_write",
+  "predicate_reset": "all_false",
+  "retirement": "RF_predicates_ACC_commit_together_on_successful_response_accept",
+  "schedule": {"single_latency": 1, "ss_multiply_latency": 2, "single_ii": 2, "ss_multiply_ii": 3}
+}

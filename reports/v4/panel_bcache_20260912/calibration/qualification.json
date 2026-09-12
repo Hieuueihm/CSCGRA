@@ -1,0 +1,1309 @@
+{
+  "status": "PASS",
+  "scope": "Measured R1/R4 stream-kernel GEMV calibration under the testbench's command-relative deterministic stalls (`+command_stall_epoch=1`). This is a mapping measurement, not a compiler selection, whole-program, timing, PPA or board claim.",
+  "source_sha256": {
+    "rtl/v4/compute/stream_kernel.sv": "0a88d278646ff2e8027ff1c046b7fa966ce06d98880657b141b52aa21dd9d70b",
+    "rtl/v4/dataflow/support_service.sv": "9c694c18d223bbf6be048b2de81b17065f9e3c46bbce10656947ec4fd939404c",
+    "rtl/v4/dataflow/factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+    "rtl/v4/dataflow/factor_panel_service.sv": "f6d1194196817c263541edb438e60aacedc63e4c9fafdb56a35d0922d3e6c236",
+    "rtl/v4/memory/factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+    "rtl/v4/compute/stream_fabric.sv": "ed1207d9beb6b745bd5b9741e8f16f59d3ec800e921ad0aee0eb021eec2edad1",
+    "rtl/v4/compute/stream_array.sv": "811e078870f77d51637bf7a7d6255ccd9276f5c230bcfcc30586020d5b88e399",
+    "rtl/v4/compute/stream_pe.sv": "0eaf9dc6b70369ff3ec96b3a89894fd6fc3e4489ae20984ce378054661622589",
+    "rtl/v4/memory/stream_vector_store.sv": "7c5e6842682173713e777f4c8e7d2d168a8738fac60d78003fc18085137f8b65",
+    "rtl/v4/dataflow/operator_frame_feeder.sv": "6060ebf90b1c0bfd9bd2a3b89d4f83670de869ae245f65489d5352eeee2b0668",
+    "rtl/v4/dataflow/range_reader.sv": "4c5133633e577ecaf5228b5a8c649d55673c35d00e3312c4e95cffabd6972d62",
+    "rtl/v4/memory/live_operator_memory.sv": "0d194909bc6b868603c698f5428f98ff55ef4ab796c89460e1d9072578e4942e",
+    "rtl/v4/memory/paired_support_store.sv": "73a688ff3bc24e34aac4e04302ee17e69dd85d24a62e61e2b6aa332d8e17aedf",
+    "rtl/v4/operator/phi_sign_generator.sv": "395aec4b89b0ca18ccd2d1ca486b71188a624acb66df6635fbca57f5c3babe3e",
+    "rtl/v4/memory/phi_sign_cache.sv": "b59073646d2c506bab1b1ed061cf5299ada2bed3fb3f5c8f0a0527a6525e8808",
+    "rtl/v4/dataflow/phi_reader.sv": "26ba84d1f0ad3a879e0b18d8d3782ca13a7afb3c22b6f490d39cee8187e32863",
+    "rtl/v4/dataflow/support_builder.sv": "8365de592657062c96a0fc68130aa75e4bff8c76a8f463344f4ce334d8d0df67",
+    "verification/v4/stream/tb_stream_kernel_mapping_calibration.sv": "2fd6eb4c6e22210e2d2bcc2eb0a0b00573358fe251321c503de56c0613363a1f",
+    "verification/v4/test_stream_kernel_rtl.py": "ced8795bb16112da944a5908886d2ff20c1c6c8b2a7ce7a42c5efe767a21f224",
+    "verification/v4/stream/tb_stream_kernel_copy.sv": "11d770c39b979ddb59f744eeb7d2e137aee9a71df6f51147065e6fd6706846ef",
+    "docs/v4/architecture/RESIDENT_CHAIN.md": "beeb26f6d2f0656edab7bb74841b7bfaaed69e9df9ad3b4e179b9803eeaab788",
+    "docs/v4/architecture/SCALAR_INSERT.md": "3ac3f5f15272a431965b1c16e261df74ab71dce6bc236e759e44f72c513e9867",
+    "docs/v4/architecture/RANGE_TEMPLATE.md": "2b5abdeabab2d45a8763ace72f43dc8728da5db923cbb6b2bf4e4b00f31f7a0d",
+    "config/v4_kernel_interface.json": "9ad7fe779f1f462b97e9338fd586735ef4b5b00f6a882947a30a0ba23a079fbe",
+    "config/v4_program_interface.json": "4072eb62e62fe7039d06177fb9ee407ac334e74622364b06d83072ab6ef790e3",
+    "rtl/v4/include/kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+    "rtl/v4/include/program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+    "scripts/v4/xsim.py": "a28a7c625b7e90676ad399b9d95f7f40b3617664758d8e886a45eeec1f6961ed",
+    "docs/v4/architecture/STREAM_SYSTEM_CONTRACT.md": "ace212eba4783396b8ffdb4ec4877b756f3827e0bd9f4e2a0f02da8555d81391",
+    "docs/v4/architecture/FACTOR_SERVICE.md": "971bc62535f0a2ad7ee5222f4a5732b8c1d7550abbecc68da89d5b4174d70048",
+    "docs/v4/architecture/FACTOR_PANEL.md": "9dfe3ea303193dbeeba636766241594b0ce13a777516be91b470ebd952c2a947",
+    "verification/v4/test_gemv_mapping_calibration_rtl.py": "3af423df6d542c179bc5c57784493fc26d321286c0ef5b7cf2c6521bdabdfe9b"
+  },
+  "compile_commands": [
+    {
+      "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat\" \"-sv\" \"-i\" \"D:\\vivado_pj\\rtl\\v4\\include\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv\" \"D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv\" \"D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv\"\"",
+      "argv": [
+        "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+        "-sv",
+        "-i",
+        "D:\\vivado_pj\\rtl\\v4\\include",
+        "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv",
+        "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv",
+        "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+        "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+        "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+        "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv",
+        "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv",
+        "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv",
+        "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv",
+        "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv",
+        "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv",
+        "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv",
+        "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv",
+        "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv",
+        "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv",
+        "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv",
+        "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv",
+        "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv"
+      ],
+      "cwd": "D:\\vivado_pj\\work\\gemv_mapping_calibration_argj4nfw\\kernel.xsim_yo0tplkn",
+      "timeout_seconds": 240,
+      "invocation_id": "1366d8fc8f71474eb66a7eeed5520f86",
+      "execution": "executed",
+      "started_utc": "2026-09-12T05:20:57.164616+00:00",
+      "returncode": 0,
+      "stdout": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_kernel.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_kernel\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:90]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:91]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:92]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:93]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:94]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:95]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:96]\nWARNING: [VRFC 10-756] identifier output_count is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:100]\nWARNING: [VRFC 10-756] identifier writes_vector is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:177]\nWARNING: [VRFC 10-756] identifier check_frame is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:178]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:180]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:181]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:193]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:194]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:199]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:200]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:201]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:209]\nWARNING: [VRFC 10-756] identifier valid_masks is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:222]\nWARNING: [VRFC 10-756] identifier job is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:223]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:224]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:227]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:228]\nWARNING: [VRFC 10-756] identifier mem_ready is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:230]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:233]\nWARNING: [VRFC 10-756] identifier affine_half_mask is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:281]\nWARNING: [VRFC 10-756] identifier fabric_fault is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:324]\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_panel_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/factor_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_fabric.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_fabric\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_array.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_array\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_pe.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_pe\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/stream_vector_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_vector_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/operator_frame_feeder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module operator_frame_feeder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/range_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module range_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/live_operator_memory.sv\" into library work\nINFO: [VRFC 10-311] analyzing module live_operator_memory\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/paired_support_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module paired_support_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/operator/phi_sign_generator.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_generator\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/phi_sign_cache.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_cache\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/phi_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_builder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_builder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_stream_kernel_mapping_calibration\n",
+      "stderr": "",
+      "logs": {
+        "xvlog.log": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_kernel.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_kernel\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:90]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:91]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:92]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:93]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:94]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:95]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:96]\nWARNING: [VRFC 10-756] identifier output_count is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:100]\nWARNING: [VRFC 10-756] identifier writes_vector is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:177]\nWARNING: [VRFC 10-756] identifier check_frame is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:178]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:180]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:181]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:193]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:194]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:199]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:200]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:201]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:209]\nWARNING: [VRFC 10-756] identifier valid_masks is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:222]\nWARNING: [VRFC 10-756] identifier job is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:223]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:224]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:227]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:228]\nWARNING: [VRFC 10-756] identifier mem_ready is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:230]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:233]\nWARNING: [VRFC 10-756] identifier affine_half_mask is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:281]\nWARNING: [VRFC 10-756] identifier fabric_fault is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:324]\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_panel_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/factor_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_fabric.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_fabric\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_array.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_array\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_pe.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_pe\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/stream_vector_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_vector_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/operator_frame_feeder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module operator_frame_feeder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/range_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module range_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/live_operator_memory.sv\" into library work\nINFO: [VRFC 10-311] analyzing module live_operator_memory\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/paired_support_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module paired_support_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/operator/phi_sign_generator.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_generator\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/phi_sign_cache.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_cache\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/phi_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_builder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_builder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_stream_kernel_mapping_calibration\n"
+      },
+      "source_identity": {
+        "metadata_schema": 2,
+        "top": "tb_stream_kernel_mapping_calibration",
+        "sources": [
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv",
+          "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv",
+          "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv"
+        ],
+        "hashes": {
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv": "0a88d278646ff2e8027ff1c046b7fa966ce06d98880657b141b52aa21dd9d70b",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv": "9c694c18d223bbf6be048b2de81b17065f9e3c46bbce10656947ec4fd939404c",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv": "f6d1194196817c263541edb438e60aacedc63e4c9fafdb56a35d0922d3e6c236",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv": "ed1207d9beb6b745bd5b9741e8f16f59d3ec800e921ad0aee0eb021eec2edad1",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv": "811e078870f77d51637bf7a7d6255ccd9276f5c230bcfcc30586020d5b88e399",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv": "0eaf9dc6b70369ff3ec96b3a89894fd6fc3e4489ae20984ce378054661622589",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv": "7c5e6842682173713e777f4c8e7d2d168a8738fac60d78003fc18085137f8b65",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv": "6060ebf90b1c0bfd9bd2a3b89d4f83670de869ae245f65489d5352eeee2b0668",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv": "4c5133633e577ecaf5228b5a8c649d55673c35d00e3312c4e95cffabd6972d62",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv": "0d194909bc6b868603c698f5428f98ff55ef4ab796c89460e1d9072578e4942e",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv": "73a688ff3bc24e34aac4e04302ee17e69dd85d24a62e61e2b6aa332d8e17aedf",
+          "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv": "395aec4b89b0ca18ccd2d1ca486b71188a624acb66df6635fbca57f5c3babe3e",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv": "b59073646d2c506bab1b1ed061cf5299ada2bed3fb3f5c8f0a0527a6525e8808",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv": "26ba84d1f0ad3a879e0b18d8d3782ca13a7afb3c22b6f490d39cee8187e32863",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv": "8365de592657062c96a0fc68130aa75e4bff8c76a8f463344f4ce334d8d0df67",
+          "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv": "2fd6eb4c6e22210e2d2bcc2eb0a0b00573358fe251321c503de56c0613363a1f",
+          "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+          "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+          "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+          "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+          "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+          "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+          "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+          "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+          "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+          "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+          "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+          "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+          "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+          "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+          "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+          "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+          "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+          "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+        },
+        "includes": [
+          "D:\\vivado_pj\\rtl\\v4\\include"
+        ],
+        "parameters": {},
+        "tools": {
+          "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+          "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+          "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+        },
+        "timescale": "1ns/1ps"
+      },
+      "compile_signature": "acd00318201dcf6a96e9da41334923a8bd2790aa993db4a9321f8d13f5e4acb3"
+    },
+    {
+      "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat\" \"tb_stream_kernel_mapping_calibration\" \"-s\" \"sim_acd00318201dcf6a\" \"--timescale\" \"1ns/1ps\" \"--debug\" \"typical\"\"",
+      "argv": [
+        "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+        "tb_stream_kernel_mapping_calibration",
+        "-s",
+        "sim_acd00318201dcf6a",
+        "--timescale",
+        "1ns/1ps",
+        "--debug",
+        "typical"
+      ],
+      "cwd": "D:\\vivado_pj\\work\\gemv_mapping_calibration_argj4nfw\\kernel.xsim_yo0tplkn",
+      "timeout_seconds": 240,
+      "invocation_id": "b7101820ceb84f4192a5b8d402452c9a",
+      "execution": "executed",
+      "started_utc": "2026-09-12T05:20:59.266557+00:00",
+      "returncode": 0,
+      "stdout": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_stream_kernel_mapping_calibration -s sim_acd00318201dcf6a --timescale 1ns/1ps --debug typical \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.range_reader\nCompiling module work.stream_vector_store\nCompiling module work.stream_pe\nCompiling module work.stream_array_default\nCompiling module work.stream_fabric(TERMINAL_ENABLE=1,...\nCompiling module work.operator_frame_feeder\nCompiling module work.support_service\nCompiling module work.factor_store\nCompiling module work.factor_service(ENABLE_PANEL_BRID...\nCompiling module work.factor_panel_service\nCompiling module work.stream_kernel\nCompiling module work.paired_support_store\nCompiling module work.support_builder\nCompiling module work.phi_sign_generator\nCompiling module work.phi_sign_cache\nCompiling module work.phi_reader\nCompiling module work.live_operator_memory\nCompiling module work.tb_stream_kernel_mapping_calibra...\nBuilt simulation snapshot sim_acd00318201dcf6a\n\n****** Webtalk v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/kernel.xsim_yo0tplkn/xsim.dir/sim_acd00318201dcf6a/webtalk/xsim_webtalk.tcl -notrace\nINFO: [Common 17-206] Exiting Webtalk at Sat Sep 12 12:21:13 2026...\n",
+      "stderr": "",
+      "logs": {
+        "xelab.log": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_stream_kernel_mapping_calibration -s sim_acd00318201dcf6a --timescale 1ns/1ps --debug typical \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.range_reader\nCompiling module work.stream_vector_store\nCompiling module work.stream_pe\nCompiling module work.stream_array_default\nCompiling module work.stream_fabric(TERMINAL_ENABLE=1,...\nCompiling module work.operator_frame_feeder\nCompiling module work.support_service\nCompiling module work.factor_store\nCompiling module work.factor_service(ENABLE_PANEL_BRID...\nCompiling module work.factor_panel_service\nCompiling module work.stream_kernel\nCompiling module work.paired_support_store\nCompiling module work.support_builder\nCompiling module work.phi_sign_generator\nCompiling module work.phi_sign_cache\nCompiling module work.phi_reader\nCompiling module work.live_operator_memory\nCompiling module work.tb_stream_kernel_mapping_calibra...\nBuilt simulation snapshot sim_acd00318201dcf6a\n"
+      },
+      "source_identity": {
+        "metadata_schema": 2,
+        "top": "tb_stream_kernel_mapping_calibration",
+        "sources": [
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv",
+          "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv",
+          "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv"
+        ],
+        "hashes": {
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv": "0a88d278646ff2e8027ff1c046b7fa966ce06d98880657b141b52aa21dd9d70b",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv": "9c694c18d223bbf6be048b2de81b17065f9e3c46bbce10656947ec4fd939404c",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv": "f6d1194196817c263541edb438e60aacedc63e4c9fafdb56a35d0922d3e6c236",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv": "ed1207d9beb6b745bd5b9741e8f16f59d3ec800e921ad0aee0eb021eec2edad1",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv": "811e078870f77d51637bf7a7d6255ccd9276f5c230bcfcc30586020d5b88e399",
+          "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv": "0eaf9dc6b70369ff3ec96b3a89894fd6fc3e4489ae20984ce378054661622589",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv": "7c5e6842682173713e777f4c8e7d2d168a8738fac60d78003fc18085137f8b65",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv": "6060ebf90b1c0bfd9bd2a3b89d4f83670de869ae245f65489d5352eeee2b0668",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv": "4c5133633e577ecaf5228b5a8c649d55673c35d00e3312c4e95cffabd6972d62",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv": "0d194909bc6b868603c698f5428f98ff55ef4ab796c89460e1d9072578e4942e",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv": "73a688ff3bc24e34aac4e04302ee17e69dd85d24a62e61e2b6aa332d8e17aedf",
+          "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv": "395aec4b89b0ca18ccd2d1ca486b71188a624acb66df6635fbca57f5c3babe3e",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv": "b59073646d2c506bab1b1ed061cf5299ada2bed3fb3f5c8f0a0527a6525e8808",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv": "26ba84d1f0ad3a879e0b18d8d3782ca13a7afb3c22b6f490d39cee8187e32863",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv": "8365de592657062c96a0fc68130aa75e4bff8c76a8f463344f4ce334d8d0df67",
+          "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv": "2fd6eb4c6e22210e2d2bcc2eb0a0b00573358fe251321c503de56c0613363a1f",
+          "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+          "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+          "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+          "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+          "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+          "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+          "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+          "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+          "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+          "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+          "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+          "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+          "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+          "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+          "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+          "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+          "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+          "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+        },
+        "includes": [
+          "D:\\vivado_pj\\rtl\\v4\\include"
+        ],
+        "parameters": {},
+        "tools": {
+          "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+          "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+          "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+        },
+        "timescale": "1ns/1ps"
+      },
+      "compile_signature": "acd00318201dcf6a96e9da41334923a8bd2790aa993db4a9321f8d13f5e4acb3"
+    }
+  ],
+  "records": [
+    {
+      "test": "verification.v4.test_gemv_mapping_calibration_rtl.GemvMappingCalibrationRtlTests.test_exact_live_phi_and_restricted_dense_measurements",
+      "status": "PASS",
+      "deterministic_stall_policy": "tb_stream_kernel command-relative epoch",
+      "source_sha256": {
+        "rtl/v4/compute/stream_kernel.sv": "0a88d278646ff2e8027ff1c046b7fa966ce06d98880657b141b52aa21dd9d70b",
+        "rtl/v4/dataflow/support_service.sv": "9c694c18d223bbf6be048b2de81b17065f9e3c46bbce10656947ec4fd939404c",
+        "rtl/v4/dataflow/factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+        "rtl/v4/dataflow/factor_panel_service.sv": "f6d1194196817c263541edb438e60aacedc63e4c9fafdb56a35d0922d3e6c236",
+        "rtl/v4/memory/factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+        "rtl/v4/compute/stream_fabric.sv": "ed1207d9beb6b745bd5b9741e8f16f59d3ec800e921ad0aee0eb021eec2edad1",
+        "rtl/v4/compute/stream_array.sv": "811e078870f77d51637bf7a7d6255ccd9276f5c230bcfcc30586020d5b88e399",
+        "rtl/v4/compute/stream_pe.sv": "0eaf9dc6b70369ff3ec96b3a89894fd6fc3e4489ae20984ce378054661622589",
+        "rtl/v4/memory/stream_vector_store.sv": "7c5e6842682173713e777f4c8e7d2d168a8738fac60d78003fc18085137f8b65",
+        "rtl/v4/dataflow/operator_frame_feeder.sv": "6060ebf90b1c0bfd9bd2a3b89d4f83670de869ae245f65489d5352eeee2b0668",
+        "rtl/v4/dataflow/range_reader.sv": "4c5133633e577ecaf5228b5a8c649d55673c35d00e3312c4e95cffabd6972d62",
+        "rtl/v4/memory/live_operator_memory.sv": "0d194909bc6b868603c698f5428f98ff55ef4ab796c89460e1d9072578e4942e",
+        "rtl/v4/memory/paired_support_store.sv": "73a688ff3bc24e34aac4e04302ee17e69dd85d24a62e61e2b6aa332d8e17aedf",
+        "rtl/v4/operator/phi_sign_generator.sv": "395aec4b89b0ca18ccd2d1ca486b71188a624acb66df6635fbca57f5c3babe3e",
+        "rtl/v4/memory/phi_sign_cache.sv": "b59073646d2c506bab1b1ed061cf5299ada2bed3fb3f5c8f0a0527a6525e8808",
+        "rtl/v4/dataflow/phi_reader.sv": "26ba84d1f0ad3a879e0b18d8d3782ca13a7afb3c22b6f490d39cee8187e32863",
+        "rtl/v4/dataflow/support_builder.sv": "8365de592657062c96a0fc68130aa75e4bff8c76a8f463344f4ce334d8d0df67",
+        "verification/v4/stream/tb_stream_kernel_mapping_calibration.sv": "2fd6eb4c6e22210e2d2bcc2eb0a0b00573358fe251321c503de56c0613363a1f",
+        "verification/v4/test_stream_kernel_rtl.py": "ced8795bb16112da944a5908886d2ff20c1c6c8b2a7ce7a42c5efe767a21f224",
+        "verification/v4/stream/tb_stream_kernel_copy.sv": "11d770c39b979ddb59f744eeb7d2e137aee9a71df6f51147065e6fd6706846ef",
+        "docs/v4/architecture/RESIDENT_CHAIN.md": "beeb26f6d2f0656edab7bb74841b7bfaaed69e9df9ad3b4e179b9803eeaab788",
+        "docs/v4/architecture/SCALAR_INSERT.md": "3ac3f5f15272a431965b1c16e261df74ab71dce6bc236e759e44f72c513e9867",
+        "docs/v4/architecture/RANGE_TEMPLATE.md": "2b5abdeabab2d45a8763ace72f43dc8728da5db923cbb6b2bf4e4b00f31f7a0d",
+        "config/v4_kernel_interface.json": "9ad7fe779f1f462b97e9338fd586735ef4b5b00f6a882947a30a0ba23a079fbe",
+        "config/v4_program_interface.json": "4072eb62e62fe7039d06177fb9ee407ac334e74622364b06d83072ab6ef790e3",
+        "rtl/v4/include/kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+        "rtl/v4/include/program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+        "scripts/v4/xsim.py": "a28a7c625b7e90676ad399b9d95f7f40b3617664758d8e886a45eeec1f6961ed",
+        "docs/v4/architecture/STREAM_SYSTEM_CONTRACT.md": "ace212eba4783396b8ffdb4ec4877b756f3827e0bd9f4e2a0f02da8555d81391",
+        "docs/v4/architecture/FACTOR_SERVICE.md": "971bc62535f0a2ad7ee5222f4a5732b8c1d7550abbecc68da89d5b4174d70048",
+        "docs/v4/architecture/FACTOR_PANEL.md": "9dfe3ea303193dbeeba636766241594b0ce13a777516be91b470ebd952c2a947",
+        "verification/v4/test_gemv_mapping_calibration_rtl.py": "3af423df6d542c179bc5c57784493fc26d321286c0ef5b7cf2c6521bdabdfe9b"
+      },
+      "vectors_sha256": "225222315e0e98b2381d7e2c0bca629d752b2f34cd467bd348e49815d1936b87",
+      "commands": [
+        {
+          "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat\" \"-sv\" \"-i\" \"D:\\vivado_pj\\rtl\\v4\\include\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv\" \"D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv\" \"D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv\"\"",
+          "argv": [
+            "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+            "-sv",
+            "-i",
+            "D:\\vivado_pj\\rtl\\v4\\include",
+            "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+            "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+            "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv",
+            "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv",
+            "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv",
+            "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv",
+            "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv",
+            "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv",
+            "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv",
+            "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv",
+            "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv"
+          ],
+          "cwd": "D:\\vivado_pj\\work\\gemv_mapping_calibration_argj4nfw\\kernel.xsim_yo0tplkn",
+          "timeout_seconds": 240,
+          "invocation_id": "1366d8fc8f71474eb66a7eeed5520f86",
+          "execution": "executed",
+          "started_utc": "2026-09-12T05:20:57.164616+00:00",
+          "returncode": 0,
+          "stdout": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_kernel.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_kernel\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:90]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:91]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:92]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:93]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:94]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:95]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:96]\nWARNING: [VRFC 10-756] identifier output_count is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:100]\nWARNING: [VRFC 10-756] identifier writes_vector is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:177]\nWARNING: [VRFC 10-756] identifier check_frame is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:178]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:180]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:181]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:193]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:194]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:199]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:200]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:201]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:209]\nWARNING: [VRFC 10-756] identifier valid_masks is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:222]\nWARNING: [VRFC 10-756] identifier job is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:223]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:224]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:227]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:228]\nWARNING: [VRFC 10-756] identifier mem_ready is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:230]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:233]\nWARNING: [VRFC 10-756] identifier affine_half_mask is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:281]\nWARNING: [VRFC 10-756] identifier fabric_fault is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:324]\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_panel_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/factor_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_fabric.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_fabric\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_array.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_array\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_pe.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_pe\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/stream_vector_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_vector_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/operator_frame_feeder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module operator_frame_feeder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/range_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module range_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/live_operator_memory.sv\" into library work\nINFO: [VRFC 10-311] analyzing module live_operator_memory\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/paired_support_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module paired_support_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/operator/phi_sign_generator.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_generator\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/phi_sign_cache.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_cache\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/phi_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_builder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_builder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_stream_kernel_mapping_calibration\n",
+          "stderr": "",
+          "logs": {
+            "xvlog.log": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_kernel.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_kernel\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:90]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:91]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:92]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:93]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:94]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:95]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:96]\nWARNING: [VRFC 10-756] identifier output_count is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:100]\nWARNING: [VRFC 10-756] identifier writes_vector is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:177]\nWARNING: [VRFC 10-756] identifier check_frame is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:178]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:180]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:181]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:193]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:194]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:199]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:200]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:201]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:209]\nWARNING: [VRFC 10-756] identifier valid_masks is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:222]\nWARNING: [VRFC 10-756] identifier job is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:223]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:224]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:227]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:228]\nWARNING: [VRFC 10-756] identifier mem_ready is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:230]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:233]\nWARNING: [VRFC 10-756] identifier affine_half_mask is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:281]\nWARNING: [VRFC 10-756] identifier fabric_fault is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:324]\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_panel_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/factor_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_fabric.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_fabric\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_array.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_array\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_pe.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_pe\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/stream_vector_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_vector_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/operator_frame_feeder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module operator_frame_feeder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/range_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module range_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/live_operator_memory.sv\" into library work\nINFO: [VRFC 10-311] analyzing module live_operator_memory\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/paired_support_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module paired_support_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/operator/phi_sign_generator.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_generator\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/phi_sign_cache.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_cache\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/phi_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_builder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_builder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_stream_kernel_mapping_calibration\n"
+          },
+          "source_identity": {
+            "metadata_schema": 2,
+            "top": "tb_stream_kernel_mapping_calibration",
+            "sources": [
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv",
+              "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv"
+            ],
+            "hashes": {
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv": "0a88d278646ff2e8027ff1c046b7fa966ce06d98880657b141b52aa21dd9d70b",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv": "9c694c18d223bbf6be048b2de81b17065f9e3c46bbce10656947ec4fd939404c",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv": "f6d1194196817c263541edb438e60aacedc63e4c9fafdb56a35d0922d3e6c236",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv": "ed1207d9beb6b745bd5b9741e8f16f59d3ec800e921ad0aee0eb021eec2edad1",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv": "811e078870f77d51637bf7a7d6255ccd9276f5c230bcfcc30586020d5b88e399",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv": "0eaf9dc6b70369ff3ec96b3a89894fd6fc3e4489ae20984ce378054661622589",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv": "7c5e6842682173713e777f4c8e7d2d168a8738fac60d78003fc18085137f8b65",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv": "6060ebf90b1c0bfd9bd2a3b89d4f83670de869ae245f65489d5352eeee2b0668",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv": "4c5133633e577ecaf5228b5a8c649d55673c35d00e3312c4e95cffabd6972d62",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv": "0d194909bc6b868603c698f5428f98ff55ef4ab796c89460e1d9072578e4942e",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv": "73a688ff3bc24e34aac4e04302ee17e69dd85d24a62e61e2b6aa332d8e17aedf",
+              "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv": "395aec4b89b0ca18ccd2d1ca486b71188a624acb66df6635fbca57f5c3babe3e",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv": "b59073646d2c506bab1b1ed061cf5299ada2bed3fb3f5c8f0a0527a6525e8808",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv": "26ba84d1f0ad3a879e0b18d8d3782ca13a7afb3c22b6f490d39cee8187e32863",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv": "8365de592657062c96a0fc68130aa75e4bff8c76a8f463344f4ce334d8d0df67",
+              "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv": "2fd6eb4c6e22210e2d2bcc2eb0a0b00573358fe251321c503de56c0613363a1f",
+              "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+              "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+              "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+              "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+              "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+              "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+              "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+              "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+              "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+              "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+              "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+              "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+              "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+              "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+              "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+              "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+              "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+              "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+            },
+            "includes": [
+              "D:\\vivado_pj\\rtl\\v4\\include"
+            ],
+            "parameters": {},
+            "tools": {
+              "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+              "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+              "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+            },
+            "timescale": "1ns/1ps"
+          },
+          "compile_signature": "acd00318201dcf6a96e9da41334923a8bd2790aa993db4a9321f8d13f5e4acb3"
+        },
+        {
+          "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat\" \"tb_stream_kernel_mapping_calibration\" \"-s\" \"sim_acd00318201dcf6a\" \"--timescale\" \"1ns/1ps\" \"--debug\" \"typical\"\"",
+          "argv": [
+            "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+            "tb_stream_kernel_mapping_calibration",
+            "-s",
+            "sim_acd00318201dcf6a",
+            "--timescale",
+            "1ns/1ps",
+            "--debug",
+            "typical"
+          ],
+          "cwd": "D:\\vivado_pj\\work\\gemv_mapping_calibration_argj4nfw\\kernel.xsim_yo0tplkn",
+          "timeout_seconds": 240,
+          "invocation_id": "b7101820ceb84f4192a5b8d402452c9a",
+          "execution": "executed",
+          "started_utc": "2026-09-12T05:20:59.266557+00:00",
+          "returncode": 0,
+          "stdout": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_stream_kernel_mapping_calibration -s sim_acd00318201dcf6a --timescale 1ns/1ps --debug typical \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.range_reader\nCompiling module work.stream_vector_store\nCompiling module work.stream_pe\nCompiling module work.stream_array_default\nCompiling module work.stream_fabric(TERMINAL_ENABLE=1,...\nCompiling module work.operator_frame_feeder\nCompiling module work.support_service\nCompiling module work.factor_store\nCompiling module work.factor_service(ENABLE_PANEL_BRID...\nCompiling module work.factor_panel_service\nCompiling module work.stream_kernel\nCompiling module work.paired_support_store\nCompiling module work.support_builder\nCompiling module work.phi_sign_generator\nCompiling module work.phi_sign_cache\nCompiling module work.phi_reader\nCompiling module work.live_operator_memory\nCompiling module work.tb_stream_kernel_mapping_calibra...\nBuilt simulation snapshot sim_acd00318201dcf6a\n\n****** Webtalk v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/kernel.xsim_yo0tplkn/xsim.dir/sim_acd00318201dcf6a/webtalk/xsim_webtalk.tcl -notrace\nINFO: [Common 17-206] Exiting Webtalk at Sat Sep 12 12:21:13 2026...\n",
+          "stderr": "",
+          "logs": {
+            "xelab.log": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_stream_kernel_mapping_calibration -s sim_acd00318201dcf6a --timescale 1ns/1ps --debug typical \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.range_reader\nCompiling module work.stream_vector_store\nCompiling module work.stream_pe\nCompiling module work.stream_array_default\nCompiling module work.stream_fabric(TERMINAL_ENABLE=1,...\nCompiling module work.operator_frame_feeder\nCompiling module work.support_service\nCompiling module work.factor_store\nCompiling module work.factor_service(ENABLE_PANEL_BRID...\nCompiling module work.factor_panel_service\nCompiling module work.stream_kernel\nCompiling module work.paired_support_store\nCompiling module work.support_builder\nCompiling module work.phi_sign_generator\nCompiling module work.phi_sign_cache\nCompiling module work.phi_reader\nCompiling module work.live_operator_memory\nCompiling module work.tb_stream_kernel_mapping_calibra...\nBuilt simulation snapshot sim_acd00318201dcf6a\n"
+          },
+          "source_identity": {
+            "metadata_schema": 2,
+            "top": "tb_stream_kernel_mapping_calibration",
+            "sources": [
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv",
+              "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv"
+            ],
+            "hashes": {
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv": "0a88d278646ff2e8027ff1c046b7fa966ce06d98880657b141b52aa21dd9d70b",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv": "9c694c18d223bbf6be048b2de81b17065f9e3c46bbce10656947ec4fd939404c",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv": "f6d1194196817c263541edb438e60aacedc63e4c9fafdb56a35d0922d3e6c236",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv": "ed1207d9beb6b745bd5b9741e8f16f59d3ec800e921ad0aee0eb021eec2edad1",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv": "811e078870f77d51637bf7a7d6255ccd9276f5c230bcfcc30586020d5b88e399",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv": "0eaf9dc6b70369ff3ec96b3a89894fd6fc3e4489ae20984ce378054661622589",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv": "7c5e6842682173713e777f4c8e7d2d168a8738fac60d78003fc18085137f8b65",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv": "6060ebf90b1c0bfd9bd2a3b89d4f83670de869ae245f65489d5352eeee2b0668",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv": "4c5133633e577ecaf5228b5a8c649d55673c35d00e3312c4e95cffabd6972d62",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv": "0d194909bc6b868603c698f5428f98ff55ef4ab796c89460e1d9072578e4942e",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv": "73a688ff3bc24e34aac4e04302ee17e69dd85d24a62e61e2b6aa332d8e17aedf",
+              "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv": "395aec4b89b0ca18ccd2d1ca486b71188a624acb66df6635fbca57f5c3babe3e",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv": "b59073646d2c506bab1b1ed061cf5299ada2bed3fb3f5c8f0a0527a6525e8808",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv": "26ba84d1f0ad3a879e0b18d8d3782ca13a7afb3c22b6f490d39cee8187e32863",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv": "8365de592657062c96a0fc68130aa75e4bff8c76a8f463344f4ce334d8d0df67",
+              "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv": "2fd6eb4c6e22210e2d2bcc2eb0a0b00573358fe251321c503de56c0613363a1f",
+              "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+              "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+              "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+              "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+              "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+              "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+              "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+              "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+              "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+              "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+              "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+              "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+              "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+              "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+              "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+              "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+              "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+              "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+            },
+            "includes": [
+              "D:\\vivado_pj\\rtl\\v4\\include"
+            ],
+            "parameters": {},
+            "tools": {
+              "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+              "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+              "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+            },
+            "timescale": "1ns/1ps"
+          },
+          "compile_signature": "acd00318201dcf6a96e9da41334923a8bd2790aa993db4a9321f8d13f5e4acb3"
+        },
+        {
+          "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat\" \"sim_acd00318201dcf6a\" \"-runall\" \"-onerror\" \"quit\" \"-testplusarg\" \"vectors=D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/measurements.txt\" \"-testplusarg\" \"command_stall_epoch=1\"\"",
+          "argv": [
+            "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat",
+            "sim_acd00318201dcf6a",
+            "-runall",
+            "-onerror",
+            "quit",
+            "-testplusarg",
+            "vectors=D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/measurements.txt",
+            "-testplusarg",
+            "command_stall_epoch=1"
+          ],
+          "cwd": "D:\\vivado_pj\\work\\gemv_mapping_calibration_argj4nfw\\kernel.xsim_yo0tplkn",
+          "timeout_seconds": 900,
+          "invocation_id": "e8d9baf9cc8840a0a43dad4fb144f6cc",
+          "execution": "executed",
+          "started_utc": "2026-09-12T05:21:13.704073+00:00",
+          "returncode": 0,
+          "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_acd00318201dcf6a/xsim_script.tcl\n# xsim {sim_acd00318201dcf6a} -testplusarg vectors=D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/measurements.txt -testplusarg command_stall_epoch=1 -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nCASE 0 op=1 rows=32 cols=64 dense=0 trans=0 r4=0 cycles=96 support_reads=0 candidates=0\nTEMPLATE_READS case=0 reads=0\nTRANSPORT case=0 frames=64 matrix=8 vector=2 first=95 last=164 maxgap=3\nCASE 1 op=1 rows=32 cols=64 dense=0 trans=0 r4=1 cycles=298 support_reads=0 candidates=0\nTEMPLATE_READS case=1 reads=0\nTRANSPORT case=1 frames=64 matrix=256 vector=2 first=291 last=550 maxgap=13\nCASE 2 op=1 rows=32 cols=64 dense=0 trans=1 r4=0 cycles=291 support_reads=0 candidates=0\nTEMPLATE_READS case=2 reads=0\nTRANSPORT case=2 frames=64 matrix=256 vector=1 first=679 last=934 maxgap=10\nCASE 3 op=1 rows=32 cols=64 dense=0 trans=1 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=3 reads=0\nTRANSPORT case=3 frames=64 matrix=8 vector=1 first=1059 last=1198 maxgap=13\nCASE 4 op=1 rows=64 cols=256 dense=0 trans=0 r4=0 cycles=607 support_reads=0 candidates=0\nTEMPLATE_READS case=4 reads=0\nTRANSPORT case=4 frames=512 matrix=64 vector=16 first=1815 last=2388 maxgap=9\nCASE 5 op=1 rows=64 cols=256 dense=0 trans=0 r4=1 cycles=2117 support_reads=0 candidates=0\nTEMPLATE_READS case=5 reads=0\nTRANSPORT case=5 frames=512 matrix=2048 vector=64 first=3012 last=5084 maxgap=14\nCASE 6 op=1 rows=64 cols=256 dense=0 trans=1 r4=0 cycles=2101 support_reads=0 candidates=0\nTEMPLATE_READS case=6 reads=0\nTRANSPORT case=6 frames=512 matrix=2048 vector=2 first=5704 last=7762 maxgap=11\nCASE 7 op=1 rows=64 cols=256 dense=0 trans=1 r4=1 cycles=920 support_reads=0 candidates=0\nTEMPLATE_READS case=7 reads=0\nTRANSPORT case=7 frames=512 matrix=64 vector=2 first=8419 last=9303 maxgap=14\nCASE 8 op=1 rows=32 cols=1 dense=1 trans=0 r4=0 cycles=26 support_reads=0 candidates=0\nTEMPLATE_READS case=8 reads=0\nTRANSPORT case=8 frames=1 matrix=1 vector=1 first=9410 last=9410 maxgap=0\nCASE 9 op=1 rows=32 cols=1 dense=1 trans=0 r4=1 cycles=62 support_reads=0 candidates=0\nTEMPLATE_READS case=9 reads=0\nTRANSPORT case=9 frames=4 matrix=4 vector=1 first=9459 last=9493 maxgap=12\nCASE 10 op=1 rows=32 cols=2 dense=1 trans=0 r4=0 cycles=27 support_reads=0 candidates=0\nTEMPLATE_READS case=10 reads=0\nTRANSPORT case=10 frames=2 matrix=2 vector=1 first=9545 last=9546 maxgap=1\nCASE 11 op=1 rows=32 cols=2 dense=1 trans=0 r4=1 cycles=70 support_reads=0 candidates=0\nTEMPLATE_READS case=11 reads=0\nTRANSPORT case=11 frames=8 matrix=8 vector=1 first=9596 last=9636 maxgap=14\nCASE 12 op=1 rows=32 cols=4 dense=1 trans=0 r4=0 cycles=32 support_reads=0 candidates=0\nTEMPLATE_READS case=12 reads=0\nTRANSPORT case=12 frames=4 matrix=4 vector=1 first=9692 last=9695 maxgap=1\nCASE 13 op=1 rows=32 cols=4 dense=1 trans=0 r4=1 cycles=74 support_reads=0 candidates=0\nTEMPLATE_READS case=13 reads=0\nTRANSPORT case=13 frames=16 matrix=16 vector=1 first=9750 last=9796 maxgap=12\nCASE 14 op=1 rows=32 cols=8 dense=1 trans=0 r4=0 cycles=33 support_reads=0 candidates=0\nTEMPLATE_READS case=14 reads=0\nTRANSPORT case=14 frames=8 matrix=8 vector=1 first=9854 last=9861 maxgap=1\nCASE 15 op=1 rows=32 cols=8 dense=1 trans=0 r4=1 cycles=93 support_reads=0 candidates=0\nTEMPLATE_READS case=15 reads=0\nTRANSPORT case=15 frames=32 matrix=32 vector=1 first=9917 last=9982 maxgap=13\nCASE 16 op=1 rows=32 cols=16 dense=1 trans=0 r4=0 cycles=43 support_reads=0 candidates=0\nTEMPLATE_READS case=16 reads=0\nTRANSPORT case=16 frames=16 matrix=16 vector=1 first=10048 last=10065 maxgap=3\nCASE 17 op=1 rows=32 cols=16 dense=1 trans=0 r4=1 cycles=93 support_reads=0 candidates=0\nTEMPLATE_READS case=17 reads=0\nTRANSPORT case=17 frames=32 matrix=32 vector=1 first=10129 last=10194 maxgap=13\nCASE 18 op=1 rows=32 cols=24 dense=1 trans=0 r4=0 cycles=51 support_reads=0 candidates=0\nTEMPLATE_READS case=18 reads=0\nTRANSPORT case=18 frames=24 matrix=24 vector=1 first=10268 last=10293 maxgap=3\nCASE 19 op=1 rows=32 cols=24 dense=1 trans=0 r4=1 cycles=93 support_reads=0 candidates=0\nTEMPLATE_READS case=19 reads=0\nTRANSPORT case=19 frames=32 matrix=32 vector=1 first=10365 last=10430 maxgap=13\nCASE 20 op=1 rows=64 cols=1 dense=1 trans=0 r4=0 cycles=36 support_reads=0 candidates=0\nTEMPLATE_READS case=20 reads=0\nTRANSPORT case=20 frames=2 matrix=2 vector=1 first=10487 last=10496 maxgap=9\nCASE 21 op=1 rows=64 cols=1 dense=1 trans=0 r4=1 cycles=109 support_reads=0 candidates=0\nTEMPLATE_READS case=21 reads=0\nTRANSPORT case=21 frames=8 matrix=8 vector=1 first=10559 last=10637 maxgap=12\nCASE 22 op=1 rows=64 cols=2 dense=1 trans=0 r4=0 cycles=38 support_reads=0 candidates=0\nTEMPLATE_READS case=22 reads=0\nTRANSPORT case=22 frames=4 matrix=4 vector=1 first=10706 last=10717 maxgap=9\nCASE 23 op=1 rows=64 cols=2 dense=1 trans=0 r4=1 cycles=121 support_reads=0 candidates=0\nTEMPLATE_READS case=23 reads=0\nTRANSPORT case=23 frames=16 matrix=16 vector=1 first=10782 last=10874 maxgap=14\nCASE 24 op=1 rows=64 cols=4 dense=1 trans=0 r4=0 cycles=45 support_reads=0 candidates=0\nTEMPLATE_READS case=24 reads=0\nTRANSPORT case=24 frames=8 matrix=8 vector=1 first=10945 last=10963 maxgap=12\nCASE 25 op=1 rows=64 cols=4 dense=1 trans=0 r4=1 cycles=133 support_reads=0 candidates=0\nTEMPLATE_READS case=25 reads=0\nTRANSPORT case=25 frames=32 matrix=32 vector=1 first=11032 last=11136 maxgap=12\nCASE 26 op=1 rows=64 cols=8 dense=1 trans=0 r4=0 cycles=52 support_reads=0 candidates=0\nTEMPLATE_READS case=26 reads=0\nTRANSPORT case=26 frames=16 matrix=16 vector=1 first=11215 last=11238 maxgap=9\nCASE 27 op=1 rows=64 cols=8 dense=1 trans=0 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=27 reads=0\nTRANSPORT case=27 frames=64 matrix=64 vector=1 first=11317 last=11456 maxgap=13\nCASE 28 op=1 rows=64 cols=16 dense=1 trans=0 r4=0 cycles=71 support_reads=0 candidates=0\nTEMPLATE_READS case=28 reads=0\nTRANSPORT case=28 frames=32 matrix=32 vector=1 first=11551 last=11594 maxgap=9\nCASE 29 op=1 rows=64 cols=16 dense=1 trans=0 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=29 reads=0\nTRANSPORT case=29 frames=64 matrix=64 vector=1 first=11688 last=11827 maxgap=13\nCASE 30 op=1 rows=64 cols=24 dense=1 trans=0 r4=0 cycles=90 support_reads=0 candidates=0\nTEMPLATE_READS case=30 reads=0\nTRANSPORT case=30 frames=48 matrix=48 vector=1 first=11938 last=11999 maxgap=9\nCASE 31 op=1 rows=64 cols=24 dense=1 trans=0 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=31 reads=0\nTRANSPORT case=31 frames=64 matrix=64 vector=1 first=12110 last=12249 maxgap=13\nOFFER_RESPONSE_OVERLAP 0\nPREFETCH_GROUP_OBSERVATIONS 1002\nPASS stream_kernel cycles=12282 checks=334 commands=32 stalls=1464\n$finish called at time : 122820 ns : File \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" Line 556\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:08 . Memory (MB): peak = 228.617 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 12:21:30 2026...\n",
+          "stderr": "",
+          "logs": {
+            "xsim.log": "#-----------------------------------------------------------\n# xsim v2018.1 (64-bit)\n# SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n# IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n# Start of session at: Sat Sep 12 12:21:15 2026\n# Process ID: 14528\n# Current directory: D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/kernel.xsim_yo0tplkn\n# Command line: xsim.exe -mode tcl -source {xsim.dir/sim_acd00318201dcf6a/xsim_script.tcl}\n# Log file: D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/kernel.xsim_yo0tplkn/xsim.log\n# Journal file: D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/kernel.xsim_yo0tplkn\\xsim.jou\n#-----------------------------------------------------------\nsource xsim.dir/sim_acd00318201dcf6a/xsim_script.tcl\n# xsim {sim_acd00318201dcf6a} -testplusarg vectors=D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/measurements.txt -testplusarg command_stall_epoch=1 -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nCASE 0 op=1 rows=32 cols=64 dense=0 trans=0 r4=0 cycles=96 support_reads=0 candidates=0\nTEMPLATE_READS case=0 reads=0\nTRANSPORT case=0 frames=64 matrix=8 vector=2 first=95 last=164 maxgap=3\nCASE 1 op=1 rows=32 cols=64 dense=0 trans=0 r4=1 cycles=298 support_reads=0 candidates=0\nTEMPLATE_READS case=1 reads=0\nTRANSPORT case=1 frames=64 matrix=256 vector=2 first=291 last=550 maxgap=13\nCASE 2 op=1 rows=32 cols=64 dense=0 trans=1 r4=0 cycles=291 support_reads=0 candidates=0\nTEMPLATE_READS case=2 reads=0\nTRANSPORT case=2 frames=64 matrix=256 vector=1 first=679 last=934 maxgap=10\nCASE 3 op=1 rows=32 cols=64 dense=0 trans=1 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=3 reads=0\nTRANSPORT case=3 frames=64 matrix=8 vector=1 first=1059 last=1198 maxgap=13\nCASE 4 op=1 rows=64 cols=256 dense=0 trans=0 r4=0 cycles=607 support_reads=0 candidates=0\nTEMPLATE_READS case=4 reads=0\nTRANSPORT case=4 frames=512 matrix=64 vector=16 first=1815 last=2388 maxgap=9\nCASE 5 op=1 rows=64 cols=256 dense=0 trans=0 r4=1 cycles=2117 support_reads=0 candidates=0\nTEMPLATE_READS case=5 reads=0\nTRANSPORT case=5 frames=512 matrix=2048 vector=64 first=3012 last=5084 maxgap=14\nCASE 6 op=1 rows=64 cols=256 dense=0 trans=1 r4=0 cycles=2101 support_reads=0 candidates=0\nTEMPLATE_READS case=6 reads=0\nTRANSPORT case=6 frames=512 matrix=2048 vector=2 first=5704 last=7762 maxgap=11\nCASE 7 op=1 rows=64 cols=256 dense=0 trans=1 r4=1 cycles=920 support_reads=0 candidates=0\nTEMPLATE_READS case=7 reads=0\nTRANSPORT case=7 frames=512 matrix=64 vector=2 first=8419 last=9303 maxgap=14\nCASE 8 op=1 rows=32 cols=1 dense=1 trans=0 r4=0 cycles=26 support_reads=0 candidates=0\nTEMPLATE_READS case=8 reads=0\nTRANSPORT case=8 frames=1 matrix=1 vector=1 first=9410 last=9410 maxgap=0\nCASE 9 op=1 rows=32 cols=1 dense=1 trans=0 r4=1 cycles=62 support_reads=0 candidates=0\nTEMPLATE_READS case=9 reads=0\nTRANSPORT case=9 frames=4 matrix=4 vector=1 first=9459 last=9493 maxgap=12\nCASE 10 op=1 rows=32 cols=2 dense=1 trans=0 r4=0 cycles=27 support_reads=0 candidates=0\nTEMPLATE_READS case=10 reads=0\nTRANSPORT case=10 frames=2 matrix=2 vector=1 first=9545 last=9546 maxgap=1\nCASE 11 op=1 rows=32 cols=2 dense=1 trans=0 r4=1 cycles=70 support_reads=0 candidates=0\nTEMPLATE_READS case=11 reads=0\nTRANSPORT case=11 frames=8 matrix=8 vector=1 first=9596 last=9636 maxgap=14\nCASE 12 op=1 rows=32 cols=4 dense=1 trans=0 r4=0 cycles=32 support_reads=0 candidates=0\nTEMPLATE_READS case=12 reads=0\nTRANSPORT case=12 frames=4 matrix=4 vector=1 first=9692 last=9695 maxgap=1\nCASE 13 op=1 rows=32 cols=4 dense=1 trans=0 r4=1 cycles=74 support_reads=0 candidates=0\nTEMPLATE_READS case=13 reads=0\nTRANSPORT case=13 frames=16 matrix=16 vector=1 first=9750 last=9796 maxgap=12\nCASE 14 op=1 rows=32 cols=8 dense=1 trans=0 r4=0 cycles=33 support_reads=0 candidates=0\nTEMPLATE_READS case=14 reads=0\nTRANSPORT case=14 frames=8 matrix=8 vector=1 first=9854 last=9861 maxgap=1\nCASE 15 op=1 rows=32 cols=8 dense=1 trans=0 r4=1 cycles=93 support_reads=0 candidates=0\nTEMPLATE_READS case=15 reads=0\nTRANSPORT case=15 frames=32 matrix=32 vector=1 first=9917 last=9982 maxgap=13\nCASE 16 op=1 rows=32 cols=16 dense=1 trans=0 r4=0 cycles=43 support_reads=0 candidates=0\nTEMPLATE_READS case=16 reads=0\nTRANSPORT case=16 frames=16 matrix=16 vector=1 first=10048 last=10065 maxgap=3\nCASE 17 op=1 rows=32 cols=16 dense=1 trans=0 r4=1 cycles=93 support_reads=0 candidates=0\nTEMPLATE_READS case=17 reads=0\nTRANSPORT case=17 frames=32 matrix=32 vector=1 first=10129 last=10194 maxgap=13\nCASE 18 op=1 rows=32 cols=24 dense=1 trans=0 r4=0 cycles=51 support_reads=0 candidates=0\nTEMPLATE_READS case=18 reads=0\nTRANSPORT case=18 frames=24 matrix=24 vector=1 first=10268 last=10293 maxgap=3\nCASE 19 op=1 rows=32 cols=24 dense=1 trans=0 r4=1 cycles=93 support_reads=0 candidates=0\nTEMPLATE_READS case=19 reads=0\nTRANSPORT case=19 frames=32 matrix=32 vector=1 first=10365 last=10430 maxgap=13\nCASE 20 op=1 rows=64 cols=1 dense=1 trans=0 r4=0 cycles=36 support_reads=0 candidates=0\nTEMPLATE_READS case=20 reads=0\nTRANSPORT case=20 frames=2 matrix=2 vector=1 first=10487 last=10496 maxgap=9\nCASE 21 op=1 rows=64 cols=1 dense=1 trans=0 r4=1 cycles=109 support_reads=0 candidates=0\nTEMPLATE_READS case=21 reads=0\nTRANSPORT case=21 frames=8 matrix=8 vector=1 first=10559 last=10637 maxgap=12\nCASE 22 op=1 rows=64 cols=2 dense=1 trans=0 r4=0 cycles=38 support_reads=0 candidates=0\nTEMPLATE_READS case=22 reads=0\nTRANSPORT case=22 frames=4 matrix=4 vector=1 first=10706 last=10717 maxgap=9\nCASE 23 op=1 rows=64 cols=2 dense=1 trans=0 r4=1 cycles=121 support_reads=0 candidates=0\nTEMPLATE_READS case=23 reads=0\nTRANSPORT case=23 frames=16 matrix=16 vector=1 first=10782 last=10874 maxgap=14\nCASE 24 op=1 rows=64 cols=4 dense=1 trans=0 r4=0 cycles=45 support_reads=0 candidates=0\nTEMPLATE_READS case=24 reads=0\nTRANSPORT case=24 frames=8 matrix=8 vector=1 first=10945 last=10963 maxgap=12\nCASE 25 op=1 rows=64 cols=4 dense=1 trans=0 r4=1 cycles=133 support_reads=0 candidates=0\nTEMPLATE_READS case=25 reads=0\nTRANSPORT case=25 frames=32 matrix=32 vector=1 first=11032 last=11136 maxgap=12\nCASE 26 op=1 rows=64 cols=8 dense=1 trans=0 r4=0 cycles=52 support_reads=0 candidates=0\nTEMPLATE_READS case=26 reads=0\nTRANSPORT case=26 frames=16 matrix=16 vector=1 first=11215 last=11238 maxgap=9\nCASE 27 op=1 rows=64 cols=8 dense=1 trans=0 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=27 reads=0\nTRANSPORT case=27 frames=64 matrix=64 vector=1 first=11317 last=11456 maxgap=13\nCASE 28 op=1 rows=64 cols=16 dense=1 trans=0 r4=0 cycles=71 support_reads=0 candidates=0\nTEMPLATE_READS case=28 reads=0\nTRANSPORT case=28 frames=32 matrix=32 vector=1 first=11551 last=11594 maxgap=9\nCASE 29 op=1 rows=64 cols=16 dense=1 trans=0 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=29 reads=0\nTRANSPORT case=29 frames=64 matrix=64 vector=1 first=11688 last=11827 maxgap=13\nCASE 30 op=1 rows=64 cols=24 dense=1 trans=0 r4=0 cycles=90 support_reads=0 candidates=0\nTEMPLATE_READS case=30 reads=0\nTRANSPORT case=30 frames=48 matrix=48 vector=1 first=11938 last=11999 maxgap=9\nCASE 31 op=1 rows=64 cols=24 dense=1 trans=0 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=31 reads=0\nTRANSPORT case=31 frames=64 matrix=64 vector=1 first=12110 last=12249 maxgap=13\nOFFER_RESPONSE_OVERLAP 0\nPREFETCH_GROUP_OBSERVATIONS 1002\nPASS stream_kernel cycles=12282 checks=334 commands=32 stalls=1464\n$finish called at time : 122820 ns : File \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" Line 556\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:08 . Memory (MB): peak = 228.617 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 12:21:30 2026...\n"
+          },
+          "compile_signature": "acd00318201dcf6a96e9da41334923a8bd2790aa993db4a9321f8d13f5e4acb3"
+        }
+      ],
+      "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_acd00318201dcf6a/xsim_script.tcl\n# xsim {sim_acd00318201dcf6a} -testplusarg vectors=D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/measurements.txt -testplusarg command_stall_epoch=1 -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nCASE 0 op=1 rows=32 cols=64 dense=0 trans=0 r4=0 cycles=96 support_reads=0 candidates=0\nTEMPLATE_READS case=0 reads=0\nTRANSPORT case=0 frames=64 matrix=8 vector=2 first=95 last=164 maxgap=3\nCASE 1 op=1 rows=32 cols=64 dense=0 trans=0 r4=1 cycles=298 support_reads=0 candidates=0\nTEMPLATE_READS case=1 reads=0\nTRANSPORT case=1 frames=64 matrix=256 vector=2 first=291 last=550 maxgap=13\nCASE 2 op=1 rows=32 cols=64 dense=0 trans=1 r4=0 cycles=291 support_reads=0 candidates=0\nTEMPLATE_READS case=2 reads=0\nTRANSPORT case=2 frames=64 matrix=256 vector=1 first=679 last=934 maxgap=10\nCASE 3 op=1 rows=32 cols=64 dense=0 trans=1 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=3 reads=0\nTRANSPORT case=3 frames=64 matrix=8 vector=1 first=1059 last=1198 maxgap=13\nCASE 4 op=1 rows=64 cols=256 dense=0 trans=0 r4=0 cycles=607 support_reads=0 candidates=0\nTEMPLATE_READS case=4 reads=0\nTRANSPORT case=4 frames=512 matrix=64 vector=16 first=1815 last=2388 maxgap=9\nCASE 5 op=1 rows=64 cols=256 dense=0 trans=0 r4=1 cycles=2117 support_reads=0 candidates=0\nTEMPLATE_READS case=5 reads=0\nTRANSPORT case=5 frames=512 matrix=2048 vector=64 first=3012 last=5084 maxgap=14\nCASE 6 op=1 rows=64 cols=256 dense=0 trans=1 r4=0 cycles=2101 support_reads=0 candidates=0\nTEMPLATE_READS case=6 reads=0\nTRANSPORT case=6 frames=512 matrix=2048 vector=2 first=5704 last=7762 maxgap=11\nCASE 7 op=1 rows=64 cols=256 dense=0 trans=1 r4=1 cycles=920 support_reads=0 candidates=0\nTEMPLATE_READS case=7 reads=0\nTRANSPORT case=7 frames=512 matrix=64 vector=2 first=8419 last=9303 maxgap=14\nCASE 8 op=1 rows=32 cols=1 dense=1 trans=0 r4=0 cycles=26 support_reads=0 candidates=0\nTEMPLATE_READS case=8 reads=0\nTRANSPORT case=8 frames=1 matrix=1 vector=1 first=9410 last=9410 maxgap=0\nCASE 9 op=1 rows=32 cols=1 dense=1 trans=0 r4=1 cycles=62 support_reads=0 candidates=0\nTEMPLATE_READS case=9 reads=0\nTRANSPORT case=9 frames=4 matrix=4 vector=1 first=9459 last=9493 maxgap=12\nCASE 10 op=1 rows=32 cols=2 dense=1 trans=0 r4=0 cycles=27 support_reads=0 candidates=0\nTEMPLATE_READS case=10 reads=0\nTRANSPORT case=10 frames=2 matrix=2 vector=1 first=9545 last=9546 maxgap=1\nCASE 11 op=1 rows=32 cols=2 dense=1 trans=0 r4=1 cycles=70 support_reads=0 candidates=0\nTEMPLATE_READS case=11 reads=0\nTRANSPORT case=11 frames=8 matrix=8 vector=1 first=9596 last=9636 maxgap=14\nCASE 12 op=1 rows=32 cols=4 dense=1 trans=0 r4=0 cycles=32 support_reads=0 candidates=0\nTEMPLATE_READS case=12 reads=0\nTRANSPORT case=12 frames=4 matrix=4 vector=1 first=9692 last=9695 maxgap=1\nCASE 13 op=1 rows=32 cols=4 dense=1 trans=0 r4=1 cycles=74 support_reads=0 candidates=0\nTEMPLATE_READS case=13 reads=0\nTRANSPORT case=13 frames=16 matrix=16 vector=1 first=9750 last=9796 maxgap=12\nCASE 14 op=1 rows=32 cols=8 dense=1 trans=0 r4=0 cycles=33 support_reads=0 candidates=0\nTEMPLATE_READS case=14 reads=0\nTRANSPORT case=14 frames=8 matrix=8 vector=1 first=9854 last=9861 maxgap=1\nCASE 15 op=1 rows=32 cols=8 dense=1 trans=0 r4=1 cycles=93 support_reads=0 candidates=0\nTEMPLATE_READS case=15 reads=0\nTRANSPORT case=15 frames=32 matrix=32 vector=1 first=9917 last=9982 maxgap=13\nCASE 16 op=1 rows=32 cols=16 dense=1 trans=0 r4=0 cycles=43 support_reads=0 candidates=0\nTEMPLATE_READS case=16 reads=0\nTRANSPORT case=16 frames=16 matrix=16 vector=1 first=10048 last=10065 maxgap=3\nCASE 17 op=1 rows=32 cols=16 dense=1 trans=0 r4=1 cycles=93 support_reads=0 candidates=0\nTEMPLATE_READS case=17 reads=0\nTRANSPORT case=17 frames=32 matrix=32 vector=1 first=10129 last=10194 maxgap=13\nCASE 18 op=1 rows=32 cols=24 dense=1 trans=0 r4=0 cycles=51 support_reads=0 candidates=0\nTEMPLATE_READS case=18 reads=0\nTRANSPORT case=18 frames=24 matrix=24 vector=1 first=10268 last=10293 maxgap=3\nCASE 19 op=1 rows=32 cols=24 dense=1 trans=0 r4=1 cycles=93 support_reads=0 candidates=0\nTEMPLATE_READS case=19 reads=0\nTRANSPORT case=19 frames=32 matrix=32 vector=1 first=10365 last=10430 maxgap=13\nCASE 20 op=1 rows=64 cols=1 dense=1 trans=0 r4=0 cycles=36 support_reads=0 candidates=0\nTEMPLATE_READS case=20 reads=0\nTRANSPORT case=20 frames=2 matrix=2 vector=1 first=10487 last=10496 maxgap=9\nCASE 21 op=1 rows=64 cols=1 dense=1 trans=0 r4=1 cycles=109 support_reads=0 candidates=0\nTEMPLATE_READS case=21 reads=0\nTRANSPORT case=21 frames=8 matrix=8 vector=1 first=10559 last=10637 maxgap=12\nCASE 22 op=1 rows=64 cols=2 dense=1 trans=0 r4=0 cycles=38 support_reads=0 candidates=0\nTEMPLATE_READS case=22 reads=0\nTRANSPORT case=22 frames=4 matrix=4 vector=1 first=10706 last=10717 maxgap=9\nCASE 23 op=1 rows=64 cols=2 dense=1 trans=0 r4=1 cycles=121 support_reads=0 candidates=0\nTEMPLATE_READS case=23 reads=0\nTRANSPORT case=23 frames=16 matrix=16 vector=1 first=10782 last=10874 maxgap=14\nCASE 24 op=1 rows=64 cols=4 dense=1 trans=0 r4=0 cycles=45 support_reads=0 candidates=0\nTEMPLATE_READS case=24 reads=0\nTRANSPORT case=24 frames=8 matrix=8 vector=1 first=10945 last=10963 maxgap=12\nCASE 25 op=1 rows=64 cols=4 dense=1 trans=0 r4=1 cycles=133 support_reads=0 candidates=0\nTEMPLATE_READS case=25 reads=0\nTRANSPORT case=25 frames=32 matrix=32 vector=1 first=11032 last=11136 maxgap=12\nCASE 26 op=1 rows=64 cols=8 dense=1 trans=0 r4=0 cycles=52 support_reads=0 candidates=0\nTEMPLATE_READS case=26 reads=0\nTRANSPORT case=26 frames=16 matrix=16 vector=1 first=11215 last=11238 maxgap=9\nCASE 27 op=1 rows=64 cols=8 dense=1 trans=0 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=27 reads=0\nTRANSPORT case=27 frames=64 matrix=64 vector=1 first=11317 last=11456 maxgap=13\nCASE 28 op=1 rows=64 cols=16 dense=1 trans=0 r4=0 cycles=71 support_reads=0 candidates=0\nTEMPLATE_READS case=28 reads=0\nTRANSPORT case=28 frames=32 matrix=32 vector=1 first=11551 last=11594 maxgap=9\nCASE 29 op=1 rows=64 cols=16 dense=1 trans=0 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=29 reads=0\nTRANSPORT case=29 frames=64 matrix=64 vector=1 first=11688 last=11827 maxgap=13\nCASE 30 op=1 rows=64 cols=24 dense=1 trans=0 r4=0 cycles=90 support_reads=0 candidates=0\nTEMPLATE_READS case=30 reads=0\nTRANSPORT case=30 frames=48 matrix=48 vector=1 first=11938 last=11999 maxgap=9\nCASE 31 op=1 rows=64 cols=24 dense=1 trans=0 r4=1 cycles=168 support_reads=0 candidates=0\nTEMPLATE_READS case=31 reads=0\nTRANSPORT case=31 frames=64 matrix=64 vector=1 first=12110 last=12249 maxgap=13\nOFFER_RESPONSE_OVERLAP 0\nPREFETCH_GROUP_OBSERVATIONS 1002\nPASS stream_kernel cycles=12282 checks=334 commands=32 stalls=1464\n$finish called at time : 122820 ns : File \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" Line 556\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:08 . Memory (MB): peak = 228.617 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 12:21:30 2026...\n",
+      "total_cycles": 12282,
+      "comparisons": 334,
+      "stalls": 1464,
+      "commands_executed": 32,
+      "per_command": [
+        {
+          "label": "live_phi_M32_N64_forward",
+          "mapping": "R1",
+          "case": 0,
+          "cycles": 96,
+          "shape": {
+            "rows": 32,
+            "columns": 64,
+            "dense": false,
+            "transpose": false
+          }
+        },
+        {
+          "label": "live_phi_M32_N64_forward",
+          "mapping": "R4",
+          "case": 1,
+          "cycles": 298,
+          "shape": {
+            "rows": 32,
+            "columns": 64,
+            "dense": false,
+            "transpose": false
+          }
+        },
+        {
+          "label": "live_phi_M32_N64_transpose",
+          "mapping": "R1",
+          "case": 2,
+          "cycles": 291,
+          "shape": {
+            "rows": 32,
+            "columns": 64,
+            "dense": false,
+            "transpose": true
+          }
+        },
+        {
+          "label": "live_phi_M32_N64_transpose",
+          "mapping": "R4",
+          "case": 3,
+          "cycles": 168,
+          "shape": {
+            "rows": 32,
+            "columns": 64,
+            "dense": false,
+            "transpose": true
+          }
+        },
+        {
+          "label": "live_phi_M64_N256_forward",
+          "mapping": "R1",
+          "case": 4,
+          "cycles": 607,
+          "shape": {
+            "rows": 64,
+            "columns": 256,
+            "dense": false,
+            "transpose": false
+          }
+        },
+        {
+          "label": "live_phi_M64_N256_forward",
+          "mapping": "R4",
+          "case": 5,
+          "cycles": 2117,
+          "shape": {
+            "rows": 64,
+            "columns": 256,
+            "dense": false,
+            "transpose": false
+          }
+        },
+        {
+          "label": "live_phi_M64_N256_transpose",
+          "mapping": "R1",
+          "case": 6,
+          "cycles": 2101,
+          "shape": {
+            "rows": 64,
+            "columns": 256,
+            "dense": false,
+            "transpose": true
+          }
+        },
+        {
+          "label": "live_phi_M64_N256_transpose",
+          "mapping": "R4",
+          "case": 7,
+          "cycles": 920,
+          "shape": {
+            "rows": 64,
+            "columns": 256,
+            "dense": false,
+            "transpose": true
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S1_forward",
+          "mapping": "R1",
+          "case": 8,
+          "cycles": 26,
+          "shape": {
+            "rows": 32,
+            "columns": 1,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S1_forward",
+          "mapping": "R4",
+          "case": 9,
+          "cycles": 62,
+          "shape": {
+            "rows": 32,
+            "columns": 1,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S2_forward",
+          "mapping": "R1",
+          "case": 10,
+          "cycles": 27,
+          "shape": {
+            "rows": 32,
+            "columns": 2,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S2_forward",
+          "mapping": "R4",
+          "case": 11,
+          "cycles": 70,
+          "shape": {
+            "rows": 32,
+            "columns": 2,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S4_forward",
+          "mapping": "R1",
+          "case": 12,
+          "cycles": 32,
+          "shape": {
+            "rows": 32,
+            "columns": 4,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S4_forward",
+          "mapping": "R4",
+          "case": 13,
+          "cycles": 74,
+          "shape": {
+            "rows": 32,
+            "columns": 4,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S8_forward",
+          "mapping": "R1",
+          "case": 14,
+          "cycles": 33,
+          "shape": {
+            "rows": 32,
+            "columns": 8,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S8_forward",
+          "mapping": "R4",
+          "case": 15,
+          "cycles": 93,
+          "shape": {
+            "rows": 32,
+            "columns": 8,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S16_forward",
+          "mapping": "R1",
+          "case": 16,
+          "cycles": 43,
+          "shape": {
+            "rows": 32,
+            "columns": 16,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S16_forward",
+          "mapping": "R4",
+          "case": 17,
+          "cycles": 93,
+          "shape": {
+            "rows": 32,
+            "columns": 16,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S24_forward",
+          "mapping": "R1",
+          "case": 18,
+          "cycles": 51,
+          "shape": {
+            "rows": 32,
+            "columns": 24,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M32_S24_forward",
+          "mapping": "R4",
+          "case": 19,
+          "cycles": 93,
+          "shape": {
+            "rows": 32,
+            "columns": 24,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S1_forward",
+          "mapping": "R1",
+          "case": 20,
+          "cycles": 36,
+          "shape": {
+            "rows": 64,
+            "columns": 1,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S1_forward",
+          "mapping": "R4",
+          "case": 21,
+          "cycles": 109,
+          "shape": {
+            "rows": 64,
+            "columns": 1,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S2_forward",
+          "mapping": "R1",
+          "case": 22,
+          "cycles": 38,
+          "shape": {
+            "rows": 64,
+            "columns": 2,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S2_forward",
+          "mapping": "R4",
+          "case": 23,
+          "cycles": 121,
+          "shape": {
+            "rows": 64,
+            "columns": 2,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S4_forward",
+          "mapping": "R1",
+          "case": 24,
+          "cycles": 45,
+          "shape": {
+            "rows": 64,
+            "columns": 4,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S4_forward",
+          "mapping": "R4",
+          "case": 25,
+          "cycles": 133,
+          "shape": {
+            "rows": 64,
+            "columns": 4,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S8_forward",
+          "mapping": "R1",
+          "case": 26,
+          "cycles": 52,
+          "shape": {
+            "rows": 64,
+            "columns": 8,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S8_forward",
+          "mapping": "R4",
+          "case": 27,
+          "cycles": 168,
+          "shape": {
+            "rows": 64,
+            "columns": 8,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S16_forward",
+          "mapping": "R1",
+          "case": 28,
+          "cycles": 71,
+          "shape": {
+            "rows": 64,
+            "columns": 16,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S16_forward",
+          "mapping": "R4",
+          "case": 29,
+          "cycles": 168,
+          "shape": {
+            "rows": 64,
+            "columns": 16,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S24_forward",
+          "mapping": "R1",
+          "case": 30,
+          "cycles": 90,
+          "shape": {
+            "rows": 64,
+            "columns": 24,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S24_forward",
+          "mapping": "R4",
+          "case": 31,
+          "cycles": 168,
+          "shape": {
+            "rows": 64,
+            "columns": 24,
+            "dense": true,
+            "transpose": false
+          }
+        }
+      ]
+    },
+    {
+      "test": "verification.v4.test_gemv_mapping_calibration_rtl.GemvMappingCalibrationRtlTests.test_mapping_fault_and_cancel_semantics_pairwise",
+      "status": "PASS",
+      "deterministic_stall_policy": "tb_stream_kernel command-relative epoch",
+      "source_sha256": {
+        "rtl/v4/compute/stream_kernel.sv": "0a88d278646ff2e8027ff1c046b7fa966ce06d98880657b141b52aa21dd9d70b",
+        "rtl/v4/dataflow/support_service.sv": "9c694c18d223bbf6be048b2de81b17065f9e3c46bbce10656947ec4fd939404c",
+        "rtl/v4/dataflow/factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+        "rtl/v4/dataflow/factor_panel_service.sv": "f6d1194196817c263541edb438e60aacedc63e4c9fafdb56a35d0922d3e6c236",
+        "rtl/v4/memory/factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+        "rtl/v4/compute/stream_fabric.sv": "ed1207d9beb6b745bd5b9741e8f16f59d3ec800e921ad0aee0eb021eec2edad1",
+        "rtl/v4/compute/stream_array.sv": "811e078870f77d51637bf7a7d6255ccd9276f5c230bcfcc30586020d5b88e399",
+        "rtl/v4/compute/stream_pe.sv": "0eaf9dc6b70369ff3ec96b3a89894fd6fc3e4489ae20984ce378054661622589",
+        "rtl/v4/memory/stream_vector_store.sv": "7c5e6842682173713e777f4c8e7d2d168a8738fac60d78003fc18085137f8b65",
+        "rtl/v4/dataflow/operator_frame_feeder.sv": "6060ebf90b1c0bfd9bd2a3b89d4f83670de869ae245f65489d5352eeee2b0668",
+        "rtl/v4/dataflow/range_reader.sv": "4c5133633e577ecaf5228b5a8c649d55673c35d00e3312c4e95cffabd6972d62",
+        "rtl/v4/memory/live_operator_memory.sv": "0d194909bc6b868603c698f5428f98ff55ef4ab796c89460e1d9072578e4942e",
+        "rtl/v4/memory/paired_support_store.sv": "73a688ff3bc24e34aac4e04302ee17e69dd85d24a62e61e2b6aa332d8e17aedf",
+        "rtl/v4/operator/phi_sign_generator.sv": "395aec4b89b0ca18ccd2d1ca486b71188a624acb66df6635fbca57f5c3babe3e",
+        "rtl/v4/memory/phi_sign_cache.sv": "b59073646d2c506bab1b1ed061cf5299ada2bed3fb3f5c8f0a0527a6525e8808",
+        "rtl/v4/dataflow/phi_reader.sv": "26ba84d1f0ad3a879e0b18d8d3782ca13a7afb3c22b6f490d39cee8187e32863",
+        "rtl/v4/dataflow/support_builder.sv": "8365de592657062c96a0fc68130aa75e4bff8c76a8f463344f4ce334d8d0df67",
+        "verification/v4/stream/tb_stream_kernel_mapping_calibration.sv": "2fd6eb4c6e22210e2d2bcc2eb0a0b00573358fe251321c503de56c0613363a1f",
+        "verification/v4/test_stream_kernel_rtl.py": "ced8795bb16112da944a5908886d2ff20c1c6c8b2a7ce7a42c5efe767a21f224",
+        "verification/v4/stream/tb_stream_kernel_copy.sv": "11d770c39b979ddb59f744eeb7d2e137aee9a71df6f51147065e6fd6706846ef",
+        "docs/v4/architecture/RESIDENT_CHAIN.md": "beeb26f6d2f0656edab7bb74841b7bfaaed69e9df9ad3b4e179b9803eeaab788",
+        "docs/v4/architecture/SCALAR_INSERT.md": "3ac3f5f15272a431965b1c16e261df74ab71dce6bc236e759e44f72c513e9867",
+        "docs/v4/architecture/RANGE_TEMPLATE.md": "2b5abdeabab2d45a8763ace72f43dc8728da5db923cbb6b2bf4e4b00f31f7a0d",
+        "config/v4_kernel_interface.json": "9ad7fe779f1f462b97e9338fd586735ef4b5b00f6a882947a30a0ba23a079fbe",
+        "config/v4_program_interface.json": "4072eb62e62fe7039d06177fb9ee407ac334e74622364b06d83072ab6ef790e3",
+        "rtl/v4/include/kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+        "rtl/v4/include/program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+        "scripts/v4/xsim.py": "a28a7c625b7e90676ad399b9d95f7f40b3617664758d8e886a45eeec1f6961ed",
+        "docs/v4/architecture/STREAM_SYSTEM_CONTRACT.md": "ace212eba4783396b8ffdb4ec4877b756f3827e0bd9f4e2a0f02da8555d81391",
+        "docs/v4/architecture/FACTOR_SERVICE.md": "971bc62535f0a2ad7ee5222f4a5732b8c1d7550abbecc68da89d5b4174d70048",
+        "docs/v4/architecture/FACTOR_PANEL.md": "9dfe3ea303193dbeeba636766241594b0ce13a777516be91b470ebd952c2a947",
+        "verification/v4/test_gemv_mapping_calibration_rtl.py": "3af423df6d542c179bc5c57784493fc26d321286c0ef5b7cf2c6521bdabdfe9b"
+      },
+      "vectors_sha256": "5a3e3df8080ae4842a746ec5c001bc381729ead3f21b045e0ff4feafc470d418",
+      "commands": [
+        {
+          "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat\" \"-sv\" \"-i\" \"D:\\vivado_pj\\rtl\\v4\\include\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv\" \"D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv\" \"D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv\" \"D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv\" \"D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv\"\"",
+          "argv": [
+            "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+            "-sv",
+            "-i",
+            "D:\\vivado_pj\\rtl\\v4\\include",
+            "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+            "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+            "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv",
+            "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv",
+            "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv",
+            "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv",
+            "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv",
+            "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv",
+            "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv",
+            "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv",
+            "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv"
+          ],
+          "cwd": "D:\\vivado_pj\\work\\gemv_mapping_calibration_argj4nfw\\kernel.xsim_yo0tplkn",
+          "timeout_seconds": 240,
+          "invocation_id": "1366d8fc8f71474eb66a7eeed5520f86",
+          "execution": "executed",
+          "started_utc": "2026-09-12T05:20:57.164616+00:00",
+          "returncode": 0,
+          "stdout": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_kernel.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_kernel\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:90]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:91]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:92]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:93]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:94]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:95]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:96]\nWARNING: [VRFC 10-756] identifier output_count is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:100]\nWARNING: [VRFC 10-756] identifier writes_vector is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:177]\nWARNING: [VRFC 10-756] identifier check_frame is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:178]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:180]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:181]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:193]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:194]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:199]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:200]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:201]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:209]\nWARNING: [VRFC 10-756] identifier valid_masks is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:222]\nWARNING: [VRFC 10-756] identifier job is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:223]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:224]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:227]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:228]\nWARNING: [VRFC 10-756] identifier mem_ready is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:230]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:233]\nWARNING: [VRFC 10-756] identifier affine_half_mask is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:281]\nWARNING: [VRFC 10-756] identifier fabric_fault is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:324]\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_panel_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/factor_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_fabric.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_fabric\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_array.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_array\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_pe.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_pe\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/stream_vector_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_vector_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/operator_frame_feeder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module operator_frame_feeder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/range_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module range_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/live_operator_memory.sv\" into library work\nINFO: [VRFC 10-311] analyzing module live_operator_memory\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/paired_support_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module paired_support_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/operator/phi_sign_generator.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_generator\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/phi_sign_cache.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_cache\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/phi_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_builder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_builder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_stream_kernel_mapping_calibration\n",
+          "stderr": "",
+          "logs": {
+            "xvlog.log": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_kernel.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_kernel\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:90]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:91]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:92]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:93]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:94]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:95]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:96]\nWARNING: [VRFC 10-756] identifier output_count is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:100]\nWARNING: [VRFC 10-756] identifier writes_vector is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:177]\nWARNING: [VRFC 10-756] identifier check_frame is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:178]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:180]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:181]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:193]\nWARNING: [VRFC 10-756] identifier reductions is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:194]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:199]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:200]\nWARNING: [VRFC 10-756] identifier operation is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:201]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:209]\nWARNING: [VRFC 10-756] identifier valid_masks is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:222]\nWARNING: [VRFC 10-756] identifier job is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:223]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:224]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:227]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:228]\nWARNING: [VRFC 10-756] identifier mem_ready is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:230]\nWARNING: [VRFC 10-756] identifier state is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:233]\nWARNING: [VRFC 10-756] identifier affine_half_mask is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:281]\nWARNING: [VRFC 10-756] identifier fabric_fault is used before its declaration [D:/vivado_pj/rtl/v4/compute/stream_kernel.sv:324]\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_panel_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/factor_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_fabric.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_fabric\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_array.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_array\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/compute/stream_pe.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_pe\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/stream_vector_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module stream_vector_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/operator_frame_feeder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module operator_frame_feeder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/range_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module range_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/live_operator_memory.sv\" into library work\nINFO: [VRFC 10-311] analyzing module live_operator_memory\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/paired_support_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module paired_support_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/operator/phi_sign_generator.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_generator\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/phi_sign_cache.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_sign_cache\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/phi_reader.sv\" into library work\nINFO: [VRFC 10-311] analyzing module phi_reader\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/support_builder.sv\" into library work\nINFO: [VRFC 10-311] analyzing module support_builder\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_stream_kernel_mapping_calibration\n"
+          },
+          "source_identity": {
+            "metadata_schema": 2,
+            "top": "tb_stream_kernel_mapping_calibration",
+            "sources": [
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv",
+              "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv"
+            ],
+            "hashes": {
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv": "0a88d278646ff2e8027ff1c046b7fa966ce06d98880657b141b52aa21dd9d70b",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv": "9c694c18d223bbf6be048b2de81b17065f9e3c46bbce10656947ec4fd939404c",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv": "f6d1194196817c263541edb438e60aacedc63e4c9fafdb56a35d0922d3e6c236",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv": "ed1207d9beb6b745bd5b9741e8f16f59d3ec800e921ad0aee0eb021eec2edad1",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv": "811e078870f77d51637bf7a7d6255ccd9276f5c230bcfcc30586020d5b88e399",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv": "0eaf9dc6b70369ff3ec96b3a89894fd6fc3e4489ae20984ce378054661622589",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv": "7c5e6842682173713e777f4c8e7d2d168a8738fac60d78003fc18085137f8b65",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv": "6060ebf90b1c0bfd9bd2a3b89d4f83670de869ae245f65489d5352eeee2b0668",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv": "4c5133633e577ecaf5228b5a8c649d55673c35d00e3312c4e95cffabd6972d62",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv": "0d194909bc6b868603c698f5428f98ff55ef4ab796c89460e1d9072578e4942e",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv": "73a688ff3bc24e34aac4e04302ee17e69dd85d24a62e61e2b6aa332d8e17aedf",
+              "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv": "395aec4b89b0ca18ccd2d1ca486b71188a624acb66df6635fbca57f5c3babe3e",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv": "b59073646d2c506bab1b1ed061cf5299ada2bed3fb3f5c8f0a0527a6525e8808",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv": "26ba84d1f0ad3a879e0b18d8d3782ca13a7afb3c22b6f490d39cee8187e32863",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv": "8365de592657062c96a0fc68130aa75e4bff8c76a8f463344f4ce334d8d0df67",
+              "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv": "2fd6eb4c6e22210e2d2bcc2eb0a0b00573358fe251321c503de56c0613363a1f",
+              "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+              "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+              "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+              "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+              "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+              "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+              "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+              "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+              "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+              "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+              "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+              "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+              "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+              "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+              "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+              "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+              "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+              "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+            },
+            "includes": [
+              "D:\\vivado_pj\\rtl\\v4\\include"
+            ],
+            "parameters": {},
+            "tools": {
+              "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+              "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+              "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+            },
+            "timescale": "1ns/1ps"
+          },
+          "compile_signature": "acd00318201dcf6a96e9da41334923a8bd2790aa993db4a9321f8d13f5e4acb3"
+        },
+        {
+          "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat\" \"tb_stream_kernel_mapping_calibration\" \"-s\" \"sim_acd00318201dcf6a\" \"--timescale\" \"1ns/1ps\" \"--debug\" \"typical\"\"",
+          "argv": [
+            "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+            "tb_stream_kernel_mapping_calibration",
+            "-s",
+            "sim_acd00318201dcf6a",
+            "--timescale",
+            "1ns/1ps",
+            "--debug",
+            "typical"
+          ],
+          "cwd": "D:\\vivado_pj\\work\\gemv_mapping_calibration_argj4nfw\\kernel.xsim_yo0tplkn",
+          "timeout_seconds": 240,
+          "invocation_id": "b7101820ceb84f4192a5b8d402452c9a",
+          "execution": "executed",
+          "started_utc": "2026-09-12T05:20:59.266557+00:00",
+          "returncode": 0,
+          "stdout": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_stream_kernel_mapping_calibration -s sim_acd00318201dcf6a --timescale 1ns/1ps --debug typical \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.range_reader\nCompiling module work.stream_vector_store\nCompiling module work.stream_pe\nCompiling module work.stream_array_default\nCompiling module work.stream_fabric(TERMINAL_ENABLE=1,...\nCompiling module work.operator_frame_feeder\nCompiling module work.support_service\nCompiling module work.factor_store\nCompiling module work.factor_service(ENABLE_PANEL_BRID...\nCompiling module work.factor_panel_service\nCompiling module work.stream_kernel\nCompiling module work.paired_support_store\nCompiling module work.support_builder\nCompiling module work.phi_sign_generator\nCompiling module work.phi_sign_cache\nCompiling module work.phi_reader\nCompiling module work.live_operator_memory\nCompiling module work.tb_stream_kernel_mapping_calibra...\nBuilt simulation snapshot sim_acd00318201dcf6a\n\n****** Webtalk v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/kernel.xsim_yo0tplkn/xsim.dir/sim_acd00318201dcf6a/webtalk/xsim_webtalk.tcl -notrace\nINFO: [Common 17-206] Exiting Webtalk at Sat Sep 12 12:21:13 2026...\n",
+          "stderr": "",
+          "logs": {
+            "xelab.log": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_stream_kernel_mapping_calibration -s sim_acd00318201dcf6a --timescale 1ns/1ps --debug typical \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.range_reader\nCompiling module work.stream_vector_store\nCompiling module work.stream_pe\nCompiling module work.stream_array_default\nCompiling module work.stream_fabric(TERMINAL_ENABLE=1,...\nCompiling module work.operator_frame_feeder\nCompiling module work.support_service\nCompiling module work.factor_store\nCompiling module work.factor_service(ENABLE_PANEL_BRID...\nCompiling module work.factor_panel_service\nCompiling module work.stream_kernel\nCompiling module work.paired_support_store\nCompiling module work.support_builder\nCompiling module work.phi_sign_generator\nCompiling module work.phi_sign_cache\nCompiling module work.phi_reader\nCompiling module work.live_operator_memory\nCompiling module work.tb_stream_kernel_mapping_calibra...\nBuilt simulation snapshot sim_acd00318201dcf6a\n"
+          },
+          "source_identity": {
+            "metadata_schema": 2,
+            "top": "tb_stream_kernel_mapping_calibration",
+            "sources": [
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv",
+              "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv",
+              "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv"
+            ],
+            "hashes": {
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_kernel.sv": "0a88d278646ff2e8027ff1c046b7fa966ce06d98880657b141b52aa21dd9d70b",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_service.sv": "9c694c18d223bbf6be048b2de81b17065f9e3c46bbce10656947ec4fd939404c",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv": "f6d1194196817c263541edb438e60aacedc63e4c9fafdb56a35d0922d3e6c236",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_fabric.sv": "ed1207d9beb6b745bd5b9741e8f16f59d3ec800e921ad0aee0eb021eec2edad1",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_array.sv": "811e078870f77d51637bf7a7d6255ccd9276f5c230bcfcc30586020d5b88e399",
+              "D:\\vivado_pj\\rtl\\v4\\compute\\stream_pe.sv": "0eaf9dc6b70369ff3ec96b3a89894fd6fc3e4489ae20984ce378054661622589",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\stream_vector_store.sv": "7c5e6842682173713e777f4c8e7d2d168a8738fac60d78003fc18085137f8b65",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\operator_frame_feeder.sv": "6060ebf90b1c0bfd9bd2a3b89d4f83670de869ae245f65489d5352eeee2b0668",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\range_reader.sv": "4c5133633e577ecaf5228b5a8c649d55673c35d00e3312c4e95cffabd6972d62",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\live_operator_memory.sv": "0d194909bc6b868603c698f5428f98ff55ef4ab796c89460e1d9072578e4942e",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\paired_support_store.sv": "73a688ff3bc24e34aac4e04302ee17e69dd85d24a62e61e2b6aa332d8e17aedf",
+              "D:\\vivado_pj\\rtl\\v4\\operator\\phi_sign_generator.sv": "395aec4b89b0ca18ccd2d1ca486b71188a624acb66df6635fbca57f5c3babe3e",
+              "D:\\vivado_pj\\rtl\\v4\\memory\\phi_sign_cache.sv": "b59073646d2c506bab1b1ed061cf5299ada2bed3fb3f5c8f0a0527a6525e8808",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\phi_reader.sv": "26ba84d1f0ad3a879e0b18d8d3782ca13a7afb3c22b6f490d39cee8187e32863",
+              "D:\\vivado_pj\\rtl\\v4\\dataflow\\support_builder.sv": "8365de592657062c96a0fc68130aa75e4bff8c76a8f463344f4ce334d8d0df67",
+              "D:\\vivado_pj\\verification\\v4\\stream\\tb_stream_kernel_mapping_calibration.sv": "2fd6eb4c6e22210e2d2bcc2eb0a0b00573358fe251321c503de56c0613363a1f",
+              "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+              "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+              "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+              "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+              "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+              "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+              "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+              "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+              "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+              "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+              "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+              "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+              "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+              "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+              "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+              "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+              "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+              "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+            },
+            "includes": [
+              "D:\\vivado_pj\\rtl\\v4\\include"
+            ],
+            "parameters": {},
+            "tools": {
+              "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+              "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+              "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+            },
+            "timescale": "1ns/1ps"
+          },
+          "compile_signature": "acd00318201dcf6a96e9da41334923a8bd2790aa993db4a9321f8d13f5e4acb3"
+        },
+        {
+          "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat\" \"sim_acd00318201dcf6a\" \"-runall\" \"-onerror\" \"quit\" \"-testplusarg\" \"vectors=D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/faults.txt\" \"-testplusarg\" \"command_stall_epoch=1\"\"",
+          "argv": [
+            "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat",
+            "sim_acd00318201dcf6a",
+            "-runall",
+            "-onerror",
+            "quit",
+            "-testplusarg",
+            "vectors=D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/faults.txt",
+            "-testplusarg",
+            "command_stall_epoch=1"
+          ],
+          "cwd": "D:\\vivado_pj\\work\\gemv_mapping_calibration_argj4nfw\\kernel.xsim_yo0tplkn",
+          "timeout_seconds": 900,
+          "invocation_id": "323e2e236b8f42a5a9688d05b14d7e06",
+          "execution": "executed",
+          "started_utc": "2026-09-12T05:21:30.732813+00:00",
+          "returncode": 0,
+          "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_acd00318201dcf6a/xsim_script.tcl\n# xsim {sim_acd00318201dcf6a} -testplusarg vectors=D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/faults.txt -testplusarg command_stall_epoch=1 -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nCASE 0 op=1 rows=64 cols=256 dense=0 trans=0 r4=0 cycles=22 support_reads=0 candidates=0\nTEMPLATE_READS case=0 reads=0\nTRANSPORT case=0 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 1 op=1 rows=64 cols=256 dense=0 trans=0 r4=1 cycles=22 support_reads=0 candidates=0\nTEMPLATE_READS case=1 reads=0\nTRANSPORT case=1 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 2 op=1 rows=64 cols=256 dense=0 trans=1 r4=0 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=2 reads=0\nTRANSPORT case=2 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 3 op=1 rows=64 cols=256 dense=0 trans=1 r4=1 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=3 reads=0\nTRANSPORT case=3 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 4 op=1 rows=64 cols=24 dense=1 trans=0 r4=0 cycles=9 support_reads=0 candidates=0\nTEMPLATE_READS case=4 reads=0\nTRANSPORT case=4 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 5 op=1 rows=64 cols=24 dense=1 trans=0 r4=1 cycles=9 support_reads=0 candidates=0\nTEMPLATE_READS case=5 reads=0\nTRANSPORT case=5 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 6 op=1 rows=64 cols=24 dense=1 trans=0 r4=0 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=6 reads=0\nTRANSPORT case=6 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 7 op=1 rows=64 cols=24 dense=1 trans=0 r4=1 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=7 reads=0\nTRANSPORT case=7 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nOFFER_RESPONSE_OVERLAP 0\nPREFETCH_GROUP_OBSERVATIONS 0\nPASS stream_kernel cycles=2762 checks=106 commands=8 stalls=53\n$finish called at time : 27620 ns : File \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" Line 556\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 12:21:36 2026...\n",
+          "stderr": "",
+          "logs": {
+            "xsim.log": "#-----------------------------------------------------------\n# xsim v2018.1 (64-bit)\n# SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n# IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n# Start of session at: Sat Sep 12 12:21:32 2026\n# Process ID: 3724\n# Current directory: D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/kernel.xsim_yo0tplkn\n# Command line: xsim.exe -mode tcl -source {xsim.dir/sim_acd00318201dcf6a/xsim_script.tcl}\n# Log file: D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/kernel.xsim_yo0tplkn/xsim.log\n# Journal file: D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/kernel.xsim_yo0tplkn\\xsim.jou\n#-----------------------------------------------------------\nsource xsim.dir/sim_acd00318201dcf6a/xsim_script.tcl\n# xsim {sim_acd00318201dcf6a} -testplusarg vectors=D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/faults.txt -testplusarg command_stall_epoch=1 -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nCASE 0 op=1 rows=64 cols=256 dense=0 trans=0 r4=0 cycles=22 support_reads=0 candidates=0\nTEMPLATE_READS case=0 reads=0\nTRANSPORT case=0 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 1 op=1 rows=64 cols=256 dense=0 trans=0 r4=1 cycles=22 support_reads=0 candidates=0\nTEMPLATE_READS case=1 reads=0\nTRANSPORT case=1 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 2 op=1 rows=64 cols=256 dense=0 trans=1 r4=0 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=2 reads=0\nTRANSPORT case=2 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 3 op=1 rows=64 cols=256 dense=0 trans=1 r4=1 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=3 reads=0\nTRANSPORT case=3 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 4 op=1 rows=64 cols=24 dense=1 trans=0 r4=0 cycles=9 support_reads=0 candidates=0\nTEMPLATE_READS case=4 reads=0\nTRANSPORT case=4 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 5 op=1 rows=64 cols=24 dense=1 trans=0 r4=1 cycles=9 support_reads=0 candidates=0\nTEMPLATE_READS case=5 reads=0\nTRANSPORT case=5 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 6 op=1 rows=64 cols=24 dense=1 trans=0 r4=0 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=6 reads=0\nTRANSPORT case=6 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 7 op=1 rows=64 cols=24 dense=1 trans=0 r4=1 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=7 reads=0\nTRANSPORT case=7 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nOFFER_RESPONSE_OVERLAP 0\nPREFETCH_GROUP_OBSERVATIONS 0\nPASS stream_kernel cycles=2762 checks=106 commands=8 stalls=53\n$finish called at time : 27620 ns : File \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" Line 556\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 12:21:36 2026...\n"
+          },
+          "compile_signature": "acd00318201dcf6a96e9da41334923a8bd2790aa993db4a9321f8d13f5e4acb3"
+        }
+      ],
+      "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_acd00318201dcf6a/xsim_script.tcl\n# xsim {sim_acd00318201dcf6a} -testplusarg vectors=D:/vivado_pj/work/gemv_mapping_calibration_argj4nfw/faults.txt -testplusarg command_stall_epoch=1 -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nCASE 0 op=1 rows=64 cols=256 dense=0 trans=0 r4=0 cycles=22 support_reads=0 candidates=0\nTEMPLATE_READS case=0 reads=0\nTRANSPORT case=0 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 1 op=1 rows=64 cols=256 dense=0 trans=0 r4=1 cycles=22 support_reads=0 candidates=0\nTEMPLATE_READS case=1 reads=0\nTRANSPORT case=1 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 2 op=1 rows=64 cols=256 dense=0 trans=1 r4=0 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=2 reads=0\nTRANSPORT case=2 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 3 op=1 rows=64 cols=256 dense=0 trans=1 r4=1 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=3 reads=0\nTRANSPORT case=3 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 4 op=1 rows=64 cols=24 dense=1 trans=0 r4=0 cycles=9 support_reads=0 candidates=0\nTEMPLATE_READS case=4 reads=0\nTRANSPORT case=4 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 5 op=1 rows=64 cols=24 dense=1 trans=0 r4=1 cycles=9 support_reads=0 candidates=0\nTEMPLATE_READS case=5 reads=0\nTRANSPORT case=5 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 6 op=1 rows=64 cols=24 dense=1 trans=0 r4=0 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=6 reads=0\nTRANSPORT case=6 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nCASE 7 op=1 rows=64 cols=24 dense=1 trans=0 r4=1 cycles=10 support_reads=0 candidates=0\nTEMPLATE_READS case=7 reads=0\nTRANSPORT case=7 frames=0 matrix=0 vector=0 first=-1 last=-1 maxgap=0\nOFFER_RESPONSE_OVERLAP 0\nPREFETCH_GROUP_OBSERVATIONS 0\nPASS stream_kernel cycles=2762 checks=106 commands=8 stalls=53\n$finish called at time : 27620 ns : File \"D:/vivado_pj/verification/v4/stream/tb_stream_kernel_mapping_calibration.sv\" Line 556\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 12:21:36 2026...\n",
+      "total_cycles": 2762,
+      "comparisons": 106,
+      "stalls": 53,
+      "commands_executed": 8,
+      "per_command": [
+        {
+          "label": "live_phi_M64_N256_forward_bad_generation",
+          "mapping": "R1",
+          "case": 0,
+          "cycles": 22,
+          "shape": {
+            "rows": 64,
+            "columns": 256,
+            "dense": false,
+            "transpose": false
+          }
+        },
+        {
+          "label": "live_phi_M64_N256_forward_bad_generation",
+          "mapping": "R4",
+          "case": 1,
+          "cycles": 22,
+          "shape": {
+            "rows": 64,
+            "columns": 256,
+            "dense": false,
+            "transpose": false
+          }
+        },
+        {
+          "label": "live_phi_M64_N256_transpose_missing_source",
+          "mapping": "R1",
+          "case": 2,
+          "cycles": 10,
+          "shape": {
+            "rows": 64,
+            "columns": 256,
+            "dense": false,
+            "transpose": true
+          }
+        },
+        {
+          "label": "live_phi_M64_N256_transpose_missing_source",
+          "mapping": "R4",
+          "case": 3,
+          "cycles": 10,
+          "shape": {
+            "rows": 64,
+            "columns": 256,
+            "dense": false,
+            "transpose": true
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S24_missing_source",
+          "mapping": "R1",
+          "case": 4,
+          "cycles": 9,
+          "shape": {
+            "rows": 64,
+            "columns": 24,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S24_missing_source",
+          "mapping": "R4",
+          "case": 5,
+          "cycles": 9,
+          "shape": {
+            "rows": 64,
+            "columns": 24,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S24_cancel",
+          "mapping": "R1",
+          "case": 6,
+          "cycles": 10,
+          "shape": {
+            "rows": 64,
+            "columns": 24,
+            "dense": true,
+            "transpose": false
+          }
+        },
+        {
+          "label": "restricted_dense_M64_S24_cancel",
+          "mapping": "R4",
+          "case": 7,
+          "cycles": 10,
+          "shape": {
+            "rows": 64,
+            "columns": 24,
+            "dense": true,
+            "transpose": false
+          }
+        }
+      ]
+    }
+  ],
+  "dense_mapping_scope": "restricted dense forward only; dense transpose was not measured or selected",
+  "restricted_width_provenance": {
+    "1/2/4/8": "incremental and grouped fixed-eight support widths",
+    "16": "SP 2K support width",
+    "24": "CoSaMP 3K support width"
+  },
+  "arithmetic_bound": {
+    "coefficient": "signed C18 maximum magnitude <= 2^17",
+    "state": "signed S27 maximum magnitude <= 2^26",
+    "reductions": "at most 1024",
+    "acc64_bound": "abs(sum) <= 2^17 * 2^26 * 2^10 = 2^53 < 2^63",
+    "conclusion": "legal R1/R4 accumulation cannot diverge through ACC64 prefix overflow; terminal rounding and all transaction faults remain separately exercised"
+  }
+}

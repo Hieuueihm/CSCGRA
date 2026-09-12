@@ -1,0 +1,18 @@
+flowchart LR
+    image["Loaded program, descriptors, contexts"] --> seq["Sequencer: read successor at retirement"]
+    seq --> kernel["Kernel: validate, dispatch, commit"]
+    pool["One public vector pool"] --> view["Command range reader: offset, mask, align"]
+    pool --> feeder["GEMV feeder: ordered frames and validated operand reuse"]
+    phi["Live LFSR Phi / selected B"] --> feeder
+    kernel --> view
+    kernel --> feeder
+    kernel --> panel["Factor panel worker: mapping by rectangle width"]
+    factor["Private factor store"] <--> panel
+    pool --> panel
+    view --> pe["Two 4x4 PE arrays: loaded contexts, fixed reduction links"]
+    feeder --> pe
+    panel <--> pe
+    pe --> scratch["Scratch result handles"]
+    scratch --> commit["Validate masks, swap ownership, publish"]
+    kernel --> commit
+    commit --> pool

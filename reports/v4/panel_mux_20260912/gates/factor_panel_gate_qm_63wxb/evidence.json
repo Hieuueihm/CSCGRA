@@ -1,0 +1,549 @@
+[
+  {
+    "name": "bridge",
+    "status": "PASS",
+    "parameters": {},
+    "sources": {
+      "rtl/v4/memory/factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+      "rtl/v4/dataflow/factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+      "verification/v4/program/tb_factor_panel_bridge.sv": "4750a2861c6d388fe3c7ecfd9e2dffba3aa8b0611295d37a9ef6d0dcf6b5d8be"
+    },
+    "source_extras": {
+      "config/v4_kernel_interface.json": "9ad7fe779f1f462b97e9338fd586735ef4b5b00f6a882947a30a0ba23a079fbe",
+      "config/v4_program_interface.json": "4072eb62e62fe7039d06177fb9ee407ac334e74622364b06d83072ab6ef790e3",
+      "rtl/v4/include/kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+      "rtl/v4/include/program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+      "rtl/v4/include/stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+      "rtl/v4/include/memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+      "scripts/v4/xsim.py": "a28a7c625b7e90676ad399b9d95f7f40b3617664758d8e886a45eeec1f6961ed",
+      "verification/v4/test_factor_panel_service_rtl.py": "56f293c891edb060eae7df7c34dcaec1a287acf9485862558c3d22e1a911256c",
+      "docs/v4/architecture/NARROW_PANEL_MAPPING.md": "495c88e858a30f7b06684c4b6116926e9ccbb65300422e73b66c1b79ad78bdd7"
+    },
+    "compile_commands": [
+      {
+        "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat\" \"-sv\" \"-i\" \"D:\\vivado_pj\\rtl\\v4\\include\" \"D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv\" \"D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_bridge.sv\"\"",
+        "argv": [
+          "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+          "-sv",
+          "-i",
+          "D:\\vivado_pj\\rtl\\v4\\include",
+          "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+          "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_bridge.sv"
+        ],
+        "cwd": "D:\\vivado_pj\\work\\factor_panel_gate_qm_63wxb\\bridge.xsim_dukfxfxs",
+        "timeout_seconds": 120,
+        "invocation_id": "20c4c21804bd4b26b89f0a02dc33e8cb",
+        "execution": "executed",
+        "started_utc": "2026-09-12T02:12:14.056659+00:00",
+        "returncode": 0,
+        "stdout": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/factor_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/program/tb_factor_panel_bridge.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_factor_panel_bridge\n",
+        "stderr": "",
+        "logs": {
+          "xvlog.log": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/memory/factor_store.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_store\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/program/tb_factor_panel_bridge.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_factor_panel_bridge\n"
+        },
+        "source_identity": {
+          "metadata_schema": 2,
+          "top": "tb_factor_panel_bridge",
+          "sources": [
+            "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_bridge.sv"
+          ],
+          "hashes": {
+            "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_bridge.sv": "4750a2861c6d388fe3c7ecfd9e2dffba3aa8b0611295d37a9ef6d0dcf6b5d8be",
+            "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+            "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+            "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+            "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+            "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+            "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+            "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+            "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+            "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+            "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+            "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+            "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+            "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+            "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+            "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+            "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+          },
+          "includes": [
+            "D:\\vivado_pj\\rtl\\v4\\include"
+          ],
+          "parameters": {},
+          "tools": {
+            "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+            "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+            "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+          },
+          "timescale": "1ns/1ps"
+        },
+        "compile_signature": "a69e2687beb778fdc6393567d0852035334c90c5e88d8cd5880ea635d4b7add0"
+      },
+      {
+        "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat\" \"tb_factor_panel_bridge\" \"-s\" \"sim_a69e2687beb778fd\" \"--timescale\" \"1ns/1ps\" \"--debug\" \"typical\"\"",
+        "argv": [
+          "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+          "tb_factor_panel_bridge",
+          "-s",
+          "sim_a69e2687beb778fd",
+          "--timescale",
+          "1ns/1ps",
+          "--debug",
+          "typical"
+        ],
+        "cwd": "D:\\vivado_pj\\work\\factor_panel_gate_qm_63wxb\\bridge.xsim_dukfxfxs",
+        "timeout_seconds": 120,
+        "invocation_id": "186d5128185a422ca501d714b3aeaecb",
+        "execution": "executed",
+        "started_utc": "2026-09-12T02:12:15.658099+00:00",
+        "returncode": 0,
+        "stdout": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_factor_panel_bridge -s sim_a69e2687beb778fd --timescale 1ns/1ps --debug typical \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.factor_store\nCompiling module work.factor_service(ENABLE_PANEL_BRID...\nCompiling module work.tb_factor_panel_bridge\nBuilt simulation snapshot sim_a69e2687beb778fd\n\n****** Webtalk v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource D:/vivado_pj/work/factor_panel_gate_qm_63wxb/bridge.xsim_dukfxfxs/xsim.dir/sim_a69e2687beb778fd/webtalk/xsim_webtalk.tcl -notrace\nINFO: [Common 17-206] Exiting Webtalk at Sat Sep 12 09:12:22 2026...\n",
+        "stderr": "",
+        "logs": {
+          "xelab.log": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_factor_panel_bridge -s sim_a69e2687beb778fd --timescale 1ns/1ps --debug typical \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.factor_store\nCompiling module work.factor_service(ENABLE_PANEL_BRID...\nCompiling module work.tb_factor_panel_bridge\nBuilt simulation snapshot sim_a69e2687beb778fd\n"
+        },
+        "source_identity": {
+          "metadata_schema": 2,
+          "top": "tb_factor_panel_bridge",
+          "sources": [
+            "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_bridge.sv"
+          ],
+          "hashes": {
+            "D:\\vivado_pj\\rtl\\v4\\memory\\factor_store.sv": "91471b77be7a11e3b6f44dd6488844788ed0674c47216166c13456188a9d0b4c",
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_service.sv": "58bb72af1e3387af05713989d1fb0123ad27dbd2eb8c0bc3a6abe57b45f0e59b",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_bridge.sv": "4750a2861c6d388fe3c7ecfd9e2dffba3aa8b0611295d37a9ef6d0dcf6b5d8be",
+            "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+            "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+            "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+            "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+            "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+            "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+            "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+            "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+            "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+            "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+            "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+            "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+            "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+            "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+            "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+            "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+          },
+          "includes": [
+            "D:\\vivado_pj\\rtl\\v4\\include"
+          ],
+          "parameters": {},
+          "tools": {
+            "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+            "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+            "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+          },
+          "timescale": "1ns/1ps"
+        },
+        "compile_signature": "a69e2687beb778fdc6393567d0852035334c90c5e88d8cd5880ea635d4b7add0"
+      }
+    ],
+    "run_commands": [
+      {
+        "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat\" \"sim_a69e2687beb778fd\" \"-runall\" \"-onerror\" \"quit\"\"",
+        "argv": [
+          "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat",
+          "sim_a69e2687beb778fd",
+          "-runall",
+          "-onerror",
+          "quit"
+        ],
+        "cwd": "D:\\vivado_pj\\work\\factor_panel_gate_qm_63wxb\\bridge.xsim_dukfxfxs",
+        "timeout_seconds": 120,
+        "invocation_id": "2c1bf21e80dc486492c5b343ce33d43d",
+        "execution": "executed",
+        "started_utc": "2026-09-12T02:12:22.923711+00:00",
+        "returncode": 0,
+        "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_a69e2687beb778fd/xsim_script.tcl\n# xsim {sim_a69e2687beb778fd} -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS factor_panel_bridge cycles=34\n$finish called at time : 340 ns : File \"D:/vivado_pj/verification/v4/program/tb_factor_panel_bridge.sv\" Line 56\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 09:12:30 2026...\n",
+        "stderr": "",
+        "logs": {
+          "xsim.log": "#-----------------------------------------------------------\n# xsim v2018.1 (64-bit)\n# SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n# IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n# Start of session at: Sat Sep 12 09:12:24 2026\n# Process ID: 25704\n# Current directory: D:/vivado_pj/work/factor_panel_gate_qm_63wxb/bridge.xsim_dukfxfxs\n# Command line: xsim.exe -mode tcl -source {xsim.dir/sim_a69e2687beb778fd/xsim_script.tcl}\n# Log file: D:/vivado_pj/work/factor_panel_gate_qm_63wxb/bridge.xsim_dukfxfxs/xsim.log\n# Journal file: D:/vivado_pj/work/factor_panel_gate_qm_63wxb/bridge.xsim_dukfxfxs\\xsim.jou\n#-----------------------------------------------------------\nsource xsim.dir/sim_a69e2687beb778fd/xsim_script.tcl\n# xsim {sim_a69e2687beb778fd} -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS factor_panel_bridge cycles=34\n$finish called at time : 340 ns : File \"D:/vivado_pj/verification/v4/program/tb_factor_panel_bridge.sv\" Line 56\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 09:12:30 2026...\n"
+        },
+        "compile_signature": "a69e2687beb778fdc6393567d0852035334c90c5e88d8cd5880ea635d4b7add0"
+      }
+    ],
+    "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_a69e2687beb778fd/xsim_script.tcl\n# xsim {sim_a69e2687beb778fd} -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS factor_panel_bridge cycles=34\n$finish called at time : 340 ns : File \"D:/vivado_pj/verification/v4/program/tb_factor_panel_bridge.sv\" Line 56\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 09:12:30 2026...\n"
+  },
+  {
+    "name": "panel_wide_baseline",
+    "status": "PASS",
+    "parameters": {
+      "NARROW_PANEL_MAPPING": 0
+    },
+    "sources": {
+      "rtl/v4/dataflow/factor_panel_service.sv": "ca8e2b71a2879991c4a8b217393de71f244f90a7b600b3e0cbd3bc15277e8d69",
+      "verification/v4/program/tb_factor_panel_service.sv": "67d99e4bda59104039cc128c5307cf45afd97b888832d50cbd84500e272e22ec"
+    },
+    "source_extras": {
+      "config/v4_kernel_interface.json": "9ad7fe779f1f462b97e9338fd586735ef4b5b00f6a882947a30a0ba23a079fbe",
+      "config/v4_program_interface.json": "4072eb62e62fe7039d06177fb9ee407ac334e74622364b06d83072ab6ef790e3",
+      "rtl/v4/include/kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+      "rtl/v4/include/program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+      "rtl/v4/include/stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+      "rtl/v4/include/memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+      "scripts/v4/xsim.py": "a28a7c625b7e90676ad399b9d95f7f40b3617664758d8e886a45eeec1f6961ed",
+      "verification/v4/test_factor_panel_service_rtl.py": "56f293c891edb060eae7df7c34dcaec1a287acf9485862558c3d22e1a911256c",
+      "docs/v4/architecture/NARROW_PANEL_MAPPING.md": "495c88e858a30f7b06684c4b6116926e9ccbb65300422e73b66c1b79ad78bdd7"
+    },
+    "compile_commands": [
+      {
+        "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat\" \"-sv\" \"-i\" \"D:\\vivado_pj\\rtl\\v4\\include\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv\" \"D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv\"\"",
+        "argv": [
+          "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+          "-sv",
+          "-i",
+          "D:\\vivado_pj\\rtl\\v4\\include",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+          "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv"
+        ],
+        "cwd": "D:\\vivado_pj\\work\\factor_panel_gate_qm_63wxb\\panel_wide_baseline.xsim_exeuedk5",
+        "timeout_seconds": 120,
+        "invocation_id": "903219d3f9dd4a07b3b71125469c7f5e",
+        "execution": "executed",
+        "started_utc": "2026-09-12T02:12:30.602747+00:00",
+        "returncode": 0,
+        "stdout": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_panel_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/program/tb_factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_factor_panel_service\n",
+        "stderr": "",
+        "logs": {
+          "xvlog.log": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_panel_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/program/tb_factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_factor_panel_service\n"
+        },
+        "source_identity": {
+          "metadata_schema": 2,
+          "top": "tb_factor_panel_service",
+          "sources": [
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv"
+          ],
+          "hashes": {
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv": "ca8e2b71a2879991c4a8b217393de71f244f90a7b600b3e0cbd3bc15277e8d69",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv": "67d99e4bda59104039cc128c5307cf45afd97b888832d50cbd84500e272e22ec",
+            "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+            "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+            "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+            "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+            "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+            "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+            "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+            "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+            "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+            "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+            "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+            "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+            "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+            "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+            "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+            "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+          },
+          "includes": [
+            "D:\\vivado_pj\\rtl\\v4\\include"
+          ],
+          "parameters": {
+            "NARROW_PANEL_MAPPING": 0
+          },
+          "tools": {
+            "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+            "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+            "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+          },
+          "timescale": "1ns/1ps"
+        },
+        "compile_signature": "852d7ea38e2958cfb62d114952d9264e665b845a4afb6c8496e7332969703d38"
+      },
+      {
+        "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat\" \"tb_factor_panel_service\" \"-s\" \"sim_852d7ea38e2958cf\" \"--timescale\" \"1ns/1ps\" \"--debug\" \"typical\" \"--generic_top\" \"NARROW_PANEL_MAPPING=0\"\"",
+        "argv": [
+          "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+          "tb_factor_panel_service",
+          "-s",
+          "sim_852d7ea38e2958cf",
+          "--timescale",
+          "1ns/1ps",
+          "--debug",
+          "typical",
+          "--generic_top",
+          "NARROW_PANEL_MAPPING=0"
+        ],
+        "cwd": "D:\\vivado_pj\\work\\factor_panel_gate_qm_63wxb\\panel_wide_baseline.xsim_exeuedk5",
+        "timeout_seconds": 120,
+        "invocation_id": "fcbb12fc9119405db26379a9404860ca",
+        "execution": "executed",
+        "started_utc": "2026-09-12T02:12:32.249354+00:00",
+        "returncode": 0,
+        "stdout": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_factor_panel_service -s sim_852d7ea38e2958cf --timescale 1ns/1ps --debug typical --generic_top NARROW_PANEL_MAPPING=0 \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.factor_panel_service(NARROW_PANE...\nCompiling module work.tb_factor_panel_service(NARROW_P...\nBuilt simulation snapshot sim_852d7ea38e2958cf\n\n****** Webtalk v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource D:/vivado_pj/work/factor_panel_gate_qm_63wxb/panel_wide_baseline.xsim_exeuedk5/xsim.dir/sim_852d7ea38e2958cf/webtalk/xsim_webtalk.tcl -notrace\nINFO: [Common 17-206] Exiting Webtalk at Sat Sep 12 09:12:41 2026...\n",
+        "stderr": "",
+        "logs": {
+          "xelab.log": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_factor_panel_service -s sim_852d7ea38e2958cf --timescale 1ns/1ps --debug typical --generic_top NARROW_PANEL_MAPPING=0 \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.factor_panel_service(NARROW_PANE...\nCompiling module work.tb_factor_panel_service(NARROW_P...\nBuilt simulation snapshot sim_852d7ea38e2958cf\n"
+        },
+        "source_identity": {
+          "metadata_schema": 2,
+          "top": "tb_factor_panel_service",
+          "sources": [
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv"
+          ],
+          "hashes": {
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv": "ca8e2b71a2879991c4a8b217393de71f244f90a7b600b3e0cbd3bc15277e8d69",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv": "67d99e4bda59104039cc128c5307cf45afd97b888832d50cbd84500e272e22ec",
+            "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+            "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+            "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+            "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+            "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+            "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+            "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+            "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+            "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+            "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+            "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+            "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+            "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+            "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+            "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+            "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+          },
+          "includes": [
+            "D:\\vivado_pj\\rtl\\v4\\include"
+          ],
+          "parameters": {
+            "NARROW_PANEL_MAPPING": 0
+          },
+          "tools": {
+            "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+            "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+            "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+          },
+          "timescale": "1ns/1ps"
+        },
+        "compile_signature": "852d7ea38e2958cfb62d114952d9264e665b845a4afb6c8496e7332969703d38"
+      }
+    ],
+    "run_commands": [
+      {
+        "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat\" \"sim_852d7ea38e2958cf\" \"-runall\" \"-onerror\" \"quit\"\"",
+        "argv": [
+          "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat",
+          "sim_852d7ea38e2958cf",
+          "-runall",
+          "-onerror",
+          "quit"
+        ],
+        "cwd": "D:\\vivado_pj\\work\\factor_panel_gate_qm_63wxb\\panel_wide_baseline.xsim_exeuedk5",
+        "timeout_seconds": 120,
+        "invocation_id": "09ca15938109479e822206bd04d38ae8",
+        "execution": "executed",
+        "started_utc": "2026-09-12T02:12:41.627979+00:00",
+        "returncode": 0,
+        "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_852d7ea38e2958cf/xsim_script.tcl\n# xsim {sim_852d7ea38e2958cf} -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS factor_panel cycles=17670\n$finish called at time : 176700 ns : File \"D:/vivado_pj/verification/v4/program/tb_factor_panel_service.sv\" Line 388\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:07 . Memory (MB): peak = 228.633 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 09:12:57 2026...\n",
+        "stderr": "",
+        "logs": {
+          "xsim.log": "#-----------------------------------------------------------\n# xsim v2018.1 (64-bit)\n# SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n# IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n# Start of session at: Sat Sep 12 09:12:43 2026\n# Process ID: 10368\n# Current directory: D:/vivado_pj/work/factor_panel_gate_qm_63wxb/panel_wide_baseline.xsim_exeuedk5\n# Command line: xsim.exe -mode tcl -source {xsim.dir/sim_852d7ea38e2958cf/xsim_script.tcl}\n# Log file: D:/vivado_pj/work/factor_panel_gate_qm_63wxb/panel_wide_baseline.xsim_exeuedk5/xsim.log\n# Journal file: D:/vivado_pj/work/factor_panel_gate_qm_63wxb/panel_wide_baseline.xsim_exeuedk5\\xsim.jou\n#-----------------------------------------------------------\nsource xsim.dir/sim_852d7ea38e2958cf/xsim_script.tcl\n# xsim {sim_852d7ea38e2958cf} -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS factor_panel cycles=17670\n$finish called at time : 176700 ns : File \"D:/vivado_pj/verification/v4/program/tb_factor_panel_service.sv\" Line 388\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:07 . Memory (MB): peak = 228.633 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 09:12:57 2026...\n"
+        },
+        "compile_signature": "852d7ea38e2958cfb62d114952d9264e665b845a4afb6c8496e7332969703d38"
+      }
+    ],
+    "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_852d7ea38e2958cf/xsim_script.tcl\n# xsim {sim_852d7ea38e2958cf} -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS factor_panel cycles=17670\n$finish called at time : 176700 ns : File \"D:/vivado_pj/verification/v4/program/tb_factor_panel_service.sv\" Line 388\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:07 . Memory (MB): peak = 228.633 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 09:12:57 2026...\n"
+  },
+  {
+    "name": "panel_narrow_mapping",
+    "status": "PASS",
+    "parameters": {
+      "NARROW_PANEL_MAPPING": 1
+    },
+    "sources": {
+      "rtl/v4/dataflow/factor_panel_service.sv": "ca8e2b71a2879991c4a8b217393de71f244f90a7b600b3e0cbd3bc15277e8d69",
+      "verification/v4/program/tb_factor_panel_service.sv": "67d99e4bda59104039cc128c5307cf45afd97b888832d50cbd84500e272e22ec"
+    },
+    "source_extras": {
+      "config/v4_kernel_interface.json": "9ad7fe779f1f462b97e9338fd586735ef4b5b00f6a882947a30a0ba23a079fbe",
+      "config/v4_program_interface.json": "4072eb62e62fe7039d06177fb9ee407ac334e74622364b06d83072ab6ef790e3",
+      "rtl/v4/include/kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+      "rtl/v4/include/program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+      "rtl/v4/include/stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+      "rtl/v4/include/memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+      "scripts/v4/xsim.py": "a28a7c625b7e90676ad399b9d95f7f40b3617664758d8e886a45eeec1f6961ed",
+      "verification/v4/test_factor_panel_service_rtl.py": "56f293c891edb060eae7df7c34dcaec1a287acf9485862558c3d22e1a911256c",
+      "docs/v4/architecture/NARROW_PANEL_MAPPING.md": "495c88e858a30f7b06684c4b6116926e9ccbb65300422e73b66c1b79ad78bdd7"
+    },
+    "compile_commands": [
+      {
+        "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat\" \"-sv\" \"-i\" \"D:\\vivado_pj\\rtl\\v4\\include\" \"D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv\" \"D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv\"\"",
+        "argv": [
+          "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+          "-sv",
+          "-i",
+          "D:\\vivado_pj\\rtl\\v4\\include",
+          "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+          "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv"
+        ],
+        "cwd": "D:\\vivado_pj\\work\\factor_panel_gate_qm_63wxb\\panel_narrow_mapping.xsim_2rs7noyi",
+        "timeout_seconds": 120,
+        "invocation_id": "b984cfb534aa46698c44d0824d28f622",
+        "execution": "executed",
+        "started_utc": "2026-09-12T02:12:57.314348+00:00",
+        "returncode": 0,
+        "stdout": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_panel_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/program/tb_factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_factor_panel_service\n",
+        "stderr": "",
+        "logs": {
+          "xvlog.log": "INFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/rtl/v4/dataflow/factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module factor_panel_service\nINFO: [VRFC 10-2263] Analyzing SystemVerilog file \"D:/vivado_pj/verification/v4/program/tb_factor_panel_service.sv\" into library work\nINFO: [VRFC 10-311] analyzing module tb_factor_panel_service\n"
+        },
+        "source_identity": {
+          "metadata_schema": 2,
+          "top": "tb_factor_panel_service",
+          "sources": [
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv"
+          ],
+          "hashes": {
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv": "ca8e2b71a2879991c4a8b217393de71f244f90a7b600b3e0cbd3bc15277e8d69",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv": "67d99e4bda59104039cc128c5307cf45afd97b888832d50cbd84500e272e22ec",
+            "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+            "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+            "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+            "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+            "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+            "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+            "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+            "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+            "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+            "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+            "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+            "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+            "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+            "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+            "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+            "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+          },
+          "includes": [
+            "D:\\vivado_pj\\rtl\\v4\\include"
+          ],
+          "parameters": {
+            "NARROW_PANEL_MAPPING": 1
+          },
+          "tools": {
+            "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+            "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+            "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+          },
+          "timescale": "1ns/1ps"
+        },
+        "compile_signature": "8723c1bf7332c2d652f694b211be4811a020e015fb615833ef3fe704c8df3862"
+      },
+      {
+        "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat\" \"tb_factor_panel_service\" \"-s\" \"sim_8723c1bf7332c2d6\" \"--timescale\" \"1ns/1ps\" \"--debug\" \"typical\" \"--generic_top\" \"NARROW_PANEL_MAPPING=1\"\"",
+        "argv": [
+          "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+          "tb_factor_panel_service",
+          "-s",
+          "sim_8723c1bf7332c2d6",
+          "--timescale",
+          "1ns/1ps",
+          "--debug",
+          "typical",
+          "--generic_top",
+          "NARROW_PANEL_MAPPING=1"
+        ],
+        "cwd": "D:\\vivado_pj\\work\\factor_panel_gate_qm_63wxb\\panel_narrow_mapping.xsim_2rs7noyi",
+        "timeout_seconds": 120,
+        "invocation_id": "c7aa14f47b1e4278963fb9a1365088a7",
+        "execution": "executed",
+        "started_utc": "2026-09-12T02:12:59.019858+00:00",
+        "returncode": 0,
+        "stdout": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_factor_panel_service -s sim_8723c1bf7332c2d6 --timescale 1ns/1ps --debug typical --generic_top NARROW_PANEL_MAPPING=1 \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.factor_panel_service(NARROW_PANE...\nCompiling module work.tb_factor_panel_service(NARROW_P...\nBuilt simulation snapshot sim_8723c1bf7332c2d6\n\n****** Webtalk v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource D:/vivado_pj/work/factor_panel_gate_qm_63wxb/panel_narrow_mapping.xsim_2rs7noyi/xsim.dir/sim_8723c1bf7332c2d6/webtalk/xsim_webtalk.tcl -notrace\nINFO: [Common 17-206] Exiting Webtalk at Sat Sep 12 09:13:07 2026...\n",
+        "stderr": "",
+        "logs": {
+          "xelab.log": "Vivado Simulator 2018.1\nCopyright 1986-1999, 2001-2017 Xilinx, Inc. All Rights Reserved.\nRunning: C:/Xilinx/Vivado/2018.1/bin/unwrapped/win64.o/xelab.exe tb_factor_panel_service -s sim_8723c1bf7332c2d6 --timescale 1ns/1ps --debug typical --generic_top NARROW_PANEL_MAPPING=1 \nMulti-threading is on. Using 6 slave threads.\nStarting static elaboration\nCompleted static elaboration\nStarting simulation data flow analysis\nCompleted simulation data flow analysis\nTime Resolution for simulation is 1ps\nCompiling module work.factor_panel_service(NARROW_PANE...\nCompiling module work.tb_factor_panel_service(NARROW_P...\nBuilt simulation snapshot sim_8723c1bf7332c2d6\n"
+        },
+        "source_identity": {
+          "metadata_schema": 2,
+          "top": "tb_factor_panel_service",
+          "sources": [
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv"
+          ],
+          "hashes": {
+            "D:\\vivado_pj\\rtl\\v4\\dataflow\\factor_panel_service.sv": "ca8e2b71a2879991c4a8b217393de71f244f90a7b600b3e0cbd3bc15277e8d69",
+            "D:\\vivado_pj\\verification\\v4\\program\\tb_factor_panel_service.sv": "67d99e4bda59104039cc128c5307cf45afd97b888832d50cbd84500e272e22ec",
+            "D:\\vivado_pj\\rtl\\v4\\include\\builder_defs.vh": "4d2a1141be472a46dcc56db386aa1ba7ccc2334d33504b36bed8a30822cba7b1",
+            "D:\\vivado_pj\\rtl\\v4\\include\\commit_interface.vh": "858540b9009827b704c4837ef02f25d7d4eb86edc6254e6920764d7f864f98d9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\context_defs.vh": "ebdfaee2d9859d39ffe14a56d7aad9cf49d399b63b8a9cdca2146e9d1ee66ab7",
+            "D:\\vivado_pj\\rtl\\v4\\include\\control_defs.vh": "8f274b911f07457f6b83b2deb2e60ae19d92f543078c0ee2be405d905e2c38e0",
+            "D:\\vivado_pj\\rtl\\v4\\include\\feeder_interface.vh": "33d28c62acbe6e2a08ab8c7daf24a8b0621df46988ade245b3b675b3c150dd05",
+            "D:\\vivado_pj\\rtl\\v4\\include\\host_registers.vh": "02858cec5657eed5e3cd4b9bdbb5d9f212965858d00ca8aa07a57f9a301ecf4e",
+            "D:\\vivado_pj\\rtl\\v4\\include\\kernel_interface.vh": "e8f039895a6e9746e72507d07e834a29c7c7c19470b8bf5796f7daf28103f48a",
+            "D:\\vivado_pj\\rtl\\v4\\include\\memory_defs.vh": "49bf3d9119eae71ce34bb2c76bd6ba1bf69e26ca45e937d923dbc0d58c4ae139",
+            "D:\\vivado_pj\\rtl\\v4\\include\\operator_defs.vh": "488c46d9489f952f5f8386429f3688ee679376ef49f3576b2cd007a934533d1f",
+            "D:\\vivado_pj\\rtl\\v4\\include\\payload_dma_regs.vh": "ae8bab9f88f2aab95029d29cbdcf31eb1a239fe1960595509ef12ef8d550c36b",
+            "D:\\vivado_pj\\rtl\\v4\\include\\pe_interface.vh": "30ce3c9998f28337f59b6833683e6472b7a246a6776bbff6361ac905ed5635ee",
+            "D:\\vivado_pj\\rtl\\v4\\include\\phi_interface.vh": "0bd61e55aa669e36634fe98dd3a68f4b125f2ec997675569c5ed11ee962faca9",
+            "D:\\vivado_pj\\rtl\\v4\\include\\program_interface.vh": "93e3afbf72ca374f2827c0245b904e76636e63e990855cf86bd7a953b487db67",
+            "D:\\vivado_pj\\rtl\\v4\\include\\recovery_interface.vh": "99eb94b8d47db999bc34f88144a99cf2cff4c9207f2893efad6972a7e0f8c941",
+            "D:\\vivado_pj\\rtl\\v4\\include\\scalar_interface.vh": "1d794718b43db1281ddc7cb4a5df348fadfc0aa1cfa63349001357cb64d5eb98",
+            "D:\\vivado_pj\\rtl\\v4\\include\\solver_interface.vh": "9665517a647a6e402ae5a1a1053afe862ec3e8f014a80aafe0cc907348e3c4c8",
+            "D:\\vivado_pj\\rtl\\v4\\include\\stream_interface.vh": "d02839989ed4171aad7d1e0ecf49ca2358b3a7705796d92e353a800705f7d2dc",
+            "D:\\vivado_pj\\rtl\\v4\\include\\tile_interface.vh": "d048957affb7a6fcc6d78a5f89eba049a1934a5da1e6b6e36a649cfbbd02653c"
+          },
+          "includes": [
+            "D:\\vivado_pj\\rtl\\v4\\include"
+          ],
+          "parameters": {
+            "NARROW_PANEL_MAPPING": 1
+          },
+          "tools": {
+            "xvlog": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xvlog.bat",
+            "xelab": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xelab.bat",
+            "xsim": "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat"
+          },
+          "timescale": "1ns/1ps"
+        },
+        "compile_signature": "8723c1bf7332c2d652f694b211be4811a020e015fb615833ef3fe704c8df3862"
+      }
+    ],
+    "run_commands": [
+      {
+        "command": "C:\\WINDOWS\\system32\\cmd.exe /d /s /c \"\"C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat\" \"sim_8723c1bf7332c2d6\" \"-runall\" \"-onerror\" \"quit\"\"",
+        "argv": [
+          "C:\\Xilinx\\Vivado\\2018.1\\bin\\xsim.bat",
+          "sim_8723c1bf7332c2d6",
+          "-runall",
+          "-onerror",
+          "quit"
+        ],
+        "cwd": "D:\\vivado_pj\\work\\factor_panel_gate_qm_63wxb\\panel_narrow_mapping.xsim_2rs7noyi",
+        "timeout_seconds": 120,
+        "invocation_id": "1c45a3990ce741acb81d12d3710a03fd",
+        "execution": "executed",
+        "started_utc": "2026-09-12T02:13:07.999281+00:00",
+        "returncode": 0,
+        "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_8723c1bf7332c2d6/xsim_script.tcl\n# xsim {sim_8723c1bf7332c2d6} -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS factor_panel cycles=17070\n$finish called at time : 170700 ns : File \"D:/vivado_pj/verification/v4/program/tb_factor_panel_service.sv\" Line 388\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:07 . Memory (MB): peak = 229.094 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 09:13:27 2026...\n",
+        "stderr": "",
+        "logs": {
+          "xsim.log": "#-----------------------------------------------------------\n# xsim v2018.1 (64-bit)\n# SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n# IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n# Start of session at: Sat Sep 12 09:13:10 2026\n# Process ID: 24988\n# Current directory: D:/vivado_pj/work/factor_panel_gate_qm_63wxb/panel_narrow_mapping.xsim_2rs7noyi\n# Command line: xsim.exe -mode tcl -source {xsim.dir/sim_8723c1bf7332c2d6/xsim_script.tcl}\n# Log file: D:/vivado_pj/work/factor_panel_gate_qm_63wxb/panel_narrow_mapping.xsim_2rs7noyi/xsim.log\n# Journal file: D:/vivado_pj/work/factor_panel_gate_qm_63wxb/panel_narrow_mapping.xsim_2rs7noyi\\xsim.jou\n#-----------------------------------------------------------\nsource xsim.dir/sim_8723c1bf7332c2d6/xsim_script.tcl\n# xsim {sim_8723c1bf7332c2d6} -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS factor_panel cycles=17070\n$finish called at time : 170700 ns : File \"D:/vivado_pj/verification/v4/program/tb_factor_panel_service.sv\" Line 388\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:07 . Memory (MB): peak = 229.094 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 09:13:27 2026...\n"
+        },
+        "compile_signature": "8723c1bf7332c2d652f694b211be4811a020e015fb615833ef3fe704c8df3862"
+      }
+    ],
+    "stdout": "\n****** xsim v2018.1 (64-bit)\n  **** SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018\n  **** IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018\n    ** Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.\n\nsource xsim.dir/sim_8723c1bf7332c2d6/xsim_script.tcl\n# xsim {sim_8723c1bf7332c2d6} -autoloadwcfg -runall -onerror quit\nVivado Simulator 2018.1\nTime resolution is 1 ps\nrun -all\nPASS factor_panel cycles=17070\n$finish called at time : 170700 ns : File \"D:/vivado_pj/verification/v4/program/tb_factor_panel_service.sv\" Line 388\nrun: Time (s): cpu = 00:00:00 ; elapsed = 00:00:07 . Memory (MB): peak = 229.094 ; gain = 0.000\nexit\nINFO: [Common 17-206] Exiting xsim at Sat Sep 12 09:13:27 2026...\n"
+  }
+]

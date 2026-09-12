@@ -1,0 +1,24 @@
+flowchart LR
+    P[Loaded program and contexts] --> K[Kernel: captured command and frame order]
+    K --> F[Feeder: four ordered frame slots]
+    F --> E[Matrix endpoint: two ordered read credits]
+    E --> R[Phi reader: ordered requests and responses]
+    R --> S[Eight unchanged raw sign banks]
+    S --> T[Round-2 qualified: two command-local raw 32x8 sign-tile entries
+Eligible R1-forward or R4-transpose
+At most one validated hit per clock]
+    T --> F
+    S -->|unfavorable live-Phi mode only| F
+    E --> B[One unchanged B store: 16 paired banks]
+    B --> F
+    V[Shared vector pool] --> O[Operand cache: two 32-lane blocks]
+    O --> F
+    V --> U[Round-2 support range transport
+Per output 32-lane block: <=3 distinct providers; one outstanding read
+common word-offset align and masked merge]
+    U --> W[Scratch only; kernel publishes atomically]
+    F --> A[Two 4x4 arrays: exactly 32 PEs]
+    A --> D[Existing PEACC + fixed registered reduction links]
+    D --> W
+    W --> V
+    C[Captured TEMPLATE context] -.unused or exact alias schedule.-> O

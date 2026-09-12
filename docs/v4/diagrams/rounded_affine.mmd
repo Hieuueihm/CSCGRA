@@ -1,0 +1,23 @@
+flowchart LR
+    program["Loaded program: ROUNDED_AFFINE\nLength L; X, Y/scalar, C, destination"] --> validate["Validate contexts, ranges and source masks"]
+    contexts["Loaded 32-PE context\nLow16 MUL; high16 ADD or SUB"] --> validate
+    validate --> read["Read one logical block\nPre-command public mapping"]
+    pool["One public vector pool"] --> read
+    read --> x["Existing a_buffer: X"]
+    read --> y["Existing b_buffer: Y\nor scalar B binding"]
+    read --> c["Existing copy_buffer: C\nTemporary lifetime before commit"]
+    x --> halves["One or two 16-element frames\nExact tail masks"]
+    y --> halves
+    halves --> low["First 4x4 PE array\n16 MUL operations"]
+    low --> product["Checked S27 rounded product\nExisting cascade queues"]
+    c --> high["Second 4x4 PE array\nC + product or C - product"]
+    product --> high
+    high --> pack["Fabric packs result in low16 lanes\nKernel assembles logical 32-element block"]
+    pack --> scratch["Existing scratch handles\nFinal result only"]
+    scratch --> done["Check complete fabric status\nAll result blocks ready"]
+    done --> commit["Existing invalidate/remap/publish"]
+    commit --> pool
+    validate -. "Fault or cancel" .-> abort["Discard current destination\nKeep prior completed CALL results"]
+    product -. "Product overflow remains a fault" .-> abort
+    high -. "ADD/SUB fault" .-> abort
+    done -. "Identity/status fault" .-> abort

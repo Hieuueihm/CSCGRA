@@ -1,0 +1,105 @@
+[
+  {
+    "algorithm": "OMP",
+    "requested_outer_iterations": 8,
+    "output_raw_x_sha256": "f988001798e5dd4a71602b1888c92457383a6ccd87622c49a62bd2811d98cf17",
+    "output_raw_r_sha256": "8a8f045ebe11215becc9e8257e2ac347100463ec04c02383cfde188bb24d86d8",
+    "accepted_support": [
+      142,
+      5,
+      136,
+      208,
+      180,
+      20,
+      152,
+      88
+    ],
+    "status": "max_iterations",
+    "outer_iterations": 8,
+    "inner_iterations": 1
+  },
+  {
+    "algorithm": "GOMP",
+    "requested_outer_iterations": 8,
+    "output_raw_x_sha256": "ba71a321ca77959a2d7272bda70d27cbd57cee2ae7240a91be6de3d2a6dd9e99",
+    "output_raw_r_sha256": "4e9592101644330ffb0c36026f0a119b33547effc75a3f58300644d2b2754af1",
+    "accepted_support": [
+      142,
+      5,
+      136,
+      152,
+      208,
+      180,
+      20,
+      88,
+      245,
+      63,
+      86,
+      2,
+      68,
+      123,
+      75,
+      23
+    ],
+    "status": "paper_iteration_limit",
+    "outer_iterations": 8,
+    "inner_iterations": 1
+  },
+  {
+    "algorithm": "CoSaMP",
+    "requested_outer_iterations": 8,
+    "output_raw_x_sha256": "545730b97a77a00b353f4a3d402187045b0492b56d6c663c9f8574eeb37bdf91",
+    "output_raw_r_sha256": "b735017866ab28058637bad3384e5909f92a5239770f080fc7c7baa03a7540bd",
+    "accepted_support": [
+      5,
+      20,
+      88,
+      136,
+      142,
+      152,
+      180,
+      208
+    ],
+    "status": "max_iterations",
+    "outer_iterations": 8,
+    "inner_iterations": 1
+  },
+  {
+    "algorithm": "SP",
+    "requested_outer_iterations": 8,
+    "output_raw_x_sha256": "4121987f4f7f9343715d47e22fe92247c05505e8d20c07f00263e314f7b64d50",
+    "output_raw_r_sha256": "70a0ff3dcd82516716fd1246129802170c3b2c55fce07845a643156558533c9e",
+    "accepted_support": [
+      5,
+      20,
+      88,
+      136,
+      142,
+      152,
+      180,
+      208
+    ],
+    "status": "residual_not_decreased",
+    "outer_iterations": 1,
+    "inner_iterations": 1
+  },
+  {
+    "algorithm": "HTP",
+    "requested_outer_iterations": 8,
+    "output_raw_x_sha256": "0973e032b55c0f451e47261563a028bab9cbe061f7f2bc1a9b820cf77a26419e",
+    "output_raw_r_sha256": "9a765c8a248363aeb056e237301a93e09bff5a0ae5f9bb7f590f814d561364b9",
+    "accepted_support": [
+      5,
+      72,
+      115,
+      136,
+      142,
+      152,
+      180,
+      208
+    ],
+    "status": "max_iterations",
+    "outer_iterations": 8,
+    "inner_iterations": 1
+  }
+]

@@ -1,0 +1,97 @@
+{
+  "revision": "k8_quality_candidate_v2_admm64",
+  "scope": "Numerical candidate pending frozen RTL qualification; no production bit lock",
+  "data_profile": "D18F14_C18F16_S27F22_ACC64",
+  "greedy_storage": "X24F20",
+  "proximal_storage": "D18F14",
+  "noise_model": "Quantization-only fixtures normalized measurement peak0.5; not a calibrated noisy-sensor policy",
+  "k": 8,
+  "greedy_budget": 128,
+  "qr_refinements": 2,
+  "ls_normal_rtol": 0.0001,
+  "proximal": {
+    "regularization_floor": 0.01,
+    "minimum_shrinkage_output_lsbs": 16,
+    "fista_lipschitz_fraction": 0.95,
+    "pdhg_tau": 8.0,
+    "pdhg_product_bound": 0.9,
+    "admm_rho": 0.3,
+    "inner_max_iterations": 64,
+    "inner_rtol": 0.0001
+  },
+  "regimes": {
+    "64x256": {
+      "HTP": {
+        "step_over_column_norm": 0.6
+      },
+      "FISTA": {
+        "budget": 256
+      },
+      "ADMM": {
+        "budget": 64
+      },
+      "PDHG": {
+        "budget": 256
+      },
+      "OMP": {
+        "budget": 8
+      },
+      "GOMP": {
+        "budget": 4
+      },
+      "CoSaMP": {
+        "budget": 8
+      },
+      "SP": {
+        "budget": 8
+      },
+      "MP": {
+        "budget": 64
+      },
+      "GP": {
+        "budget": 64
+      }
+    },
+    "32x64": {
+      "HTP": {
+        "step_over_column_norm": 1.0
+      },
+      "FISTA": {
+        "budget": 256
+      },
+      "ADMM": {
+        "budget": 256
+      },
+      "PDHG": {
+        "budget": 256
+      }
+    },
+    "128x256": {
+      "IHT": {
+        "step_over_column_norm": 0.5
+      }
+    }
+  },
+  "exclusions": [
+    "Fixed-step IHT not enabled atM64N256/M32N64: held-out failures retained.",
+    "NIHT is a separate optional variant, not an IHT policy toggle.",
+    "Proximal runtime outer convergence stop absent; compiled budget termination only."
+  ],
+  "numerical_qualification": {
+    "64x256": {
+      "ADMM": {
+        "policy": "lambda0.01_rho0.3_outer64_inner64_rtol1e-4",
+        "training_signal_support_seeds": [4101, 4102, 4103, 4104],
+        "reserved_signal_support_seeds": [10001, 10002],
+        "operator": "one fixed LFSR C18 operator: seed0x12345678, raw Phi SHA256 8a498acd18fc9909cd3900feaf9951ff262ae5fd8b7f867331d9720fcd727de8",
+        "gate": "both float/fixed SNR>=20dB; NMSE_fixed/NMSE_float<=1.10; SNR loss<=0.5dB; fixed numeric events zero; successful programmed-budget status",
+        "reports": [
+          "work/quality_accelerated_0909/reports/v4/admm64_train_20260909/summary.json",
+          "work/quality_accelerated_0909/reports/v4/admm64_heldout_20260909/summary.json",
+          "reports/v4/k8_quality_policy_20260909/admm64_policy_gate.json"
+        ],
+        "scope": "Numerical candidate only. Seeds vary planted signal/support under the same Phi; this is neither matrix-seed generalization nor dataset qualification. Frozen RTL remains a separate gate."
+      }
+    }
+  }
+}

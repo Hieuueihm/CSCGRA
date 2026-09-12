@@ -1,0 +1,9 @@
+flowchart LR
+  A["Same quantized A: one copy"] --> L["Idle loader; DMA framing still pending"]
+  L --> B["32 diagonal banks: bank=(row+column) mod32"]
+  B --> F["Per-bank addresses + 32-lane rotation"]
+  F --> P["Two 4x4 arrays: R1 or chunked R4"]
+  V["Vector banks: 1 or4 source values per issue"] --> P
+  P --> O["Ax or transpose-A*x"]
+  B -. "support gather candidate" .-> S["One-copy packed B cache; pipeline unproven"]
+  S -.-> F

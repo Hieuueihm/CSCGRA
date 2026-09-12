@@ -1,0 +1,40 @@
+flowchart TB
+  host[Host - load program / templates / vector data / descriptor]
+  top[csr_top - AXI4-Lite 32-bit registers]
+  bridge[host_command_bridge - native snapshots and mailboxes]
+  recovery[recovery_engine - 10 active programs passed fixed8 gates]
+  control[program_sequencer - loaded branches and subroutines]
+  kernel[stream_kernel - shared pool, kernel dispatch and publication]
+  subgraph compute[Only compute fabric in target]
+    left[4x4 stream_array - 16 PEs]
+    right[4x4 stream_array - 16 PEs]
+  end
+  pool[Vector pool - 16 paired TDP banks, logical block ownership]
+  support[support_service - selection and support operations]
+  scalar[arithmetic_service - shared DIV / SQRT / RESCALE]
+  live[live_operator_memory - Phi/B endpoint with two read credits and elastic Phi cache]
+  feeder[operator_frame_feeder - four frame slots, two vector blocks, R1/R4]
+  qr[factor_service / factor_store - private factor access and prefix append]
+  panel[factor_panel_service - loaded dot and rank update on shared 32 PEs]
+  commit[result_store - whole-result publication gate passed]
+  scope[Active10 M32/N64/K8 and M64/N256/K8, actual outer8; maximum-N gate MP/GP/IHT/FISTA only]
+  pending[QR S96 full-program RTL, held-out quality and physical qualification pending]
+  host -->|AXI-Lite MMIO and IRQ| top
+  top --> bridge -->|Native ready-valid| recovery
+  recovery --> control
+  control -->|Generic commands, no algorithm-ID FSM| kernel
+  control <--> scalar
+  control -->|Build ordered support| live
+  kernel <--> pool
+  kernel <--> support
+  kernel <--> feeder
+  live <--> feeder
+  feeder <--> pool
+  kernel <--> left
+  kernel <--> right
+  qr <--> kernel
+  panel <--> kernel
+  panel <--> qr
+  recovery --> commit -->|Result read via MMIO| top
+  recovery -.-> scope
+  scope -.-> pending

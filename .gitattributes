@@ -20,3 +20,17 @@
 *.png  binary
 *.jpg  binary
 *.pdf  binary
+
+# Preserve source-bound V4 qualification hashes across Git checkouts.
+/V4.md -text
+/requirements-v4.txt -text
+/compiler/v4/** -text
+/config/v4* -text
+/docs/v4/** -text
+/models/v4/** -text
+/rtl/v4/** -text
+/scripts/v4/** -text
+/verification/v4/** -text
+/reports/v4/panel_bcache_20260912/** -text
+/reports/v4/panel_mux_20260912/** -text
+/reports/v4/payload_benchmark_20260911/** -text

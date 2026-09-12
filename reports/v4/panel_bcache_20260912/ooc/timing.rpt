@@ -1,0 +1,741 @@
+Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2018.1 (win64) Build 2188600 Wed Apr  4 18:40:38 MDT 2018
+| Date              : Sat Sep 12 15:02:03 2026
+| Host              : DESKTOP-4VU606L running 64-bit major release  (build 9200)
+| Command           : report_timing_summary -report_unconstrained -file D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/timing.rpt
+| Design            : factor_panel_service
+| Device            : xczu7ev-ffvc1156
+| Speed File        : -2  PRODUCTION 1.19 03-17-2018
+| Temperature Grade : E
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  false
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock
+2. checking constant_clock
+3. checking pulse_width_clock
+4. checking unconstrained_internal_endpoints
+5. checking no_input_delay
+6. checking no_output_delay
+7. checking multiple_clock
+8. checking generated_clocks
+9. checking loops
+10. checking partial_input_delay
+11. checking partial_output_delay
+12. checking latch_loops
+
+1. checking no_clock
+--------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock
+--------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock
+-----------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints
+--------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay
+--------------------------
+ There are 5618 input ports with no input delay specified. (HIGH)
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay
+---------------------------
+ There are 6396 ports with no output delay specified. (HIGH)
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock
+--------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks
+----------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops
+-----------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay
+--------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay
+---------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops
+------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+      2.004        0.000                      0                31671        0.067        0.000                      0                31671        4.725        0.000                       0                 17091  
+
+
+All user specified timing constraints are met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock  Waveform(ns)       Period(ns)      Frequency(MHz)
+-----  ------------       ----------      --------------
+clk    {0.000 5.000}      10.000          100.000         
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+clk                 2.004        0.000                      0                31671        0.067        0.000                      0                31671        4.725        0.000                       0                 17091  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| User Ignored Path Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock    
+----------    ----------    --------    
+
+
+------------------------------------------------------------------------------------------------
+| Unconstrained Path Table
+| ------------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock    
+----------    ----------    --------    
+(none)                                    
+(none)        clk                         
+(none)                      clk           
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  clk
+  To Clock:  clk
+
+Setup :            0  Failing Endpoints,  Worst Slack        2.004ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.067ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        4.725ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             2.004ns  (required time - arrival time)
+  Source:                 slot_row_reg[0][1]/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            tail_nonzero_seen_reg/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        7.986ns  (logic 1.719ns (21.525%)  route 6.267ns (78.475%))
+  Logic Levels:           34  (CARRY8=2 LUT2=1 LUT3=2 LUT4=2 LUT5=10 LUT6=17)
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=17090, unset)        0.000     0.000    clk
+                         FDRE                                         r  slot_row_reg[0][1]/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.077     0.077 r  slot_row_reg[0][1]/Q
+                         net (fo=29, unplaced)        0.194     0.271    slot_row_reg_n_0_[0][1]
+                         LUT2 (Prop_LUT2_I1_O)        0.037     0.308 r  rsp_fault[2]_i_434/O
+                         net (fo=1, unplaced)         0.023     0.331    rsp_fault[2]_i_434_n_0
+                         CARRY8 (Prop_CARRY8_S[1]_CO[7])
+                                                      0.197     0.528 r  rsp_fault_reg[2]_i_268/CO[7]
+                         net (fo=1, unplaced)         0.005     0.533    rsp_fault_reg[2]_i_268_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[0])
+                                                      0.056     0.589 r  rsp_fault_reg[2]_i_155/O[0]
+                         net (fo=1, unplaced)         0.185     0.774    response_found310_in[8]
+                         LUT4 (Prop_LUT4_I2_O)        0.038     0.812 f  rsp_fault[2]_i_276/O
+                         net (fo=1, unplaced)         0.185     0.997    rsp_fault[2]_i_276_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.038     1.035 f  rsp_fault[2]_i_157/O
+                         net (fo=1, unplaced)         0.185     1.220    rsp_fault[2]_i_157_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.038     1.258 r  rsp_fault[2]_i_78/O
+                         net (fo=2, unplaced)         0.185     1.443    response_found211_out
+                         LUT5 (Prop_LUT5_I4_O)        0.038     1.481 r  rsp_fault[2]_i_34/O
+                         net (fo=2, unplaced)         0.185     1.666    response_found1
+                         LUT6 (Prop_LUT6_I1_O)        0.038     1.704 f  slot_factor[0][863]_i_82/O
+                         net (fo=6, unplaced)         0.207     1.911    response_found12411_out
+                         LUT6 (Prop_LUT6_I5_O)        0.038     1.949 f  rsp_fault[2]_i_75/O
+                         net (fo=3, unplaced)         0.191     2.140    rsp_fault[2]_i_75_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.038     2.178 r  rsp_fault[2]_i_33/O
+                         net (fo=7, unplaced)         0.210     2.388    response_found12415_out
+                         LUT6 (Prop_LUT6_I1_O)        0.038     2.426 f  slot_factor[0][863]_i_81/O
+                         net (fo=7, unplaced)         0.210     2.636    response_found12419_out
+                         LUT6 (Prop_LUT6_I5_O)        0.038     2.674 f  rsp_fault[2]_i_63/O
+                         net (fo=3, unplaced)         0.191     2.865    rsp_fault[2]_i_63_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.038     2.903 r  rsp_fault[2]_i_35/O
+                         net (fo=8, unplaced)         0.213     3.116    response_found12423_out
+                         LUT6 (Prop_LUT6_I1_O)        0.038     3.154 f  rsp_fault[2]_i_65/O
+                         net (fo=7, unplaced)         0.210     3.364    response_found12427_out
+                         LUT6 (Prop_LUT6_I5_O)        0.038     3.402 f  rsp_fault[2]_i_27/O
+                         net (fo=2, unplaced)         0.185     3.587    rsp_fault[2]_i_27_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.038     3.625 r  rsp_fault[2]_i_28/O
+                         net (fo=8, unplaced)         0.213     3.838    response_found12431_out
+                         LUT6 (Prop_LUT6_I5_O)        0.038     3.876 r  slot_factor[0][863]_i_38/O
+                         net (fo=71, unplaced)        0.263     4.139    response_slot[0]
+                         LUT6 (Prop_LUT6_I1_O)        0.038     4.177 f  slot_factor[0][782]_i_28/O
+                         net (fo=22, unplaced)        0.236     4.413    slot_factor[0][782]_i_28_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.038     4.451 f  slot_factor[0][863]_i_97/O
+                         net (fo=8, unplaced)         0.213     4.664    slot_factor[0][863]_i_97_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     4.702 f  slot_factor[0][863]_i_87/O
+                         net (fo=15, unplaced)        0.227     4.929    slot_factor[0][863]_i_87_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.038     4.967 r  slot_factor[0][863]_i_63/O
+                         net (fo=15, unplaced)        0.227     5.194    slot_factor[0][863]_i_63_n_0
+                         LUT5 (Prop_LUT5_I1_O)        0.038     5.232 r  slot_factor[0][782]_i_18/O
+                         net (fo=156, unplaced)       0.281     5.513    slot_factor[0][782]_i_18_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.038     5.551 r  slot_factor[0][697]_i_6/O
+                         net (fo=6, unplaced)         0.207     5.758    response_rotation[5]_378[22]
+                         LUT5 (Prop_LUT5_I4_O)        0.038     5.796 r  slot_factor[0][400]_i_3/O
+                         net (fo=2, unplaced)         0.141     5.937    response_ordered_378[22]
+                         LUT4 (Prop_LUT4_I0_O)        0.100     6.037 r  tail_nonzero_seen_i_274/O
+                         net (fo=1, unplaced)         0.185     6.222    tail_nonzero_seen_i_274_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.038     6.260 r  tail_nonzero_seen_i_179/O
+                         net (fo=1, unplaced)         0.185     6.445    tail_nonzero_seen_i_179_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.038     6.483 r  tail_nonzero_seen_i_50/O
+                         net (fo=1, unplaced)         0.105     6.588    tail_nonzero_seen_i_50_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.150     6.738 r  tail_nonzero_seen_i_18/O
+                         net (fo=1, unplaced)         0.185     6.923    tail_nonzero_seen_i_18_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     6.961 r  tail_nonzero_seen_i_10/O
+                         net (fo=2, unplaced)         0.185     7.146    tail_nonzero_seen_i_10_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.038     7.184 r  tail_nonzero_seen_i_12/O
+                         net (fo=1, unplaced)         0.140     7.324    tail_nonzero_seen_i_12_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     7.362 r  tail_nonzero_seen_i_8/O
+                         net (fo=1, unplaced)         0.140     7.502    tail_nonzero_seen_i_8_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.038     7.540 r  tail_nonzero_seen_i_4/O
+                         net (fo=1, unplaced)         0.185     7.725    tail_nonzero_seen_i_4_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.038     7.763 r  tail_nonzero_seen_i_2/O
+                         net (fo=1, unplaced)         0.137     7.900    tail_nonzero_seen
+                         LUT6 (Prop_LUT6_I1_O)        0.038     7.938 r  tail_nonzero_seen_i_1/O
+                         net (fo=1, unplaced)         0.048     7.986    tail_nonzero_seen_i_1_n_0
+                         FDRE                                         r  tail_nonzero_seen_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  
+                                                      0.000    10.000 r  clk (IN)
+                         net (fo=17090, unset)        0.000    10.000    clk
+                         FDRE                                         r  tail_nonzero_seen_reg/C
+                         clock pessimism              0.000    10.000    
+                         clock uncertainty           -0.035     9.965    
+                         FDRE (Setup_FDRE_C_D)        0.025     9.990    tail_nonzero_seen_reg
+  -------------------------------------------------------------------
+                         required time                          9.990    
+                         arrival time                          -7.986    
+  -------------------------------------------------------------------
+                         slack                                  2.004    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.067ns  (arrival time - required time)
+  Source:                 dense_reg/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dense_reg/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (clk rise@0.000ns - clk rise@0.000ns)
+  Data Path Delay:        0.113ns  (logic 0.052ns (45.966%)  route 0.061ns (54.034%))
+  Logic Levels:           1  (LUT4=1)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=17090, unset)        0.000     0.000    clk
+                         FDRE                                         r  dense_reg/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.038     0.038 r  dense_reg/Q
+                         net (fo=2, unplaced)         0.045     0.083    dense
+                         LUT4 (Prop_LUT4_I1_O)        0.014     0.097 r  dense_i_1/O
+                         net (fo=1, unplaced)         0.016     0.113    dense_i_1_n_0
+                         FDRE                                         r  dense_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=17090, unset)        0.000     0.000    clk
+                         FDRE                                         r  dense_reg/C
+                         clock pessimism              0.000     0.000    
+                         FDRE (Hold_FDRE_C_D)         0.046     0.046    dense_reg
+  -------------------------------------------------------------------
+                         required time                         -0.046    
+                         arrival time                           0.113    
+  -------------------------------------------------------------------
+                         slack                                  0.067    
+
+
+
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         clk
+Waveform(ns):       { 0.000 5.000 }
+Period(ns):         10.000
+Sources:            { clk }
+
+Check Type        Corner  Lib Pin  Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location  Pin
+Min Period        n/a     FDRE/C   n/a            0.550         10.000      9.450                A[0]/C
+Low Pulse Width   Slow    FDRE/C   n/a            0.275         5.000       4.725                A[0]/C
+High Pulse Width  Slow    FDRE/C   n/a            0.275         5.000       4.725                A[0]/C
+
+
+
+--------------------------------------------------------------------------------------
+Path Group:  (none)
+From Clock:  
+  To Clock:  
+
+Max Delay            13 Endpoints
+Min Delay            13 Endpoints
+--------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack:                    inf
+  Source:                 rst
+                            (input port)
+  Destination:            fabric_done_ready
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Max at Slow Process Corner
+  Data Path Delay:        0.620ns  (logic 0.268ns (43.226%)  route 0.352ns (56.774%))
+  Logic Levels:           3  (LUT2=1 LUT3=1 LUT5=1)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                                                      0.000     0.000 f  rst (IN)
+                         net (fo=1, unset)            0.000     0.000    rst
+                         LUT2 (Prop_LUT2_I0_O)        0.053     0.053 r  req_ready_INST_0_i_1/O
+                         net (fo=160, unplaced)       0.194     0.247    p_2514_in
+                         LUT5 (Prop_LUT5_I0_O)        0.125     0.372 r  panel_rsp_ready_INST_0/O
+                         net (fo=5, unplaced)         0.158     0.530    panel_rsp_ready
+                         LUT3 (Prop_LUT3_I2_O)        0.090     0.620 r  fabric_done_ready_INST_0/O
+                         net (fo=0)                   0.000     0.620    fabric_done_ready
+                                                                      r  fabric_done_ready (OUT)
+  -------------------------------------------------------------------    -------------------
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack:                    inf
+  Source:                 cancel
+                            (input port)
+  Destination:            panel_invalidate
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Min at Fast Process Corner
+  Data Path Delay:        0.060ns  (logic 0.060ns (100.000%)  route 0.000ns (0.000%))
+  Logic Levels:           1  (LUT6=1)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                                                      0.000     0.000 r  cancel (IN)
+                         net (fo=2, unset)            0.000     0.000    cancel
+                         LUT6 (Prop_LUT6_I0_O)        0.060     0.060 r  panel_invalidate_INST_0/O
+                         net (fo=0)                   0.000     0.060    panel_invalidate
+                                                                      r  panel_invalidate (OUT)
+  -------------------------------------------------------------------    -------------------
+
+
+
+
+
+--------------------------------------------------------------------------------------
+Path Group:  (none)
+From Clock:  clk
+  To Clock:  
+
+Max Delay          6396 Endpoints
+Min Delay          6396 Endpoints
+--------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack:                    inf
+  Source:                 col_position_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            panel_req_addr[124]
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Max at Slow Process Corner
+  Data Path Delay:        8.989ns  (logic 1.811ns (20.147%)  route 7.178ns (79.853%))
+  Logic Levels:           36  (CARRY8=3 LUT2=5 LUT3=8 LUT4=2 LUT5=3 LUT6=15)
+  Clock Uncertainty:      0.025ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=17090, unset)        0.000     0.000    clk
+                         FDRE                                         r  col_position_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.077     0.077 r  col_position_reg[1]/Q
+                         net (fo=174, unplaced)       0.235     0.312    col_position[1]
+                         LUT2 (Prop_LUT2_I1_O)        0.037     0.349 r  fabric_cmd_terminal[1]_INST_0_i_12/O
+                         net (fo=1, unplaced)         0.023     0.372    fabric_cmd_terminal[1]_INST_0_i_12_n_0
+                         CARRY8 (Prop_CARRY8_S[1]_CO[7])
+                                                      0.197     0.569 r  fabric_cmd_terminal[1]_INST_0_i_3/CO[7]
+                         net (fo=1, unplaced)         0.005     0.574    fabric_cmd_terminal[1]_INST_0_i_3_n_0
+                         CARRY8 (Prop_CARRY8_CI_O[2])
+                                                      0.067     0.641 f  fabric_cmd_terminal_mask[31]_INST_0_i_4/O[2]
+                         net (fo=4, unplaced)         0.197     0.838    remaining_columns[10]
+                         LUT6 (Prop_LUT6_I2_O)        0.038     0.876 f  panel_req_mask[8]_INST_0_i_6/O
+                         net (fo=114, unplaced)       0.273     1.149    panel_req_mask[8]_INST_0_i_6_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     1.187 r  fabric_in_mask[19]_INST_0_i_30/O
+                         net (fo=4, unplaced)         0.197     1.384    fabric_in_mask[19]_INST_0_i_30_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     1.422 r  fabric_cmd_terminal[1]_INST_0_i_16/O
+                         net (fo=2, unplaced)         0.185     1.607    fabric_cmd_terminal[1]_INST_0_i_16_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     1.645 r  fabric_cmd_terminal[1]_INST_0_i_14/O
+                         net (fo=88, unplaced)        0.268     1.913    fabric_cmd_terminal[1]_INST_0_i_14_n_0
+                         LUT2 (Prop_LUT2_I0_O)        0.038     1.951 f  fabric_cmd_terminal[1]_INST_0_i_4/O
+                         net (fo=61, unplaced)        0.259     2.210    fabric_cmd_terminal[1]_INST_0_i_4_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     2.248 f  fabric_cmd_terminal[1]_INST_0_i_2/O
+                         net (fo=30, unplaced)        0.243     2.491    fabric_cmd_terminal[1]_INST_0_i_2_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.038     2.529 r  fabric_cmd_terminal_mask[31]_INST_0_i_1/O
+                         net (fo=924, unplaced)       0.321     2.850    fabric_cmd_terminal_mask[31]_INST_0_i_1_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     2.888 r  fabric_in_last_INST_0_i_25/O
+                         net (fo=13, unplaced)        0.224     3.112    phase_frame_count__0[1]
+                         LUT4 (Prop_LUT4_I3_O)        0.070     3.182 r  panel_req_valid_INST_0_i_12/O
+                         net (fo=1, unplaced)         0.260     3.442    panel_req_valid_INST_0_i_12_n_0
+                         CARRY8 (Prop_CARRY8_DI[0]_CO[5])
+                                                      0.170     3.612 r  panel_req_valid_INST_0_i_3/CO[5]
+                         net (fo=1, unplaced)         0.095     3.707    request_valid3
+                         LUT6 (Prop_LUT6_I0_O)        0.038     3.745 r  panel_req_valid_INST_0_i_2/O
+                         net (fo=34, unplaced)        0.246     3.991    request_valid12501_out
+                         LUT5 (Prop_LUT5_I0_O)        0.038     4.029 f  panel_req_mask[6]_INST_0_i_44/O
+                         net (fo=10, unplaced)        0.218     4.247    panel_req_mask[6]_INST_0_i_44_n_0
+                         LUT2 (Prop_LUT2_I1_O)        0.038     4.285 r  panel_req_data[377]_INST_0_i_50/O
+                         net (fo=239, unplaced)       0.290     4.575    panel_req_data[377]_INST_0_i_50_n_0
+                         LUT3 (Prop_LUT3_I1_O)        0.038     4.613 r  panel_req_tag[0]_INST_0_i_21/O
+                         net (fo=1, unplaced)         0.185     4.798    panel_req_tag[0]_INST_0_i_21_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.038     4.836 r  panel_req_tag[0]_INST_0_i_20/O
+                         net (fo=6, unplaced)         0.207     5.043    panel_req_tag[0]_INST_0_i_20_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.038     5.081 r  panel_req_mask[26]_INST_0_i_42/O
+                         net (fo=122, unplaced)       0.275     5.356    panel_req_mask[26]_INST_0_i_42_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.038     5.394 f  panel_req_mask[21]_INST_0_i_83/O
+                         net (fo=5, unplaced)         0.203     5.597    panel_req_mask[21]_INST_0_i_83_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.038     5.635 r  panel_req_mask[21]_INST_0_i_63/O
+                         net (fo=4, unplaced)         0.197     5.832    panel_req_mask[21]_INST_0_i_63_n_0
+                         LUT6 (Prop_LUT6_I1_O)        0.038     5.870 r  panel_req_mask[13]_INST_0_i_26/O
+                         net (fo=4, unplaced)         0.197     6.067    panel_req_mask[13]_INST_0_i_26_n_0
+                         LUT4 (Prop_LUT4_I3_O)        0.038     6.105 f  panel_req_addr[119]_INST_0_i_13/O
+                         net (fo=3, unplaced)         0.191     6.296    panel_req_addr[119]_INST_0_i_13_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.038     6.334 r  panel_req_addr[119]_INST_0_i_12/O
+                         net (fo=1, unplaced)         0.185     6.519    panel_req_addr[119]_INST_0_i_12_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     6.557 r  panel_req_addr[119]_INST_0_i_7/O
+                         net (fo=4, unplaced)         0.197     6.754    panel_req_addr[119]_INST_0_i_7_n_0
+                         LUT2 (Prop_LUT2_I1_O)        0.038     6.792 r  panel_req_addr[118]_INST_0_i_8/O
+                         net (fo=2, unplaced)         0.137     6.929    panel_req_addr[118]_INST_0_i_8_n_0
+                         LUT2 (Prop_LUT2_I1_O)        0.053     6.982 r  panel_req_addr[118]_INST_0_i_3/O
+                         net (fo=2, unplaced)         0.185     7.167    panel_req_addr[118]_INST_0_i_3_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.038     7.205 r  panel_req_addr[119]_INST_0_i_4/O
+                         net (fo=2, unplaced)         0.185     7.390    panel_req_addr[119]_INST_0_i_4_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.038     7.428 r  panel_req_addr[120]_INST_0_i_3/O
+                         net (fo=2, unplaced)         0.185     7.613    panel_req_addr[120]_INST_0_i_3_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.038     7.651 r  panel_req_addr[121]_INST_0_i_3/O
+                         net (fo=2, unplaced)         0.185     7.836    panel_req_addr[121]_INST_0_i_3_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.038     7.874 r  panel_req_addr[122]_INST_0_i_3/O
+                         net (fo=2, unplaced)         0.185     8.059    panel_req_addr[122]_INST_0_i_3_n_0
+                         LUT3 (Prop_LUT3_I0_O)        0.038     8.097 r  panel_req_addr[123]_INST_0_i_7/O
+                         net (fo=2, unplaced)         0.185     8.282    panel_req_addr[123]_INST_0_i_7_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     8.320 r  panel_req_addr[125]_INST_0_i_9/O
+                         net (fo=2, unplaced)         0.185     8.505    panel_req_addr[125]_INST_0_i_9_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.038     8.543 f  panel_req_addr[124]_INST_0_i_12/O
+                         net (fo=1, unplaced)         0.185     8.728    panel_req_addr[124]_INST_0_i_12_n_0
+                         LUT6 (Prop_LUT6_I0_O)        0.038     8.766 f  panel_req_addr[124]_INST_0_i_2/O
+                         net (fo=1, unplaced)         0.185     8.951    panel_req_addr[124]_INST_0_i_2_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.038     8.989 r  panel_req_addr[124]_INST_0/O
+                         net (fo=0)                   0.000     8.989    panel_req_addr[124]
+                                                                      r  panel_req_addr[124] (OUT)
+  -------------------------------------------------------------------    -------------------
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack:                    inf
+  Source:                 candidate_block_reg[0]/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            candidate_block[0]
+                            (output port)
+  Path Group:             (none)
+  Path Type:              Min at Fast Process Corner
+  Data Path Delay:        0.038ns  (logic 0.038ns (100.000%)  route 0.000ns (0.000%))
+  Logic Levels:           0  
+  Clock Uncertainty:      0.025ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=17090, unset)        0.000     0.000    clk
+                         FDRE                                         r  candidate_block_reg[0]/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_FDRE_C_Q)         0.038     0.038 r  candidate_block_reg[0]/Q
+                         net (fo=0)                   0.000     0.038    candidate_block[0]
+                                                                      r  candidate_block[0] (OUT)
+  -------------------------------------------------------------------    -------------------
+
+
+
+
+
+--------------------------------------------------------------------------------------
+Path Group:  (none)
+From Clock:  
+  To Clock:  clk
+
+Max Delay         44726 Endpoints
+Min Delay         44726 Endpoints
+--------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack:                    inf
+  Source:                 fabric_out_faults[7]
+                            (input port)
+  Destination:            b_cache_reg[17][0]/CE
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             (none)
+  Path Type:              Setup (Max at Slow Process Corner)
+  Data Path Delay:        9.243ns  (logic 1.632ns (17.657%)  route 7.611ns (82.343%))
+  Logic Levels:           38  (LUT3=2 LUT4=1 LUT5=4 LUT6=31)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                                                      0.000     0.000 r  fabric_out_faults[7] (IN)
+                         net (fo=2, unset)            0.000     0.000    fabric_out_faults[7]
+                         LUT4 (Prop_LUT4_I0_O)        0.100     0.100 r  rsp_detail[3]_i_305/O
+                         net (fo=6, unplaced)         0.207     0.307    first_fault2
+                         LUT6 (Prop_LUT6_I5_O)        0.038     0.345 r  rsp_detail[3]_i_302/O
+                         net (fo=5, unplaced)         0.203     0.548    rsp_detail[3]_i_302_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     0.586 f  rsp_detail[3]_i_291/O
+                         net (fo=5, unplaced)         0.203     0.789    rsp_detail[3]_i_291_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     0.827 r  rsp_detail[3]_i_287/O
+                         net (fo=5, unplaced)         0.203     1.030    rsp_detail[3]_i_287_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     1.068 f  rsp_detail[3]_i_277/O
+                         net (fo=5, unplaced)         0.203     1.271    rsp_detail[3]_i_277_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     1.309 r  rsp_detail[3]_i_274/O
+                         net (fo=5, unplaced)         0.203     1.512    rsp_detail[3]_i_274_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     1.550 f  rsp_detail[3]_i_263/O
+                         net (fo=5, unplaced)         0.203     1.753    rsp_detail[3]_i_263_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     1.791 r  rsp_detail[3]_i_259/O
+                         net (fo=5, unplaced)         0.203     1.994    rsp_detail[3]_i_259_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     2.032 f  rsp_detail[3]_i_249/O
+                         net (fo=5, unplaced)         0.203     2.235    rsp_detail[3]_i_249_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     2.273 r  rsp_detail[3]_i_246/O
+                         net (fo=5, unplaced)         0.203     2.476    rsp_detail[3]_i_246_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     2.514 f  rsp_detail[3]_i_235/O
+                         net (fo=5, unplaced)         0.203     2.717    rsp_detail[3]_i_235_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     2.755 r  rsp_detail[3]_i_231/O
+                         net (fo=5, unplaced)         0.203     2.958    rsp_detail[3]_i_231_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     2.996 f  rsp_detail[3]_i_221/O
+                         net (fo=5, unplaced)         0.203     3.199    rsp_detail[3]_i_221_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     3.237 r  rsp_detail[3]_i_218/O
+                         net (fo=5, unplaced)         0.203     3.440    rsp_detail[3]_i_218_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     3.478 f  rsp_detail[3]_i_207/O
+                         net (fo=5, unplaced)         0.203     3.681    rsp_detail[3]_i_207_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     3.719 r  rsp_detail[3]_i_203/O
+                         net (fo=5, unplaced)         0.203     3.922    rsp_detail[3]_i_203_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     3.960 f  rsp_detail[3]_i_193/O
+                         net (fo=5, unplaced)         0.203     4.163    rsp_detail[3]_i_193_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     4.201 r  rsp_detail[3]_i_190/O
+                         net (fo=5, unplaced)         0.203     4.404    rsp_detail[3]_i_190_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     4.442 f  rsp_detail[3]_i_179/O
+                         net (fo=5, unplaced)         0.203     4.645    rsp_detail[3]_i_179_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     4.683 r  rsp_detail[3]_i_174/O
+                         net (fo=3, unplaced)         0.191     4.874    rsp_detail[3]_i_174_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     4.912 r  rsp_detail[3]_i_164/O
+                         net (fo=5, unplaced)         0.203     5.115    rsp_detail[3]_i_164_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.038     5.153 f  rsp_detail[3]_i_160/O
+                         net (fo=10, unplaced)        0.218     5.371    rsp_detail[3]_i_160_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     5.409 r  rsp_detail[3]_i_157/O
+                         net (fo=2, unplaced)         0.185     5.594    rsp_detail[3]_i_157_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     5.632 r  rsp_detail[3]_i_146/O
+                         net (fo=9, unplaced)         0.216     5.848    rsp_detail[3]_i_146_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.070     5.918 r  rsp_detail[3]_i_129/O
+                         net (fo=1, unplaced)         0.185     6.103    rsp_detail[3]_i_129_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     6.141 r  rsp_detail[3]_i_118/O
+                         net (fo=7, unplaced)         0.210     6.351    rsp_detail[3]_i_118_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     6.389 r  rsp_detail[3]_i_87/O
+                         net (fo=2, unplaced)         0.185     6.574    rsp_detail[3]_i_87_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     6.612 r  rsp_detail[3]_i_60/O
+                         net (fo=9, unplaced)         0.216     6.828    rsp_detail[3]_i_60_n_0
+                         LUT3 (Prop_LUT3_I2_O)        0.070     6.898 r  rsp_detail[3]_i_36/O
+                         net (fo=1, unplaced)         0.185     7.083    rsp_detail[3]_i_36_n_0
+                         LUT6 (Prop_LUT6_I4_O)        0.038     7.121 r  rsp_detail[3]_i_23/O
+                         net (fo=7, unplaced)         0.210     7.331    rsp_detail[3]_i_23_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     7.369 f  rsp_detail[1]_i_5/O
+                         net (fo=3, unplaced)         0.191     7.560    first_fault8[1]
+                         LUT6 (Prop_LUT6_I4_O)        0.038     7.598 r  slot_factor[0][863]_i_11/O
+                         net (fo=27, unplaced)        0.241     7.839    slot_factor[0][863]_i_11_n_0
+                         LUT5 (Prop_LUT5_I3_O)        0.038     7.877 r  b_cache[14][26]_i_82/O
+                         net (fo=2, unplaced)         0.141     8.018    p_390_in
+                         LUT6 (Prop_LUT6_I2_O)        0.100     8.118 r  b_cache[78][26]_i_28/O
+                         net (fo=3, unplaced)         0.191     8.309    b_cache[78][26]_i_28_n_0
+                         LUT6 (Prop_LUT6_I3_O)        0.038     8.347 r  b_cache[46][26]_i_8/O
+                         net (fo=9, unplaced)         0.216     8.563    b_cache[46][26]_i_8_n_0
+                         LUT5 (Prop_LUT5_I2_O)        0.038     8.601 r  b_cache[17][26]_i_4/O
+                         net (fo=1, unplaced)         0.185     8.786    b_cache[17][26]_i_4_n_0
+                         LUT6 (Prop_LUT6_I5_O)        0.038     8.824 r  b_cache[17][26]_i_2/O
+                         net (fo=1, unplaced)         0.185     9.009    b_cache[17][26]_i_2_n_0
+                         LUT5 (Prop_LUT5_I4_O)        0.038     9.047 r  b_cache[17][26]_i_1/O
+                         net (fo=27, unplaced)        0.196     9.243    b_cache[17][26]_i_1_n_0
+                         FDRE                                         r  b_cache_reg[17][0]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=17090, unset)        0.000     0.000    clk
+                         FDRE                                         r  b_cache_reg[17][0]/C
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack:                    inf
+  Source:                 req_index[0]
+                            (input port)
+  Destination:            col_start_reg[0]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             (none)
+  Path Type:              Hold (Min at Slow Process Corner)
+  Data Path Delay:        0.000ns  (logic 0.000ns (0.000%)  route 0.000ns (0.000%))
+  Logic Levels:           0  
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                                                      0.000     0.000 r  req_index[0] (IN)
+                         net (fo=4, unset)            0.000     0.000    req_index[0]
+                         FDRE                                         r  col_start_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        0.000     0.000 r  
+                                                      0.000     0.000 r  clk (IN)
+                         net (fo=17090, unset)        0.000     0.000    clk
+                         FDRE                                         r  col_start_reg[0]/C
+
+
+
+
+

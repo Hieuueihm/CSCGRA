@@ -1,0 +1,7 @@
+{
+  "fixture": "verification/v4/fixtures/k8_reference_oracles.json",
+  "sha256": "a3d44c141f96597977a43f971893d8bb28a32295d14f92b256416aa262cb418b",
+  "records": 5,
+  "origin": "work/k8_oracles.json in the isolated qr_schedule_scalar_0909 source snapshot",
+  "scope": "Relocation only. The five archived oracle records and their order are byte-identical; executed archival tests remain unchanged."
+}

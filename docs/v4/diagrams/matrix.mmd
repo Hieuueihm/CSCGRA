@@ -1,0 +1,16 @@
+flowchart LR
+  S["Original signal s"] --> Y["y = Phi*s + noise"]
+  PH["Physical measurement operator Phi"] --> Y
+  PH --> A["Host constructs A = Phi*Psi"]
+  PS["Synthesis basis Psi"] --> A
+  A --> AQ["Quantize A once to C format"]
+  AQ --> AF["Pack forward orientation: 32 banks"]
+  AQ --> AT["Transpose SAME integers; pack: 32 banks"]
+  AF --> M["Manifest: shape / format / hashes / bank geometry"]
+  AT --> M
+  M --> L["Idle-only loader; verify before publish"]
+  Y --> YQ["Normalize and quantize y separately"]
+  YQ --> PE["PE execution"]
+  L --> PE
+  PE --> XR["Recovered coefficients"]
+  XR --> SR["Host inverse transform and undo scale"]

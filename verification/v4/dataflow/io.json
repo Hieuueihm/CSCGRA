@@ -1,0 +1,40 @@
+{
+  "inputs": {
+    "rst": 1,
+    "cancel": 1,
+    "req_valid": 1,
+    "req_mode": 2,
+    "req_trans": 1,
+    "req_rows": 8,
+    "req_cols": 11,
+    "req_out": 11,
+    "req_red": 11,
+    "req_step": 3,
+    "req_scale": 18,
+    "req_signs": 256,
+    "req_masks": 256,
+    "req_sign_valid": 8,
+    "req_dense": 576,
+    "req_dense_valid": 32,
+    "req_vec": 108,
+    "req_vec_valid": 4,
+    "req_src_fault": 1,
+    "req_job": 16,
+    "req_tag": 16,
+    "req_fmt": 8,
+    "req_last": 1,
+    "rsp_ready": 1
+  },
+  "outputs": {
+    "req_ready": 1,
+    "rsp_valid": 1,
+    "rsp_mat": 864,
+    "rsp_vec": 864,
+    "rsp_mask": 32,
+    "rsp_fault": 4,
+    "rsp_job": 16,
+    "rsp_tag": 16,
+    "rsp_fmt": 8,
+    "rsp_last": 1
+  }
+}

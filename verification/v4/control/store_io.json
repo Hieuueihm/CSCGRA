@@ -1,0 +1,26 @@
+{
+  "inputs": {
+    "rst": 1,
+    "cancel": 1,
+    "invalidate": 1,
+    "image_ready": 1,
+    "generation": 32,
+    "wr_en": 1,
+    "wr_pc": 8,
+    "wr_bank": 6,
+    "wr_data": 256,
+    "rd_valid": 1,
+    "rd_pc": 8,
+    "rd_generation": 32,
+    "rsp_ready": 1
+  },
+  "outputs": {
+    "rd_ready": 1,
+    "rsp_valid": 1,
+    "rsp_words": 2048,
+    "rsp_control": 256,
+    "rsp_pc": 8,
+    "rsp_generation": 32,
+    "rsp_fault": 4
+  }
+}

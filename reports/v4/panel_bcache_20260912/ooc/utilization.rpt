@@ -1,0 +1,27 @@
+Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2018.1 (win64) Build 2188600 Wed Apr  4 18:40:38 MDT 2018
+| Date         : Sat Sep 12 15:01:01 2026
+| Host         : DESKTOP-4VU606L running 64-bit major release  (build 9200)
+| Command      : report_utilization -hierarchical -file D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/utilization.rpt
+| Design       : factor_panel_service
+| Device       : xczu7evffvc1156-2
+| Design State : Synthesized
+----------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++----------------------+--------+------------+------------+---------+------+-------+--------+--------+------+--------------+
+|       Instance       | Module | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | URAM | DSP48 Blocks |
++----------------------+--------+------------+------------+---------+------+-------+--------+--------+------+--------------+
+| factor_panel_service |  (top) |      57470 |      57470 |       0 |    0 | 17091 |      0 |      0 |    0 |            0 |
++----------------------+--------+------------+------------+---------+------+-------+--------+--------+------+--------------+
+
+

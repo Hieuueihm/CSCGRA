@@ -1,0 +1,1347 @@
+#-----------------------------------------------------------
+# Vivado v2018.1 (64-bit)
+# SW Build 2188600 on Wed Apr  4 18:40:38 MDT 2018
+# IP Build 2185939 on Wed Apr  4 20:55:05 MDT 2018
+# Start of session at: Sat Sep 12 14:25:00 2026
+# Process ID: 17428
+# Current directory: D:/vivado_pj
+# Command line: vivado.exe -mode batch -source scripts/v4/run_ooc_probe.tcl -log work/v4_ooc_panel_bcache_20260912_1425.log -journal work/v4_ooc_panel_bcache_20260912_1425.jou -tclargs -top factor_panel_service -clock_ns 10.0 -out_dir work/v4_ooc_panel_bcache_20260912_1425
+# Log file: D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425.log
+# Journal file: D:/vivado_pj\work/v4_ooc_panel_bcache_20260912_1425.jou
+#-----------------------------------------------------------
+CRITICAL WARNING: [Common 17-741] No write access right to the local Tcl store at 'C'. XilinxTclStore is reverted to the installation area. If you want to use local Tcl Store, please change the access right and relaunch Vivado.
+source scripts/v4/run_ooc_probe.tcl
+# set repo_root [file normalize [file join [file dirname [info script]] ../..]]
+# set part xczu7ev-ffvc1156-2-e
+# set top ""
+# set clock_ns 10.0
+# set out_dir ""
+# for {set index 0} {$index < $argc} {incr index} {
+#     set argument [lindex $argv $index]
+#     if {$argument in {-help --help}} {
+#         puts "Usage: vivado -mode batch -source scripts/v4/run_ooc_probe.tcl -tclargs -top TOP ?-part PART? ?-clock_ns 10.0? ?-out_dir work/v4_ooc_*?"
+#         exit 0
+#     }
+#     if {$argument ni {-top -part -clock_ns -out_dir}} { error "Unknown argument: $argument" }
+#     incr index
+#     if {$index >= $argc} { error "Missing value for $argument" }
+#     set value [lindex $argv $index]
+#     switch -- $argument {
+#         -top { set top $value }
+#         -part { set part $value }
+#         -clock_ns { set clock_ns $value }
+#         -out_dir { set out_dir $value }
+#     }
+# }
+# if {$top eq ""} { error "-top is required" }
+# if {![string is double -strict $clock_ns] || !($clock_ns > 0)} { error "-clock_ns must be positive" }
+# if {[llength [get_parts -quiet $part]] != 1} { error "Part not installed or not unique: $part" }
+# set work_dir [file join $repo_root work]
+# if {$out_dir eq ""} { set out_dir [file join $work_dir "v4_ooc_${top}_[clock format [clock seconds] -format %Y%m%d_%H%M%S]"] }
+# if {[file pathtype $out_dir] ne "absolute"} { set out_dir [file join $repo_root $out_dir] }
+# set out_dir [file normalize $out_dir]
+# if {[file dirname $out_dir] ne $work_dir || ![string match v4_ooc_* [file tail $out_dir]]} { error "Output must be a direct child of work named v4_ooc_*" }
+# if {[file exists $out_dir]} { error "Refusing existing output directory: $out_dir" }
+# set source_files {}
+# set include_dirs {}
+# set filelist [open [file join $repo_root rtl v4 files.f] r]
+# foreach raw_line [split [read $filelist] "\n"] {
+#     regsub {#.*$} $raw_line {} line
+#     foreach token [regexp -all -inline {\S+} $line] {
+#         if {[string first +incdir+ $token] == 0} {
+#             foreach directory [split [string range $token 8 end] +] {
+#                 set directory [file normalize [file join $repo_root $directory]]
+#                 if {![file isdirectory $directory]} { error "Missing include directory: $directory" }
+#                 lappend include_dirs $directory
+#             }
+#         } elseif {[file extension $token] in {.sv .v}} {
+#             set source [file normalize [file join $repo_root $token]]
+#             if {![file isfile $source]} { error "Missing RTL: $source" }
+#             lappend source_files $source
+#         }
+#     }
+# }
+# close $filelist
+# file mkdir $out_dir
+# set snapshot_dir [file join $out_dir source_snapshot]
+# file mkdir $snapshot_dir
+# set snapshot_sources {}
+# foreach source $source_files {
+#     set target [file join $snapshot_dir [file tail $source]]
+#     if {[file exists $target]} { error "Duplicate source basename: $source" }
+#     file copy $source $target
+#     lappend snapshot_sources $target
+# }
+# foreach directory $include_dirs {
+#     foreach header [glob -nocomplain -directory $directory *.vh *.svh] {
+#         set target [file join $snapshot_dir [file tail $header]]
+#         if {[file exists $target]} { error "Duplicate header basename: $header" }
+#         file copy $header $target
+#     }
+# }
+# set xdc [file join $out_dir probe.xdc]
+# set channel [open $xdc w]
+# puts $channel "create_clock -name clk -period $clock_ns \[get_ports clk\]"
+# close $channel
+# set channel [open [file join $out_dir run_config.txt] w]
+# puts $channel "part=$part\ntop=$top\nclock_ns=$clock_ns\nmode=out_of_context\ndirectives=Vivado defaults\nsource_count=[llength $source_files]"
+# close $channel
+# file copy [info script] [file join $out_dir run_ooc_probe.tcl]
+# create_project -in_memory -part $part
+# set_property include_dirs [list $snapshot_dir] [current_fileset]
+# read_verilog -sv $snapshot_sources
+# read_xdc $xdc
+# synth_design -top $top -part $part -mode out_of_context
+Command: synth_design -top factor_panel_service -part xczu7ev-ffvc1156-2-e -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu7ev'
+INFO: Launching helper process for spawning children vivado processes
+INFO: Helper process launched with PID 24308 
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:07 ; elapsed = 00:00:08 . Memory (MB): peak = 419.602 ; gain = 108.777
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'factor_panel_service' [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:5]
+	Parameter NARROW_PANEL_MAPPING bound to: 1'b1 
+	Parameter PROJECT_DOT_SPLIT_ENABLE bound to: 1'b1 
+	Parameter PROJECT_DOT_SPLIT_MIN_ROWS bound to: 11'b00000011000 
+	Parameter IDLE bound to: 6'b000000 
+	Parameter CHECK bound to: 6'b000001 
+	Parameter A_REQ bound to: 6'b000010 
+	Parameter A_WAIT bound to: 6'b000011 
+	Parameter B_REQ bound to: 6'b000100 
+	Parameter B_WAIT bound to: 6'b000101 
+	Parameter CONFIG bound to: 6'b000110 
+	Parameter CONFIG_WAIT bound to: 6'b000111 
+	Parameter LAUNCH bound to: 6'b001000 
+	Parameter RUN bound to: 6'b001001 
+	Parameter CANDIDATE bound to: 6'b001010 
+	Parameter FAILED bound to: 6'b001011 
+	Parameter DONE bound to: 6'b001100 
+	Parameter EMPTY bound to: 3'b000 
+	Parameter READ_PENDING bound to: 3'b001 
+	Parameter READY bound to: 3'b010 
+	Parameter PE_PENDING bound to: 3'b011 
+	Parameter RESULT bound to: 3'b100 
+	Parameter WRITE_PENDING bound to: 3'b101 
+	Parameter PROJECT_DOT bound to: 2'b00 
+	Parameter PROJECT_SCALE bound to: 2'b01 
+	Parameter PROJECT_RANK bound to: 2'b10 
+	Parameter PROJECT_DOT_CONTEXT bound to: 64'b0000000000000000000000000000000000000000000000000000000100101001 
+	Parameter PROJECT_SCALE_CONTEXT bound to: 64'b0000000000000000000000000000000000000000000000000000000100101000 
+	Parameter PROJECT_RANK_CONTEXT bound to: 64'b0000000000000000000000000000000000000000000000000000000100100011 
+	Parameter PROJECT_PADDING_CONTEXT bound to: 64'b0000000000000000000000000000000000000000000000000000000000000000 
+WARNING: [Synth 8-6014] Unused sequential element row_value_reg was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:682]
+WARNING: [Synth 8-6014] Unused sequential element seq_row_reg was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:684]
+WARNING: [Synth 8-6014] Unused sequential element seq_col_reg was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:685]
+WARNING: [Synth 8-6014] Unused sequential element bank_reg was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:691]
+WARNING: [Synth 8-6014] Unused sequential element col_value_reg was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:699]
+WARNING: [Synth 8-6014] Unused sequential element factor_response_data_reg was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:692]
+INFO: [Synth 8-6155] done synthesizing module 'factor_panel_service' (1#1) [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:5]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2047]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2046]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2045]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2044]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2043]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2042]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2041]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2040]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2039]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2038]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2037]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2036]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2035]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2034]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2033]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2032]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2031]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2030]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2029]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2028]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2027]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2026]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2025]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2024]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2023]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2022]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2021]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2020]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2019]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2018]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2017]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2016]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2015]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2014]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2013]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2012]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2011]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2010]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2009]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2008]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2007]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2006]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2005]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2004]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2003]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2002]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2001]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[2000]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1999]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1998]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1997]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1996]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1995]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1994]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1993]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1992]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1991]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1990]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1989]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1988]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1987]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1986]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1985]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1984]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1983]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1982]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1981]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1980]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1979]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1978]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1977]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1976]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1975]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1974]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1973]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1972]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1971]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1970]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1969]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1968]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1967]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1966]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1965]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1964]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1963]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1962]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1961]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1960]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1959]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1958]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1957]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1956]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1955]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1954]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1953]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1952]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1951]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1950]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1949]
+WARNING: [Synth 8-3331] design factor_panel_service has unconnected port fabric_out_acc[1948]
+INFO: [Common 17-14] Message 'Synth 8-3331' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:30 ; elapsed = 00:00:33 . Memory (MB): peak = 930.984 ; gain = 620.160
+---------------------------------------------------------------------------------
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:34 ; elapsed = 00:00:38 . Memory (MB): peak = 930.984 ; gain = 620.160
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:34 ; elapsed = 00:00:38 . Memory (MB): peak = 930.984 ; gain = 620.160
+---------------------------------------------------------------------------------
+INFO: [Device 21-403] Loading part xczu7ev-ffvc1156-2-e
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/probe.xdc]
+Finished Parsing XDC File [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/probe.xdc]
+Completed Processing XDC Constraints
+
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.466 . Memory (MB): peak = 2061.547 ; gain = 13.312
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:01:29 ; elapsed = 00:01:38 . Memory (MB): peak = 2061.547 ; gain = 1750.723
+---------------------------------------------------------------------------------
+INFO: [Synth 8-5580] Multithreading enabled for synth_design using a maximum of 2 processes.
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu7ev-ffvc1156-2-e
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:01:29 ; elapsed = 00:01:38 . Memory (MB): peak = 2061.547 ; gain = 1750.723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:01:29 ; elapsed = 00:01:38 . Memory (MB): peak = 2061.547 ; gain = 1750.723
+---------------------------------------------------------------------------------
+INFO: [Synth 8-4471] merging register 'rsp_job_reg[15:0]' into 'job_reg[15:0]' [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:510]
+INFO: [Synth 8-4471] merging register 'rsp_tag_reg[15:0]' into 'tag_reg[15:0]' [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:511]
+INFO: [Synth 8-4471] merging register 'rsp_fmt_reg[7:0]' into 'fmt_reg[7:0]' [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:512]
+WARNING: [Synth 8-6014] Unused sequential element rsp_job_reg was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:510]
+WARNING: [Synth 8-6014] Unused sequential element rsp_tag_reg was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:511]
+WARNING: [Synth 8-6014] Unused sequential element rsp_fmt_reg was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:512]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:527]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:139]
+INFO: [Synth 8-5544] ROM "slot_state_reg[0]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_state_reg[1]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_state_reg[2]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_state_reg[3]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_row_reg[0]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_row_reg[1]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_row_reg[2]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_row_reg[3]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_result_reg[0]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_result_reg[1]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_result_reg[2]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_result_reg[3]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "request_valid" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:227]
+WARNING: [Synth 8-6014] Unused sequential element  was removed. 
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:237]
+WARNING: [Synth 8-6014] Unused sequential element  was removed. 
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:590]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:705]
+WARNING: [Synth 8-6014] Unused sequential element  was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:698]
+INFO: [Synth 8-5544] ROM "slot_state_reg[0]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_state_reg[1]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_state_reg[2]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_state_reg[3]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_row_reg[0]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_row_reg[1]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_row_reg[2]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_row_reg[3]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_result_reg[0]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_result_reg[1]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_result_reg[2]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_result_reg[3]" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "request_valid" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "panel_req_tag1" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "fabric_cfg_contexts1" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "fabric_cmd_terminal1" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "fabric_cmd_shift" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "fabric_cmd_flow" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "slot_state" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "project_phase" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "rsp_fault" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "rsp_fault" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "code" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "code" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "rsp_fault" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "rsp_fault" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "rsp_count1" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[30].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[29].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[28].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[27].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[26].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[25].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[24].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[23].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[22].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[21].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[20].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[19].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[18].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[17].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[16].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[15].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[14].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[13].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[12].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[11].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[10].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[9].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[8].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[7].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[6].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[5].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[4].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[3].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[2].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[1].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "cache_read_banks[0].read_block0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "fabric_in_mask" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "fabric_in_mask" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:02:26 ; elapsed = 00:02:40 . Memory (MB): peak = 2061.547 ; gain = 1750.723
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++------+---------------------------+------------+----------+
+|      |RTL Partition              |Replication |Instances |
++------+---------------------------+------------+----------+
+|1     |factor_panel_service__GB0  |           1|     58602|
+|2     |factor_panel_service__GB1  |           1|     18920|
+|3     |factor_panel_service__GB2  |           1|     22318|
+|4     |factor_panel_service__GB3  |           1|     31024|
+|5     |factor_panel_service__GB4  |           1|     35527|
+|6     |factor_panel_service__GB5  |           1|     30559|
+|7     |case__443__GD              |           1|    105244|
+|8     |factor_panel_service__GB7  |           1|       832|
+|9     |factor_panel_service__GB8  |           1|     22191|
+|10    |factor_panel_service__GB9  |           1|      1208|
+|11    |factor_panel_service__GB10 |           1|     29593|
+|12    |factor_panel_service__GB11 |           1|     34831|
+|13    |factor_panel_service__GB12 |           1|     32135|
+|14    |factor_panel_service__GB13 |           1|     10305|
+|15    |factor_panel_service__GB14 |           1|     40811|
+|16    |factor_panel_service__GB15 |           1|     20311|
+|17    |factor_panel_service__GB16 |           1|     12881|
+|18    |factor_panel_service__GB17 |           1|     31347|
+|19    |factor_panel_service__GB18 |           1|     10287|
+|20    |factor_panel_service__GB19 |           1|     13720|
+|21    |factor_panel_service__GB20 |           1|     13716|
+|22    |factor_panel_service__GB21 |           1|     17145|
+|23    |factor_panel_service__GB22 |           1|     24003|
+|24    |factor_panel_service__GB23 |           1|     28998|
+|25    |factor_panel_service__GB24 |           1|      9768|
+|26    |factor_panel_service__GB25 |           1|     29111|
+|27    |factor_panel_service__GB26 |           1|      6229|
+|28    |factor_panel_service__GB27 |           1|      6095|
+|29    |factor_panel_service__GB28 |           1|     10434|
+|30    |factor_panel_service__GB29 |           1|     23089|
+|31    |factor_panel_service__GB30 |           1|      5655|
+|32    |factor_panel_service__GB31 |           1|     19014|
+|33    |factor_panel_service__GB32 |           1|     22453|
+|34    |factor_panel_service__GB33 |           1|      5695|
+|35    |factor_panel_service__GB34 |           1|      8614|
+|36    |factor_panel_service__GB35 |           1|      8966|
+|37    |factor_panel_service__GB36 |           1|     15331|
+|38    |factor_panel_service__GB37 |           1|     18015|
+|39    |factor_panel_service__GB38 |           1|     22197|
+|40    |factor_panel_service__GB39 |           1|     21067|
+|41    |factor_panel_service__GB40 |           1|      6219|
++------+---------------------------+------------+----------+
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+INFO: [Synth 8-3538] Detected potentially large (wide) register contexts_reg [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:471]
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     32 Bit       Adders := 226   
+	   3 Input     32 Bit       Adders := 1     
+	   2 Input     18 Bit       Adders := 3     
+	   2 Input     17 Bit       Adders := 8     
+	   5 Input     17 Bit       Adders := 32    
+	   2 Input     16 Bit       Adders := 3     
+	   3 Input     16 Bit       Adders := 9     
+	   3 Input     14 Bit       Adders := 37    
+	   3 Input     13 Bit       Adders := 95    
+	   4 Input     13 Bit       Adders := 1     
+	   2 Input     13 Bit       Adders := 3     
+	   3 Input     12 Bit       Adders := 27    
+	   2 Input     12 Bit       Adders := 36    
+	   3 Input     11 Bit       Adders := 4     
+	   2 Input     11 Bit       Adders := 10    
+	   2 Input     10 Bit       Adders := 4     
+	   2 Input      9 Bit       Adders := 128   
+	   3 Input      9 Bit       Adders := 2     
+	   4 Input      9 Bit       Adders := 1     
+	   2 Input      8 Bit       Adders := 93    
+	   3 Input      8 Bit       Adders := 62    
+	   2 Input      7 Bit       Adders := 31    
+	   2 Input      6 Bit       Adders := 30    
+	   2 Input      5 Bit       Adders := 32    
+	   3 Input      5 Bit       Adders := 3     
+	   2 Input      3 Bit       Adders := 1     
+	   2 Input      2 Bit       Adders := 1     
++---Registers : 
+	             2048 Bit    Registers := 1     
+	              864 Bit    Registers := 8     
+	              128 Bit    Registers := 1     
+	               64 Bit    Registers := 1     
+	               32 Bit    Registers := 11    
+	               27 Bit    Registers := 225   
+	               17 Bit    Registers := 2     
+	               16 Bit    Registers := 2     
+	               12 Bit    Registers := 2     
+	               11 Bit    Registers := 12    
+	                9 Bit    Registers := 4     
+	                8 Bit    Registers := 3     
+	                6 Bit    Registers := 1     
+	                5 Bit    Registers := 1     
+	                4 Bit    Registers := 2     
+	                3 Bit    Registers := 4     
+	                2 Bit    Registers := 3     
+	                1 Bit    Registers := 7     
++---Muxes : 
+	   2 Input   2048 Bit        Muxes := 1     
+	   3 Input   1993 Bit        Muxes := 1     
+	   4 Input    864 Bit        Muxes := 4     
+	   2 Input    864 Bit        Muxes := 121   
+	  14 Input    864 Bit        Muxes := 3     
+	   4 Input    837 Bit        Muxes := 3     
+	   4 Input    810 Bit        Muxes := 3     
+	   4 Input    783 Bit        Muxes := 3     
+	   4 Input    756 Bit        Muxes := 3     
+	   4 Input    729 Bit        Muxes := 3     
+	   4 Input    702 Bit        Muxes := 3     
+	   4 Input    675 Bit        Muxes := 3     
+	   4 Input    648 Bit        Muxes := 3     
+	   4 Input    621 Bit        Muxes := 3     
+	   4 Input    594 Bit        Muxes := 3     
+	   4 Input    567 Bit        Muxes := 3     
+	   4 Input    540 Bit        Muxes := 3     
+	   4 Input    513 Bit        Muxes := 3     
+	   4 Input    486 Bit        Muxes := 3     
+	   4 Input    459 Bit        Muxes := 3     
+	   4 Input    432 Bit        Muxes := 3     
+	   4 Input    405 Bit        Muxes := 3     
+	   4 Input    378 Bit        Muxes := 3     
+	   4 Input    351 Bit        Muxes := 3     
+	   4 Input    324 Bit        Muxes := 3     
+	   4 Input    297 Bit        Muxes := 3     
+	   2 Input    288 Bit        Muxes := 7     
+	   4 Input    270 Bit        Muxes := 3     
+	   4 Input    243 Bit        Muxes := 3     
+	   4 Input    216 Bit        Muxes := 3     
+	   4 Input    189 Bit        Muxes := 3     
+	   4 Input    162 Bit        Muxes := 3     
+	   4 Input    135 Bit        Muxes := 3     
+	   4 Input    108 Bit        Muxes := 3     
+	   4 Input     81 Bit        Muxes := 3     
+	   2 Input     64 Bit        Muxes := 9     
+	  14 Input     64 Bit        Muxes := 1     
+	   4 Input     54 Bit        Muxes := 3     
+	   4 Input     32 Bit        Muxes := 3     
+	   2 Input     32 Bit        Muxes := 159   
+	  14 Input     32 Bit        Muxes := 3     
+	   4 Input     31 Bit        Muxes := 2     
+	   4 Input     30 Bit        Muxes := 2     
+	   4 Input     29 Bit        Muxes := 2     
+	   4 Input     28 Bit        Muxes := 2     
+	   2 Input     27 Bit        Muxes := 1962  
+	   4 Input     27 Bit        Muxes := 36    
+	  14 Input     27 Bit        Muxes := 32    
+	   4 Input     26 Bit        Muxes := 2     
+	   4 Input     25 Bit        Muxes := 2     
+	   4 Input     24 Bit        Muxes := 2     
+	   4 Input     23 Bit        Muxes := 2     
+	   4 Input     22 Bit        Muxes := 2     
+	   4 Input     21 Bit        Muxes := 2     
+	   4 Input     20 Bit        Muxes := 2     
+	   4 Input     19 Bit        Muxes := 2     
+	   4 Input     18 Bit        Muxes := 2     
+	   4 Input     17 Bit        Muxes := 2     
+	   2 Input     17 Bit        Muxes := 1     
+	   6 Input     17 Bit        Muxes := 1     
+	   4 Input     16 Bit        Muxes := 2     
+	   2 Input     16 Bit        Muxes := 1     
+	   4 Input     15 Bit        Muxes := 2     
+	   4 Input     14 Bit        Muxes := 2     
+	   4 Input     13 Bit        Muxes := 2     
+	   4 Input     12 Bit        Muxes := 2     
+	   2 Input     12 Bit        Muxes := 1     
+	   4 Input     11 Bit        Muxes := 5     
+	   2 Input     11 Bit        Muxes := 31    
+	  14 Input     11 Bit        Muxes := 7     
+	   4 Input     10 Bit        Muxes := 2     
+	   4 Input      9 Bit        Muxes := 2     
+	   2 Input      9 Bit        Muxes := 286   
+	  14 Input      9 Bit        Muxes := 3     
+	   4 Input      8 Bit        Muxes := 2     
+	   4 Input      7 Bit        Muxes := 3     
+	   4 Input      6 Bit        Muxes := 2     
+	   3 Input      6 Bit        Muxes := 1     
+	   4 Input      5 Bit        Muxes := 3     
+	   2 Input      5 Bit        Muxes := 8     
+	  14 Input      5 Bit        Muxes := 1     
+	   4 Input      4 Bit        Muxes := 3     
+	   3 Input      4 Bit        Muxes := 3     
+	   2 Input      4 Bit        Muxes := 64    
+	   4 Input      3 Bit        Muxes := 8     
+	   2 Input      3 Bit        Muxes := 72    
+	  14 Input      3 Bit        Muxes := 6     
+	   3 Input      3 Bit        Muxes := 1     
+	   4 Input      2 Bit        Muxes := 2     
+	   2 Input      2 Bit        Muxes := 46    
+	  14 Input      2 Bit        Muxes := 2     
+	   6 Input      2 Bit        Muxes := 1     
+	  32 Input      1 Bit        Muxes := 4     
+	   2 Input      1 Bit        Muxes := 1867  
+	   4 Input      1 Bit        Muxes := 6     
+	  14 Input      1 Bit        Muxes := 257   
+	  64 Input      1 Bit        Muxes := 2     
+	   8 Input      1 Bit        Muxes := 2     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Hierarchical Component Statistics 
+---------------------------------------------------------------------------------
+INFO: [Synth 8-3538] Detected potentially large (wide) register contexts_reg [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:471]
+Hierarchical RTL Component report 
+Module factor_panel_service 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     32 Bit       Adders := 226   
+	   3 Input     32 Bit       Adders := 1     
+	   2 Input     18 Bit       Adders := 3     
+	   2 Input     17 Bit       Adders := 8     
+	   5 Input     17 Bit       Adders := 32    
+	   2 Input     16 Bit       Adders := 3     
+	   3 Input     16 Bit       Adders := 9     
+	   3 Input     14 Bit       Adders := 37    
+	   3 Input     13 Bit       Adders := 95    
+	   4 Input     13 Bit       Adders := 1     
+	   2 Input     13 Bit       Adders := 3     
+	   3 Input     12 Bit       Adders := 27    
+	   2 Input     12 Bit       Adders := 36    
+	   3 Input     11 Bit       Adders := 4     
+	   2 Input     11 Bit       Adders := 10    
+	   2 Input     10 Bit       Adders := 4     
+	   2 Input      9 Bit       Adders := 128   
+	   3 Input      9 Bit       Adders := 2     
+	   4 Input      9 Bit       Adders := 1     
+	   2 Input      8 Bit       Adders := 93    
+	   3 Input      8 Bit       Adders := 62    
+	   2 Input      7 Bit       Adders := 31    
+	   2 Input      6 Bit       Adders := 30    
+	   2 Input      5 Bit       Adders := 32    
+	   3 Input      5 Bit       Adders := 3     
+	   2 Input      3 Bit       Adders := 1     
+	   2 Input      2 Bit       Adders := 1     
++---Registers : 
+	             2048 Bit    Registers := 1     
+	              864 Bit    Registers := 8     
+	              128 Bit    Registers := 1     
+	               64 Bit    Registers := 1     
+	               32 Bit    Registers := 11    
+	               27 Bit    Registers := 225   
+	               17 Bit    Registers := 2     
+	               16 Bit    Registers := 2     
+	               12 Bit    Registers := 2     
+	               11 Bit    Registers := 12    
+	                9 Bit    Registers := 4     
+	                8 Bit    Registers := 3     
+	                6 Bit    Registers := 1     
+	                5 Bit    Registers := 1     
+	                4 Bit    Registers := 2     
+	                3 Bit    Registers := 4     
+	                2 Bit    Registers := 3     
+	                1 Bit    Registers := 7     
++---Muxes : 
+	   2 Input   2048 Bit        Muxes := 1     
+	   3 Input   1993 Bit        Muxes := 1     
+	   4 Input    864 Bit        Muxes := 4     
+	   2 Input    864 Bit        Muxes := 121   
+	  14 Input    864 Bit        Muxes := 3     
+	   4 Input    837 Bit        Muxes := 3     
+	   4 Input    810 Bit        Muxes := 3     
+	   4 Input    783 Bit        Muxes := 3     
+	   4 Input    756 Bit        Muxes := 3     
+	   4 Input    729 Bit        Muxes := 3     
+	   4 Input    702 Bit        Muxes := 3     
+	   4 Input    675 Bit        Muxes := 3     
+	   4 Input    648 Bit        Muxes := 3     
+	   4 Input    621 Bit        Muxes := 3     
+	   4 Input    594 Bit        Muxes := 3     
+	   4 Input    567 Bit        Muxes := 3     
+	   4 Input    540 Bit        Muxes := 3     
+	   4 Input    513 Bit        Muxes := 3     
+	   4 Input    486 Bit        Muxes := 3     
+	   4 Input    459 Bit        Muxes := 3     
+	   4 Input    432 Bit        Muxes := 3     
+	   4 Input    405 Bit        Muxes := 3     
+	   4 Input    378 Bit        Muxes := 3     
+	   4 Input    351 Bit        Muxes := 3     
+	   4 Input    324 Bit        Muxes := 3     
+	   4 Input    297 Bit        Muxes := 3     
+	   2 Input    288 Bit        Muxes := 7     
+	   4 Input    270 Bit        Muxes := 3     
+	   4 Input    243 Bit        Muxes := 3     
+	   4 Input    216 Bit        Muxes := 3     
+	   4 Input    189 Bit        Muxes := 3     
+	   4 Input    162 Bit        Muxes := 3     
+	   4 Input    135 Bit        Muxes := 3     
+	   4 Input    108 Bit        Muxes := 3     
+	   4 Input     81 Bit        Muxes := 3     
+	   2 Input     64 Bit        Muxes := 9     
+	  14 Input     64 Bit        Muxes := 1     
+	   4 Input     54 Bit        Muxes := 3     
+	   4 Input     32 Bit        Muxes := 3     
+	   2 Input     32 Bit        Muxes := 159   
+	  14 Input     32 Bit        Muxes := 3     
+	   4 Input     31 Bit        Muxes := 2     
+	   4 Input     30 Bit        Muxes := 2     
+	   4 Input     29 Bit        Muxes := 2     
+	   4 Input     28 Bit        Muxes := 2     
+	   2 Input     27 Bit        Muxes := 1962  
+	   4 Input     27 Bit        Muxes := 36    
+	  14 Input     27 Bit        Muxes := 32    
+	   4 Input     26 Bit        Muxes := 2     
+	   4 Input     25 Bit        Muxes := 2     
+	   4 Input     24 Bit        Muxes := 2     
+	   4 Input     23 Bit        Muxes := 2     
+	   4 Input     22 Bit        Muxes := 2     
+	   4 Input     21 Bit        Muxes := 2     
+	   4 Input     20 Bit        Muxes := 2     
+	   4 Input     19 Bit        Muxes := 2     
+	   4 Input     18 Bit        Muxes := 2     
+	   4 Input     17 Bit        Muxes := 2     
+	   2 Input     17 Bit        Muxes := 1     
+	   6 Input     17 Bit        Muxes := 1     
+	   4 Input     16 Bit        Muxes := 2     
+	   2 Input     16 Bit        Muxes := 1     
+	   4 Input     15 Bit        Muxes := 2     
+	   4 Input     14 Bit        Muxes := 2     
+	   4 Input     13 Bit        Muxes := 2     
+	   4 Input     12 Bit        Muxes := 2     
+	   2 Input     12 Bit        Muxes := 1     
+	   4 Input     11 Bit        Muxes := 5     
+	   2 Input     11 Bit        Muxes := 31    
+	  14 Input     11 Bit        Muxes := 7     
+	   4 Input     10 Bit        Muxes := 2     
+	   4 Input      9 Bit        Muxes := 2     
+	   2 Input      9 Bit        Muxes := 286   
+	  14 Input      9 Bit        Muxes := 3     
+	   4 Input      8 Bit        Muxes := 2     
+	   4 Input      7 Bit        Muxes := 3     
+	   4 Input      6 Bit        Muxes := 2     
+	   3 Input      6 Bit        Muxes := 1     
+	   4 Input      5 Bit        Muxes := 3     
+	   2 Input      5 Bit        Muxes := 8     
+	  14 Input      5 Bit        Muxes := 1     
+	   4 Input      4 Bit        Muxes := 3     
+	   3 Input      4 Bit        Muxes := 3     
+	   2 Input      4 Bit        Muxes := 64    
+	   4 Input      3 Bit        Muxes := 8     
+	   2 Input      3 Bit        Muxes := 72    
+	  14 Input      3 Bit        Muxes := 6     
+	   3 Input      3 Bit        Muxes := 1     
+	   4 Input      2 Bit        Muxes := 2     
+	   2 Input      2 Bit        Muxes := 46    
+	  14 Input      2 Bit        Muxes := 2     
+	   6 Input      2 Bit        Muxes := 1     
+	  32 Input      1 Bit        Muxes := 4     
+	   2 Input      1 Bit        Muxes := 1867  
+	   4 Input      1 Bit        Muxes := 6     
+	  14 Input      1 Bit        Muxes := 257   
+	  64 Input      1 Bit        Muxes := 2     
+	   8 Input      1 Bit        Muxes := 2     
+---------------------------------------------------------------------------------
+Finished RTL Hierarchical Component Statistics
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1728 (col length:144)
+BRAMs: 624 (col length: RAMB18 144 RAMB36 72)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-6014] Unused sequential element A was removed. 
+WARNING: [Synth 8-6014] Unused sequential element C was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:227]
+WARNING: [Synth 8-3917] design factor_panel_service has port fabric_cmd_shift[5] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service has port fabric_cmd_shift[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service has port fabric_cmd_shift[0] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service has port fabric_cmd_flow[1] driven by constant 0
+INFO: [Synth 8-3886] merging instance 'i_40/C[0]' (FDRE) to 'i_40/retired_count_reg[0]'
+INFO: [Synth 8-3886] merging instance 'i_40/C[1]' (FDRE) to 'i_40/retired_count_reg[1]'
+INFO: [Synth 8-3886] merging instance 'i_40/C[2]' (FDRE) to 'i_40/retired_count_reg[2]'
+INFO: [Synth 8-3886] merging instance 'i_40/C[3]' (FDRE) to 'i_40/A[7]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[11]' (FDRE) to 'i_40/A[7]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[12]' (FDRE) to 'i_40/A[7]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[13]' (FDRE) to 'i_40/A[7]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[14]' (FDRE) to 'i_40/A[7]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[15]' (FDRE) to 'i_40/A[7]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[-1]' (FDRE) to 'i_40/retired_count_reg[3]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[0]' (FDRE) to 'i_40/retired_count_reg[4]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[1]' (FDRE) to 'i_40/retired_count_reg[5]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[2]' (FDRE) to 'i_40/retired_count_reg[6]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[3]' (FDRE) to 'i_40/retired_count_reg[7]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[4]' (FDRE) to 'i_40/retired_count_reg[8]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[5]' (FDRE) to 'i_40/retired_count_reg[9]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[6]' (FDRE) to 'i_40/retired_count_reg[10]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[7]' (FDRE) to 'i_40/A[8]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[8]' (FDRE) to 'i_40/A[9]'
+INFO: [Synth 8-3886] merging instance 'i_40/A[9]' (FDRE) to 'i_40/A[10]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (i_40/\A[10] )
+WARNING: [Synth 8-3917] design factor_panel_service__GB13 has port P[14] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB13 has port P[13] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB13 has port P[12] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB13 has port P[0] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port P[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port P[3] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port P[2] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port P[1] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port P[0] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O230[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O230[3] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O230[2] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O230[1] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O230[0] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O233[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O233[3] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O233[2] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O233[1] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O233[0] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O234[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O234[3] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O234[2] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O234[1] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O234[0] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O236[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O236[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O236[2] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O236[1] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O236[0] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O238[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O238[3] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O238[2] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O238[1] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O238[0] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O240[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O240[3] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O240[2] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O240[1] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O240[0] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O243[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O243[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O243[2] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O243[1] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O243[0] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O244[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O244[3] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O244[2] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O244[1] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O244[0] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O246[4] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O246[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O246[2] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O246[1] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O246[0] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O248[4] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O248[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O248[2] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O248[1] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O248[0] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O250[4] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O250[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O250[2] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O250[1] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O250[0] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O252[4] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O252[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O252[2] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O252[1] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O252[0] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O254[4] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O254[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O254[2] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O254[1] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O254[0] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O256[4] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O256[3] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O256[2] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB16 has port O256[1] driven by constant 0
+INFO: [Common 17-14] Message 'Synth 8-3917' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port P[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port P[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port P[2] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port P[1] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port P[0] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O326[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O326[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O326[2] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O326[1] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O326[0] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O360[4] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O360[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O360[2] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O360[1] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O360[0] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O522[4] driven by constant 1
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O522[3] driven by constant 0
+WARNING: [Synth 8-3917] design factor_panel_service__GB25 has port O522[2] driven by constant 0
+INFO: [Common 17-14] Message 'Synth 8-3917' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\rsp_fault_reg[3] )
+INFO: [Synth 8-3886] merging instance 'source_bundle_reg[0]' (FDRE) to 'A[0]'
+INFO: [Synth 8-3886] merging instance 'source_bundle_reg[1]' (FDRE) to 'A[1]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\A[2] )
+INFO: [Synth 8-3886] merging instance 'state_reg[4]' (FDRE) to 'state_reg[5]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\state_reg[5] )
+WARNING: [Synth 8-6014] Unused sequential element C was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:705]
+INFO: [Synth 8-3886] merging instance 'C[0]__0' (FDRE) to 'C[0]'
+INFO: [Synth 8-3886] merging instance 'C[1]__0' (FDRE) to 'C[1]'
+INFO: [Synth 8-3886] merging instance 'C[2]__0' (FDRE) to 'C[2]'
+INFO: [Synth 8-3886] merging instance 'C[3]__0' (FDRE) to 'C[3]'
+INFO: [Synth 8-3886] merging instance 'C[4]__0' (FDRE) to 'C[4]'
+INFO: [Synth 8-3886] merging instance 'C[5]' (FDRE) to 'row_start_reg[5]'
+INFO: [Synth 8-3886] merging instance 'C[6]' (FDRE) to 'row_start_reg[6]'
+INFO: [Synth 8-3886] merging instance 'C[7]' (FDRE) to 'row_start_reg[7]'
+INFO: [Synth 8-3886] merging instance 'C[8]' (FDRE) to 'row_start_reg[8]'
+INFO: [Synth 8-3886] merging instance 'C[9]' (FDRE) to 'row_start_reg[9]'
+INFO: [Synth 8-3886] merging instance 'C[10]' (FDRE) to 'row_start_reg[10]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\C[11] )
+INFO: [Synth 8-3886] merging instance 'C[4]' (FDRE) to 'row_start_reg[4]'
+INFO: [Synth 8-3886] merging instance 'C[3]' (FDRE) to 'row_start_reg[3]'
+INFO: [Synth 8-3886] merging instance 'C[2]' (FDRE) to 'row_start_reg[2]'
+INFO: [Synth 8-3886] merging instance 'C[1]' (FDRE) to 'row_start_reg[1]'
+INFO: [Synth 8-3886] merging instance 'C[0]' (FDRE) to 'row_start_reg[0]'
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+WARNING: [Synth 8-6014] Unused sequential element B was removed.  [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/source_snapshot/factor_panel_service.sv:209]
+INFO: [Common 17-14] Message 'Synth 8-6014' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\B[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\B[2] )
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:06:22 ; elapsed = 00:06:59 . Memory (MB): peak = 2061.547 ; gain = 1750.723
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++------+---------------------------+------------+----------+
+|      |RTL Partition              |Replication |Instances |
++------+---------------------------+------------+----------+
+|1     |factor_panel_service__GB0  |           1|      1581|
+|2     |factor_panel_service__GB1  |           1|      4162|
+|3     |factor_panel_service__GB2  |           1|       760|
+|4     |factor_panel_service__GB3  |           1|      4347|
+|5     |factor_panel_service__GB4  |           1|      6180|
+|6     |factor_panel_service__GB5  |           1|     20532|
+|7     |case__443__GD              |           1|      7160|
+|8     |factor_panel_service__GB7  |           1|       186|
+|9     |factor_panel_service__GB8  |           1|      4590|
+|10    |factor_panel_service__GB9  |           1|       253|
+|11    |factor_panel_service__GB10 |           1|     14024|
+|12    |factor_panel_service__GB11 |           1|     23850|
+|13    |factor_panel_service__GB12 |           1|     31793|
+|14    |factor_panel_service__GB13 |           1|       252|
+|15    |factor_panel_service__GB14 |           1|     17340|
+|16    |factor_panel_service__GB15 |           1|      7537|
+|17    |factor_panel_service__GB16 |           1|      1110|
+|18    |factor_panel_service__GB17 |           1|     31347|
+|19    |factor_panel_service__GB18 |           1|     10287|
+|20    |factor_panel_service__GB19 |           1|     13720|
+|21    |factor_panel_service__GB20 |           1|     13716|
+|22    |factor_panel_service__GB21 |           1|     17145|
+|23    |factor_panel_service__GB22 |           1|     24003|
+|24    |factor_panel_service__GB23 |           1|     27938|
+|25    |factor_panel_service__GB24 |           1|      4258|
+|26    |factor_panel_service__GB25 |           1|      8487|
+|27    |factor_panel_service__GB26 |           1|       998|
+|28    |factor_panel_service__GB27 |           1|       948|
+|29    |factor_panel_service__GB28 |           1|      2708|
+|30    |factor_panel_service__GB29 |           1|       968|
+|31    |factor_panel_service__GB30 |           1|       163|
+|32    |factor_panel_service__GB31 |           1|       652|
+|33    |factor_panel_service__GB32 |           1|      6484|
+|34    |factor_panel_service__GB33 |           1|      2016|
+|35    |factor_panel_service__GB34 |           1|      1661|
+|36    |factor_panel_service__GB35 |           1|      2857|
+|37    |factor_panel_service__GB36 |           1|      4212|
+|38    |factor_panel_service__GB37 |           1|      4366|
+|39    |factor_panel_service__GB38 |           1|       904|
+|40    |factor_panel_service__GB39 |           1|      4804|
+|41    |factor_panel_service__GB40 |           1|      2497|
++------+---------------------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:07:09 ; elapsed = 00:07:52 . Memory (MB): peak = 2612.137 ; gain = 2301.312
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:29:43 ; elapsed = 00:31:31 . Memory (MB): peak = 3309.375 ; gain = 2998.551
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++------+----------------------------+------------+----------+
+|      |RTL Partition               |Replication |Instances |
++------+----------------------------+------------+----------+
+|1     |factor_panel_service__GB0   |           1|      1581|
+|2     |factor_panel_service__GB1   |           1|       949|
+|3     |factor_panel_service__GB2   |           1|       760|
+|4     |factor_panel_service__GB3   |           1|      1323|
+|5     |factor_panel_service__GB4   |           1|      3534|
+|6     |factor_panel_service__GB5   |           1|     20101|
+|7     |case__443__GD               |           1|      7160|
+|8     |factor_panel_service__GB7   |           1|        39|
+|9     |factor_panel_service__GB8   |           1|      4590|
+|10    |factor_panel_service__GB9   |           1|        85|
+|11    |factor_panel_service__GB12  |           1|     31784|
+|12    |factor_panel_service__GB13  |           1|       229|
+|13    |factor_panel_service__GB14  |           1|     16962|
+|14    |factor_panel_service__GB15  |           1|      7537|
+|15    |factor_panel_service__GB16  |           1|      1102|
+|16    |factor_panel_service__GB17  |           1|      1215|
+|17    |factor_panel_service__GB18  |           1|       243|
+|18    |factor_panel_service__GB19  |           1|       328|
+|19    |factor_panel_service__GB20  |           1|       324|
+|20    |factor_panel_service__GB21  |           1|       405|
+|21    |factor_panel_service__GB22  |           1|      2079|
+|22    |factor_panel_service__GB23  |           1|      8066|
+|23    |factor_panel_service__GB24  |           1|      4258|
+|24    |factor_panel_service__GB26  |           1|       761|
+|25    |factor_panel_service__GB27  |           1|       599|
+|26    |factor_panel_service__GB29  |           1|       942|
+|27    |factor_panel_service__GB30  |           1|       163|
+|28    |factor_panel_service__GB31  |           1|       640|
+|29    |factor_panel_service__GB38  |           1|       904|
+|30    |factor_panel_service__GB39  |           1|      3983|
+|31    |factor_panel_service_GT1    |           1|        11|
+|32    |factor_panel_service_GT2    |           1|        11|
+|33    |factor_panel_service_GT3    |           1|         2|
+|34    |factor_panel_service_GT4    |           1|         2|
+|35    |factor_panel_service_GT5    |           1|         2|
+|36    |factor_panel_service_GT6    |           1|         2|
+|37    |factor_panel_service_GT7    |           1|         2|
+|38    |factor_panel_service_GT8    |           1|         2|
+|39    |factor_panel_service_GT16   |           1|      3456|
+|40    |factor_panel_service_GT17   |           1|         3|
+|41    |factor_panel_service_GT18   |           1|         2|
+|42    |factor_panel_service_GT19   |           1|         3|
+|43    |factor_panel_service_GT20   |           1|         3|
+|44    |factor_panel_service_GT21   |           1|         3|
+|45    |factor_panel_service_GT22   |           1|         2|
+|46    |factor_panel_service_GT23   |           1|         8|
+|47    |factor_panel_service_GT24   |           1|        16|
+|48    |factor_panel_service_GT25   |           1|         9|
+|49    |factor_panel_service_GT26   |           1|        32|
+|50    |factor_panel_service_GT28   |           1|        10|
+|51    |factor_panel_service_GT29   |           1|         6|
+|52    |factor_panel_service_GT30   |           1|         8|
+|53    |factor_panel_service_GT31   |           1|         9|
+|54    |factor_panel_service_GT32   |           1|        81|
+|55    |factor_panel_service_GT33   |           1|         9|
+|56    |factor_panel_service_GT34   |           1|        11|
+|57    |factor_panel_service_GT35   |           1|        11|
+|58    |factor_panel_service_GT36   |           1|        11|
+|59    |factor_panel_service_GT37   |           1|        13|
+|60    |factor_panel_service_GT38   |           1|        11|
+|61    |factor_panel_service_GT39   |           1|         8|
+|62    |factor_panel_service_GT50   |           1|       128|
+|63    |factor_panel_service_GT51   |           1|         5|
+|64    |factor_panel_service_GT52   |           1|         9|
+|65    |factor_panel_service_GT9    |           1|       181|
+|66    |partition__24__GD           |           1|     23541|
+|67    |factor_panel_service_GT1__8 |           1|     44322|
++------+----------------------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+INFO: [Synth 8-3886] merging instance 'i_55/C[0]' (FDRE) to 'i_55/row_start_reg[0]'
+INFO: [Synth 8-3886] merging instance 'i_55/C[1]' (FDRE) to 'i_55/row_start_reg[1]'
+INFO: [Synth 8-3886] merging instance 'i_55/C[2]' (FDRE) to 'i_55/row_start_reg[2]'
+INFO: [Synth 8-3886] merging instance 'i_55/C[3]' (FDRE) to 'i_55/row_start_reg[3]'
+INFO: [Synth 8-3886] merging instance 'i_55/C[4]' (FDRE) to 'i_55/row_start_reg[4]'
+INFO: [Synth 8-3886] merging instance 'i_64/B[0]' (FDRE) to 'i_64/issued_count_reg[0]'
+INFO: [Synth 8-3886] merging instance 'i_64/B[1]' (FDRE) to 'i_64/issued_count_reg[1]'
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:31:00 ; elapsed = 00:33:30 . Memory (MB): peak = 3338.273 ; gain = 3027.449
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++------+----------------------------+------------+----------+
+|      |RTL Partition               |Replication |Instances |
++------+----------------------------+------------+----------+
+|1     |factor_panel_service__GB0   |           1|       458|
+|2     |factor_panel_service__GB1   |           1|       135|
+|3     |factor_panel_service__GB2   |           1|       108|
+|4     |factor_panel_service__GB3   |           1|       189|
+|5     |factor_panel_service__GB4   |           1|       829|
+|6     |factor_panel_service__GB5   |           1|      7678|
+|7     |case__443__GD               |           1|      2629|
+|8     |factor_panel_service__GB7   |           1|         5|
+|9     |factor_panel_service__GB8   |           1|      3618|
+|10    |factor_panel_service__GB9   |           1|        39|
+|11    |factor_panel_service__GB12  |           1|      8541|
+|12    |factor_panel_service__GB13  |           1|        80|
+|13    |factor_panel_service__GB14  |           1|      5042|
+|14    |factor_panel_service__GB15  |           1|      3107|
+|15    |factor_panel_service__GB16  |           1|      1299|
+|16    |factor_panel_service__GB17  |           1|       729|
+|17    |factor_panel_service__GB18  |           1|        81|
+|18    |factor_panel_service__GB19  |           1|       109|
+|19    |factor_panel_service__GB20  |           1|       108|
+|20    |factor_panel_service__GB21  |           1|       135|
+|21    |factor_panel_service__GB22  |           1|       837|
+|22    |factor_panel_service__GB23  |           1|      5537|
+|23    |factor_panel_service__GB24  |           1|      3583|
+|24    |factor_panel_service__GB26  |           1|       526|
+|25    |factor_panel_service__GB27  |           1|       440|
+|26    |factor_panel_service__GB29  |           1|      3220|
+|27    |factor_panel_service__GB30  |           1|      1227|
+|28    |factor_panel_service__GB31  |           1|      3331|
+|29    |factor_panel_service__GB38  |           1|       957|
+|30    |factor_panel_service__GB39  |           1|      2263|
+|31    |factor_panel_service_GT1    |           1|        11|
+|32    |factor_panel_service_GT2    |           1|        11|
+|33    |factor_panel_service_GT3    |           1|         2|
+|34    |factor_panel_service_GT4    |           1|         2|
+|35    |factor_panel_service_GT5    |           1|         2|
+|36    |factor_panel_service_GT6    |           1|         2|
+|37    |factor_panel_service_GT7    |           1|         2|
+|38    |factor_panel_service_GT8    |           1|         2|
+|39    |factor_panel_service_GT16   |           1|      3456|
+|40    |factor_panel_service_GT17   |           1|         3|
+|41    |factor_panel_service_GT18   |           1|         2|
+|42    |factor_panel_service_GT19   |           1|         3|
+|43    |factor_panel_service_GT20   |           1|         3|
+|44    |factor_panel_service_GT21   |           1|         3|
+|45    |factor_panel_service_GT22   |           1|         2|
+|46    |factor_panel_service_GT23   |           1|         8|
+|47    |factor_panel_service_GT24   |           1|        16|
+|48    |factor_panel_service_GT25   |           1|         9|
+|49    |factor_panel_service_GT26   |           1|        32|
+|50    |factor_panel_service_GT28   |           1|         5|
+|51    |factor_panel_service_GT29   |           1|         6|
+|52    |factor_panel_service_GT30   |           1|         8|
+|53    |factor_panel_service_GT31   |           1|         9|
+|54    |factor_panel_service_GT32   |           1|        81|
+|55    |factor_panel_service_GT33   |           1|         9|
+|56    |factor_panel_service_GT34   |           1|        11|
+|57    |factor_panel_service_GT35   |           1|        11|
+|58    |factor_panel_service_GT36   |           1|        11|
+|59    |factor_panel_service_GT37   |           1|        11|
+|60    |factor_panel_service_GT38   |           1|        11|
+|61    |factor_panel_service_GT39   |           1|         8|
+|62    |factor_panel_service_GT50   |           1|       128|
+|63    |factor_panel_service_GT51   |           1|         5|
+|64    |factor_panel_service_GT52   |           1|         9|
+|65    |factor_panel_service_GT9    |           1|       173|
+|66    |partition__24__GD           |           1|      7083|
+|67    |factor_panel_service_GT1__8 |           1|     20393|
++------+----------------------------+------------+----------+
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+INFO: [Synth 8-3886] merging instance 'B[0]' (FDRE) to 'A[0]'
+INFO: [Synth 8-3886] merging instance 'B[1]' (FDRE) to 'A[1]'
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:31:32 ; elapsed = 00:34:05 . Memory (MB): peak = 3354.152 ; gain = 3043.328
+---------------------------------------------------------------------------------
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:31:34 ; elapsed = 00:34:06 . Memory (MB): peak = 3354.152 ; gain = 3043.328
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:31:47 ; elapsed = 00:34:20 . Memory (MB): peak = 3354.152 ; gain = 3043.328
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:31:47 ; elapsed = 00:34:20 . Memory (MB): peak = 3354.152 ; gain = 3043.328
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:31:59 ; elapsed = 00:34:34 . Memory (MB): peak = 3354.152 ; gain = 3043.328
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:31:59 ; elapsed = 00:34:34 . Memory (MB): peak = 3354.152 ; gain = 3043.328
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY8 |  2419|
+|2     |LUT1   |   726|
+|3     |LUT2   | 15133|
+|4     |LUT3   |  7706|
+|5     |LUT4   |  8820|
+|6     |LUT5   |  9790|
+|7     |LUT6   | 24747|
+|8     |MUXF7  |  1186|
+|9     |MUXF8  |    27|
+|10    |FDRE   | 17091|
++------+-------+------+
+
+Report Instance Areas: 
++------+---------+-------+------+
+|      |Instance |Module |Cells |
++------+---------+-------+------+
+|1     |top      |       | 87645|
++------+---------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:31:59 ; elapsed = 00:34:34 . Memory (MB): peak = 3354.152 ; gain = 3043.328
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 4303 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:30:42 ; elapsed = 00:33:56 . Memory (MB): peak = 3354.152 ; gain = 1912.766
+Synthesis Optimization Complete : Time (s): cpu = 00:32:00 ; elapsed = 00:34:43 . Memory (MB): peak = 3354.152 ; gain = 3043.328
+INFO: [Project 1-571] Translating synthesized netlist
+INFO: [Netlist 29-17] Analyzing 3632 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 1 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'factor_panel_service' is not ideal for floorplanning, since the cellview 'factor_panel_service' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/probe.xdc]
+Finished Parsing XDC File [D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/probe.xdc]
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+INFO: [Common 17-83] Releasing license: Synthesis
+163 Infos, 301 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:32:26 ; elapsed = 00:35:16 . Memory (MB): peak = 3362.031 ; gain = 3063.875
+# write_checkpoint [file join $out_dir post_synth.dcp]
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-480] Writing timing data to binary archive.
+INFO: [Common 17-1381] The checkpoint 'D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425/post_synth.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:30 ; elapsed = 00:00:24 . Memory (MB): peak = 3493.469 ; gain = 131.438
+# report_utilization -hierarchical -file [file join $out_dir utilization.rpt]
+report_utilization: Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 3493.469 ; gain = 0.000
+# report_timing_summary -report_unconstrained -file [file join $out_dir timing.rpt]
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2, Temperature grade: E, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 2 CPUs
+WARNING: [Timing 38-242] The property HD.CLK_SRC of clock port "clk" is not set. In out-of-context mode, this prevents timing estimation for clock delay/skew
+Resolution: Set the HD.CLK_SRC property of the out-of-context port to the location of the clock buffer instance in the top-level design
+report_timing_summary: Time (s): cpu = 00:01:10 ; elapsed = 00:01:01 . Memory (MB): peak = 4395.715 ; gain = 902.246
+# puts "OOC PROBE COMPLETE: $out_dir"
+OOC PROBE COMPLETE: D:/vivado_pj/work/v4_ooc_panel_bcache_20260912_1425
+# exit 0
+INFO: [Common 17-206] Exiting Vivado at Sat Sep 12 15:02:04 2026...

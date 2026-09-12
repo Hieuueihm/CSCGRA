@@ -1,0 +1,15 @@
+flowchart TB
+  B["LS request: support, A, y, numeric policy"] --> P["Validate / obtain packed support matrices"]
+  P --> I["Initialize CGLS: x=0, r=y, g=A_S^T*r, d=g"]
+  I --> Q["Forward q=A_S*d; delta=dot(q,q)"]
+  Q --> AL["Wide ratio alpha=gamma/delta"]
+  AL --> U["Candidate x+=alpha*d; recursive r-=alpha*q"]
+  U --> N["Round candidate to stored D format"]
+  N --> CE["Exact policy: recompute r_D and A_S^T*r_D"]
+  CE --> OK{"Post-storage certificate passes?"}
+  OK -- Yes --> C["Publish coefficients only if no numeric fault"]
+  OK -- No --> T{"Budget / breakdown / fault?"}
+  T -- Yes --> F["Fail / rollback; keep last committed job state"]
+  T -- No --> G["g_new=A_S^T*r; gamma_new=dot(g_new,g_new)"]
+  G --> BT["beta=gamma_new/gamma; d=g_new+beta*d"]
+  BT --> Q

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "revision": "pe_alu_router_local_v1",
+  "scope": "decoded_execution_primitives_not_context_image_ABI",
+  "profile_status": "shortlist_build_candidate_not_production_frozen",
+  "state_width": 27,
+  "state_frac": 22,
+  "coeff_width": 18,
+  "coeff_frac": 16,
+  "acc_width": 64,
+  "split_bits": 17,
+  "opcode_width": 5,
+  "fault_width": 4,
+  "ops": {
+    "HOLD": 0, "MOV": 1, "ADD": 2, "SUB": 3, "ABS": 4,
+    "CMP_S": 5, "CMP_U": 6, "SELECT": 7, "MUL": 8, "MAC": 9,
+    "ACC_CLEAR": 10, "ACC_READ": 11, "ACC_ADD": 12,
+    "AND": 13, "OR": 14, "XOR": 15, "NOT": 16
+  },
+  "faults": {"NONE": 0, "SAT": 1, "ACC": 2, "OP": 3, "MODE": 4, "COEFF": 5},
+  "route_faults": {"NONE": 0, "SEL": 1, "EDGE": 2, "SRC": 3},
+  "schedule": {
+    "alu_single_latency": 1,
+    "alu_ss_multiply_latency": 2,
+    "alu_single_ii": 2,
+    "alu_ss_multiply_ii": 3,
+    "route_hop_latency": 1,
+    "route_completion_latency": 2,
+    "route_ii": 3,
+    "assumptions": "one_outstanding_request; no_stalls; no_same_edge_replacement; not_PPA"
+  }
+}

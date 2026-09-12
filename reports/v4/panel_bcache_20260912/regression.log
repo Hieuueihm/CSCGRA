@@ -1,0 +1,19 @@
+test_direct_narrow_rectangles_real_fabric (verification.v4.test_factor_panel_narrow_fabric_rtl.NarrowPanelRealFabric.test_direct_narrow_rectangles_real_fabric) ... ok
+test_fractional_project_update_real_terminal_tail (verification.v4.test_factor_panel_narrow_fabric_rtl.NarrowPanelRealFabric.test_fractional_project_update_real_terminal_tail) ... ok
+test_enabled_schedule_preserves_outputs_under_legacy_stalls (verification.v4.test_factor_project_dot_schedule_ab_rtl.FactorProjectDotScheduleAbRtlTests.test_enabled_schedule_preserves_outputs_under_legacy_stalls) ... ok
+test_second_dot_cancel_and_fabric_fault_each_recover (verification.v4.test_factor_project_dot_schedule_ab_rtl.FactorProjectDotScheduleAbRtlTests.test_second_dot_cancel_and_fabric_fault_each_recover)
+Marker26 sees valid second-DOT input; marker27 sees accepted output. ... ok
+test_split_threshold_ab_exact_outputs_and_phase_frames (verification.v4.test_factor_project_dot_schedule_ab_rtl.FactorProjectDotScheduleAbRtlTests.test_split_threshold_ab_exact_outputs_and_phase_frames) ... ok
+test_raw_terminal_faults_candidate_commit_cancel_and_recovery (verification.v4.test_factor_range_fault_injection_rtl.FactorRangeFaultInjectionRtlTests.test_raw_terminal_faults_candidate_commit_cancel_and_recovery) ... ok
+test_energy_tap_axes_offsets_tails_and_import_extrema (verification.v4.test_factor_energy_tap_rtl.FactorEnergyTapRtlTests.test_energy_tap_axes_offsets_tails_and_import_extrema) ... ok
+test_energy_tap_cancel_after_private_candidate_then_fresh_init_recovery (verification.v4.test_factor_energy_tap_rtl.FactorEnergyTapRtlTests.test_energy_tap_cancel_after_private_candidate_then_fresh_init_recovery) ... ok
+test_energy_tap_full_candidate_private_factor_readback_and_block_zero (verification.v4.test_factor_energy_tap_rtl.FactorEnergyTapRtlTests.test_energy_tap_full_candidate_private_factor_readback_and_block_zero) ... ok
+test_energy_tap_private_response_mask_fault_has_no_candidate_or_stat (verification.v4.test_factor_energy_tap_rtl.FactorEnergyTapRtlTests.test_energy_tap_private_response_mask_fault_has_no_candidate_or_stat) ... ok
+test_count_and_length_mismatch_abort_private_candidate_then_recover (verification.v4.test_factor_energy_tap_fault_injection_rtl.FactorEnergyTapFaultInjectionRtlTests.test_count_and_length_mismatch_abort_private_candidate_then_recover) ... ok
+test_exact_live_phi_and_restricted_dense_measurements (verification.v4.test_gemv_mapping_calibration_rtl.GemvMappingCalibrationRtlTests.test_exact_live_phi_and_restricted_dense_measurements) ... ok
+test_mapping_fault_and_cancel_semantics_pairwise (verification.v4.test_gemv_mapping_calibration_rtl.GemvMappingCalibrationRtlTests.test_mapping_fault_and_cancel_semantics_pairwise) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 384.641s
+
+OK

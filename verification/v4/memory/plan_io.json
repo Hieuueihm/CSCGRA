@@ -1,0 +1,21 @@
+{
+  "inputs": {
+    "mode": 2,
+    "trans": 1,
+    "rows": 8,
+    "cols": 11,
+    "out_idx": 11,
+    "red_idx": 11,
+    "step": 3,
+    "vec_base": 12
+  },
+  "outputs": {
+    "mat_mask": 32,
+    "vec_mask": 32,
+    "mat_addr": 288,
+    "vec_addr": 224,
+    "vec_banks": 20,
+    "vec_lanes": 4,
+    "fault": 4
+  }
+}

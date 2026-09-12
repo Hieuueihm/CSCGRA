@@ -1,0 +1,15 @@
+flowchart TB
+  Y["Measurement y: original units"] --> N["Host: choose e from y only<br/>peak after scaling in (0.25, 0.5]"]
+  N --> D["Quantize input D<br/>e stays in job metadata"]
+  L["Selected LFSR32<br/>seed + shape + scale"] --> P["One Phi sign cache"]
+  P --> B["Ordered support B<br/>one dense C cache"]
+  D --> PE["Two 4x4 arrays: 32 full PEs<br/>LSQR GEMV / DOT / AXPY in S"]
+  B --> PE
+  SC["Shared DIV / SQRT"] <--> PE
+  PE --> X["Round to persistent X<br/>exact X-to-S embedding"]
+  X --> CHECK["Recompute residual and normal<br/>from stored X"]
+  B --> CHECK
+  CHECK -->|"pass and no fault"| COMMIT["Commit support + X + residual<br/>all in normalized domain"]
+  CHECK -->|"not passed, budget remains"| PE
+  CHECK -->|"fault or exhausted budget"| FAIL["Failed LS<br/>preserve prior committed state"]
+  COMMIT --> OUT["Host output: decode raw X<br/>multiply by 2^-e"]

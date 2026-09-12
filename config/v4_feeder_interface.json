@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "scope": "aligned_operand_bundle_not_memory_scheduler",
+  "modes": {"PHI_R1": 0, "PHI_R4": 1, "B_R1": 2, "B_R4": 3},
+  "faults": {"NONE": 0, "SHAPE": 1, "INDEX": 2, "SCALE": 3, "SOURCE": 4},
+  "latency": 1,
+  "minimum_ii": 2
+}

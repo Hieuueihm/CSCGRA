@@ -1,0 +1,6 @@
+part=xczu7ev-ffvc1156-2-e
+top=factor_panel_service
+clock_ns=10.0
+mode=out_of_context
+directives=Vivado defaults
+source_count=58

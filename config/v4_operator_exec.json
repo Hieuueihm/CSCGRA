@@ -1,0 +1,7 @@
+{
+  "revision": 1,
+  "scope": "candidate_resident_context_gemv_stream_not_job_commit",
+  "descriptor_count": 16,
+  "descriptor_fields": {"mode": 2, "trans": 1, "rows": 8, "cols": 11, "vec_base": 12, "vec_plane": 2, "scale": 18, "key": 128, "mat_generation": 32, "vec_generation": 32, "job": 16, "fmt": 8},
+  "address_mode": 1
+}

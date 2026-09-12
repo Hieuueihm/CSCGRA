@@ -1,0 +1,37 @@
+flowchart TB
+  host[Native host: load program, context, vectors and job]
+  recovery[recovery_engine: native job ownership and result publication]
+  seq[program_sequencer: loaded instructions and internal RF 32 x 64]
+  kernel[stream_kernel: generic dispatch, validation and scratch/ownership commit]
+  scalar[arithmetic_service: DIV / SQRT / RESCALE]
+  support[support_service: TOPK winners, range transport and scalar-insert staging]
+  insert[SCALAR_INSERT: scalar RF lane replacement, full-vector transaction]
+  project["FACTOR_PROJECT_UPDATE: dot → scale → rank (MUL + SUB)"]
+  factor[factor_service / factor_store: private QR factors]
+  panel[factor_panel_service: generic panel worker]
+  subgraph fabric[One shared stream_fabric: exactly two 4 x 4 PE arrays, 32 PEs]
+    a0[stream_array 0: 4 x 4]
+    a1[stream_array 1: 4 x 4]
+  end
+  scratch[32 private scratch block handles]
+  ownership[480 public logical mappings: one handle swap per cycle]
+  pool[Existing vector RAM: 512 physical blocks]
+  result[result_store: committed result and metadata]
+  cpu[CPU / AXI-Lite / DMA: not implemented]
+  cpu -. not implemented .-> host
+  host <--> recovery
+  recovery --> seq
+  recovery <--> kernel
+  recovery <--> result
+  seq <--> scalar
+  seq --> kernel
+  kernel <--> support
+  insert -. conceptual transport .-> support
+  project -. conceptual transport .-> panel
+  kernel <--> factor
+  kernel <--> panel
+  panel <--> fabric
+  factor <--> panel
+  kernel --> scratch --> ownership
+  kernel <--> ownership
+  ownership <--> pool

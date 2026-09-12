@@ -1,0 +1,18 @@
+flowchart TB
+  host["Host / recovery_engine\nloads revision2 program image"]
+  sequencer["program_sequencer\nloaded generic ops"]
+  kernel["stream_kernel\nshared vector pool and exclusive fabric mux"]
+  panel["factor_panel_service\nsource-qualified candidate ops17/18"]
+  bridge["factor_service bridge\nprivate factor_store"]
+  fabric["stream_fabric\nexisting two 4x4 arrays = 32 PEs"]
+  normal["flow0 parallel32"]
+  cascade["flow1 cascade16\nMUL then SUB"]
+  host --> sequencer --> kernel
+  kernel --> fabric
+  kernel --> panel --> bridge
+  panel -->|exclusive ownership only during panel command| fabric
+  fabric --> normal
+  fabric --> cascade
+  note["Source-qualified Vivado candidate: 20 fixed8 active10 PASS\nCoSaMP M64 252684 / M32 210512 cycles; 41.48% reduction\nsource installation tracked by promotion manifest; no PPA/timing/production-bit claim"]
+  panel -.-> note
+  legend["Legend: solid arrows denote instantiated control/data flow; panel and normal paths share one fabric, never duplicate arrays"]

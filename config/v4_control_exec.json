@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "revision": "control256_execution_candidate_v1",
+  "loop_depth": 4,
+  "faults": {"NONE": 0, "REV": 1, "WORD": 2, "EXEC": 3, "HEADER": 4, "STREAM": 5, "FETCH": 6, "LOOP": 7, "PC": 8, "BACKEND": 9, "TAG": 10},
+  "hash_boundary": "trusted_host_load_image_SHA256_before_verified_header",
+  "address_boundary": "tagged_descriptor_request_completion_not_memory_scheduler",
+  "retirement": "PC_loop_and_address_state_change_only_after_successful_tagged_completion"
+}

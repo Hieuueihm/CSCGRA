@@ -1,0 +1,42 @@
+{
+  "inputs": {
+    "rst": 1,
+    "cancel": 1,
+    "begin_valid": 1,
+    "begin_plane": 2,
+    "begin_length": 13,
+    "begin_generation": 32,
+    "begin_job": 16,
+    "begin_fmt": 8,
+    "fill_valid": 1,
+    "fill_block": 7,
+    "fill_mask": 32,
+    "fill_data": 864,
+    "fill_last": 1,
+    "rd_valid": 2,
+    "rd_plane": 4,
+    "rd_mask": 64,
+    "rd_addr": 448,
+    "rd_generation": 64,
+    "rd_job": 32,
+    "rd_tag": 32,
+    "rd_fmt": 16,
+    "rsp_ready": 2
+  },
+  "outputs": {
+    "begin_ready": 1,
+    "fill_ready": 1,
+    "loading": 1,
+    "plane_valid": 3,
+    "load_fault": 4,
+    "rd_ready": 2,
+    "rsp_valid": 2,
+    "rsp_data": 1728,
+    "rsp_mask": 64,
+    "rsp_generation": 64,
+    "rsp_job": 32,
+    "rsp_tag": 32,
+    "rsp_fmt": 16,
+    "rsp_fault": 8
+  }
+}

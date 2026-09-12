@@ -1,0 +1,10 @@
+{
+  "revision": 1,
+  "scope": "native recovery integration and transactional result publication; no board bus",
+  "result_faults": {"NONE": 0, "COMMAND": 1, "RANGE": 2, "ORDER": 3, "EMBEDDING": 4, "IDENTITY": 5, "REJECTED": 6, "UNINITIALIZED": 7},
+  "faults": {"NONE": 0, "START": 1, "PROGRAM": 2, "BUILD": 3, "READ": 4, "RESULT": 5, "IDENTITY": 6, "GENERATION": 7},
+  "limits": {"MAX_ROWS": 128, "MAX_LENGTH": 1024, "MAX_SUPPORT": 96, "PUBLIC_BLOCKS": 480, "FORMAT": 1},
+  "storage_modes": {"X24": 1, "D18": 2},
+  "publication": "fault zero and status 0..5; exact raw embedding; explicit approval switches bank; cancel preserves prior commit",
+  "generation": "top lifetime monotonic B generation, reject wrap; external START generation denotes Phi"
+}
